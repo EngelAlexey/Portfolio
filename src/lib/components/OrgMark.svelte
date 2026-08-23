@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * Employer marks, taken from each company's own repository and rendered in
-	 * ink. Inter Cargo only ships a colour PNG, so it is masked rather than
+	 * ink. Intercargo only ships a colour PNG, so it is masked rather than
 	 * placed as an image — otherwise the strip would import a brand palette and
 	 * break the rule that a hue on this site always means an area.
 	 *

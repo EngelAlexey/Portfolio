@@ -1,9 +1,9 @@
 import type { Lang } from './i18n';
 
 /**
- * Stable biographical facts, mirrored from `D:/GitHub/Personal/CV/cv.md`
- * (the live source — `cv.json` is stale). Prose for the About page arrives with
- * the content pass; this file holds only what does not change often.
+ * Stable biographical facts, mirrored from `D:/GitHub/Personal/CV/cv-es.html`
+ * (the live rendered CV — `cv.json` is stale). Prose for the About page arrives
+ * with the content pass; this file holds only what does not change often.
  */
 
 type Bilingual = Record<Lang, string>;
@@ -23,12 +23,12 @@ export const EXPERIENCE: Role[] = [
 	{
 		period: { es: 'Ago 2026 — Actualidad', en: 'Aug 2026 — Present' },
 		title: { es: 'Desarrollador de Software', en: 'Software Developer' },
-		org: 'Inter Cargo Panamá — vía Kaizen Apps CR',
-		shortOrg: 'Inter Cargo Panamá',
+		org: 'Intercargo Panamá — vía Kaizen Apps CR',
+		shortOrg: 'Intercargo Panamá',
 		mark: 'intercargo',
 		detail: {
-			es: 'Construyo en solitario la plataforma corporativa completa y diseñé su modelo de seguridad: instancias separadas por criticidad de secretos, identidad por invitación, sesiones revocables y defensa contra inyección de prompt.',
-			en: 'I build the whole corporate platform single-handed and designed its security model: instances split by how critical their secrets are, invite-based identity, revocable sessions and prompt-injection defence.'
+			es: 'Construyo en solitario la plataforma corporativa completa —sitio público, portal interno, debida diligencia y cuentas por cobrar— y diseñé su modelo de seguridad: dos instancias separadas por criticidad de secretos, identidad por invitación, sesiones revocables y defensa contra inyección de prompt.',
+			en: 'I build the whole corporate platform single-handed — public site, internal portal, due diligence and accounts receivable — and designed its security model: two instances split by how critical their secrets are, invite-based identity, revocable sessions and prompt-injection defence.'
 		}
 	},
 	{
@@ -40,8 +40,8 @@ export const EXPERIENCE: Role[] = [
 		org: 'Kaizen Apps CR',
 		mark: 'kaizen',
 		detail: {
-			es: 'Plataforma web oficial y sistemas internos, de la propuesta a producción. Mantengo dos sistemas en producción mientras desarrollo otros, y reviso el trabajo de compañeros antes de que salga.',
-			en: 'Official web platform and internal systems, from proposal to production. I keep two systems running while building others, and review teammates’ work before it ships.'
+			es: 'Plataforma web oficial y un catálogo de cuatro sistemas internos, de la propuesta a producción; aporto al ERP de RRHH que la empresa licencia, y rediseñé el sitio corporativo bilingüe. Soporte N2: rastreo la falla hasta el código y la corrijo.',
+			en: 'Official web platform and a catalogue of four internal systems, from proposal to production; I contribute to the HR ERP the company licenses, and rebuilt the bilingual corporate site. N2 support: I trace the fault to the code and fix it.'
 		}
 	},
 	{
@@ -53,8 +53,8 @@ export const EXPERIENCE: Role[] = [
 		org: 'Star Cargo Service',
 		mark: 'starcargo',
 		detail: {
-			es: 'CRM a la medida para gestión logística y de carga, con automatización de flujos de venta. Soporte de primer nivel. Colaboración por proyectos.',
-			en: 'Bespoke logistics and freight CRM with sales-flow automation. First-line support. Project-based collaboration.'
+			es: 'CRM logístico a la medida construido en dos meses: 15 pantallas sobre 18 módulos de backend, con automatización de flujos de venta y sincronización en tiempo real. Soporte N1. Colaboración por proyectos.',
+			en: 'Bespoke logistics CRM built in two months: 15 screens over 18 backend modules, with sales-flow automation and real-time sync. N1 support. Project-based collaboration.'
 		}
 	}
 ];

@@ -20,7 +20,7 @@ export const en: Dict = {
 	home: {
 		badge: 'Available — professional internship, January to April 2027',
 		title: 'Alex Herrera Manzanares',
-		role: 'Cybersecurity · Secure development',
+		role: 'Software Developer · Cybersecurity focus',
 		headline: 'I design the security before writing the code.',
 		pitch:
 			'I am the sole developer of the corporate platform of a logistics company in Panama. I defined its whole security model — instances split by how critical their secrets are, invite-based identity, revocable sessions and prompt-injection defence — and backed it with per-module attack suites.',
@@ -113,9 +113,9 @@ export const en: Dict = {
 	},
 	meta: {
 		siteName: 'Alex Herrera Manzanares',
-		defaultTitle: 'Alex Herrera Manzanares — Cybersecurity and secure development',
+		defaultTitle: 'Alex Herrera Manzanares — Software developer with a cybersecurity focus',
 		defaultDescription:
-			'Portfolio of Alex Herrera Manzanares: cybersecurity and secure development. The security model of a corporate platform, attack testing, networking and infrastructure. Costa Rica.',
+			'Portfolio of Alex Herrera Manzanares: software developer with a cybersecurity focus. The security model of a corporate platform, attack testing, networking and infrastructure. Costa Rica.',
 		titleTemplate: (page: string) => `${page} — Alex Herrera Manzanares`
 	}
 };

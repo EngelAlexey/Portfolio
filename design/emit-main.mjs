@@ -78,7 +78,7 @@ ${toolEntries(HERO_TOOLS)
       <li>
         <span class="orgmark orgmark-intercargo"></span>
         <span class="orgtext">
-          <strong>Inter Cargo Panam&aacute;</strong>
+          <strong>Intercargo Panam&aacute;</strong>
           <span class="mono">Desarrollador de Software &middot; ago 2026 &rarr; hoy &middot; v&iacute;a Kaizen Apps CR</span>
         </span>
       </li>

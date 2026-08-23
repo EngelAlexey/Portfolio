@@ -18,7 +18,7 @@ export const es = {
 	home: {
 		badge: 'Disponible — práctica profesional, enero a abril de 2027',
 		title: 'Alex Herrera Manzanares',
-		role: 'Ciberseguridad · Desarrollo seguro',
+		role: 'Desarrollador de Software · Enfoque en Ciberseguridad',
 		headline: 'Diseño la seguridad antes de escribir el código.',
 		pitch:
 			'Soy el único desarrollador de la plataforma corporativa de una empresa logística en Panamá. Definí su modelo de seguridad completo — separación de instancias por criticidad de secretos, identidad por invitación, sesiones revocables y defensa contra inyección de prompt — y lo respaldé con pruebas de ataque por módulo.',
@@ -111,9 +111,9 @@ export const es = {
 	},
 	meta: {
 		siteName: 'Alex Herrera Manzanares',
-		defaultTitle: 'Alex Herrera Manzanares — Ciberseguridad y desarrollo seguro',
+		defaultTitle: 'Alex Herrera Manzanares — Desarrollador de Software con enfoque en ciberseguridad',
 		defaultDescription:
-			'Portafolio de Alex Herrera Manzanares: ciberseguridad y desarrollo seguro. Modelo de seguridad de una plataforma corporativa, pruebas de ataque, redes e infraestructura. Costa Rica.',
+			'Portafolio de Alex Herrera Manzanares: desarrollador de software con enfoque en ciberseguridad. Modelo de seguridad de una plataforma corporativa, pruebas de ataque, redes e infraestructura. Costa Rica.',
 		titleTemplate: (page: string) => `${page} — Alex Herrera Manzanares`
 	}
 };
