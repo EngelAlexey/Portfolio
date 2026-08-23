@@ -1,0 +1,78 @@
+<script lang="ts">
+	export type TimelineItem = {
+		period: string;
+		title: string;
+		org?: string;
+		detail?: string;
+	};
+
+	let { items, label }: { items: TimelineItem[]; label?: string } = $props();
+</script>
+
+<ol class="timeline" aria-label={label}>
+	{#each items as item (item.period + item.title)}
+		<li>
+			<span class="period">{item.period}</span>
+			<div class="body">
+				<h3>{item.title}</h3>
+				{#if item.org}<p class="org">{item.org}</p>{/if}
+				{#if item.detail}<p class="detail">{item.detail}</p>{/if}
+			</div>
+		</li>
+	{/each}
+</ol>
+
+<style>
+	.timeline {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	li {
+		display: grid;
+		grid-template-columns: minmax(6.5rem, max-content) 1fr;
+		gap: 1rem;
+		padding: 1rem 0;
+		border-top: 1px solid var(--line);
+	}
+
+	li:first-child {
+		border-top: 0;
+		padding-top: 0;
+	}
+
+	.period {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--ink-faint);
+		padding-top: 0.2rem;
+	}
+
+	h3 {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+
+	.org,
+	.detail {
+		margin: 0.2rem 0 0;
+		color: var(--ink-muted);
+		font-size: 0.9375rem;
+		line-height: 1.6;
+	}
+
+	@media (max-width: 34rem) {
+		li {
+			grid-template-columns: 1fr;
+			gap: 0.35rem;
+		}
+
+		.period {
+			padding-top: 0;
+		}
+	}
+</style>

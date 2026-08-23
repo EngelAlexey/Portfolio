@@ -1,0 +1,251 @@
+<script lang="ts">
+	import AreaChip from '$lib/components/AreaChip.svelte';
+	import Container from '$lib/components/Container.svelte';
+	import Prose from '$lib/components/Prose.svelte';
+	import Seo from '$lib/components/Seo.svelte';
+	import StackList from '$lib/components/StackList.svelte';
+	import type { Project } from '$lib/content';
+	import { neighbours } from '$lib/content';
+	import { path, t, type Lang } from '$lib/i18n';
+
+	let { lang, project }: { lang: Lang; project: Project } = $props();
+
+	const strings = $derived(t(lang));
+	const meta = $derived(project.meta);
+	const around = $derived(neighbours(lang, meta.slug));
+	const period = $derived(
+		meta.period.end === null
+			? `${meta.period.start} — ${strings.project.present}`
+			: meta.period.start === meta.period.end
+				? meta.period.start
+				: `${meta.period.start} — ${meta.period.end}`
+	);
+</script>
+
+<Seo
+	{lang}
+	key="project"
+	slug={meta.slug}
+	title={strings.meta.titleTemplate(meta.title)}
+	description={meta.tagline}
+	image={meta.cover}
+/>
+
+<Container as="header" size="text">
+	<a class="back" href={path(lang, 'projects')}>← {strings.project.back}</a>
+
+	<div class="head">
+		<p class="kind">{strings.kind[meta.kind]}</p>
+		<h1>{meta.title}</h1>
+		<p class="tagline">{meta.tagline}</p>
+
+		<ul class="areas">
+			{#each meta.areas as area (area)}
+				<li><AreaChip {area} {lang} /></li>
+			{/each}
+		</ul>
+	</div>
+</Container>
+
+<Container size="text">
+	<dl class="facts">
+		{#if meta.org}
+			<div><dt>{strings.project.org}</dt><dd>{meta.org}</dd></div>
+		{/if}
+		{#if meta.role}
+			<div><dt>{strings.project.role}</dt><dd>{meta.role}</dd></div>
+		{/if}
+		<div><dt>{strings.project.period}</dt><dd>{period}</dd></div>
+	</dl>
+
+	<div class="stack">
+		<h2>{strings.project.stack}</h2>
+		<StackList stack={meta.stack} label={strings.project.stack} />
+	</div>
+
+	{#if meta.visibility === 'privado'}
+		<aside class="notice">
+			<h2>{strings.project.privateTitle}</h2>
+			<p>{strings.project.privateBody}</p>
+		</aside>
+	{:else if meta.repo || meta.demo}
+		<p class="links">
+			{#if meta.repo}
+				<a href={meta.repo} rel="noreferrer" target="_blank">{strings.project.repo} ↗</a>
+			{/if}
+			{#if meta.demo}
+				<a href={meta.demo} rel="noreferrer" target="_blank">{strings.project.demo} ↗</a>
+			{/if}
+		</p>
+	{/if}
+</Container>
+
+<Container size="text">
+	<Prose>
+		<project.Body />
+	</Prose>
+</Container>
+
+<Container size="text">
+	<nav class="pager" aria-label={strings.projects.title}>
+		{#if around.prev}
+			<a class="prev" href={path(lang, 'project', around.prev.meta.slug)}>
+				<span>← {strings.project.previous}</span>
+				<strong>{around.prev.meta.title}</strong>
+			</a>
+		{:else}
+			<span></span>
+		{/if}
+
+		{#if around.next}
+			<a class="next" href={path(lang, 'project', around.next.meta.slug)}>
+				<span>{strings.project.next} →</span>
+				<strong>{around.next.meta.title}</strong>
+			</a>
+		{/if}
+	</nav>
+</Container>
+
+<style>
+	.back {
+		display: inline-block;
+		margin-top: 2rem;
+		font-size: 0.875rem;
+		color: var(--ink-muted);
+		text-decoration: none;
+	}
+
+	.back:hover {
+		color: var(--ink);
+	}
+
+	.head {
+		padding-block: 1.5rem 0.5rem;
+	}
+
+	.kind {
+		margin: 0 0 0.75rem;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--ink-faint);
+	}
+
+	h1 {
+		margin: 0;
+		font-size: clamp(1.875rem, 5vw, 2.75rem);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+		line-height: 1.1;
+	}
+
+	.tagline {
+		margin: 0.75rem 0 0;
+		font-size: 1.125rem;
+		line-height: 1.6;
+		color: var(--ink-muted);
+	}
+
+	.areas {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		list-style: none;
+		margin: 1.25rem 0 0;
+		padding: 0;
+	}
+
+	.facts {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+		gap: 1rem;
+		margin: 2rem 0 1.5rem;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--surface);
+	}
+
+	dt {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--ink-faint);
+	}
+
+	dd {
+		margin: 0.25rem 0 0;
+		font-size: 0.9375rem;
+	}
+
+	.stack h2,
+	.notice h2 {
+		margin: 0 0 0.6rem;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--ink-faint);
+	}
+
+	.notice {
+		margin-top: 1.75rem;
+		padding: 1rem 1.25rem;
+		border: 1px dashed var(--line-strong);
+		border-radius: var(--radius);
+		color: var(--ink-muted);
+	}
+
+	.notice p {
+		margin: 0;
+		font-size: 0.9375rem;
+		line-height: 1.6;
+	}
+
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin: 1.75rem 0 0;
+		font-size: 0.9375rem;
+	}
+
+	.pager {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+		margin: clamp(2.5rem, 6vw, 4rem) 0 clamp(3rem, 7vw, 5rem);
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--line);
+	}
+
+	.pager a {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		text-decoration: none;
+		color: var(--ink-muted);
+	}
+
+	.pager a:hover {
+		color: var(--ink);
+	}
+
+	.pager .next {
+		text-align: right;
+	}
+
+	.pager span {
+		font-size: 0.75rem;
+		font-family: var(--font-mono);
+	}
+
+	.pager strong {
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--ink);
+	}
+</style>
