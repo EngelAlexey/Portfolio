@@ -9,8 +9,12 @@
 
 <ul class="stack" aria-label={label}>
 	{#each items as tool (tool.label)}
-		<li>
-			<span class="mark"><BrandMark {tool} size={18} /></span>
+		<!-- A real brand mark gets an icon; concepts (VLAN, VPN, a reranker with no
+		     logo) show as a clean text chip rather than a redundant monogram. -->
+		<li class:with-mark={tool.d}>
+			{#if tool.d}
+				<span class="mark"><BrandMark {tool} size={16} /></span>
+			{/if}
 			{tool.label}
 		</li>
 	{/each}
@@ -43,5 +47,9 @@
 	.mark {
 		display: flex;
 		color: var(--ink-faint);
+	}
+
+	li.with-mark:hover .mark {
+		color: var(--ink);
 	}
 </style>
