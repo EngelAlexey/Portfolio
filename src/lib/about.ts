@@ -13,9 +13,24 @@ export type Role = {
 	title: Bilingual;
 	org: string;
 	detail: Bilingual;
+	/** Which employer mark to draw, when there is one. */
+	mark?: 'intercargo' | 'kaizen' | 'starcargo';
+	/** Short form for the home page strip, where the full title is too long. */
+	shortOrg?: string;
 };
 
 export const EXPERIENCE: Role[] = [
+	{
+		period: { es: 'Ago 2026 — Actualidad', en: 'Aug 2026 — Present' },
+		title: { es: 'Desarrollador de Software', en: 'Software Developer' },
+		org: 'Inter Cargo Panamá — vía Kaizen Apps CR',
+		shortOrg: 'Inter Cargo Panamá',
+		mark: 'intercargo',
+		detail: {
+			es: 'Construyo en solitario la plataforma corporativa completa y diseñé su modelo de seguridad: instancias separadas por criticidad de secretos, identidad por invitación, sesiones revocables y defensa contra inyección de prompt.',
+			en: 'I build the whole corporate platform single-handed and designed its security model: instances split by how critical their secrets are, invite-based identity, revocable sessions and prompt-injection defence.'
+		}
+	},
 	{
 		period: { es: '2024 — Actualidad', en: '2024 — Present' },
 		title: {
@@ -23,18 +38,10 @@ export const EXPERIENCE: Role[] = [
 			en: 'Software Developer & N2 Technical Support'
 		},
 		org: 'Kaizen Apps CR',
+		mark: 'kaizen',
 		detail: {
-			es: 'Plataforma web oficial y sistemas internos; soporte de segundo nivel y seguimiento de proyectos con metodologías ágiles.',
-			en: 'Official web platform and internal systems; second-line support and agile project follow-up.'
-		}
-	},
-	{
-		period: { es: 'Ago 2026 — Actualidad', en: 'Aug 2026 — Present' },
-		title: { es: 'Desarrollador de Software', en: 'Software Developer' },
-		org: 'Inter Cargo Panamá — proyecto vía Kaizen Apps CR',
-		detail: {
-			es: 'Plataforma corporativa en Cloud Run: portal interno con identidad por invitación, módulos de debida diligencia y cobranza, y endurecimiento de seguridad.',
-			en: 'Corporate platform on Cloud Run: invite-based internal portal, due-diligence and collections modules, and security hardening.'
+			es: 'Plataforma web oficial y sistemas internos, de la propuesta a producción. Mantengo dos sistemas en producción mientras desarrollo otros, y reviso el trabajo de compañeros antes de que salga.',
+			en: 'Official web platform and internal systems, from proposal to production. I keep two systems running while building others, and review teammates’ work before it ships.'
 		}
 	},
 	{
@@ -44,9 +51,10 @@ export const EXPERIENCE: Role[] = [
 			en: 'Web Developer & N1 Technical Support'
 		},
 		org: 'Star Cargo Service',
+		mark: 'starcargo',
 		detail: {
-			es: 'CRM de gestión logística y de carga; soporte de primer nivel. Colaboración por proyectos.',
-			en: 'Logistics and freight CRM; first-line support. Project-based collaboration.'
+			es: 'CRM a la medida para gestión logística y de carga, con automatización de flujos de venta. Soporte de primer nivel. Colaboración por proyectos.',
+			en: 'Bespoke logistics and freight CRM with sales-flow automation. First-line support. Project-based collaboration.'
 		}
 	}
 ];

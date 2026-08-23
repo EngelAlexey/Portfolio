@@ -77,6 +77,20 @@ El color es semántico: una tonalidad **siempre** significa un área y nunca dec
 
 Los tokens viven en `src/app.css` en OKLCH: `:root` define el tema claro completo, y `@media (prefers-color-scheme: dark)` junto a `[data-theme="dark"]` redefinen solo los tokens. Un script en `src/app.html` aplica el tema guardado antes del primer pintado, así el cambio no parpadea.
 
+## Marcas y logos
+
+Los logos de herramientas viven en `src/lib/brands.ts` (marcas de simple-icons, CC0) y los de las empresas en `src/lib/components/OrgMark.svelte`. **Ambos se generan**, no se editan a mano — la fuente está en `design/`:
+
+```bash
+cd design
+node emit-brands.mjs     # regenera src/lib/brands.ts desde el catálogo
+node emit-orgmark.mjs     # regenera OrgMark.svelte con los tres logos de empresa
+```
+
+Todos los logos se pintan en tinta, nunca en color de marca: en este sitio una tonalidad solo significa un área. Inter Cargo solo publica un PNG a color, así que se enmascara con CSS en lugar de colocarse como imagen. `design/` es material de trabajo del rediseño; no entra en el build.
+
+Añadir una herramienta: edítala en `design/catalog.mjs`, corre `emit-brands.mjs`, y aparece en la retícula filtrable. Los strings de stack de las fichas se mapean a esas marcas en `src/lib/stack.ts` (con alias para los nombres largos).
+
 ## Dominio
 
 `SITE_URL` sale de `PUBLIC_SITE_URL`, con el subdominio de Vercel como valor por defecto (`src/lib/site.ts`). Al comprar el dominio propio basta con definir esa variable en Vercel: canonical, `hreflang`, Open Graph y sitemap se recalculan solos.

@@ -215,6 +215,13 @@ body {
 	font-feature-settings: 'liga' 0;
 }
 
+/* Monospace is a semantic register here: metadata, counts, stack names and
+   anything the reader should scan rather than read. */
+.mono {
+	font-family: var(--font-mono);
+	font-feature-settings: 'liga' 0;
+}
+
 :focus-visible {
 	outline: 2px solid var(--focus);
 	outline-offset: 2px;

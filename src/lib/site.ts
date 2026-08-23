@@ -19,8 +19,8 @@ export const PERSON = {
 		en: 'El Roble, Puntarenas, Costa Rica'
 	},
 	availability: {
-		es: 'Remoto — Costa Rica e internacional',
-		en: 'Remote — Costa Rica and international'
+		es: 'Práctica profesional de enero a abril de 2027, a tiempo completo. Remoto, híbrido o presencial en Puntarenas y alrededores.',
+		en: 'Full-time professional internship, January to April 2027. Remote, hybrid or on-site around Puntarenas.'
 	},
 	linkedin: 'https://www.linkedin.com/in/alex-herrera-manzanares-b000ba379',
 	github: 'https://github.com/EngelAlexey',

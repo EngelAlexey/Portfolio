@@ -24,3 +24,6 @@ vite.config.ts.timestamp-*
 
 # Local CV sync output is committed on purpose:
 # Vercel has no access to D:/GitHub/Personal/CV, so the PDFs must be in the repo.
+
+# Design canvas: keep the sources, not the 2.4MB seeded output
+design/portafolio-alex-herrera.html

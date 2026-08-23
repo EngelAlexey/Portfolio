@@ -18,19 +18,32 @@ export const en: Dict = {
 		langSwitchShort: 'ES'
 	},
 	home: {
-		eyebrow: 'Information Technology Engineering · Costa Rica',
+		badge: 'Available — professional internship, January to April 2027',
 		title: 'Alex Herrera Manzanares',
-		role: 'Full Stack Developer & Cybersecurity',
+		role: 'Cybersecurity · Secure development',
+		headline: 'I design the security before writing the code.',
 		pitch:
-			'I build systems end to end and secure them from the inside: web, mobile, data, applied AI, networking and support.',
+			'I am the sole developer of the corporate platform of a logistics company in Panama. I defined its whole security model — instances split by how critical their secrets are, invite-based identity, revocable sessions and prompt-injection defence — and backed it with per-module attack suites.',
 		ctaProjects: 'View projects',
-		ctaContact: 'Get in touch',
-		featuredTitle: 'Selected work',
-		featuredLead: 'Four projects that explain the whole profile.',
-		featuredAll: 'See the rest of the projects',
-		areasTitle: 'Six areas',
-		areasLead: 'Colour on this site always means an area. Nothing else.',
-		areasCount: (n: number) => (n === 1 ? '1 project' : `${n} projects`)
+		ctaCv: 'Download CV',
+		heroStackLabel: 'Core tools',
+		proofLabel: 'Platform figures',
+		proof: [
+			{ value: '883', label: 'unit tests' },
+			{ value: '220', label: 'end-to-end tests' },
+			{ value: '4', label: 'dedicated attack suites' },
+			{ value: '1', label: 'developer on the platform' }
+		],
+		orgsLabel: '01 — Where I work',
+		workLabel: '02 — Selected work',
+		workTitle: 'The projects that explain the profile',
+		workAll: 'See the rest of the projects',
+		stackLabel: '03 — Tools'
+	},
+	stack: {
+		title: 'Filter by area',
+		lead: 'The same axis that orders the projects orders the stack.',
+		showing: (shown: number, total: number) => `${shown} of ${total} tools`
 	},
 	projects: {
 		title: 'Projects',
@@ -100,9 +113,9 @@ export const en: Dict = {
 	},
 	meta: {
 		siteName: 'Alex Herrera Manzanares',
-		defaultTitle: 'Alex Herrera Manzanares — Full Stack & Cybersecurity',
+		defaultTitle: 'Alex Herrera Manzanares — Cybersecurity and secure development',
 		defaultDescription:
-			'Portfolio of Alex Herrera Manzanares: full stack development, applied AI, data, mobile, security and infrastructure. Costa Rica.',
+			'Portfolio of Alex Herrera Manzanares: cybersecurity and secure development. The security model of a corporate platform, attack testing, networking and infrastructure. Costa Rica.',
 		titleTemplate: (page: string) => `${page} — Alex Herrera Manzanares`
 	}
 };

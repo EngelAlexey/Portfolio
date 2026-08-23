@@ -1,0 +1,39 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1280, "h": 2400, "title": "Inicio — escritorio" },
+    { "file": "Project.dc.html", "x": 1400, "y": 0, "w": 900, "h": 2060, "title": "Ficha de proyecto — Kaizen AI" },
+    { "file": "Mobile.dc.html", "x": 2420, "y": 0, "w": 390, "h": 2500, "title": "Inicio — 390 px" },
+    { "file": "DirectionB.dc.html", "x": 0, "y": 2620, "w": 1280, "h": 760, "title": "Dirección B — informe de seguridad" }
+  ],
+  "annotations": [
+    {
+      "id": "nota-direccion",
+      "x": 0,
+      "y": -190,
+      "w": 560,
+      "text": "Dirección principal: tinta sobre papel, sin color de marca.\nEl color solo significa área — por eso los 33 logos van en monocromo y las 6 etiquetas son lo único que resalta.\nContra: es sobria; no grita en una galería de portafolios."
+    },
+    {
+      "id": "nota-interactivo",
+      "x": 1400,
+      "y": -190,
+      "w": 500,
+      "text": "Lo interactivo, no decorativo:\n· el filtro por área mueve un solo atributo y filtra las 33 herramientas\n· los tres filtros del reescritor AST se explican al hacer clic\nAmbos son la idea del proyecto, no un adorno."
+    },
+    {
+      "id": "nota-direccion-b",
+      "x": 1400,
+      "y": 2620,
+      "w": 480,
+      "text": "Dirección B — mismo contenido, postura opuesta: oscuro, monoespaciado, el perfil leído como informe de seguridad.\nA favor: memorable para un puesto de seguridad.\nContra: al reclutador generalista le puede sonar a nicho, y encierra el sitio en un solo tema."
+    },
+    {
+      "id": "nota-cv",
+      "x": 2420,
+      "y": -190,
+      "w": 420,
+      "text": "Todo el texto sale del CV nuevo (cv.md, 23 ago).\nOjo: ese CV reposiciona el perfil a ciberseguridad y desarrollo seguro, y el andamiaje del sitio todavía dice «Full Stack y Ciberseguridad» con 6 áreas por igual."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
