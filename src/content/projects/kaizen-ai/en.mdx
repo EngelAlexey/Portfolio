@@ -43,7 +43,7 @@ diagram:
       body: "The specific action narrows the result once more. What the model returns is an intent; the effective scope is set by the server."
     - name: "Query record"
       body: "The SQL that ran is recorded, together with the role and the user. The audit trail covers the final query, not the one the model proposed."
-  caption: "The three filters are injected into the query's syntax tree, not checked afterwards."
+  caption: "The rewriter sits between the SQL the model proposes and the SQL that reaches the database."
 ---
 
 import ArchDiagram from '../../../components/ArchDiagram.astro';
@@ -52,7 +52,7 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 A tool Kaizen puts in the hands of the companies that license its ERP. They query their own data by writing the question in plain language.
 
-I started it with little experience and rebuilt it from scratch four times. Each version absorbed what the previous one could not handle.
+The version in production is the fourth. Each rebuild moved into code a decision the previous one had left to the model.
 
 ## Problem
 
@@ -66,20 +66,22 @@ With several client companies on the same installation, a model querying product
 
 So the question is translated to SQL, and the server rewrites that query before executing it. A rewriter over the syntax tree injects three filters: client database, session role and action scope.
 
-The filters are injected, not checked afterwards. A query asking for another company's data does not fail validation: it runs already scoped and returns only what is permitted.
+A query asking for another company's data does not fail a validation: it runs already scoped and returns only what is permitted.
 
 ## Architecture
 
+The model does not talk to the database. It proposes SQL, and that text passes through the rewriter before it executes.
+
 <ArchDiagram {...frontmatter.diagram} />
+
+The rewriter is the only point on the path that sets how much comes back, so permission tests are written against it rather than against the conversation.
 
 ## Result
 
-On that base: differentiated access control for developer, administrator and user, sanitisation of sensitive fields, an audit record per query, and retrieval with a relevance floor.
+The tool is in production for the companies that license the ERP. It answers over each company's own data, separates what a developer, an administrator and a user can see, sanitises sensitive fields and records every query.
 
-With that floor, a question with no support in the data returns that there is no information. It does not return a text assembled from loosely related fragments.
+Retrieval carries a relevance floor. A question with no support in the data returns that there is no information, rather than a text assembled from loosely related fragments.
 
 ## What I learned
 
-The first three versions kept part of the visibility control in the prompt. Each rebuild moved one of those decisions into code, until none of them were left in the instruction text.
-
-The practical difference is that the final version can be tested: a test runs the rewriter and checks that the resulting SQL carries all three filters. There is nothing equivalent to execute against a prompt.
+Visibility control started out resting on the instruction text and ended up entirely in code. The practical difference is that it can now be executed: a test puts a question through the rewriter and checks that the resulting SQL carries all three filters. There is nothing equivalent to run against a prompt.

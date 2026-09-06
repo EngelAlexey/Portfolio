@@ -55,12 +55,10 @@ Los puntos no se envían directo. Entran en una bandeja de salida en SQLite. Un 
 
 ## Resultado
 
-No hay filtro por distancia ni detección de vehículo detenido. Un chofer parado tres horas en aduana sigue generando un punto cada cinco minutos.
+El teléfono sostiene la cadencia durante un viaje entero sin que el chofer intervenga.
 
-Esos puntos repetidos son la única señal de que el rastreo sigue activo. Sin ellos, el backend no puede distinguir un vehículo detenido de un teléfono que dejó de reportar.
+La app reporta también con el vehículo detenido: un chofer parado tres horas en aduana sigue generando un punto cada cinco minutos. Es deliberado, porque esos puntos repetidos son lo que distingue un vehículo detenido de un teléfono que dejó de reportar.
 
 ## Lo que aprendí
 
-El documento de cadencia describió durante meses un filtro por distancia y un modo en vivo de diez segundos que el código ya no tenía. Se reemplazaron y nadie actualizó la página.
-
-Ahora ese documento nombra los tres archivos que son su fuente de verdad y lleva arriba la corrección de lo que afirmaba antes.
+La función que decide si un punto sale conserva un parámetro de nivel de batería que ignora, por compatibilidad de firma. Quien lea la llamada sin abrirla asumirá que la app baja la cadencia con la carga baja, y no lo hace: el requisito es un punto cada cinco minutos al 20 % y con el ahorro de energía activo.

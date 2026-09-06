@@ -45,7 +45,7 @@ A hybrid architecture on Azure: whatever must keep working with the link down st
 
 Each site repeats the same internal structure: its four segments and its edge firewall. The encrypted point-to-point links join the four buildings and form the backbone.
 
-Guest authentication does not live in each access point but in a central service. The access point asks; it does not decide.
+Guest authentication does not live in each access point but in a central RADIUS service, so revoking a credential takes effect across all four sites at once.
 
 CCTV travels over its own segment to the recorder and shares no path with administrative traffic.
 
@@ -53,7 +53,9 @@ The line between local and cloud was drawn with one question: what has to keep w
 
 ## Result
 
-Full network documentation: addressing, access control lists, firewall policy, a high-availability scheme and a risk analysis. The topology was built and tested in Cisco Packet Tracer.
+The topology was built and tested in Cisco Packet Tracer: four sites, their segments, and the encrypted backbone between them.
+
+The deliverable documents addressing, access control lists, firewall policy, a high-availability scheme and a risk analysis. The compliance section fixes where guest data may reside and how long CCTV recordings are kept, which is what decides what goes to the cloud and what does not.
 
 ## What I learned
 

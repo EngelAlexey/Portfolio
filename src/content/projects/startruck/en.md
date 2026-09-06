@@ -55,12 +55,10 @@ Points are not sent directly. They go into a SQLite outbox. A worker syncs it ev
 
 ## Result
 
-There is no distance filter and no stopped-vehicle detection. A driver parked three hours at customs still produces a point every five minutes.
+The phone holds the cadence across a whole trip with no input from the driver.
 
-Those repeated points are the only signal that tracking is still running. Without them the backend cannot tell a stationary vehicle from a phone that stopped reporting.
+The app also reports with the vehicle stopped: a driver parked three hours at customs still produces a point every five minutes. That is deliberate, because those repeated points are what separates a stationary vehicle from a phone that stopped reporting.
 
 ## What I learned
 
-For months the cadence document described a distance filter and a ten-second live mode that the code no longer had. They were replaced and nobody updated the page.
-
-That document now names the three files that are its source of truth, and carries a correction at the top of what it previously claimed.
+The function that decides whether a point goes out still takes a battery-level parameter it ignores, kept for signature compatibility. Anyone reading the call without opening it will assume the app backs off on low charge; it does not. The requirement is a point every five minutes at 20% with battery saver on.

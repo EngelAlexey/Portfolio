@@ -43,7 +43,7 @@ diagram:
       body: "La acción concreta acota el resultado una vez más. Lo que el modelo devuelve es una intención; el alcance efectivo lo fija el servidor."
     - name: "Registro de la consulta"
       body: "Queda registrado el SQL que se ejecutó, junto con el rol y el usuario. La auditoría se hace sobre la consulta final, no sobre la que el modelo propuso."
-  caption: "Los tres filtros se inyectan en el árbol sintáctico de la consulta, no se comprueban después."
+  caption: "El reescritor actúa entre el SQL que propone el modelo y el que llega a la base."
 ---
 
 import ArchDiagram from '../../../components/ArchDiagram.astro';
@@ -52,7 +52,7 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 Herramienta que Kaizen pone en manos de las empresas que licencian su ERP, para que consulten sus propios datos escribiendo la pregunta en lenguaje corriente.
 
-La empecé con poca experiencia y la reconstruí desde cero cuatro veces. Cada versión incorporó lo que la anterior no resolvía.
+La versión en producción es la cuarta. Cada reconstrucción movió al código una decisión que la anterior dejaba en manos del modelo.
 
 ## Problema
 
@@ -66,20 +66,22 @@ Si la herramienta la usan varias empresas cliente sobre la misma instalación, u
 
 Así que la pregunta se traduce a SQL y el servidor reescribe esa consulta antes de ejecutarla. Un reescritor sobre el árbol sintáctico inyecta tres filtros: base de datos del cliente, rol de la sesión y alcance de la acción.
 
-Los filtros se inyectan, no se comprueban después. Una consulta que pidiera datos de otra empresa no falla la validación: se ejecuta ya acotada y devuelve solo lo permitido.
+Una consulta que pidiera datos de otra empresa no falla una validación: se ejecuta ya acotada y devuelve solo lo permitido.
 
 ## Arquitectura
 
+El modelo no habla con la base. Propone un SQL, y ese texto pasa por el reescritor antes de ejecutarse.
+
 <ArchDiagram {...frontmatter.diagram} />
+
+El reescritor es el único punto del recorrido que fija cuánto se devuelve, así que las pruebas de permisos se escriben contra él y no contra la conversación.
 
 ## Resultado
 
-Sobre esa base: control de acceso diferenciado para desarrollador, administrador y usuario, saneamiento de campos sensibles, registro de auditoría por consulta y recuperación con piso de relevancia.
+La herramienta está en producción para las empresas que licencian el ERP. Responde sobre los datos de cada una, distingue lo que ve un desarrollador, un administrador y un usuario, sanea los campos sensibles y deja registro por consulta.
 
-Con ese piso, una pregunta sin respaldo en los datos devuelve que no hay información. No devuelve un texto construido con fragmentos poco relacionados.
+La recuperación lleva un piso de relevancia. Una pregunta sin respaldo en los datos devuelve que no hay información, en lugar de un texto armado con fragmentos poco relacionados.
 
 ## Lo que aprendí
 
-Las tres primeras versiones apoyaban parte del control de visibilidad en el prompt. Cada reconstrucción movió una de esas decisiones al código, hasta que ninguna quedó en el texto de la instrucción.
-
-La diferencia práctica es que la versión final se puede probar: una prueba ejecuta el reescritor y comprueba que el SQL resultante lleva los tres filtros. Sobre un prompt no hay nada equivalente que ejecutar.
+El control de visibilidad empezó apoyado en el texto de la instrucción y terminó entero en el código. La diferencia práctica es que ahora se puede ejecutar: una prueba pasa una pregunta por el reescritor y comprueba que el SQL resultante lleva los tres filtros. Sobre un prompt no hay nada equivalente que ejecutar.

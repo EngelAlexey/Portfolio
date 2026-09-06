@@ -45,7 +45,7 @@ Arquitectura híbrida sobre Azure: lo que debe seguir funcionando sin enlace que
 
 Cada sede repite la misma estructura interna: sus cuatro segmentos y su cortafuegos de borde. Los enlaces punto a punto cifrados unen los cuatro edificios y forman la troncal.
 
-La autenticación de los huéspedes no vive en cada punto de acceso sino en un servicio central. El punto de acceso pregunta; no decide.
+La autenticación de los huéspedes no vive en cada punto de acceso sino en un servicio central contra RADIUS, así que dar de baja una credencial surte efecto en las cuatro sedes a la vez.
 
 El CCTV viaja por su propio segmento hasta el grabador y no comparte camino con el tráfico administrativo.
 
@@ -53,7 +53,9 @@ El corte entre lo local y la nube se trazó con una sola pregunta: qué tiene qu
 
 ## Resultado
 
-Documentación completa de la red: direccionamiento, listas de control de acceso, política de cortafuegos, esquema de alta disponibilidad y análisis de riesgos. La topología quedó montada y probada en Cisco Packet Tracer.
+La topología quedó montada y probada en Cisco Packet Tracer: cuatro sedes, sus segmentos y la troncal cifrada entre ellas.
+
+La entrega documenta direccionamiento, listas de control de acceso, política de cortafuegos, esquema de alta disponibilidad y análisis de riesgos. El apartado de cumplimiento fija dónde puede residir el dato del huésped y cuánto tiempo se conservan las grabaciones de CCTV, que es lo que decide qué se sube a la nube y qué no.
 
 ## Lo que aprendí
 
