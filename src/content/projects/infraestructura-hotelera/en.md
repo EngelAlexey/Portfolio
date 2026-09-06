@@ -7,8 +7,8 @@ kind: academico
 org: Universidad Técnica Nacional
 role: Telecoms, logical design and compliance
 period:
-  start: '2025'
-  end: '2025'
+  start: '2025-09'
+  end: '2025-12'
 tier: ficha
 home: false
 visibility: publico
