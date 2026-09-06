@@ -5,9 +5,9 @@ tagline: An Android app for the driver on the road. Emergencies, nearby services
 areas: [movil]
 kind: profesional
 org: Star Cargo Service
-role: Development
+role: Background tracking
 period:
-  start: '2026-04'
+  start: '2026-07'
   end: '2026-08'
 tier: ficha
 home: false
@@ -30,6 +30,8 @@ order: null
 The driver scans their credential to identify themselves, then the waybill for the trip. From that point the phone sends positions until the trip is closed, with nothing for them to operate.
 
 The app is also their tool on the road: it reports an emergency and locates the nearest hospital, police station or petrol station without leaving it.
+
+I joined with the app already running, responsible for background tracking.
 
 ## Problem
 

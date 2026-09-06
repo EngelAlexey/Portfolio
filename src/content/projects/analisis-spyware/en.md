@@ -5,7 +5,7 @@ tagline: An inventory of the signals this software leaves on a system and the co
 areas: [seguridad]
 kind: academico
 org: Universidad Técnica Nacional
-role: Individual
+role: Analysis and countermeasures
 period:
   start: '2026'
   end: '2026'

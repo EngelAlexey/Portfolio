@@ -12,7 +12,7 @@ period:
 tier: ficha
 home: false
 visibility: publico
-repo: https://github.com/SebastianRodMes/proyecto-base-de-datos-avanzada
+repo: null
 site: null
 stack:
   - Python

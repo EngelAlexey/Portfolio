@@ -116,6 +116,9 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Project>>>> {
 	return bySlug;
 }
 
+/** `YYYY` carries no month, so place it mid-year rather than behind `YYYY-01`. */
+const monthKey = (value: string) => (value.length === 4 ? `${value}-06` : value);
+
 /** Newest first, unless a project pins itself with `order`. */
 function compare(a: Project, b: Project): number {
 	const orderA = a.meta.order;
@@ -124,7 +127,7 @@ function compare(a: Project, b: Project): number {
 	if (orderA !== null) return -1;
 	if (orderB !== null) return 1;
 
-	const startDiff = b.meta.period.start.localeCompare(a.meta.period.start);
+	const startDiff = monthKey(b.meta.period.start).localeCompare(monthKey(a.meta.period.start));
 	if (startDiff !== 0) return startDiff;
 	return a.meta.title.localeCompare(b.meta.title);
 }

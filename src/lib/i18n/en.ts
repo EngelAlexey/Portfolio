@@ -23,17 +23,17 @@ export const en: Dict = {
 		role: 'Software Developer · Cybersecurity focus',
 		headline: 'I design the security model of the platforms I build.',
 		pitch:
-			'I work on the corporate platform of a logistics company in Panama, and I defined its security model. The same image is deployed as two services with different permissions. Identity is by invitation and sessions are revoked from the server. Each corporate module has its own attack suite.',
+			'I work on the corporate platform of a logistics company in Panama, and I defined its security model. The same image is deployed as two services with different permissions. Identity is by invitation and sessions are revoked from the server. Each module of the platform has its own attack suite.',
 		ctaProjects: 'View projects',
 		ctaCv: 'Download CV',
 		heroStackLabel: 'Core tools',
-		proofLabel: 'Figures from the work',
-		proof: [
-			{ value: '2,243', label: 'unit tests' },
-			{ value: '27', label: 'end-to-end suites' },
-			{ value: '4', label: 'dedicated attack suites' },
-			{ value: '3', label: 'permission filters per query' }
-		],
+		proofLabel: 'The portfolio in numbers',
+		proof: {
+			projects: 'documented projects',
+			orgs: 'organisations',
+			areas: 'areas of work',
+			languages: 'languages'
+		},
 		orgsLabel: 'Where I work',
 		workTitle: 'Featured projects',
 		workAll: 'See the rest of the projects',

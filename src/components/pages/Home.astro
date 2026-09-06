@@ -7,9 +7,10 @@ import ProjectCard from '../ProjectCard.astro';
 import ProofStrip from '../ProofStrip.astro';
 import ToolGrid from '../ToolGrid.astro';
 import { EXPERIENCE, text } from '../../lib/about';
+import { AREA_IDS } from '../../lib/areas';
 import { heroTools } from '../../lib/brands';
-import { homeProjects } from '../../lib/content';
-import { path, t, type Lang } from '../../lib/i18n';
+import { allProjects, homeProjects, projectsByOrg } from '../../lib/content';
+import { LANGS, path, t, type Lang } from '../../lib/i18n';
 import { CV, CV_DEFAULT } from '../../lib/site';
 
 interface Props {
@@ -23,6 +24,14 @@ const featured = await homeProjects(lang);
 const tools = heroTools();
 const orgs = EXPERIENCE.filter((role) => role.mark);
 const cvHref = CV[CV_DEFAULT][lang];
+
+// Counted at build so the strip cannot drift from the content it describes.
+const proof = [
+	{ value: String((await allProjects(lang)).length), label: strings.home.proof.projects },
+	{ value: String((await projectsByOrg(lang)).length), label: strings.home.proof.orgs },
+	{ value: String(AREA_IDS.length), label: strings.home.proof.areas },
+	{ value: String(LANGS.length), label: strings.home.proof.languages }
+];
 ---
 
 <Layout
@@ -65,7 +74,10 @@ const cvHref = CV[CV_DEFAULT][lang];
 	</Container>
 
 	<Container>
-		<ProofStrip items={strings.home.proof} label={strings.home.proofLabel} />
+		<div class="section">
+			<h2>{strings.home.proofLabel}</h2>
+			<ProofStrip items={proof} />
+		</div>
 	</Container>
 
 	<Container>

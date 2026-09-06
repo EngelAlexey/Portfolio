@@ -10,7 +10,7 @@ period:
   start: '2026-05'
   end: '2026-08'
 tier: ficha
-home: true
+home: false
 visibility: publico
 repo: https://github.com/EngelAlexey/Guias-Scout
 site: null
@@ -23,7 +23,7 @@ stack:
   - Resend
   - Vercel
 cover: null
-order: 4
+order: null
 ---
 
 ## Context

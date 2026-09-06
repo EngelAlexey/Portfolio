@@ -5,7 +5,7 @@ tagline: Inventario de las señales que deja este software en el sistema y del c
 areas: [seguridad]
 kind: academico
 org: Universidad Técnica Nacional
-role: Individual
+role: Análisis y contramedidas
 period:
   start: '2026'
   end: '2026'

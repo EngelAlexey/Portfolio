@@ -32,6 +32,8 @@ export type Role = {
 	detail: Bilingual;
 	/** Which employer mark to draw, when there is one. */
 	mark?: 'intercargo' | 'kaizen' | 'starcargo' | 'utn';
+	/** Shown by the org timeline when the full title does not read as a post. */
+	post?: Bilingual;
 	/** Short form for the home page strip, where the full title is too long. */
 	shortOrg?: string;
 };
@@ -51,8 +53,8 @@ export const EXPERIENCE: Role[] = [
 		shortOrg: 'Intercargo Panamá',
 		mark: 'intercargo',
 		detail: {
-			es: 'Trabajo en la plataforma corporativa: sitio público, portal interno, debida diligencia y cuentas por cobrar. Diseñé su modelo de seguridad, con dos instancias separadas por criticidad de secretos, identidad por invitación, sesiones revocables y defensa contra inyección de prompt.',
-			en: 'I work on the corporate platform: public site, internal portal, due diligence and accounts receivable. I designed its security model, with two instances split by how critical their secrets are, invite-based identity, revocable sessions and prompt-injection defence.'
+			es: 'Trabajo en la plataforma corporativa: sitio público, portal interno, debida diligencia y cuentas por cobrar. Definí su modelo de seguridad, con dos instancias separadas por criticidad de secretos, identidad por invitación y sesiones revocables.',
+			en: 'I work on the corporate platform: public site, internal portal, due diligence and accounts receivable. I defined its security model, with two instances split by how critical their secrets are, invite-based identity and revocable sessions.'
 		}
 	},
 	{
@@ -64,8 +66,8 @@ export const EXPERIENCE: Role[] = [
 		org: 'Kaizen Apps CR',
 		mark: 'kaizen',
 		detail: {
-			es: 'Desarrollo de la plataforma web y de los sistemas internos de la empresa, de la propuesta a producción, y aportes al ERP de recursos humanos que licencia. En soporte N2 rastreo la falla hasta el código y la corrijo.',
-			en: 'Development of the company web platform and its internal systems, from proposal to production, plus contributions to the HR ERP it licenses. In N2 support I trace the fault down to the code and fix it.'
+			es: 'Desarrollo sobre el ERP de recursos humanos que licencia la empresa y sobre las herramientas que lo acompañan, de la propuesta a producción. En soporte N2 rastreo la falla hasta el código y la corrijo.',
+			en: 'Development on the HR ERP the company licenses and on the tools around it, from proposal to production. In N2 support I trace the fault down to the code and fix it.'
 		}
 	},
 	{
@@ -101,7 +103,7 @@ export function postAt(key: string, lang: Lang): { title: string; mark?: Role['m
 		(typeof role.org === 'string' ? role.org : role.org.es).split(' — ')[0].trim() === key;
 
 	const match = EXPERIENCE.find(named) ?? EDUCATION.find(named);
-	return match ? { title: match.title[lang], mark: match.mark } : null;
+	return match ? { title: (match.post ?? match.title)[lang], mark: match.mark } : null;
 }
 
 export const EDUCATION: Role[] = [
@@ -113,6 +115,7 @@ export const EDUCATION: Role[] = [
 		},
 		org: 'Universidad Técnica Nacional — Sede Pacífico, El Roble',
 		mark: 'utn',
+		post: { es: 'Estudiante', en: 'Student' },
 		detail: { es: '', en: '' }
 	}
 ];

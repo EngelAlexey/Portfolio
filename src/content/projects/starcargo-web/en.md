@@ -10,7 +10,7 @@ period:
   start: '2026-05'
   end: null
 tier: ficha
-home: false
+home: true
 visibility: privado
 repo: null
 site: https://www.starcargoservice.com
@@ -23,7 +23,7 @@ stack:
   - Google Cloud Run
   - Playwright
 cover: null
-order: null
+order: 3
 ---
 
 ## Context

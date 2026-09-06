@@ -10,7 +10,7 @@ period:
   start: '2026-01'
   end: '2026-04'
 tier: ficha
-home: false
+home: true
 visibility: privado
 repo: null
 site: null
@@ -23,7 +23,7 @@ stack:
   - PostgreSQL
   - Playwright
 cover: null
-order: null
+order: 4
 ---
 
 ## Context
@@ -34,7 +34,7 @@ A bespoke CRM for a freight company. It handles clients, contacts, shipping deal
 
 Each rep recorded their activity in a spreadsheet and sent it to management. Somebody there carried that data into the rest of the files. The same information was written several times, and consolidation depended on somebody doing it by hand.
 
-With six branches working that way, the goal was to centralise the record and let the system do the consolidation. Centralising it also turns "who sees what" into a rule that has to be applied on every query.
+With several branches working that way, the goal was to centralise the record and let the system do the consolidation. Centralising it also turns "who sees what" into a rule that has to be applied on every query.
 
 ## Technical decisions
 

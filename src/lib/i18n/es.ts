@@ -21,17 +21,17 @@ export const es = {
 		role: 'Desarrollador de Software · Enfoque en Ciberseguridad',
 		headline: 'Diseño el modelo de seguridad de las plataformas que construyo.',
 		pitch:
-			'Trabajo en la plataforma corporativa de una empresa logística en Panamá y definí su modelo de seguridad. La misma imagen se despliega como dos servicios con permisos distintos. La identidad es por invitación y las sesiones se revocan desde el servidor. Cada módulo corporativo tiene su propia suite de ataque.',
+			'Trabajo en la plataforma corporativa de una empresa logística en Panamá y definí su modelo de seguridad. La misma imagen se despliega como dos servicios con permisos distintos. La identidad es por invitación y las sesiones se revocan desde el servidor. Cada módulo de la plataforma tiene su propia suite de ataque.',
 		ctaProjects: 'Ver proyectos',
 		ctaCv: 'Descargar CV',
 		heroStackLabel: 'Herramientas principales',
-		proofLabel: 'Cifras del trabajo',
-		proof: [
-			{ value: '2 243', label: 'pruebas unitarias' },
-			{ value: '27', label: 'suites end-to-end' },
-			{ value: '4', label: 'suites de ataque dedicadas' },
-			{ value: '3', label: 'filtros de permiso por consulta' }
-		],
+		proofLabel: 'El portafolio en cifras',
+		proof: {
+			projects: 'proyectos documentados',
+			orgs: 'organizaciones',
+			areas: 'áreas de trabajo',
+			languages: 'idiomas'
+		},
 		orgsLabel: 'Dónde trabajo',
 		workTitle: 'Proyectos destacados',
 		workAll: 'Ver los demás proyectos',

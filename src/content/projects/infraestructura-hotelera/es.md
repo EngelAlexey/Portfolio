@@ -5,7 +5,7 @@ tagline: Cuatro sedes bajo un mismo diseño, con segmentación por VLAN, enlaces
 areas: [infra, seguridad]
 kind: academico
 org: Universidad Técnica Nacional
-role: Telecomunicaciones y diseño lógico de red
+role: Telecomunicaciones, diseño lógico y cumplimiento
 period:
   start: '2025'
   end: '2025'
@@ -17,7 +17,6 @@ site: null
 stack:
   - VLAN
   - Firewall
-  - VPN
   - WPA3
   - RADIUS
   - Azure
@@ -40,7 +39,7 @@ Segmentación por VLAN para separar huéspedes, administración, CCTV y voz.
 
 Enlaces inalámbricos punto a punto cifrados entre edificios, en lugar de tendido nuevo. WiFi por habitación con WPA3 y autenticación contra RADIUS. CCTV centralizado.
 
-Arquitectura híbrida: lo que debe seguir funcionando sin enlace queda local, el resto va a la nube.
+Arquitectura híbrida sobre Azure: lo que debe seguir funcionando sin enlace queda local, el resto va a la nube.
 
 ## Arquitectura
 

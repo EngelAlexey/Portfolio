@@ -10,7 +10,7 @@ period:
   start: '2026-01'
   end: '2026-04'
 tier: ficha
-home: false
+home: true
 visibility: privado
 repo: null
 site: null
@@ -23,7 +23,7 @@ stack:
   - PostgreSQL
   - Playwright
 cover: null
-order: null
+order: 4
 ---
 
 ## Contexto
@@ -34,7 +34,7 @@ CRM a la medida para una empresa de carga. Gestiona clientes, contactos, negocio
 
 Cada ejecutivo anotaba su gestión en una hoja de cálculo y se la enviaba a la gerencia. Ahí alguien trasladaba esos datos al resto de los archivos. La misma información se escribía varias veces y la consolidación dependía de que alguien la hiciera a mano.
 
-Con seis sucursales operando así, el objetivo fue centralizar el registro y que la consolidación la haga el sistema. Centralizarlo convierte además el «quién ve qué» en una regla que hay que aplicar en cada consulta.
+Con varias sucursales operando así, el objetivo fue centralizar el registro y que la consolidación la haga el sistema. Centralizarlo convierte además el «quién ve qué» en una regla que hay que aplicar en cada consulta.
 
 ## Decisiones técnicas
 

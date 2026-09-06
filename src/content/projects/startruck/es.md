@@ -5,9 +5,9 @@ tagline: App Android para el chofer en ruta. Emergencias, servicios cercanos y l
 areas: [movil]
 kind: profesional
 org: Star Cargo Service
-role: Desarrollo
+role: Rastreo en segundo plano
 period:
-  start: '2026-04'
+  start: '2026-07'
   end: '2026-08'
 tier: ficha
 home: false
@@ -30,6 +30,8 @@ order: null
 El chofer escanea su credencial para identificarse y después la carta porte del viaje. Desde ese momento el teléfono envía posiciones hasta que el viaje se cierra, sin que él tenga que operar nada.
 
 La app es además su herramienta en carretera: reporta una emergencia y localiza el hospital, la comisaría o la gasolinera más cercana sin salir de ella.
+
+Entré con la app ya en marcha, a cargo del rastreo en segundo plano.
 
 ## Problema
 

@@ -5,7 +5,7 @@ tagline: Four sites under one design, with VLAN segmentation, encrypted links an
 areas: [infra, seguridad]
 kind: academico
 org: Universidad Técnica Nacional
-role: Telecommunications and logical network design
+role: Telecoms, logical design and compliance
 period:
   start: '2025'
   end: '2025'
@@ -17,7 +17,6 @@ site: null
 stack:
   - VLAN
   - Firewall
-  - VPN
   - WPA3
   - RADIUS
   - Azure
@@ -40,7 +39,7 @@ VLAN segmentation to separate guests, administration, CCTV and voice.
 
 Encrypted point-to-point wireless links between buildings instead of new cabling. Per-room WiFi with WPA3 and authentication against RADIUS. Centralised CCTV.
 
-A hybrid architecture: whatever must keep working with the link down stays local, the rest goes to the cloud.
+A hybrid architecture on Azure: whatever must keep working with the link down stays local, the rest goes to the cloud.
 
 ## Architecture
 
