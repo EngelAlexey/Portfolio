@@ -105,9 +105,9 @@ export const en: Dict = {
 	},
 	meta: {
 		siteName: 'Alex Herrera Manzanares',
-		defaultTitle: 'Alex Herrera Manzanares — Software developer with a cybersecurity focus',
+		defaultTitle: 'Alex Herrera | Software developer with a cybersecurity focus',
 		defaultDescription:
 			'Portfolio of Alex Herrera Manzanares: software developer with a cybersecurity focus. The security model of a corporate platform, attack testing, networking and infrastructure. Costa Rica.',
-		titleTemplate: (page: string) => `${page} — Alex Herrera Manzanares`
+		titleTemplate: (page: string) => `${page} | Alex Herrera`
 	}
 };
