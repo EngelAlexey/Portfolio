@@ -25,14 +25,7 @@ export const es = {
 		ctaProjects: 'Ver proyectos',
 		ctaCv: 'Descargar CV',
 		heroStackLabel: 'Herramientas principales',
-		proofLabel: 'El portafolio en cifras',
-		proof: {
-			projects: 'proyectos documentados',
-			orgs: 'organizaciones',
-			areas: 'áreas de trabajo',
-			languages: 'idiomas'
-		},
-		orgsLabel: 'Dónde trabajo',
+		orgsLabel: 'Mi experiencia',
 		workTitle: 'Proyectos destacados',
 		workAll: 'Ver los demás proyectos',
 		stackLabel: 'Herramientas'

@@ -27,14 +27,7 @@ export const en: Dict = {
 		ctaProjects: 'View projects',
 		ctaCv: 'Download CV',
 		heroStackLabel: 'Core tools',
-		proofLabel: 'The portfolio in numbers',
-		proof: {
-			projects: 'documented projects',
-			orgs: 'organisations',
-			areas: 'areas of work',
-			languages: 'languages'
-		},
-		orgsLabel: 'Where I work',
+		orgsLabel: 'My experience',
 		workTitle: 'Featured projects',
 		workAll: 'See the rest of the projects',
 		stackLabel: 'Tools'
