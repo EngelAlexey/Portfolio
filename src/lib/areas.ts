@@ -31,8 +31,8 @@ export const AREAS: Record<AreaId, AreaMeta> = {
 		token: 'ia',
 		label: { es: 'IA', en: 'AI' },
 		blurb: {
-			es: 'Modelos dentro de producto: el modelo interpreta, el código decide y ejecuta.',
-			en: 'Models inside products: the model interprets, the code decides and executes.'
+			es: 'Modelos integrados en producto, con las decisiones y los permisos fuera del prompt.',
+			en: 'Models embedded in products, with decisions and permissions kept out of the prompt.'
 		}
 	},
 	datos: {
@@ -70,7 +70,6 @@ export const AREAS: Record<AreaId, AreaMeta> = {
 };
 
 export const areaLabel = (id: AreaId, lang: 'es' | 'en') => AREAS[id].label[lang];
-export const areaBlurb = (id: AreaId, lang: 'es' | 'en') => AREAS[id].blurb[lang];
 
 /** Inline style bundle so a chip only needs one attribute. */
 export function areaStyle(id: AreaId): string {

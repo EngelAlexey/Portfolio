@@ -1,0 +1,86 @@
+---
+slug: starhub-bodega
+title: StarHub | API de bodega
+tagline: Lee la base del ERP por SQL y escribe solo a través de su API, nunca directo.
+areas: [fullstack, movil]
+kind: profesional
+org: Star Cargo Service
+role: API y capa de seguridad
+period:
+  start: '2026-08'
+  end: null
+tier: ficha
+home: false
+visibility: privado
+repo: null
+site: null
+stack:
+  - TypeScript
+  - Node.js
+  - MySQL
+  - Google Cloud Run
+  - Docker
+  - Kotlin
+cover: null
+order: null
+diagram:
+  nodes:
+    - "Teléfono"
+    - "Enrolamiento"
+    - "Token"
+    - "Servicio"
+    - "ERP"
+  gate: 1
+  layers:
+    - name: "Código de un solo uso"
+      body: "El alta usa un código que caduca y se liga al identificador del dispositivo. El registro guarda su hash, nunca el valor, y el código no vuelve a servir después del primer uso."
+    - name: "Dos límites de frecuencia"
+      body: "El endpoint de alta es público, así que está acotado por origen y por dispositivo. Un intento repetido de adivinar el código se detiene antes de recorrer el espacio de posibilidades."
+    - name: "Lectura y escritura separadas"
+      body: "El token da lectura por SQL y escritura solo a través del API del ERP. En la superficie del servicio no existe una operación de escritura directa contra la base."
+    - name: "Acotación por bodega"
+      body: "Cada consulta se limita a la bodega del dispositivo enrolado. Un teléfono dado de alta en una bodega no alcanza el inventario de otra."
+  caption: "Cuatro reglas protegen el único endpoint que no exige credencial previa."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Contexto
+
+El bodeguero registra la recepción de un contenedor desde el teléfono. Escanea el código del recibo, anota cada línea que descarga, indica la posición de cada tarima y fotografía la mercancía dañada.
+
+Este servicio es el backend de esa app Android. El cliente Android lo desarrolló otra persona del equipo.
+
+## Problema
+
+El registro de recepción se hacía en papel y alguien lo transcribía al ERP después. Hasta que esa transcripción ocurría, el inventario del sistema no correspondía con lo que había en bodega.
+
+El servicio existe para que la recepción entre al ERP en el momento en que el bodeguero la anota.
+
+## Decisiones técnicas
+
+El ERP genera los números de recibo con fórmulas propias que no toman bloqueo. Dos bodegueros trabajando a la vez habrían recibido el mismo consecutivo. También tiene notificaciones y acciones automáticas sobre esas tablas, que un `INSERT` directo no habría disparado.
+
+Las lecturas van por SQL directo contra la base del ERP. Las escrituras van por su API, que es más lento pero respeta esas fórmulas y esos disparadores.
+
+La separación se aplica en una función del código, no en los permisos del motor: la credencial tenía permiso de escritura sobre esas tablas. El README lo registra como deuda técnica.
+
+## Arquitectura
+
+Un teléfono no puede autenticarse con la identidad de la plataforma, porque el alta ocurre antes de que el aparato tenga credencial alguna. Esa es la compuerta del servicio: un solo endpoint público, con cuatro reglas aplicadas a la vez.
+
+<ArchDiagram {...frontmatter.diagram} />
+
+El servicio corre en una sola instancia. El registro de códigos vive en un fichero local, y con varias instancias el código dejaría de ser de un solo uso.
+
+## Resultado
+
+Una prueba de humo arranca el servidor y le hace peticiones reales. Cubre TLS, credenciales, filtrado por bodega, consulta y mapeo de la respuesta. No usa dobles de prueba ni escribe datos.
+
+Junto a ella hay 30 casos de `node:test` sobre paginación y sobre el ciclo de vida de los dispositivos.
+
+## Lo que aprendí
+
+El registro de códigos de un solo uso y de tokens vive en un fichero local, y eso obliga a correr una sola instancia. Es una restricción de diseño, no una decisión de capacidad.
+
+Mientras ese estado no se mueva a almacenamiento compartido, la única forma de absorber más carga es una instancia más grande. Está anotado como el siguiente cambio del servicio.

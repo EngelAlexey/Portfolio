@@ -1,0 +1,134 @@
+---
+import { t, type Lang } from '../lib/i18n';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const strings = t(lang).a11y;
+---
+
+{/*
+  Which icon shows is decided entirely by CSS from `data-theme` on <html>, which
+  the pre-paint script in Layout.astro has already set. So the correct icon is
+  in the very first frame and the script below only has to handle the click.
+
+  The label is deliberately neutral in the markup. Which theme the button would
+  switch *to* is not knowable at build time — it depends on stored choice or OS
+  preference — so naming one of them here announced the wrong action to anyone
+  already in dark mode, and stayed wrong forever if the script never ran.
+  `relabel()` sharpens it to the specific direction once JS is available.
+*/}
+<button
+	type="button"
+	class="toggle"
+	aria-label={strings.theme}
+	title={strings.theme}
+	data-theme-toggle
+	data-label-dark={strings.themeToDark}
+	data-label-light={strings.themeToLight}
+>
+	<svg class="moon" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+		<path d="M20 14.4A8.6 8.6 0 0 1 9.6 4a8.6 8.6 0 1 0 10.4 10.4z" fill="currentColor"></path>
+	</svg>
+	<svg class="sun" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+		<circle cx="12" cy="12" r="4.2" fill="currentColor"></circle>
+		<g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+			<path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4"></path>
+			<path d="M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7"></path>
+		</g>
+	</svg>
+</button>
+
+<style>
+	.toggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--ink-muted);
+		cursor: pointer;
+		transition:
+			color 120ms ease,
+			border-color 120ms ease;
+	}
+
+	.toggle:hover {
+		color: var(--ink);
+		border-color: var(--line-strong);
+	}
+
+	/* Light is the default, so the moon (“switch to dark”) shows. */
+	.sun {
+		display: none;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme='light']) .moon {
+			display: none;
+		}
+
+		:root:not([data-theme='light']) .sun {
+			display: block;
+		}
+	}
+
+	:root[data-theme='dark'] .moon {
+		display: none;
+	}
+
+	:root[data-theme='dark'] .sun {
+		display: block;
+	}
+
+	:root[data-theme='light'] .moon {
+		display: block;
+	}
+
+	:root[data-theme='light'] .sun {
+		display: none;
+	}
+</style>
+
+<script>
+	const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+
+	if (button) {
+		const root = document.documentElement;
+
+		const current = (): 'light' | 'dark' =>
+			root.dataset.theme === 'dark' || root.dataset.theme === 'light'
+				? root.dataset.theme
+				: window.matchMedia('(prefers-color-scheme: dark)').matches
+					? 'dark'
+					: 'light';
+
+		const relabel = () => {
+			const next = current() === 'dark' ? 'light' : 'dark';
+			const label =
+				next === 'dark'
+					? (button.dataset.labelDark ?? '')
+					: (button.dataset.labelLight ?? '');
+			button.setAttribute('aria-label', label);
+			button.setAttribute('title', label);
+		};
+
+		relabel();
+
+		button.addEventListener('click', () => {
+			const next = current() === 'dark' ? 'light' : 'dark';
+			root.dataset.theme = next;
+			try {
+				localStorage.setItem('theme', next);
+			} catch {
+				/* storage blocked: the choice just does not persist */
+			}
+			relabel();
+		});
+	}
+</script>

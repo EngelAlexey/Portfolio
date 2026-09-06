@@ -1,0 +1,85 @@
+---
+slug: deteccion-por-umbral
+title: Detector de cifrado masivo
+tagline: Tres señales del sistema se combinan en una puntuación de comportamiento, y solo esa puntuación decide contener.
+areas: [seguridad, infra]
+kind: academico
+org: Universidad Técnica Nacional
+role: Individual
+period:
+  start: '2026-08'
+  end: '2026-08'
+tier: ficha
+home: false
+visibility: publico
+repo: https://github.com/EngelAlexey/Proyecto-Seguridad
+site: null
+stack:
+  - Python
+  - Linux
+  - Terraform
+  - AWS
+cover: null
+order: null
+diagram:
+  nodes:
+    - "Sistema de archivos"
+    - "Señales"
+    - "Puntuación"
+    - "Contención"
+  gate: 2
+  layers:
+    - name: "Eventos de archivo"
+      body: "Un observador registra creaciones, escrituras y renombrados en un búfer con bloqueo. Dice que hay actividad, no quién la produce."
+    - name: "Entropía del contenido"
+      body: "Se mide la entropía de lo que se escribe. Un contenido cercano al azar indica que el archivo dejó de parecerse a un documento, sin necesidad de abrirlo ni de identificarlo."
+    - name: "Escritura por proceso"
+      body: "Un muestreo de write_bytes por proceso cada 500 ms atribuye el volumen escrito a un proceso concreto. Es la única de las tres señales que identifica al responsable."
+    - name: "Decisión única"
+      body: "Ninguna señal contiene por sí sola. El componente que las combina es el único que puede ordenar la contención, así que los umbrales se ajustan sin tocar los sensores."
+  caption: "Las tres señales solo observan; la decisión de contener está en un único punto."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Contexto
+
+Proyecto final individual de Seguridad de TI I. La consigna pedía una herramienta de detección y contención autónoma, y un banco de pruebas donde ejercitarla.
+
+Todo corre en una máquina virtual aislada, con instantánea previa. Nada del ejercicio toca un sistema real.
+
+## Problema
+
+La consigna pedía detectar y contener sin intervención humana, y sin conocer el binario de antemano.
+
+Una lista de firmas solo reconoce lo que ya se vio antes, así que la pregunta pasa a ser otra: qué observa el sistema operativo cuando algo cifra archivos en masa, y cuánto de eso se puede medir sin identificar al programa.
+
+## Decisiones técnicas
+
+Tres señales independientes, ninguna concluyente por sí sola.
+
+Los eventos del sistema de archivos indican que hay actividad. La entropía de lo que se escribe indica que el contenido dejó de parecerse a un documento. El muestreo de `write_bytes` por proceso, cada 500 ms, indica quién está escribiendo.
+
+Un componente aparte combina las tres en una puntuación, y solo esa puntuación decide contener.
+
+## Arquitectura
+
+<ArchDiagram {...frontmatter.diagram} />
+
+Un observador del sistema de archivos deposita eventos en un búfer con bloqueo. Un hilo de muestreo mantiene la foto más reciente de escritura por proceso. El hilo principal consulta la puntuación cada segundo y decide si actúa.
+
+La contención mata el árbol de procesos y mueve el binario a un directorio de cuarentena sin permisos de ejecución.
+
+La infraestructura del banco de pruebas está descrita en Terraform. El laboratorio se levanta y se destruye con un comando, en lugar de reconstruirse a mano.
+
+## Resultado
+
+El detector reacciona a comportamiento y no a identidad, que era el objetivo del ejercicio.
+
+El estado de Terraform y el fichero de variables quedan fuera del control de versiones. Un fichero de estado guarda valores sensibles en claro, y en un repositorio público eso es una filtración.
+
+## Lo que aprendí
+
+El umbral fue la parte difícil. Una copia de seguridad legítima produce un patrón muy parecido al de un cifrado masivo: muchos archivos escritos rápido, con contenido de entropía alta.
+
+Con las tres señales disponibles no encontré un valor que separara los dos casos. La versión entregada prioriza no perder un caso real y acepta falsos positivos. Queda documentado como una elección, no como un ajuste óptimo.

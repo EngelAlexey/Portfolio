@@ -1,0 +1,83 @@
+---
+slug: intercargo-cobranza
+title: Asistente de cobranza
+tagline: El cliente escribe por WhatsApp. El modelo interpreta; el código decide la acción y qué datos revela.
+areas: [ia, fullstack]
+kind: profesional
+org: Intercargo Panamá — vía Kaizen Apps CR
+role: Desarrollo
+period:
+  start: '2026-07'
+  end: null
+tier: ficha
+home: true
+visibility: privado
+repo: null
+site: null
+stack:
+  - TypeScript
+  - Node.js
+  - MySQL
+  - WhatsApp
+  - Claude
+  - Docker
+  - Google Cloud Run
+cover: null
+order: 3
+diagram:
+  nodes:
+    - "Mensaje"
+    - "Intención"
+    - "Identidad"
+    - "Acción"
+    - "Respuesta"
+  gate: 2
+  layers:
+    - name: "Quién pregunta"
+      body: "El número de teléfono no basta como identidad. Se valida contra los datos del cliente, y hasta que esa validación pasa la conversación no revela nada de la cartera."
+    - name: "Qué puede pedir"
+      body: "El modelo devuelve una intención, no una orden. Las acciones disponibles son un conjunto cerrado definido en el código, así que una intención sin acción correspondiente no ejecuta nada."
+    - name: "Cuándo se puede escribir"
+      body: "Días hábiles, feriados y ventana de contacto se calculan en el servidor. Quien pide no recibir más mensajes deja de recibirlos. El recordatorio sale un día hábil antes del vencimiento."
+    - name: "Qué queda registrado"
+      body: "Cada turno guarda el mensaje recibido, la intención resuelta y la acción ejecutada. Una respuesta inesperada se puede reconstruir después sin volver a consultar al modelo."
+  caption: "La identidad se resuelve antes que la acción: sin ella, no hay saldo que mostrar."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Contexto
+
+Cobranza por WhatsApp para la misma empresa de logística. El cliente escribe, consulta su estado de cuenta, reporta un pago o promete una fecha, y todo ocurre dentro de la conversación.
+
+## Problema
+
+La cobranza se apoyaba en listas de clientes a los que había que contactar uno a uno. Cada comprobante de pago lo revisaba una persona antes de que el saldo quedara al día.
+
+El cliente pidió automatizar ese ciclo. El deudor consulta su propio saldo y adjunta su propio comprobante, y el equipo interviene solo donde hace falta criterio.
+
+## Decisiones técnicas
+
+Un asistente de cobranza expone saldos de terceros. Si el modelo decidiera a quién se los muestra, cada respuesta dependería de que no se equivoque, y un modelo de lenguaje no da esa garantía.
+
+Por eso el modelo hace una sola cosa: convertir un mensaje en lenguaje natural en una intención y, cuando aplica, en una fecha.
+
+Todo lo demás es código: validar identidad, consultar cartera, registrar una promesa de pago y decidir si corresponde recordar. La conversación se resuelve en una máquina de estados que devuelve acciones, y una capa separada las traduce al transporte de WhatsApp.
+
+El servicio no usa framework web: levanta un servidor con `node:http` y trabaja sobre nueve tablas propias, separadas del resto de la plataforma. El proveedor de modelo es intercambiable, con dos implementaciones detrás de la misma interfaz.
+
+## Arquitectura
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Resultado
+
+Separar la decisión del envío permite probar la conversación completa sin credenciales de Meta ni línea de WhatsApp. Un comando reproduce un diálogo entero contra la lógica real.
+
+Los casos difíciles se prueban así: una promesa con fecha ambigua, un pago reportado dos veces, un cliente que pide dejar de recibir mensajes.
+
+## Lo que aprendí
+
+El repositorio no tiene pruebas unitarias. La verificación es ese simulador de conversación, que recorre la máquina de estados de extremo a extremo pero no ejercita los módulos por separado.
+
+Sirve para detectar una regresión de flujo y no para localizarla. Añadir pruebas sobre la capa de acciones es el trabajo pendiente.

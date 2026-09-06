@@ -1,12 +1,11 @@
-import { env } from '$env/dynamic/public';
-
 /**
  * Every canonical, hreflang, Open Graph and sitemap URL is built from this.
  * Set `PUBLIC_SITE_URL` in Vercel when the custom domain lands — no code change.
+ * `astro.config.mjs` reads the same variable for `site`.
  */
 const FALLBACK_ORIGIN = 'https://alexherrera.vercel.app';
 
-export const SITE_URL = (env.PUBLIC_SITE_URL ?? FALLBACK_ORIGIN).replace(/\/+$/, '');
+export const SITE_URL = (import.meta.env.PUBLIC_SITE_URL ?? FALLBACK_ORIGIN).replace(/\/+$/, '');
 
 export const absolute = (path: string): string =>
 	`${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
@@ -19,21 +18,36 @@ export const PERSON = {
 		en: 'El Roble, Puntarenas, Costa Rica'
 	},
 	availability: {
-		es: 'Práctica profesional de enero a abril de 2027, a tiempo completo. Remoto, híbrido o presencial en Puntarenas y alrededores.',
-		en: 'Full-time professional internship, January to April 2027. Remote, hybrid or on-site around Puntarenas.'
+		es: 'Práctica profesional universitaria de enero a abril de 2027. Remoto, híbrido o presencial en Puntarenas y alrededores.',
+		en: 'University internship from January to April 2027. Remote, hybrid or on-site around Puntarenas.'
 	},
 	linkedin: 'https://www.linkedin.com/in/alex-herrera-manzanares-b000ba379',
-	github: 'https://github.com/EngelAlexey',
-	/** Repository of this site — the only source link in the footer. */
-	source: 'https://github.com/EngelAlexey/portfolio'
+	github: 'https://github.com/EngelAlexey'
 } as const;
 
 /**
- * Written by `scripts/sync-cv.mjs`, which copies from D:/GitHub/Personal/CV.
- * `en` stays null until the English CV exists; the UI says so instead of
- * shipping a dead link.
+ * Three tailored CVs, two languages each, all written by `scripts/sync-cv.mjs`
+ * from D:/GitHub/Personal/CV. The site leads with the security variant because
+ * that is the profile it argues for; the contact page offers all three so a
+ * reader looking for something else is not forced through the wrong document.
  */
-export const CV = {
-	es: '/cv/CV-Alex-Herrera-Manzanares-es.pdf',
-	en: null as string | null
-} as const;
+export const CV_VARIANTS = ['ciberseguridad', 'desarrollo', 'general'] as const;
+export type CvVariant = (typeof CV_VARIANTS)[number];
+
+/** The variant the home page hero downloads. */
+export const CV_DEFAULT: CvVariant = 'ciberseguridad';
+
+export const CV: Record<CvVariant, { es: string; en: string }> = {
+	ciberseguridad: {
+		es: '/cv/CV-Alex-Herrera-Manzanares-ciberseguridad-es.pdf',
+		en: '/cv/CV-Alex-Herrera-Manzanares-ciberseguridad-en.pdf'
+	},
+	desarrollo: {
+		es: '/cv/CV-Alex-Herrera-Manzanares-desarrollo-es.pdf',
+		en: '/cv/CV-Alex-Herrera-Manzanares-desarrollo-en.pdf'
+	},
+	general: {
+		es: '/cv/CV-Alex-Herrera-Manzanares-general-es.pdf',
+		en: '/cv/CV-Alex-Herrera-Manzanares-general-en.pdf'
+	}
+};

@@ -1,0 +1,84 @@
+---
+slug: seiri-asistencia
+title: Seiri | Reloj marcador
+tagline: Marcaje con foto y ubicación que funciona sin señal, con la regla de un registro diario resuelta en el servidor.
+areas: [movil]
+kind: profesional
+org: Kaizen Apps CR
+role: Desarrollo
+period:
+  start: '2026-05'
+  end: '2026-08'
+tier: ficha
+home: false
+visibility: privado
+repo: null
+site: null
+stack:
+  - React Native (Expo)
+  - TypeScript
+  - SQLite
+  - Next.js
+  - MySQL
+  - Render
+cover: null
+order: null
+diagram:
+  nodes:
+    - "Marca en el teléfono"
+    - "Cola local"
+    - "API"
+    - "Transacción"
+    - "Registro"
+  gate: 3
+  layers:
+    - name: "Bloqueo de las filas del día"
+      body: "La transacción bloquea las marcas del día antes de decidir. Dos sincronizaciones simultáneas ya no pueden pasar ambas la validación, porque la segunda espera a que la primera termine."
+    - name: "Día laboral en zona fija"
+      body: "La ventana del día se calcula en la zona horaria del país, no en la del proceso. El servidor corre en UTC, y sin esta regla una marca a las 23:30 locales contaría al día siguiente."
+    - name: "Conflicto a revisión"
+      body: "La marca que pierde no se descarta. Queda registrada y señalada para revisión manual, con su dispositivo y su hora, para que alguien pueda decidir cuál era la buena."
+    - name: "Verificación consultiva"
+      body: "Si el servicio de reconocimiento no responde, la marca se acepta igual y queda anotada como no verificada. Un fallo de infraestructura no puede impedir que alguien registre su jornada."
+  caption: "Las cuatro reglas se aplican dentro de la misma transacción, antes de escribir la marca."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Contexto
+
+App de marcaje de asistencia para las empresas que usan los sistemas de Kaizen. El colaborador marca con foto y ubicación. El registro se guarda en el teléfono y sube cuando hay red, porque buena parte del trabajo ocurre en obra y en ruta.
+
+## Problema
+
+Sin sistema, la entrada se anota en un cuaderno o la toma un encargado nombre por nombre. En centros con mucho personal esa fila consume tiempo productivo cada mañana, antes de que nadie llegue a su puesto.
+
+El objetivo fue doble. Que marcar tome segundos y no requiera a nadie tomando nota, y que el registro resultante se sostenga solo.
+
+Cada marca lleva su hora, su ubicación y su verificación de identidad. La nómina se calcula sobre datos que no dependen de que alguien los confirme después.
+
+## Decisiones técnicas
+
+Sin conexión, dos dispositivos pueden marcar al mismo colaborador sin verse entre sí. Al reconectar, ambos envían una marca válida según lo que cada uno observó. El esquema anterior contaba las marcas del día y después insertaba, que son dos pasos sin garantía entre ellos.
+
+La validación se movió dentro de una transacción InnoDB con aislamiento REPEATABLE READ, que bloquea las filas del día con `SELECT ... FOR UPDATE` antes de decidir. Uno de los dos dispositivos gana. El otro no se descarta: queda marcado para revisión manual.
+
+El día laboral se calcula con una ventana fija en la zona horaria del país, no en la del proceso. El servidor corre en UTC, y una marca a las 23:30 hora local se habría contado al día siguiente.
+
+## Arquitectura
+
+El teléfono escribe primero en SQLite y encola la marca. Una tarea en segundo plano vacía la cola contra el API cuando hay red. El token se guarda en el almacén seguro del sistema, con migración desde la ubicación que se usaba antes.
+
+Las cuatro reglas que deciden si la marca entra se aplican en el servidor.
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Resultado
+
+La misma fórmula de geocerca existe en el servidor y en el cliente, porque el cliente necesita evaluarla sin red. Hay una prueba cuyo único trabajo es fallar si las dos versiones dejan de coincidir.
+
+## Lo que aprendí
+
+Mientras la regla de un marcaje por día vivió en el cliente, cada dispositivo mantenía su propio recuento y las marcas duplicadas llegaban a la base.
+
+Moverla a una transacción del servidor no elimina el conflicto: lo detecta y lo envía a revisión.

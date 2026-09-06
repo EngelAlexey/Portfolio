@@ -1,0 +1,63 @@
+---
+import BrandMark from './BrandMark.astro';
+import { toolFor } from '../lib/stack';
+
+interface Props {
+	stack: readonly string[];
+	label?: string;
+}
+
+const { stack, label } = Astro.props;
+const items = stack.map((entry) => toolFor(entry));
+---
+
+<ul class="stack" aria-label={label}>
+	{
+		/* A real brand mark gets an icon; concepts (VLAN, VPN, a reranker with no
+		   logo) show as a clean text chip rather than a redundant monogram. */
+		items.map((tool) => (
+			<li class:list={{ 'with-mark': Boolean(tool.d) }}>
+				{tool.d && (
+					<span class="mark">
+						<BrandMark tool={tool} size={16} />
+					</span>
+				)}
+				{tool.label}
+			</li>
+		))
+	}
+</ul>
+
+<style>
+	.stack {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	li {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		padding: 0.3rem 0.65rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--paper-sunken);
+		color: var(--ink-muted);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		line-height: 1.4;
+	}
+
+	.mark {
+		display: flex;
+		color: var(--ink-faint);
+	}
+
+	li.with-mark:hover .mark {
+		color: var(--ink);
+	}
+</style>

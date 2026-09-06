@@ -1,0 +1,258 @@
+---
+import BrandMark from './BrandMark.astro';
+import { AREA_IDS, areaLabel, areaStyle } from '../lib/areas';
+import { TOOLS, toolsByArea } from '../lib/brands';
+import { t, type Lang } from '../lib/i18n';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+const strings = t(lang);
+const counts = toolsByArea();
+
+// Sentinels the client script substitutes, so the phrasing (and its word order,
+// which differs between languages) stays in the dictionary.
+const SHOWN = '{shown}' as unknown as number;
+const TOTAL = '{total}' as unknown as number;
+---
+
+<div class="toolgrid" data-tool-grid>
+	<div class="chips">
+		<button type="button" class="chip chip-all" aria-pressed="true" data-area="all">
+			{strings.projects.filterAll}<span class="mono n">{TOOLS.length}</span>
+		</button>
+
+		{
+			AREA_IDS.map((area) => (
+				<button
+					type="button"
+					class="chip"
+					style={areaStyle(area)}
+					aria-pressed="false"
+					data-area={area}
+					data-count={counts[area]}
+					data-area-source
+				>
+					<span class="dot" aria-hidden="true" />
+					{areaLabel(area, lang)}
+					<span class="mono n">{counts[area]}</span>
+				</button>
+			))
+		}
+	</div>
+
+	{/*
+	  The counts and the label template are rendered into attributes so the
+	  client script never has to import `brands.ts` — that module carries every
+	  SVG paths, and importing it would ship ~50 kB of icon data to do
+	  arithmetic that is already known at build time.
+	*/}
+	<p
+		class="count mono"
+		aria-live="polite"
+		data-tool-count
+		data-total={TOOLS.length}
+		data-template={strings.stack.showing(SHOWN, TOTAL)}
+	>
+		{strings.stack.showing(TOOLS.length, TOOLS.length)}
+	</p>
+
+	{/*
+	  Filtering moves one attribute; the tiles never re-render, so the marks
+	  paint once and stay put.
+	*/}
+	<ul class="grid" data-filter="all">
+		{
+			TOOLS.map((tool) => (
+				<li class="tile" data-area={tool.area} title={tool.label}>
+					<BrandMark tool={tool} />
+					<span class="label">{tool.label}</span>
+				</li>
+			))
+		}
+	</ul>
+</div>
+
+<style>
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.4rem 0.8rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--ink-muted);
+		font: inherit;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			border-color 120ms ease,
+			background-color 120ms ease,
+			color 120ms ease;
+	}
+
+	.chip:hover {
+		border-color: var(--line-strong);
+		color: var(--ink);
+	}
+
+	.chip[aria-pressed='true'] {
+		border-color: var(--chip-line);
+		background: var(--chip-bg);
+		color: var(--chip-fg);
+	}
+
+	.chip-all[aria-pressed='true'] {
+		border-color: var(--ink);
+		background: var(--ink);
+		color: var(--ink-inverted);
+	}
+
+	.dot {
+		width: 0.4em;
+		height: 0.4em;
+		border-radius: 999px;
+		background: currentColor;
+		flex: none;
+	}
+
+	.n {
+		font-size: 0.6875rem;
+		opacity: 0.65;
+	}
+
+	.count {
+		margin: 0.9rem 0 1.25rem;
+		font-size: 0.75rem;
+		color: var(--ink-faint);
+	}
+
+	/* The rules are drawn by the tiles, not by a gap over a coloured backing.
+	   With the backing, the empty cells left at the end of the last row painted
+	   as one solid grey slab — 33 tools never divide evenly into 6, 4 or 2
+	   columns, so the ragged row is permanent and had to stop being a mistake. */
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid var(--line);
+		border-left: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--surface);
+		overflow: hidden;
+	}
+
+	.tile {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.55rem;
+		padding: 1.35rem 0.5rem;
+		border-right: 1px solid var(--line);
+		border-bottom: 1px solid var(--line);
+		background: var(--surface);
+		color: var(--ink-faint);
+		transition:
+			color 140ms ease,
+			background-color 140ms ease;
+	}
+
+	.tile:hover {
+		color: var(--ink);
+		background: var(--paper-sunken);
+	}
+
+	.label {
+		font-size: 0.75rem;
+		color: var(--ink-muted);
+		text-align: center;
+		line-height: 1.3;
+	}
+
+	.grid[data-filter='fullstack'] .tile:not([data-area='fullstack']),
+	.grid[data-filter='ia'] .tile:not([data-area='ia']),
+	.grid[data-filter='datos'] .tile:not([data-area='datos']),
+	.grid[data-filter='movil'] .tile:not([data-area='movil']),
+	.grid[data-filter='seguridad'] .tile:not([data-area='seguridad']),
+	.grid[data-filter='infra'] .tile:not([data-area='infra']) {
+		display: none;
+	}
+
+	@media (max-width: 60rem) {
+		.grid {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+
+	@media (max-width: 34rem) {
+		/* Sideways beats four ragged rows of chips on a phone. */
+		.chips {
+			flex-wrap: nowrap;
+			overflow-x: auto;
+			padding-bottom: 0.6rem;
+			scrollbar-width: none;
+		}
+
+		.chip {
+			flex: none;
+			min-height: 36px;
+		}
+
+		.grid {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+
+		.tile {
+			min-height: 76px;
+			padding: 0.75rem 0.35rem;
+			gap: 0.4rem;
+		}
+
+		.label {
+			font-size: 0.625rem;
+		}
+	}
+</style>
+
+<script>
+	// No imports: everything this needs is already in the markup. Importing
+	// `brands.ts` here would ship every SVG path to the browser to do
+	// arithmetic that is settled at build time.
+	const root = document.querySelector<HTMLElement>('[data-tool-grid]');
+
+	if (root) {
+		const grid = root.querySelector<HTMLElement>('.grid');
+		const count = root.querySelector<HTMLElement>('[data-tool-count]');
+		const chips = [...root.querySelectorAll<HTMLButtonElement>('.chip')];
+		const total = count?.dataset.total ?? '0';
+		const template = count?.dataset.template ?? '{shown}/{total}';
+
+		for (const chip of chips) {
+			chip.addEventListener('click', () => {
+				const area = chip.dataset.area ?? 'all';
+				grid?.setAttribute('data-filter', area);
+				for (const other of chips) {
+					other.setAttribute('aria-pressed', String(other === chip));
+				}
+				if (count) {
+					const shown = area === 'all' ? total : (chip.dataset.count ?? '0');
+					count.textContent = template.replace('{shown}', shown).replace('{total}', total);
+				}
+			});
+		}
+	}
+</script>

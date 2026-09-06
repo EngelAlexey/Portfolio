@@ -6,43 +6,42 @@ export const en: Dict = {
 		projects: 'Projects',
 		about: 'About',
 		contact: 'Contact',
-		menu: 'Menu',
-		close: 'Close'
+		menu: 'Menu'
 	},
 	a11y: {
 		skipToContent: 'Skip to content',
 		mainLandmark: 'Main content',
+		theme: 'Switch theme',
 		themeToDark: 'Switch to dark theme',
 		themeToLight: 'Switch to light theme',
 		langSwitch: 'View this page in Spanish',
 		langSwitchShort: 'ES'
 	},
 	home: {
-		badge: 'Available — professional internship, January to April 2027',
+		badge: 'Available for a professional internship, January to April 2027',
 		title: 'Alex Herrera Manzanares',
 		role: 'Software Developer · Cybersecurity focus',
-		headline: 'I design the security before writing the code.',
+		headline: 'I design the security model of the platforms I build.',
 		pitch:
-			'I am the sole developer of the corporate platform of a logistics company in Panama. I defined its whole security model — instances split by how critical their secrets are, invite-based identity, revocable sessions and prompt-injection defence — and backed it with per-module attack suites.',
+			'I work on the corporate platform of a logistics company in Panama, and I defined its security model. The same image is deployed as two services with different permissions. Identity is by invitation and sessions are revoked from the server. Each corporate module has its own attack suite.',
 		ctaProjects: 'View projects',
 		ctaCv: 'Download CV',
 		heroStackLabel: 'Core tools',
-		proofLabel: 'Platform figures',
+		proofLabel: 'Figures from the work',
 		proof: [
-			{ value: '883', label: 'unit tests' },
-			{ value: '220', label: 'end-to-end tests' },
+			{ value: '2,243', label: 'unit tests' },
+			{ value: '27', label: 'end-to-end suites' },
 			{ value: '4', label: 'dedicated attack suites' },
-			{ value: '1', label: 'developer on the platform' }
+			{ value: '3', label: 'permission filters per query' }
 		],
-		orgsLabel: '01 — Where I work',
-		workLabel: '02 — Selected work',
-		workTitle: 'The projects that explain the profile',
+		orgsLabel: 'Where I work',
+		workTitle: 'Featured projects',
 		workAll: 'See the rest of the projects',
-		stackLabel: '03 — Tools'
+		stackLabel: 'Tools'
 	},
 	stack: {
 		title: 'Filter by area',
-		lead: 'The same axis that orders the projects orders the stack.',
+		lead: 'Every tool is tagged with the area I use it in.',
 		showing: (shown: number, total: number) => `${shown} of ${total} tools`
 	},
 	projects: {
@@ -50,24 +49,23 @@ export const en: Dict = {
 		lead: 'Professional, academic and personal work. Filter by area.',
 		filterLegend: 'Filter by area',
 		filterAll: 'All',
-		clearFilter: 'Clear filters',
 		resultsOne: '1 project',
 		resultsMany: (n: number) => `${n} projects`,
-		empty: 'No project matches that filter.',
-		moreTitle: 'Other work',
-		moreLead: 'Smaller projects, still part of the picture.'
+		orgsOne: '1 organisation',
+		orgsMany: (n: number) => `${n} organisations`,
+		resultsJoin: (projects: string, orgs: string) => `${projects} across ${orgs}`,
+		independent: 'Independent',
+		empty: 'No project matches that filter.'
 	},
 	project: {
 		back: 'Back to projects',
-		context: 'Context',
 		org: 'Organisation',
 		role: 'Role',
 		period: 'Period',
 		present: 'Present',
 		stack: 'Stack',
-		areas: 'Areas',
 		repo: 'Repository',
-		demo: 'Demo',
+		site: 'Live site',
 		privateTitle: 'Private project',
 		privateBody:
 			'This is client work: the architecture and the decisions are described, with no code, no repository and no screenshots holding real data.',
@@ -81,7 +79,7 @@ export const en: Dict = {
 	},
 	about: {
 		title: 'About me',
-		lead: 'Who I am, what I study and how I work.',
+		lead: 'Education, experience and the tools I work with.',
 		education: 'Education',
 		certifications: 'Certifications',
 		languages: 'Languages',
@@ -98,17 +96,19 @@ export const en: Dict = {
 		location: 'Location',
 		availability: 'Availability',
 		cv: 'Download CV',
-		cvNote: 'PDF, 2 pages',
-		cvOnlySpanish: 'The CV is currently available in Spanish.'
+		cvNote: '2-page PDF. Three versions depending on the role.',
+		cvVariants: {
+			ciberseguridad: 'Cybersecurity',
+			desarrollo: 'Development',
+			general: 'General'
+		}
 	},
 	footer: {
-		builtWith: 'Built with SvelteKit. No trackers.',
-		source: 'Source of this site',
-		updated: 'Updated'
+		builtWith: 'Built with Astro.'
 	},
 	notFound: {
 		title: 'Page not found',
-		body: 'That link does not lead anywhere.',
+		body: 'This address does not match any page on the site.',
 		back: 'Back to home'
 	},
 	meta: {

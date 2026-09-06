@@ -1,0 +1,83 @@
+---
+slug: intercargo-plataforma
+title: Plataforma corporativa
+tagline: Sitio público y portal autenticado desde la misma imagen, desplegados como dos servicios con permisos distintos.
+areas: [seguridad, fullstack]
+kind: profesional
+org: Intercargo Panamá — vía Kaizen Apps CR
+role: Desarrollo y modelo de seguridad
+period:
+  start: '2026-07'
+  end: null
+tier: ficha
+home: true
+visibility: privado
+repo: null
+site: null
+stack:
+  - Next.js
+  - React
+  - TypeScript
+  - MySQL
+  - Google Cloud Run
+  - Docker
+  - Vitest
+  - Playwright
+  - Gemini
+cover: null
+order: 1
+diagram:
+  nodes:
+    - "Visitante"
+    - "Sitio público"
+    - "Invitación"
+    - "Portal"
+    - "Datos"
+  gate: 3
+  layers:
+    - name: "Separación de instancias"
+      body: "La misma imagen se despliega dos veces con identidades distintas. Al servicio público se le retira el acceso a la base de datos, así que un fallo en el sitio abierto no tiene ruta hacia lo que guarda el portal."
+    - name: "Identidad por invitación"
+      body: "No hay registro abierto ni contraseñas propias. Se entra por invitación y con un solo proveedor de identidad. Las sesiones se revocan desde el servidor, no solo caducan."
+    - name: "Cotas antes del modelo"
+      body: "Tamaño de archivo, peticiones por origen y validación de tipo se aplican antes de que nada llegue al modelo. El límite lo fija el servidor; el modelo no decide cuánto puede pedir."
+    - name: "Verificación antes de publicar"
+      body: "El pipeline corre tipos y pruebas, construye la imagen y la escanea. Una vulnerabilidad crítica aborta el despliegue antes de que exista un servicio nuevo."
+  caption: "La compuerta la impone el despliegue: dos servicios de la misma imagen, con permisos distintos."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Contexto
+
+La plataforma reúne el sitio público, el portal interno, la debida diligencia de clientes y las cuentas por cobrar. Entré a construir sobre ella y a definir su modelo de seguridad.
+
+## Problema
+
+El sitio corría sobre WordPress, y eso ponía techo a lo que se podía construir encima. El cliente pedía un portal de usuario con información crítica, y esa pieza no podía descansar en una plataforma que no controlábamos.
+
+La propuesta de rehacerlo salió del equipo. Mover el sitio a una infraestructura configurable permitía sostener el portal con las garantías que exigía y rediseñar el sitio público al mismo tiempo. Abrió además la puerta a automatizar la debida diligencia, que hasta entonces era leer documentos a mano.
+
+## Decisiones técnicas
+
+Un sitio de marketing y un portal con documentos de clientes tienen exposiciones opuestas. Servirlos desde el mismo proceso convertiría cualquier fallo del primero en un acceso al segundo.
+
+La frontera es de despliegue, no de código. Una sola imagen se publica como dos servicios con identidades separadas, y al servicio público se le retira el acceso a la base de datos.
+
+La segunda regla es que el código de servidor nunca se importa desde el navegador, ni siquiera para tipos. Cuando el cliente importó una constante desde un módulo de servidor, el grafo de dependencias arrastró el SDK del modelo: **269 KB de JavaScript muerto** en cada visita. No se expuso ninguna credencial, porque el framework solo inyecta las variables con prefijo público, pero el peso era real. La regla ahora se comprueba con un comando dentro del pipeline.
+
+## Arquitectura
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Resultado
+
+El modelo lee documentos y propone. Las decisiones las toma el código.
+
+La suite tiene **2 243 pruebas unitarias** repartidas en 144 archivos y **27 suites end-to-end**. Cuatro de ellas son suites de ataque dedicadas, una por módulo: autenticación, cuentas por cobrar, debida diligencia y sitio público.
+
+## Lo que aprendí
+
+La separación por despliegue cuesta más que una comprobación dentro del código: dos servicios que configurar, dos identidades que mantener y un despliegue que puede quedar a medias entre versiones.
+
+A cambio no depende de que la aplicación se comporte correctamente. Si el sitio público llegara a ejecutar código arbitrario, seguiría sin tener credenciales de base de datos que usar.

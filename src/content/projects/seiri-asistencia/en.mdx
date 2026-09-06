@@ -1,0 +1,84 @@
+---
+slug: seiri-asistencia
+title: Seiri | Time clock
+tagline: Clock-ins with photo and location that work with no signal, and the one-entry-per-day rule resolved on the server.
+areas: [movil]
+kind: profesional
+org: Kaizen Apps CR
+role: Development
+period:
+  start: '2026-05'
+  end: '2026-08'
+tier: ficha
+home: false
+visibility: privado
+repo: null
+site: null
+stack:
+  - React Native (Expo)
+  - TypeScript
+  - SQLite
+  - Next.js
+  - MySQL
+  - Render
+cover: null
+order: null
+diagram:
+  nodes:
+    - "Entry on the phone"
+    - "Local queue"
+    - "API"
+    - "Transaction"
+    - "Record"
+  gate: 3
+  layers:
+    - name: "Locking the day's rows"
+      body: "The transaction locks the day's entries before deciding. Two simultaneous syncs can no longer both pass validation, because the second waits for the first to finish."
+    - name: "Working day in a fixed zone"
+      body: "The day's window is computed in the country's timezone, not the process timezone. The server runs in UTC, and without this rule an entry at 23:30 local time would count towards the next day."
+    - name: "Conflicts go to review"
+      body: "The losing entry is not discarded. It is stored and flagged for manual review, with its device and its time, so somebody can decide which one was right."
+    - name: "Advisory verification"
+      body: "If the recognition service does not respond, the entry is still accepted and recorded as unverified. An infrastructure failure cannot stop somebody logging their shift."
+  caption: "All four rules are applied inside the same transaction, before the entry is written."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Context
+
+An attendance clock-in app for the companies running Kaizen's systems. Staff clock in with a photo and a location. The entry is stored on the phone and uploaded when there is a connection, because much of the work happens on site and on the road.
+
+## Problem
+
+Without a system, entries are written in a notebook or taken down name by name by a supervisor. At sites with large headcounts that queue consumes productive time every morning, before anyone reaches their post.
+
+The goal was twofold. Clocking in should take seconds and require nobody taking notes, and the resulting record should stand on its own.
+
+Each entry carries its time, its location and its identity check. Payroll is computed on data that does not depend on anyone confirming it afterwards.
+
+## Technical decisions
+
+Offline, two devices can clock in the same worker without seeing each other. On reconnecting, both send an entry that was valid according to what each one observed. The previous scheme counted the day's entries and then inserted, which are two steps with no guarantee between them.
+
+Validation moved inside an InnoDB transaction at REPEATABLE READ isolation, which locks the day's rows with `SELECT ... FOR UPDATE` before deciding. One of the two devices wins. The other is not discarded: it is flagged for manual review.
+
+The working day is computed against a fixed window in the country's timezone, not the process timezone. The server runs in UTC, and an entry at 23:30 local time would have counted towards the following day.
+
+## Architecture
+
+The phone writes to SQLite first and queues the entry. A background task drains the queue against the API when there is a connection. The token is held in the system's secure store, with a migration from the location used previously.
+
+The four rules that decide whether the entry is accepted are applied on the server.
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Result
+
+The same geofence formula exists on the server and on the client, because the client has to evaluate it offline. There is a test whose only job is to fail if the two versions stop agreeing.
+
+## What I learned
+
+While the one-entry-per-day rule lived in the client, each device kept its own count and duplicate entries reached the database.
+
+Moving it into a server transaction does not remove the conflict: it detects it and sends it to review.

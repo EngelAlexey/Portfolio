@@ -1,0 +1,83 @@
+---
+slug: intercargo-plataforma
+title: Corporate platform
+tagline: A public site and an authenticated portal from the same image, deployed as two services with different permissions.
+areas: [seguridad, fullstack]
+kind: profesional
+org: Intercargo Panamá — via Kaizen Apps CR
+role: Development and security model
+period:
+  start: '2026-07'
+  end: null
+tier: ficha
+home: true
+visibility: privado
+repo: null
+site: null
+stack:
+  - Next.js
+  - React
+  - TypeScript
+  - MySQL
+  - Google Cloud Run
+  - Docker
+  - Vitest
+  - Playwright
+  - Gemini
+cover: null
+order: 1
+diagram:
+  nodes:
+    - "Visitor"
+    - "Public site"
+    - "Invitation"
+    - "Portal"
+    - "Data"
+  gate: 3
+  layers:
+    - name: "Instance separation"
+      body: "The same image is deployed twice under different identities. The public service has its database access removed, so a failure on the open site has no route to what the portal holds."
+    - name: "Identity by invitation"
+      body: "There is no open sign-up and no passwords of our own. Entry is by invitation through a single identity provider. Sessions are revoked from the server, not merely expired."
+    - name: "Limits before the model"
+      body: "File size, requests per origin and type validation are applied before anything reaches the model. The server sets the limit; the model does not decide how much it may ask for."
+    - name: "Verification before publishing"
+      body: "The pipeline runs types and tests, builds the image and scans it. A critical vulnerability aborts the deployment before a new service exists."
+  caption: "The gate is imposed by the deployment: two services from the same image, with different permissions."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Context
+
+The platform brings together the public site, the internal portal, client due diligence and accounts receivable. I joined to build on it and to define its security model.
+
+## Problem
+
+The site ran on WordPress, and that capped what could be built on top of it. The client was asking for a user portal holding critical information, and that piece could not rest on a platform we did not control.
+
+The proposal to rebuild came from the team. Moving to configurable infrastructure made it possible to support the portal with the guarantees it required and redesign the public site at the same time. It also opened the way to automating due diligence, which until then meant reading documents by hand.
+
+## Technical decisions
+
+A marketing site and a portal holding client documents have opposite exposures. Serving them from the same process would turn any failure on the first into access to the second.
+
+The boundary is a deployment boundary, not a code boundary. A single image is published as two services with separate identities, and the public service has its database access removed.
+
+The second rule is that server code is never imported from the browser, not even for types. When the client imported a constant from a server module, the dependency graph pulled in the model SDK: **269 KB of dead JavaScript** on every visit. No credential was exposed, because the framework only injects variables with the public prefix, but the weight was real. The rule is now checked by a command inside the pipeline.
+
+## Architecture
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Result
+
+The model reads documents and proposes. The code makes the decisions.
+
+The suite holds **2,243 unit tests** across 144 files and **27 end-to-end suites**. Four of those are dedicated attack suites, one per module: authentication, accounts receivable, due diligence and the public site.
+
+## What I learned
+
+Separation by deployment costs more than a check inside the code: two services to configure, two identities to maintain, and a deployment that can end up split between versions.
+
+In return it does not depend on the application behaving correctly. If the public site ever ran arbitrary code, it would still have no database credentials to use.

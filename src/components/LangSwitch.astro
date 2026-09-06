@@ -1,0 +1,47 @@
+---
+import { other, path, t, type Lang, type RouteKey } from '../lib/i18n';
+
+interface Props {
+	lang: Lang;
+	routeKey: RouteKey;
+	slug?: string;
+}
+
+const { lang, routeKey, slug } = Astro.props;
+
+// Built from the route the page declares, not parsed back out of the URL:
+// with `build.format: 'file'` the pathname is `/contacto.html`, which no
+// segment table matches.
+const href = path(other(lang), routeKey, slug);
+const strings = t(lang).a11y;
+---
+
+<a {href} class="switch" hreflang={other(lang)} aria-label={strings.langSwitch}>
+	{strings.langSwitchShort}
+</a>
+
+<style>
+	.switch {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		height: 2.25rem;
+		padding-inline: 0.7rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--ink-muted);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.06em;
+		text-decoration: none;
+		transition:
+			color 120ms ease,
+			border-color 120ms ease;
+	}
+
+	.switch:hover {
+		color: var(--ink);
+		border-color: var(--line-strong);
+	}
+</style>

@@ -1,12 +1,11 @@
 node_modules
 
-# Output
-.output
+# Build output
+dist
+.astro
+
+# Deploy
 .vercel
-.netlify
-.wrangler
-/.svelte-kit
-/build
 
 # OS
 .DS_Store
@@ -18,12 +17,12 @@ Thumbs.db
 !.env.example
 !.env.test
 
-# Vite
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
+# Astro
+astro.config.mjs.timestamp-*
 
-# Local CV sync output is committed on purpose:
-# Vercel has no access to D:/GitHub/Personal/CV, so the PDFs must be in the repo.
+# Working material for the redesign: generators, brand artwork and canvases.
+# Not part of the build, and it holds client-owned source art.
+design/
 
-# Design canvas: keep the sources, not the 2.4MB seeded output
-design/portafolio-alex-herrera.html
+# public/cv/*.pdf is committed on purpose: the deploy host cannot reach the CV
+# repo, so the PDFs have to travel with this one.

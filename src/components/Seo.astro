@@ -1,0 +1,57 @@
+---
+import { personJsonLd, seo, type SeoInput } from '../lib/seo';
+import { t } from '../lib/i18n';
+
+interface Props extends SeoInput {
+	person?: boolean;
+}
+
+const {
+	lang,
+	key,
+	slug,
+	title,
+	description,
+	image = null,
+	person = false,
+	noindex = false
+} = Astro.props;
+
+const tags = seo({ lang, key, slug, title, description, image });
+const siteName = t(lang).meta.siteName;
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+
+{/* A page that does not know its own URL claims neither a canonical nor a
+    language pair — it only asks to stay out of the index. */}
+{
+	noindex ? (
+		<meta name="robots" content="noindex, follow" />
+	) : (
+		<>
+			<link rel="canonical" href={tags.canonical} />
+			{tags.alternates.map((alternate) => (
+				<link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
+			))}
+		</>
+	)
+}
+
+<meta property="og:type" content={key === 'project' ? 'article' : 'website'} />
+<meta property="og:site_name" content={siteName} />
+<meta property="og:locale" content={tags.ogLocale} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+{!noindex && <meta property="og:url" content={tags.canonical} />}
+{
+	tags.ogImage && (
+		<>
+			<meta property="og:image" content={tags.ogImage} />
+			<meta name="twitter:card" content="summary_large_image" />
+		</>
+	)
+}
+
+{person && <script type="application/ld+json" is:inline set:html={personJsonLd(lang)} />}

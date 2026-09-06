@@ -1,0 +1,274 @@
+---
+export type Layer = { name: string; body: string };
+
+/**
+ * A pipeline with one gate that enforces several layers at once. Private
+ * projects have no screenshots, so this is what carries the shape — and the
+ * layers are the argument, not decoration: clicking one says what it does.
+ *
+ * It started as a security figure and is not one any more: a gate is any stage
+ * where several rules are applied together, so a transaction, an enrolment
+ * endpoint or a scoring component all draw the same way.
+ *
+ * Every layer's body is rendered up front and CSS shows the active one, so the
+ * whole thing reads correctly with JavaScript disabled. The script only moves
+ * `data-active`.
+ */
+interface Props {
+	nodes: readonly string[];
+	gate: number;
+	layers: readonly Layer[];
+	caption?: string | null;
+}
+
+const { nodes, gate, layers, caption = null } = Astro.props;
+
+// Unique per instance, so two diagrams on one page cannot collide on ids.
+const uid = `sl-${crypto.randomUUID().slice(0, 8)}`;
+
+// Four buttons across a text column leave no room for a two-word name, and
+// `auto-fit` laid them out three-and-one. Four go two by two; two and three
+// keep a single row.
+const cols = layers.length === 4 ? 2 : layers.length;
+---
+
+<figure class="diagram" data-security-layers style={`--cols: ${cols}`}>
+	<div class="pipe" data-active="0">
+		{
+			nodes.map((node, i) => (
+				<>
+					{i > 0 && <span class="arrow" aria-hidden="true" />}
+					<span class:list={['node', { gate: i === gate }]}>
+						{node}
+						{i === gate && (
+							<span class="bars" aria-hidden="true">
+								{layers.map((_, j) => (
+									<i data-layer={j} />
+								))}
+							</span>
+						)}
+					</span>
+				</>
+			))
+		}
+	</div>
+
+	{/*
+	  Each button names the paragraph it reveals, and the bodies are a polite
+	  live region. Without the pairing, pressing a layer changed the text on
+	  screen and announced nothing at all.
+	*/}
+	<div class="layers">
+		{
+			layers.map((layer, i) => (
+				<button
+					type="button"
+					class="layer"
+					id={`${uid}-tab-${i}`}
+					aria-pressed={i === 0}
+					aria-controls={`${uid}-panel-${i}`}
+					data-index={i}
+				>
+					<span class="mono n">0{i + 1}</span>
+					<span class="name">{layer.name}</span>
+				</button>
+			))
+		}
+	</div>
+
+	<div class="bodies" aria-live="polite">
+		{
+			layers.map((layer, i) => (
+				<p
+					class="body"
+					id={`${uid}-panel-${i}`}
+					role="region"
+					aria-labelledby={`${uid}-tab-${i}`}
+					data-layer={i}
+				>
+					{layer.body}
+				</p>
+			))
+		}
+	</div>
+
+	{caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+	.diagram {
+		margin: 2rem 0;
+	}
+
+	.pipe {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		padding: 1.5rem 1.25rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--paper-sunken);
+	}
+
+	.node {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.8rem;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--ink-muted);
+	}
+
+	/* The gate and the open layer are marked in ink, by weight, not by hue. They
+	   were tinted with the security colour on every diagram — including one on a
+	   project that is not about security at all, which made a hue mean something
+	   other than its area for the only time on the site. Ink says "this is the
+	   one" without shouting, and it says it the same way on every page. */
+	.node.gate {
+		border-color: var(--ink);
+		background: var(--surface);
+		color: var(--ink);
+		font-weight: 500;
+	}
+
+	.arrow {
+		flex: 1 1 12px;
+		min-width: 12px;
+		height: 1px;
+		background: var(--line-strong);
+	}
+
+	.bars {
+		display: flex;
+		gap: 3px;
+	}
+
+	.bars i {
+		display: block;
+		width: 22px;
+		height: 4px;
+		border-radius: 2px;
+		background: currentColor;
+		opacity: 0.28;
+		transition:
+			opacity 160ms ease,
+			transform 160ms ease;
+	}
+
+	.pipe[data-active='0'] .bars i[data-layer='0'],
+	.pipe[data-active='1'] .bars i[data-layer='1'],
+	.pipe[data-active='2'] .bars i[data-layer='2'],
+	.pipe[data-active='3'] .bars i[data-layer='3'] {
+		opacity: 1;
+		transform: scaleY(1.6);
+	}
+
+	.layers {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 0.5rem;
+		margin-top: 0.75rem;
+	}
+
+	@media (min-width: 30rem) {
+		.layers {
+			grid-template-columns: repeat(var(--cols, 3), 1fr);
+		}
+	}
+
+	.layer {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.3rem;
+		padding: 0.8rem 0.95rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--ink-muted);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+		transition:
+			border-color 120ms ease,
+			background-color 120ms ease,
+			color 120ms ease;
+	}
+
+	.layer:hover {
+		border-color: var(--line-strong);
+		color: var(--ink);
+	}
+
+	.layer[aria-pressed='true'] {
+		border-color: var(--ink);
+		background: var(--paper-sunken);
+		color: var(--ink);
+	}
+
+	.n {
+		font-size: 0.6875rem;
+		opacity: 0.7;
+	}
+
+	.name {
+		font-size: 0.875rem;
+		font-weight: 500;
+	}
+
+	.body {
+		margin: 0.9rem 0 0;
+		padding: 0.9rem 1.1rem;
+		border-left: 2px solid var(--ink);
+		font-size: 0.9375rem;
+		line-height: 1.65;
+		color: var(--ink-muted);
+	}
+
+	/* Only the active body shows; the rest stay in the DOM so the section still
+	   reads end to end without JavaScript. */
+	.bodies .body {
+		display: none;
+	}
+
+	.bodies[data-active='0'] .body[data-layer='0'],
+	.bodies[data-active='1'] .body[data-layer='1'],
+	.bodies[data-active='2'] .body[data-layer='2'],
+	.bodies[data-active='3'] .body[data-layer='3'] {
+		display: block;
+	}
+
+	figcaption {
+		margin-top: 0.75rem;
+		font-size: 0.8125rem;
+		color: var(--ink-faint);
+	}
+</style>
+
+<script>
+	for (const figure of document.querySelectorAll<HTMLElement>('[data-security-layers]')) {
+		const pipe = figure.querySelector<HTMLElement>('.pipe');
+		const bodies = figure.querySelector<HTMLElement>('.bodies');
+		const buttons = [...figure.querySelectorAll<HTMLButtonElement>('.layer')];
+
+		// Without JS the first body is the one CSS shows, so start there.
+		bodies?.setAttribute('data-active', '0');
+
+		for (const button of buttons) {
+			button.addEventListener('click', () => {
+				const index = button.dataset.index ?? '0';
+				pipe?.setAttribute('data-active', index);
+				bodies?.setAttribute('data-active', index);
+				for (const other of buttons) {
+					other.setAttribute('aria-pressed', String(other === button));
+				}
+			});
+		}
+	}
+</script>

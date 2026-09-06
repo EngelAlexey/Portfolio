@@ -1,0 +1,86 @@
+---
+slug: starhub-bodega
+title: StarHub | Warehouse API
+tagline: Reads the ERP database over SQL and writes only through its API, never directly.
+areas: [fullstack, movil]
+kind: profesional
+org: Star Cargo Service
+role: API and security layer
+period:
+  start: '2026-08'
+  end: null
+tier: ficha
+home: false
+visibility: privado
+repo: null
+site: null
+stack:
+  - TypeScript
+  - Node.js
+  - MySQL
+  - Google Cloud Run
+  - Docker
+  - Kotlin
+cover: null
+order: null
+diagram:
+  nodes:
+    - "Phone"
+    - "Enrolment"
+    - "Token"
+    - "Service"
+    - "ERP"
+  gate: 1
+  layers:
+    - name: "Single-use code"
+      body: "Enrolment uses a code that expires and is bound to the device identifier. The registry stores its hash, never the value, and the code does not work again after first use."
+    - name: "Two rate limits"
+      body: "The enrolment endpoint is public, so it is bounded per origin and per device. Repeated attempts to guess the code stop well before the space of possibilities is covered."
+    - name: "Reads and writes separated"
+      body: "The token grants reads over SQL and writes only through the ERP's API. The service's surface exposes no direct write against the database."
+    - name: "Warehouse scoping"
+      body: "Every query is limited to the warehouse of the enrolled device. A phone enrolled at one warehouse cannot reach another warehouse's inventory."
+  caption: "Four rules protect the one endpoint that does not require a prior credential."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Context
+
+Warehouse staff record an incoming container from a phone. They scan the receipt code, log every line as it comes off, mark the slot each pallet went to, and photograph damaged goods.
+
+This service is the backend for that Android app. The Android client was built by another member of the team.
+
+## Problem
+
+Receiving was recorded on paper and transcribed into the ERP afterwards. Until that transcription happened, the system's inventory did not match what was in the warehouse.
+
+The service exists so a receipt reaches the ERP at the moment the warehouse worker records it.
+
+## Technical decisions
+
+The ERP generates receipt numbers with its own formulas, and those formulas take no lock. Two warehouse workers operating at once would have been given the same sequence number. It also has notifications and automated actions over those tables, which a direct `INSERT` would not have fired.
+
+Reads go over direct SQL against the ERP database. Writes go through its API, which is slower but respects those formulas and those triggers.
+
+The split is enforced by a function in the code, not by engine permissions: the credential had write access to those tables. The README records this as technical debt.
+
+## Architecture
+
+A phone cannot authenticate with the platform's identity, because enrolment happens before the device holds any credential. That is the service's gate: a single public endpoint with four rules applied at once.
+
+<ArchDiagram {...frontmatter.diagram} />
+
+The service runs on a single instance. The code registry lives in a local file, and across several instances the code would stop being single-use.
+
+## Result
+
+A smoke test starts the server and makes real requests against it. It covers TLS, credentials, warehouse scoping, the query and the response mapping. It uses no test doubles and writes no data.
+
+Alongside it there are 30 `node:test` cases covering pagination and the device lifecycle.
+
+## What I learned
+
+The registry of single-use codes and tokens lives in a local file, and that forces the service onto a single instance. It is a design constraint, not a capacity decision.
+
+Until that state moves to shared storage, the only way to absorb more load is a larger instance. It is recorded as the next change to the service.

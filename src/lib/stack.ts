@@ -5,7 +5,7 @@ import type { AreaId } from './areas';
  * Front matter lists stack items as free text, so this maps those strings onto
  * the brand library. A stack can name a product the curated grid does not (a
  * reranker, an ORM), so resolution goes through the full `BRANDS` library, not
- * just the 33 grid tools. Aliases cover the cases where the write-up names a
+ * just the tools on the grid. Aliases cover the cases where the write-up names a
  * product more precisely than the icon set does.
  */
 const ALIASES: Record<string, string> = {
@@ -26,12 +26,9 @@ const ALIASES: Record<string, string> = {
 	'node.js': 'nodedotjs',
 	nodejs: 'nodedotjs',
 	'tailwind css': 'tailwindcss',
-	// SvelteKit shares the Svelte mark
-	sveltekit: 'svelte',
 	// Products named more precisely than the mark
 	'vercel ai sdk': 'vercel',
 	'upstash vector': 'upstash',
-	'cohere rerank': 'cohere',
 	'drizzle orm': 'drizzle',
 	'github actions': 'githubactions',
 	java: 'openjdk',

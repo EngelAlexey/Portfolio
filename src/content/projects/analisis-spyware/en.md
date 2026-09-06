@@ -1,7 +1,7 @@
 ---
 slug: analisis-spyware
-title: Spyware analysis in a controlled environment
-tagline: A client-server tool in an isolated lab to study data capture and exfiltration, and derive the countermeasures from it.
+title: Spyware analysis
+tagline: An inventory of the signals this software leaves on a system and the control that cuts each step.
 areas: [seguridad]
 kind: academico
 org: Universidad Técnica Nacional
@@ -10,34 +10,46 @@ period:
   start: '2026'
   end: '2026'
 tier: ficha
-home: true
+home: false
 visibility: publico
 repo: null
-demo: null
+site: null
 stack:
   - Python
   - Client-server
   - Malware analysis
 cover: null
-order: 3
+order: null
 ---
 
 ## Context
 
-Information Security course. An individual exercise, built and run in an isolated lab, with an academic goal: to understand an attack vector well enough to defend against it.
+An IT Security I course. An individual exercise, built and run inside an isolated lab. The deliverable was defensive: which signals this kind of software leaves, and which control stops each step.
 
 ## Problem
 
-Countermeasures learned by rote do not hold. To know what signals spyware leaves and which controls actually cut it off, you first have to watch how it captures and moves data.
+The course asked for countermeasures derived from direct observation rather than from a manual.
+
+A memorised list does not say which of them works. To know what to watch and where in the system, you first have to see what records remain when capture and data egress happen.
 
 ## Technical decisions
 
-A client-server tool in Python that reproduces, in miniature, the capture-and-exfiltration cycle. The point is not the tool: it is the list of signals it leaves behind — outbound traffic, resource access, persistence — and the mapping of each one to a control that stops it.
+A client-server tool in Python reproduces the capture-and-exfiltration cycle at small scale, purely as an activity generator for the lab.
 
-## Outcome
+The deliverable is not that tool but the inventory it produces: outbound traffic, resource access and persistence mechanisms, each mapped to a control that stops it.
 
-An inventory of indicators and countermeasures drawn from direct observation, not from a manual: what to watch, where, and which control closes each step of the attack.
+## Architecture
+
+A closed lab, with no internet route and a snapshot taken first. The observed machine and the receiving machine sit in the same isolated segment, so all traffic between them can be captured and read.
+
+That arrangement is what makes the exercise measurable: what is touched on the filesystem, which connection opens and when, and what is written to survive a reboot.
+
+## Result
+
+An inventory of indicators and countermeasures derived from direct observation: what to watch, at which point in the system, and which control closes each step of the attack.
 
 ## What I learned
 
-That understanding the vector is what lets you defend against it. The offensive exercise was the means; the real deliverable was the defence.
+The most useful signals were not the network ones, because an encrypted channel hides them. They were the filesystem signals and the persistence mechanism.
+
+A network control on its own would not have detected the exercise. Detection came from correlating local access with an outbound connection, which is exactly what a single observation point cannot see.

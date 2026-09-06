@@ -1,7 +1,7 @@
 ---
 slug: infraestructura-hotelera
-title: Secure IT infrastructure for a hotel chain
-tagline: Documented design of a unified network across four sites, with segmentation, encrypted links and hybrid cloud.
+title: Hotel chain network
+tagline: Four sites under one design, with VLAN segmentation, encrypted links and hybrid cloud.
 areas: [infra, seguridad]
 kind: academico
 org: Universidad Técnica Nacional
@@ -10,10 +10,10 @@ period:
   start: '2025'
   end: '2025'
 tier: ficha
-home: true
+home: false
 visibility: publico
 repo: null
-demo: null
+site: null
 stack:
   - VLAN
   - Firewall
@@ -23,25 +23,39 @@ stack:
   - Azure
   - Cisco Packet Tracer
 cover: null
-order: 2
+order: null
 ---
 
 ## Context
 
-Integrative Project II. A team design and documentation exercise for the technology infrastructure of a four-site hotel chain. My contribution was telecommunications, logical network design and regulatory compliance.
+Integrative Project II. Team design and documentation of the IT infrastructure for a hotel chain with four sites. My contribution was telecommunications, logical network design and regulatory compliance.
 
 ## Problem
 
-Four buildings operating as if they were separate companies: each site on its own flat network, no separation between guest and administrative traffic, and no way to monitor any of it centrally.
+Four buildings operating as if they were separate companies. Each site had its own flat network, with no separation between guest and administrative traffic, and no centralised point of observation.
 
 ## Technical decisions
 
-VLAN segmentation separating guests, administration, CCTV and voice. Encrypted point-to-point wireless links between buildings instead of new cabling. Per-room WiFi on WPA3 authenticated against RADIUS. Centralised CCTV. A hybrid architecture: whatever must keep working without internet stays local, the rest goes to Azure.
+VLAN segmentation to separate guests, administration, CCTV and voice.
 
-## Outcome
+Encrypted point-to-point wireless links between buildings instead of new cabling. Per-room WiFi with WPA3 and authentication against RADIUS. Centralised CCTV.
 
-Full network documentation — addressing, ACLs, firewall policy, high-availability scheme and risk analysis — with the topology built and tested in Cisco Packet Tracer.
+A hybrid architecture: whatever must keep working with the link down stays local, the rest goes to the cloud.
+
+## Architecture
+
+Each site repeats the same internal structure: its four segments and its edge firewall. The encrypted point-to-point links join the four buildings and form the backbone.
+
+Guest authentication does not live in each access point but in a central service. The access point asks; it does not decide.
+
+CCTV travels over its own segment to the recorder and shares no path with administrative traffic.
+
+The line between local and cloud was drawn with one question: what has to keep working with the link down. Locks, cameras and reception stay on site; reports and backups go up.
+
+## Result
+
+Full network documentation: addressing, access control lists, firewall policy, a high-availability scheme and a risk analysis. The topology was built and tested in Cisco Packet Tracer.
 
 ## What I learned
 
-That segmentation is a business decision before it is a technical one: drawing VLANs is cheap, agreeing on who should be allowed to talk to whom is not.
+Drawing the VLANs took little time. Defining the access control lists between them took considerably longer, because every rule forces a decision about which area may reach which system.

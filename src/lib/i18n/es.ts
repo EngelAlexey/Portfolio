@@ -4,43 +4,42 @@ export const es = {
 		projects: 'Proyectos',
 		about: 'Sobre mí',
 		contact: 'Contacto',
-		menu: 'Menú',
-		close: 'Cerrar'
+		menu: 'Menú'
 	},
 	a11y: {
 		skipToContent: 'Saltar al contenido',
 		mainLandmark: 'Contenido principal',
+		theme: 'Cambiar tema',
 		themeToDark: 'Cambiar a tema oscuro',
 		themeToLight: 'Cambiar a tema claro',
 		langSwitch: 'Ver esta página en inglés',
 		langSwitchShort: 'EN'
 	},
 	home: {
-		badge: 'Disponible — práctica profesional, enero a abril de 2027',
+		badge: 'Disponible para práctica profesional, enero a abril de 2027',
 		title: 'Alex Herrera Manzanares',
 		role: 'Desarrollador de Software · Enfoque en Ciberseguridad',
-		headline: 'Diseño la seguridad antes de escribir el código.',
+		headline: 'Diseño el modelo de seguridad de las plataformas que construyo.',
 		pitch:
-			'Soy el único desarrollador de la plataforma corporativa de una empresa logística en Panamá. Definí su modelo de seguridad completo — separación de instancias por criticidad de secretos, identidad por invitación, sesiones revocables y defensa contra inyección de prompt — y lo respaldé con pruebas de ataque por módulo.',
+			'Trabajo en la plataforma corporativa de una empresa logística en Panamá y definí su modelo de seguridad. La misma imagen se despliega como dos servicios con permisos distintos. La identidad es por invitación y las sesiones se revocan desde el servidor. Cada módulo corporativo tiene su propia suite de ataque.',
 		ctaProjects: 'Ver proyectos',
 		ctaCv: 'Descargar CV',
 		heroStackLabel: 'Herramientas principales',
-		proofLabel: 'Cifras de la plataforma',
+		proofLabel: 'Cifras del trabajo',
 		proof: [
-			{ value: '883', label: 'pruebas unitarias' },
-			{ value: '220', label: 'pruebas end-to-end' },
+			{ value: '2 243', label: 'pruebas unitarias' },
+			{ value: '27', label: 'suites end-to-end' },
 			{ value: '4', label: 'suites de ataque dedicadas' },
-			{ value: '1', label: 'desarrollador en la plataforma' }
+			{ value: '3', label: 'filtros de permiso por consulta' }
 		],
-		orgsLabel: '01 — Dónde trabajo',
-		workLabel: '02 — Trabajo destacado',
-		workTitle: 'Los proyectos que explican el perfil',
+		orgsLabel: 'Dónde trabajo',
+		workTitle: 'Proyectos destacados',
 		workAll: 'Ver los demás proyectos',
-		stackLabel: '03 — Herramientas'
+		stackLabel: 'Herramientas'
 	},
 	stack: {
 		title: 'Filtra por área',
-		lead: 'El mismo eje que ordena los proyectos ordena el stack.',
+		lead: 'Cada herramienta está clasificada por el área en la que la uso.',
 		showing: (shown: number, total: number) => `${shown} de ${total} herramientas`
 	},
 	projects: {
@@ -48,24 +47,25 @@ export const es = {
 		lead: 'Trabajo profesional, académico y personal. Filtra por área.',
 		filterLegend: 'Filtrar por área',
 		filterAll: 'Todas',
-		clearFilter: 'Quitar filtros',
 		resultsOne: '1 proyecto',
 		resultsMany: (n: number) => `${n} proyectos`,
-		empty: 'Ningún proyecto coincide con ese filtro.',
-		moreTitle: 'Otros trabajos',
-		moreLead: 'Proyectos con menos superficie que contar, pero que suman al perfil.'
+		orgsOne: '1 organización',
+		orgsMany: (n: number) => `${n} organizaciones`,
+		// Split so the count line pluralises both halves and keeps Spanish word
+		// order in the dictionary rather than in the browser.
+		resultsJoin: (projects: string, orgs: string) => `${projects} en ${orgs}`,
+		independent: 'Por cuenta propia',
+		empty: 'Ningún proyecto coincide con ese filtro.'
 	},
 	project: {
 		back: 'Volver a proyectos',
-		context: 'Contexto',
 		org: 'Organización',
 		role: 'Rol',
 		period: 'Periodo',
 		present: 'Actualidad',
 		stack: 'Stack',
-		areas: 'Áreas',
 		repo: 'Repositorio',
-		demo: 'Demo',
+		site: 'Sitio en producción',
 		privateTitle: 'Proyecto privado',
 		privateBody:
 			'Es trabajo para una empresa: se describe la arquitectura y las decisiones, sin código, sin repositorio y sin capturas con datos reales.',
@@ -79,7 +79,7 @@ export const es = {
 	},
 	about: {
 		title: 'Sobre mí',
-		lead: 'Quién soy, qué estudio y cómo trabajo.',
+		lead: 'Formación, experiencia y las herramientas con las que trabajo.',
 		education: 'Educación',
 		certifications: 'Certificaciones',
 		languages: 'Idiomas',
@@ -96,17 +96,19 @@ export const es = {
 		location: 'Ubicación',
 		availability: 'Disponibilidad',
 		cv: 'Descargar CV',
-		cvNote: 'PDF, 2 páginas',
-		cvOnlySpanish: 'El CV está disponible en español.'
+		cvNote: 'PDF de 2 páginas. Tres versiones según el puesto.',
+		cvVariants: {
+			ciberseguridad: 'Ciberseguridad',
+			desarrollo: 'Desarrollo',
+			general: 'General'
+		}
 	},
 	footer: {
-		builtWith: 'Hecho con SvelteKit. Sin rastreadores.',
-		source: 'Código de este sitio',
-		updated: 'Actualizado'
+		builtWith: 'Hecho con Astro.'
 	},
 	notFound: {
 		title: 'Página no encontrada',
-		body: 'El enlace no lleva a ninguna parte.',
+		body: 'Esta dirección no corresponde a ninguna página del sitio.',
 		back: 'Volver al inicio'
 	},
 	meta: {

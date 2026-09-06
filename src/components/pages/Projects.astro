@@ -1,0 +1,171 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AreaFilter from '../AreaFilter.astro';
+import Container from '../Container.astro';
+import OrgTimeline from '../OrgTimeline.astro';
+import { areaCounts, projectsByOrg } from '../../lib/content';
+import { t, type Lang } from '../../lib/i18n';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+const strings = t(lang);
+const counts = await areaCounts(lang);
+const groups = await projectsByOrg(lang);
+const total = groups.reduce((n, group) => n + group.projects.length, 0);
+
+/** Sentinels the client script substitutes; keeps word order in the dictionary. */
+const COUNT = '{n}' as unknown as number;
+const ORGS = '{orgs}' as unknown as number;
+
+const resultLine = (projects: number, orgs: number) =>
+	strings.projects.resultsJoin(
+		projects === 1 ? strings.projects.resultsOne : strings.projects.resultsMany(projects),
+		orgs === 1 ? strings.projects.orgsOne : strings.projects.orgsMany(orgs)
+	);
+---
+
+<Layout
+	{lang}
+	key="projects"
+	title={strings.meta.titleTemplate(strings.projects.title)}
+	description={strings.projects.lead}
+>
+	<Container as="header">
+		<div class="head">
+			<h1>{strings.projects.title}</h1>
+			<p>{strings.projects.lead}</p>
+		</div>
+	</Container>
+
+	<Container>
+		<AreaFilter {lang} {counts} />
+		{/* Every phrasing rides along as an attribute so the script needs no import. */}
+		<p
+			class="results"
+			aria-live="polite"
+			data-results
+			data-one={strings.projects.resultsOne}
+			data-many={strings.projects.resultsMany(COUNT)}
+			data-orgs-one={strings.projects.orgsOne}
+			data-orgs-many={strings.projects.orgsMany(ORGS)}
+			data-join={strings.projects.resultsJoin('{projects}', '{orgs}')}
+		>
+			{resultLine(total, groups.length)}
+		</p>
+	</Container>
+
+	<Container>
+		{/* Rendered up front and hidden by the filter script, so every project is
+		    in the page with JavaScript off. */}
+		<p class="empty" data-empty hidden>{strings.projects.empty}</p>
+
+		<OrgTimeline {groups} {lang} />
+	</Container>
+</Layout>
+
+<script>
+	// No imports: the two phrasings come from data attributes on the results
+	// line, so the dictionary never reaches the browser.
+	const filter = document.querySelector<HTMLElement>('[data-area-filter]');
+
+	if (filter) {
+		const buttons = [...filter.querySelectorAll<HTMLButtonElement>('.pill')];
+		const cards = [...document.querySelectorAll<HTMLElement>('[data-project-list] > li')];
+		const groups = [...document.querySelectorAll<HTMLElement>('[data-org-group]')];
+		const results = document.querySelector<HTMLElement>('[data-results]');
+		const empty = document.querySelector<HTMLElement>('[data-empty]');
+
+		const selected = new Set<string>();
+
+		function apply() {
+			let shown = 0;
+			for (const card of cards) {
+				const areas = (card.dataset.areas ?? '').split(' ');
+				const match = selected.size === 0 || areas.some((area) => selected.has(area));
+				card.hidden = !match;
+				if (match) shown += 1;
+			}
+
+			// A whole organisation drops out when none of its projects match —
+			// heading, node and all — so the chronology never shows an empty stop.
+			let orgs = 0;
+			for (const group of groups) {
+				const keep = [...group.querySelectorAll<HTMLElement>('[data-project-list] > li')].some(
+					(card) => !card.hidden
+				);
+				group.hidden = !keep;
+				if (keep) orgs += 1;
+			}
+
+			if (results) {
+				const one = results.dataset.one ?? '1';
+				const many = results.dataset.many ?? '{n}';
+				const orgsOne = results.dataset.orgsOne ?? '1';
+				const orgsMany = results.dataset.orgsMany ?? '{orgs}';
+				const join = results.dataset.join ?? '{projects} · {orgs}';
+				results.textContent = join
+					.replace('{projects}', shown === 1 ? one : many.replace('{n}', String(shown)))
+					.replace('{orgs}', orgs === 1 ? orgsOne : orgsMany.replace('{orgs}', String(orgs)));
+			}
+			if (empty) empty.hidden = shown > 0;
+
+			// The rail is measured from node positions, which just moved.
+			document.dispatchEvent(new CustomEvent('projects:filtered'));
+
+			for (const button of buttons) {
+				const area = button.dataset.area ?? 'all';
+				button.setAttribute(
+					'aria-pressed',
+					String(area === 'all' ? selected.size === 0 : selected.has(area))
+				);
+			}
+		}
+
+		for (const button of buttons) {
+			button.addEventListener('click', () => {
+				const area = button.dataset.area ?? 'all';
+				if (area === 'all') selected.clear();
+				else if (selected.has(area)) selected.delete(area);
+				else selected.add(area);
+				apply();
+			});
+		}
+	}
+</script>
+
+<style>
+	.head {
+		padding-block: clamp(2.5rem, 7vw, 4rem) 1.5rem;
+		max-width: 42rem;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: clamp(2rem, 5vw, 2.75rem);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+	}
+
+	.head p {
+		margin: 0.6rem 0 0;
+		color: var(--ink-muted);
+		font-size: 1.0625rem;
+		line-height: 1.6;
+	}
+
+	.results {
+		margin: 0.9rem 0 1.5rem;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--ink-faint);
+	}
+
+	.empty {
+		margin: 0 0 3rem;
+		color: var(--ink-muted);
+	}
+</style>

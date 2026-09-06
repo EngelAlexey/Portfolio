@@ -1,0 +1,85 @@
+---
+slug: kaizen-ai
+title: Kaizen AI | Asistente inteligente
+tagline: Un reescritor de AST inyecta tres filtros de permiso en cada consulta antes de ejecutar el SQL.
+areas: [ia, seguridad]
+kind: profesional
+org: Kaizen Apps CR
+role: Desarrollo
+period:
+  start: '2025-09'
+  end: '2026-07'
+tier: ficha
+home: true
+visibility: privado
+repo: null
+site: null
+stack:
+  - Next.js
+  - TypeScript
+  - Vercel AI SDK
+  - Upstash Vector
+  - Cohere rerank
+  - Drizzle ORM
+  - MySQL
+  - Google Cloud Run
+cover: null
+order: 2
+diagram:
+  nodes:
+    - "Pregunta"
+    - "Modelo"
+    - "SQL propuesto"
+    - "Reescritor AST"
+    - "SQL ejecutado"
+    - "Datos permitidos"
+  gate: 3
+  layers:
+    - name: "Base de datos del cliente"
+      body: "Cada consulta queda acotada a la base del cliente que pregunta. Un usuario de una empresa no alcanza los datos de otra, aunque el SQL generado los pidiera de forma explícita."
+    - name: "Rol de la sesión"
+      body: "Desarrollador, administrador y usuario ven conjuntos distintos. El filtro se inyecta según el rol autenticado, no según lo que el modelo proponga."
+    - name: "Alcance de la acción"
+      body: "La acción concreta acota el resultado una vez más. Lo que el modelo devuelve es una intención; el alcance efectivo lo fija el servidor."
+    - name: "Registro de la consulta"
+      body: "Queda registrado el SQL que se ejecutó, junto con el rol y el usuario. La auditoría se hace sobre la consulta final, no sobre la que el modelo propuso."
+  caption: "Los tres filtros se inyectan en el árbol sintáctico de la consulta, no se comprueban después."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Contexto
+
+Herramienta que Kaizen pone en manos de las empresas que licencian su ERP, para que consulten sus propios datos escribiendo la pregunta en lenguaje corriente.
+
+La empecé con poca experiencia y la reconstruí desde cero cuatro veces. Cada versión incorporó lo que la anterior no resolvía.
+
+## Problema
+
+Cada consulta de un cliente la atendía una persona del equipo de soporte. Conforme crece la demanda de ayuda, ese equipo se satura y el cliente espera.
+
+Buena parte de esas consultas se repiten: cómo se hace algo, qué significa un concepto de recursos humanos o de salud ocupacional, qué dice la legislación laboral al respecto. La herramienta existe para que el cliente resuelva esas por su cuenta, y el equipo atienda lo que sí necesita a una persona.
+
+## Decisiones técnicas
+
+Si la herramienta la usan varias empresas cliente sobre la misma instalación, un modelo que consulta datos productivos plantea una pregunta que un prompt no resuelve: quién puede leer qué. Si el control de acceso dependiera de que el modelo siga instrucciones, bastaría reformular la pregunta para saltárselo.
+
+Así que la pregunta se traduce a SQL y el servidor reescribe esa consulta antes de ejecutarla. Un reescritor sobre el árbol sintáctico inyecta tres filtros: base de datos del cliente, rol de la sesión y alcance de la acción.
+
+Los filtros se inyectan, no se comprueban después. Una consulta que pidiera datos de otra empresa no falla la validación: se ejecuta ya acotada y devuelve solo lo permitido.
+
+## Arquitectura
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Resultado
+
+Sobre esa base: control de acceso diferenciado para desarrollador, administrador y usuario, saneamiento de campos sensibles, registro de auditoría por consulta y recuperación con piso de relevancia.
+
+Con ese piso, una pregunta sin respaldo en los datos devuelve que no hay información. No devuelve un texto construido con fragmentos poco relacionados.
+
+## Lo que aprendí
+
+Las tres primeras versiones apoyaban parte del control de visibilidad en el prompt. Cada reconstrucción movió una de esas decisiones al código, hasta que ninguna quedó en el texto de la instrucción.
+
+La diferencia práctica es que la versión final se puede probar: una prueba ejecuta el reescritor y comprueba que el SQL resultante lleva los tres filtros. Sobre un prompt no hay nada equivalente que ejecutar.

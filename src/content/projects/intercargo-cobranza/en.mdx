@@ -1,0 +1,83 @@
+---
+slug: intercargo-cobranza
+title: Collections assistant
+tagline: The client writes on WhatsApp. The model reads; the code decides the action and what it may disclose.
+areas: [ia, fullstack]
+kind: profesional
+org: Intercargo Panamá — via Kaizen Apps CR
+role: Development
+period:
+  start: '2026-07'
+  end: null
+tier: ficha
+home: true
+visibility: privado
+repo: null
+site: null
+stack:
+  - TypeScript
+  - Node.js
+  - MySQL
+  - WhatsApp
+  - Claude
+  - Docker
+  - Google Cloud Run
+cover: null
+order: 3
+diagram:
+  nodes:
+    - "Message"
+    - "Intent"
+    - "Identity"
+    - "Action"
+    - "Reply"
+  gate: 2
+  layers:
+    - name: "Who is asking"
+      body: "A phone number is not enough as an identity. It is validated against the client record, and until that validation passes the conversation discloses nothing about the account."
+    - name: "What may be asked"
+      body: "The model returns an intent, not a command. The available actions are a closed set defined in code, so an intent with no matching action executes nothing."
+    - name: "When we may write"
+      body: "Working days, holidays and the contact window are computed on the server. Anyone who asks to stop receiving messages stops receiving them. The reminder goes out one working day before the due date."
+    - name: "What is recorded"
+      body: "Every turn stores the message received, the intent resolved and the action executed. An unexpected reply can be reconstructed later without consulting the model again."
+  caption: "Identity is resolved before the action: without it, there is no balance to show."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Context
+
+WhatsApp collections for the same logistics company. The client writes in, checks their statement, reports a payment or promises a date, and all of it happens inside the conversation.
+
+## Problem
+
+Collections relied on lists of clients to be contacted one by one. Every payment receipt was reviewed by a person before the balance was up to date.
+
+The client asked for that cycle to be automated. The debtor checks their own balance and attaches their own receipt, and the team steps in only where judgement is needed.
+
+## Technical decisions
+
+A collections assistant discloses other people's balances. If the model decided who sees them, every reply would depend on it never being wrong, and a language model does not give that guarantee.
+
+So the model does one thing: turn a natural-language message into an intent and, where applicable, a date.
+
+Everything else is code: validating identity, querying the account, recording a payment promise and deciding whether a reminder is due. The conversation runs on a state machine that returns actions, and a separate layer translates them into the WhatsApp transport.
+
+The service uses no web framework: it starts a server with `node:http` and works over nine tables of its own, separate from the rest of the platform. The model provider is swappable, with two implementations behind the same interface.
+
+## Architecture
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Result
+
+Separating the decision from the delivery makes the whole conversation testable without Meta credentials or a WhatsApp line. One command replays an entire dialogue against the real logic.
+
+The hard cases are tested this way: a promise with an ambiguous date, a payment reported twice, a client asking to stop receiving messages.
+
+## What I learned
+
+The repository has no unit tests. Verification is that conversation simulator, which walks the state machine end to end but does not exercise the modules separately.
+
+It catches a flow regression without locating it. Adding tests over the action layer is the outstanding work.

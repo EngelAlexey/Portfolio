@@ -2,8 +2,13 @@
 
 /* ─────────────────────────────────────────────────────────────────────────
    Design thesis: colour is semantic. A hue on this site always encodes a
-   project area — never decoration, never a brand accent. Everything else is
-   ink on paper, so the six area chips are the only thing that pops.
+   project area — never decoration, never a brand accent.
+
+   It is also rationed. A hue is worn by a dot, and the words beside it carry
+   the meaning; the one exception is a control you have pressed, where the
+   fill marks your choice. Filling every label turned a grid of twelve cards
+   into two dozen coloured pills shouting over the writing they were meant to
+   caption. Everything else is ink on paper.
    ───────────────────────────────────────────────────────────────────────── */
 
 :root {
@@ -30,6 +35,12 @@
 	--action-hover: oklch(30% 0.01 260);
 	--action-ink: oklch(98.5% 0.002 260);
 	--focus: oklch(55% 0.19 255);
+
+	/* Deliberately outside the area system: this marks availability, not a
+	   discipline, so it must not be one of the six hues that mean an area. It
+	   is the only colour on the site that is not an area, and a single dot
+	   wears it. */
+	--available: oklch(62% 0.15 152);
 
 	/* Elevation */
 	--shadow-card: 0 1px 2px oklch(18% 0.008 260 / 0.05), 0 4px 12px oklch(18% 0.008 260 / 0.04);
@@ -87,6 +98,7 @@
 		--action-hover: oklch(85% 0.006 265);
 		--action-ink: oklch(15.5% 0.008 265);
 		--focus: oklch(72% 0.16 255);
+		--available: oklch(72% 0.15 152);
 
 		--shadow-card: 0 1px 2px oklch(0% 0 0 / 0.4), 0 4px 14px oklch(0% 0 0 / 0.28);
 
@@ -137,6 +149,7 @@
 	--action-hover: oklch(85% 0.006 265);
 	--action-ink: oklch(15.5% 0.008 265);
 	--focus: oklch(72% 0.16 255);
+	--available: oklch(72% 0.15 152);
 
 	--shadow-card: 0 1px 2px oklch(0% 0 0 / 0.4), 0 4px 14px oklch(0% 0 0 / 0.28);
 
@@ -231,6 +244,57 @@ body {
 ::selection {
 	background: var(--ink);
 	color: var(--paper);
+}
+
+/* ── Area resonance ───────────────────────────────────────────────────────
+   The site's one rule is that a hue always means an area. This makes that
+   rule something the reader can operate rather than something the README
+   asserts: pointing at any area — a chip on a card, a filter pill, a tool —
+   holds everything that shares it at full strength and lets the rest recede.
+   One taxonomy, visible across the whole page at once.
+
+   Global rather than scoped, because the whole point is that it crosses
+   component boundaries: a pill in the tool grid dims a project card. */
+[data-area-focus] [data-areas],
+[data-area-focus] .tile[data-area] {
+	transition: opacity 180ms ease;
+}
+
+[data-area-focus='fullstack'] [data-areas]:not([data-areas~='fullstack']),
+[data-area-focus='fullstack'] .tile[data-area]:not([data-area='fullstack']),
+[data-area-focus='ia'] [data-areas]:not([data-areas~='ia']),
+[data-area-focus='ia'] .tile[data-area]:not([data-area='ia']),
+[data-area-focus='datos'] [data-areas]:not([data-areas~='datos']),
+[data-area-focus='datos'] .tile[data-area]:not([data-area='datos']),
+[data-area-focus='movil'] [data-areas]:not([data-areas~='movil']),
+[data-area-focus='movil'] .tile[data-area]:not([data-area='movil']),
+[data-area-focus='seguridad'] [data-areas]:not([data-areas~='seguridad']),
+[data-area-focus='seguridad'] .tile[data-area]:not([data-area='seguridad']),
+[data-area-focus='infra'] [data-areas]:not([data-areas~='infra']),
+[data-area-focus='infra'] .tile[data-area]:not([data-area='infra']) {
+	opacity: 0.25;
+}
+
+/* The dimming is information, not decoration, so it still happens when motion
+   is reduced — it just arrives without a transition. */
+@media (prefers-reduced-motion: reduce) {
+	[data-area-focus] [data-areas],
+	[data-area-focus] .tile[data-area] {
+		transition: none;
+	}
+}
+
+/* Text for screen readers only. Global because component styles are scoped, and
+   more than one component needs to name something a decorative mark stands for. */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,85 @@
+---
+slug: kaizen-ai
+title: Kaizen AI | Smart assistant
+tagline: An AST rewriter injects three permission filters into every query before the SQL is executed.
+areas: [ia, seguridad]
+kind: profesional
+org: Kaizen Apps CR
+role: Development
+period:
+  start: '2025-09'
+  end: '2026-07'
+tier: ficha
+home: true
+visibility: privado
+repo: null
+site: null
+stack:
+  - Next.js
+  - TypeScript
+  - Vercel AI SDK
+  - Upstash Vector
+  - Cohere rerank
+  - Drizzle ORM
+  - MySQL
+  - Google Cloud Run
+cover: null
+order: 2
+diagram:
+  nodes:
+    - "Question"
+    - "Model"
+    - "Proposed SQL"
+    - "AST rewriter"
+    - "Executed SQL"
+    - "Permitted data"
+  gate: 3
+  layers:
+    - name: "Client database"
+      body: "Every query is scoped to the database of the client asking. A user at one company cannot reach another company's data, even if the generated SQL asked for it explicitly."
+    - name: "Session role"
+      body: "Developer, administrator and user see different sets. The filter is injected from the authenticated role, not from whatever the model proposes."
+    - name: "Action scope"
+      body: "The specific action narrows the result once more. What the model returns is an intent; the effective scope is set by the server."
+    - name: "Query record"
+      body: "The SQL that ran is recorded, together with the role and the user. The audit trail covers the final query, not the one the model proposed."
+  caption: "The three filters are injected into the query's syntax tree, not checked afterwards."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Context
+
+A tool Kaizen puts in the hands of the companies that license its ERP. They query their own data by writing the question in plain language.
+
+I started it with little experience and rebuilt it from scratch four times. Each version absorbed what the previous one could not handle.
+
+## Problem
+
+Every client question was handled by someone on the support team. As the demand for help grows, that team saturates and the client waits.
+
+A large share of those questions repeat: how to do something, what a human-resources or occupational-health concept means, what labour law says about it. The tool exists so a client resolves those on their own, and the team handles what genuinely needs a person.
+
+## Technical decisions
+
+With several client companies on the same installation, a model querying production data raises a question a prompt cannot answer: who may read what. If access control depended on the model following instructions, rephrasing the question would be enough to get around it.
+
+So the question is translated to SQL, and the server rewrites that query before executing it. A rewriter over the syntax tree injects three filters: client database, session role and action scope.
+
+The filters are injected, not checked afterwards. A query asking for another company's data does not fail validation: it runs already scoped and returns only what is permitted.
+
+## Architecture
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Result
+
+On that base: differentiated access control for developer, administrator and user, sanitisation of sensitive fields, an audit record per query, and retrieval with a relevance floor.
+
+With that floor, a question with no support in the data returns that there is no information. It does not return a text assembled from loosely related fragments.
+
+## What I learned
+
+The first three versions kept part of the visibility control in the prompt. Each rebuild moved one of those decisions into code, until none of them were left in the instruction text.
+
+The practical difference is that the final version can be tested: a test runs the rewriter and checks that the resulting SQL carries all three filters. There is nothing equivalent to execute against a prompt.

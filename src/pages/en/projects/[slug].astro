@@ -1,0 +1,18 @@
+---
+import ProjectPage from '../../../components/pages/Project.astro';
+import { fichaSlugs, getProject } from '../../../lib/content';
+
+export async function getStaticPaths() {
+	const slugs = await fichaSlugs();
+	return slugs.map((slug) => ({ params: { slug } }));
+}
+
+const { slug } = Astro.params;
+const project = await getProject('en', slug!);
+
+// getStaticPaths only emits known slugs, so this is a guard against a future
+// refactor rather than a reachable branch.
+if (!project) throw new Error(`unknown project: ${slug}`);
+---
+
+<ProjectPage lang="en" {project} />

@@ -1,0 +1,85 @@
+---
+slug: deteccion-por-umbral
+title: Mass-encryption detector
+tagline: Three system signals combine into one behaviour score, and only that score decides to contain a process.
+areas: [seguridad, infra]
+kind: academico
+org: Universidad Técnica Nacional
+role: Individual
+period:
+  start: '2026-08'
+  end: '2026-08'
+tier: ficha
+home: false
+visibility: publico
+repo: https://github.com/EngelAlexey/Proyecto-Seguridad
+site: null
+stack:
+  - Python
+  - Linux
+  - Terraform
+  - AWS
+cover: null
+order: null
+diagram:
+  nodes:
+    - "Filesystem"
+    - "Signals"
+    - "Score"
+    - "Containment"
+  gate: 2
+  layers:
+    - name: "File events"
+      body: "A watcher records creations, writes and renames into a locked buffer. It says there is activity, not who is producing it."
+    - name: "Content entropy"
+      body: "The entropy of what is written is measured. Content close to random indicates the file has stopped resembling a document, without opening or identifying it."
+    - name: "Writes per process"
+      body: "Sampling write_bytes per process every 500 ms attributes the volume written to a specific process. It is the only one of the three signals that identifies the responsible party."
+    - name: "A single decision"
+      body: "No signal contains on its own. The component that combines them is the only one able to order containment, so thresholds are tuned without touching the sensors."
+  caption: "The three signals only observe; the decision to contain sits at a single point."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Context
+
+An individual final project for IT Security I. The brief asked for an autonomous detection and containment tool, plus a test bench to exercise it on.
+
+Everything runs in an isolated virtual machine with a snapshot taken first. No part of the exercise touches a real system.
+
+## Problem
+
+The brief asked for detection and containment without human intervention, and without knowing the binary in advance.
+
+A signature list only recognises what has been seen before, so the question becomes a different one: what does the operating system observe when something encrypts files in bulk, and how much of that can be measured without identifying the program.
+
+## Technical decisions
+
+Three independent signals, none conclusive on its own.
+
+Filesystem events say there is activity. The entropy of what is written says the content has stopped resembling a document. Sampling `write_bytes` per process every 500 ms says who is writing.
+
+A separate component combines the three into a score, and only that score decides containment.
+
+## Architecture
+
+<ArchDiagram {...frontmatter.diagram} />
+
+A filesystem watcher deposits events into a locked buffer. A sampling thread keeps the most recent snapshot of writes per process. The main thread reads the score once a second and decides whether to act.
+
+Containment kills the process tree and moves the binary into a quarantine directory with no execute permission.
+
+The test bench's infrastructure is described in Terraform. The lab is created and destroyed with one command, rather than rebuilt by hand.
+
+## Result
+
+The detector reacts to behaviour rather than identity, which was the point of the exercise.
+
+Terraform state and the variables file are kept out of version control. A state file stores sensitive values in the clear, and in a public repository that is a leak.
+
+## What I learned
+
+The threshold was the hard part. A legitimate backup produces a pattern very close to mass encryption: many files written quickly, with high-entropy content.
+
+With the three signals available I found no value that separates the two cases. The delivered version prefers not to miss a real case and accepts false positives. That is documented as a choice, not as an optimal setting.
