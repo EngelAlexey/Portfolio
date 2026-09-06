@@ -24,8 +24,6 @@ const siteName = t(lang).meta.siteName;
 <title>{title}</title>
 <meta name="description" content={description} />
 
-{/* A page that does not know its own URL claims neither a canonical nor a
-    language pair — it only asks to stay out of the index. */}
 {
 	noindex ? (
 		<meta name="robots" content="noindex, follow" />

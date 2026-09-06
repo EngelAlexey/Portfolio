@@ -13,8 +13,6 @@ const items = stack.map((entry) => toolFor(entry));
 
 <ul class="stack" aria-label={label}>
 	{
-		/* A real brand mark gets an icon; concepts (VLAN, VPN, a reranker with no
-		   logo) show as a clean text chip rather than a redundant monogram. */
 		items.map((tool) => (
 			<li class:list={{ 'with-mark': Boolean(tool.d) }}>
 				{tool.d && (

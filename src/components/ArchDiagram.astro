@@ -1,19 +1,6 @@
 ---
 export type Layer = { name: string; body: string };
 
-/**
- * A pipeline with one gate that enforces several layers at once. Private
- * projects have no screenshots, so this is what carries the shape — and the
- * layers are the argument, not decoration: clicking one says what it does.
- *
- * It started as a security figure and is not one any more: a gate is any stage
- * where several rules are applied together, so a transaction, an enrolment
- * endpoint or a scoring component all draw the same way.
- *
- * Every layer's body is rendered up front and CSS shows the active one, so the
- * whole thing reads correctly with JavaScript disabled. The script only moves
- * `data-active`.
- */
 interface Props {
 	nodes: readonly string[];
 	gate: number;
@@ -23,12 +10,8 @@ interface Props {
 
 const { nodes, gate, layers, caption = null } = Astro.props;
 
-// Unique per instance, so two diagrams on one page cannot collide on ids.
 const uid = `sl-${crypto.randomUUID().slice(0, 8)}`;
 
-// Four buttons across a text column leave no room for a two-word name, and
-// `auto-fit` laid them out three-and-one. Four go two by two; two and three
-// keep a single row.
 const cols = layers.length === 4 ? 2 : layers.length;
 ---
 
@@ -53,11 +36,6 @@ const cols = layers.length === 4 ? 2 : layers.length;
 		}
 	</div>
 
-	{/*
-	  Each button names the paragraph it reveals, and the bodies are a polite
-	  live region. Without the pairing, pressing a layer changed the text on
-	  screen and announced nothing at all.
-	*/}
 	<div class="layers">
 		{
 			layers.map((layer, i) => (
@@ -125,11 +103,6 @@ const cols = layers.length === 4 ? 2 : layers.length;
 		color: var(--ink-muted);
 	}
 
-	/* The gate and the open layer are marked in ink, by weight, not by hue. They
-	   were tinted with the security colour on every diagram — including one on a
-	   project that is not about security at all, which made a hue mean something
-	   other than its area for the only time on the site. Ink says "this is the
-	   one" without shouting, and it says it the same way on every page. */
 	.node.gate {
 		border-color: var(--ink);
 		background: var(--surface);
@@ -230,8 +203,6 @@ const cols = layers.length === 4 ? 2 : layers.length;
 		color: var(--ink-muted);
 	}
 
-	/* Only the active body shows; the rest stay in the DOM so the section still
-	   reads end to end without JavaScript. */
 	.bodies .body {
 		display: none;
 	}

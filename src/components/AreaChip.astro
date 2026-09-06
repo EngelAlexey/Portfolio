@@ -11,22 +11,12 @@ interface Props {
 const { area, lang, size = 'md' } = Astro.props;
 ---
 
-{/* A label, not a control. The chip carries `data-area` so a card can be matched
-    by area, but the handle for resonance is the filter pill: on a card the
-    title's overlay link covers the chip, and lifting it above would cost the
-    card its click target for the sake of a second route to the same thing. */}
 <span class:list={['chip', { sm: size === 'sm' }]} style={areaStyle(area)} data-area={area}>
 	<span class="dot" aria-hidden="true"></span>
 	{areaLabel(area, lang)}
 </span>
 
 <style>
-	/* The dot is the only thing that carries the hue. It used to be carried four
-	   times over — tinted text, tinted fill, tinted border and the dot — and a
-	   grid of twelve cards turned that into two dozen coloured pills competing
-	   with the writing they were meant to label. A label is not a choice: the
-	   filter pills still take the full tint when pressed, because pressing one
-	   is a choice. Here a dot is enough, and the word carries the meaning. */
 	.chip {
 		display: inline-flex;
 		align-items: center;

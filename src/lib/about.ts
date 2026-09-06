@@ -1,25 +1,7 @@
 import type { Lang } from './i18n';
 
-/**
- * Stable biographical facts, mirrored from `D:/GitHub/Personal/CV/cv.md` — the
- * superset fact base the CV variants are cut from. Keep this file in step with
- * it; the rendered `cv-*.html` files are per-audience subsets, so they are the
- * wrong thing to copy from.
- *
- * Two standing rules from the CV apply here as well: no exclusivity claims
- * ("en solitario", "único responsable") and no speed claims ("en dos meses"),
- * and no business metrics — client counts, revenue, real user numbers. Only
- * technical figures from his own engineering.
- */
-
 type Bilingual = Record<Lang, string>;
 
-/**
- * Most of these strings are proper nouns that read the same in both languages,
- * so a plain string means "identical in ES and EN" and only the ones that
- * actually differ carry a pair. Spelling every one of them out bilingually
- * would bury the handful that matter under duplicated product names.
- */
 export type Text = string | Bilingual;
 
 export const text = (value: Text, lang: Lang): string =>
@@ -30,19 +12,11 @@ export type Role = {
 	title: Bilingual;
 	org: Text;
 	detail: Bilingual;
-	/** Which employer mark to draw, when there is one. */
 	mark?: 'intercargo' | 'kaizen' | 'starcargo' | 'utn';
-	/** Shown by the org timeline when the full title does not read as a post. */
 	post?: Bilingual;
-	/** Short form for the home page strip, where the full title is too long. */
 	shortOrg?: string;
 };
 
-/**
- * Marks that spell the organisation out. Where one of these is shown the name
- * does not need repeating underneath — the logo already says it. Anything not
- * listed here is a bare symbol, and its name still has to be written.
- */
 export const WORDMARKS = new Set(['intercargo', 'kaizen', 'starcargo', 'utn']);
 
 export const EXPERIENCE: Role[] = [
@@ -91,12 +65,6 @@ export const EXPERIENCE: Role[] = [
 	}
 ];
 
-/**
- * What he was at a place, looked up by the same key the project timeline groups
- * on — the part of `org` before the em dash. Experience is searched before
- * education, and in its own order, so an employer answers with the most senior
- * post held there rather than the first one found.
- */
 export function postAt(key: string, lang: Lang): { title: string; mark?: Role['mark'] } | null {
 	const named = (role: Role) =>
 		text(role.org, lang).split(' — ')[0].trim() === key ||
@@ -120,11 +88,6 @@ export const EDUCATION: Role[] = [
 	}
 ];
 
-/**
- * `status` is separate from `issuer` because it is the only translatable part:
- * an issuer is a proper noun, "en curso" is not. Folding it into the issuer
- * string printed Spanish on the English page.
- */
 export const CERTIFICATIONS: { name: string; issuer: string; status?: Bilingual }[] = [
 	{ name: 'Introduction to Cybersecurity', issuer: 'Cisco Networking Academy' },
 	{
@@ -148,12 +111,6 @@ export const LANGUAGES: { label: Bilingual; level: Bilingual }[] = [
 	}
 ];
 
-/**
- * Mirrors the CV's trimmed skill list. Anything used only once is deliberately
- * absent: Angular, Express, Prisma, Turborepo, threat modelling, malware
- * analysis. C# and Flutter were listed here but appear nowhere in the CV or in
- * his own audit of what he has actually used, so they are gone too.
- */
 export const SKILL_GROUPS: { label: Bilingual; items: Text[] }[] = [
 	{
 		label: { es: 'Lenguajes', en: 'Languages' },

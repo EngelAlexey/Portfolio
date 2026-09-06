@@ -6,15 +6,6 @@ import type { OrgGroup } from '../lib/content';
 import { formatPeriod } from '../lib/format';
 import { t, type Lang } from '../lib/i18n';
 
-/**
- * The projects as a chronology of the places behind them. The rail draws itself
- * as the reader descends: it is a position indicator, not an ornament — the
- * line's length says how far through the record you are, and a node inks in
- * when its organisation is reached.
- *
- * With motion reduced the line is simply drawn in full from the start, because
- * what it encodes is structure rather than movement.
- */
 interface Props {
 	groups: OrgGroup[];
 	lang: Lang;
@@ -40,17 +31,6 @@ const years = (period: OrgGroup['period']) =>
 					<span class="node" aria-hidden="true" />
 
 					<div class="head">
-						{/*
-						  The stop carries the employer's own mark and the post held there,
-						  both already on the site — the home page shows these logos and the
-						  about page these titles. A timeline of employers that showed
-						  neither left a tall empty column beside every group and said less
-						  than the pages either side of it.
-
-						  Where the mark spells the company out, the heading keeps the name
-						  for the document outline and for anyone listening, but does not
-						  print it a second time under a logo that already says it.
-						*/}
 						{post(group)?.mark && (
 							<span class="logo">
 								<OrgMark org={post(group)!.mark!} width={112} />
@@ -88,8 +68,6 @@ const years = (period: OrgGroup['period']) =>
 		padding-left: 2.25rem;
 	}
 
-	/* Anchored to the first node; the script trims the far end to the last one.
-	   The `bottom` is the no-JS fallback, so the line still spans the record. */
 	.rail {
 		position: absolute;
 		top: 0.84375rem;
@@ -99,9 +77,6 @@ const years = (period: OrgGroup['period']) =>
 		background: var(--line-strong);
 	}
 
-	/* No transition: the height is set from scroll position on every frame, so
-	   easing it would only make the line lag behind the reader. The nodes do
-	   transition, because those are discrete changes of state. */
 	.fill {
 		display: block;
 		width: 100%;
@@ -187,9 +162,6 @@ const years = (period: OrgGroup['period']) =>
 		padding: 0;
 	}
 
-	/* The heading rides alongside its own projects rather than above them, and
-	   stays put while they scroll past — so the place you are reading about is
-	   always named, without repeating it on every card. */
 	@media (min-width: 62rem) {
 		.group {
 			display: grid;
@@ -223,12 +195,6 @@ const years = (period: OrgGroup['period']) =>
 </style>
 
 <script>
-	// The line is drawn to wherever the reader has got to. A mark sits partway
-	// down the viewport; the rail fills to meet it and each node inks as the
-	// line passes. Driven by scroll position rather than by intersections,
-	// because the groups are wildly different heights — one holds seven
-	// projects and another holds one — and a band that catches a tall group for
-	// half the page misses a short one at the end entirely.
 	const timeline = document.querySelector<HTMLElement>('[data-timeline]');
 	const rail = timeline?.querySelector<HTMLElement>('.rail');
 	const fill = timeline?.querySelector<HTMLElement>('[data-fill]');
@@ -238,8 +204,6 @@ const years = (period: OrgGroup['period']) =>
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 		if (reduced) {
-			// Structure, not spectacle: with motion reduced the record is simply
-			// complete from the first frame.
 			for (const group of groups) group.setAttribute('data-reached', '');
 			fill.style.height = '100%';
 		} else {
@@ -248,9 +212,6 @@ const years = (period: OrgGroup['period']) =>
 			const draw = () => {
 				queued = false;
 
-				// The line spans the nodes, not the container. Without this it ran
-				// on past the final card into empty space — most visibly once a
-				// filter had collapsed everything below.
 				const visible = groups.filter((group) => !group.hidden);
 				const first = visible[0]?.querySelector<HTMLElement>('.node');
 				const last = visible[visible.length - 1]?.querySelector<HTMLElement>('.node');
@@ -263,11 +224,6 @@ const years = (period: OrgGroup['period']) =>
 
 				const box = rail.getBoundingClientRect();
 
-				// The last organisation sits near the foot of the page, where no
-				// amount of scrolling can lift its node past a mark set partway up
-				// the viewport. Reaching the bottom of the page is reaching the end
-				// of the record, so say so outright rather than leaving the line
-				// permanently short of its own last node.
 				const ended =
 					innerHeight + scrollY >= document.documentElement.scrollHeight - 2;
 				const mark = ended ? Infinity : innerHeight * 0.55;
@@ -291,7 +247,6 @@ const years = (period: OrgGroup['period']) =>
 
 			addEventListener('scroll', schedule, { passive: true });
 			addEventListener('resize', schedule, { passive: true });
-			// Filtering collapses whole organisations, moving every node below.
 			document.addEventListener('projects:filtered', schedule);
 			draw();
 		}

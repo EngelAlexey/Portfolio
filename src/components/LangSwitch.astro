@@ -9,9 +9,6 @@ interface Props {
 
 const { lang, routeKey, slug } = Astro.props;
 
-// Built from the route the page declares, not parsed back out of the URL:
-// with `build.format: 'file'` the pathname is `/contacto.html`, which no
-// segment table matches.
 const href = path(other(lang), routeKey, slug);
 const strings = t(lang).a11y;
 ---

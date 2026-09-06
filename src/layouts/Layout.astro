@@ -33,8 +33,6 @@ const {
 } = Astro.props;
 
 const strings = t(lang);
-// The page declares its own route; parsing it back out of the URL would break
-// under `build.format: 'file'`, where the pathname carries a `.html` suffix.
 const current = key;
 
 const links = [
@@ -52,18 +50,16 @@ const links = [
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" href="/favicon.svg" />
 		<link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
-		{/* Paints the browser chrome to match whichever theme is showing. */}
 		<meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#17171c" media="(prefers-color-scheme: dark)" />
 		<script is:inline>
-			// Applies the stored theme before first paint so the toggle never flashes.
 			try {
 				var stored = localStorage.getItem('theme');
 				if (stored === 'dark' || stored === 'light') {
 					document.documentElement.dataset.theme = stored;
 				}
 			} catch (e) {
-				/* private mode / blocked storage: fall back to prefers-color-scheme */
+				// Blocked storage: fall back to prefers-color-scheme.
 			}
 		</script>
 		<Seo lang={lang} key={key ?? 'home'} {slug} {title} {description} {image} {person} {noindex} />
@@ -120,12 +116,6 @@ const links = [
 			</footer>
 		</div>
 
-		{/*
-		  Area resonance. One attribute on <html> and the rest is CSS, so this
-		  stays a few lines and adds no listeners per element: pointing at or
-		  tabbing to anything that names an area holds that area's work at full
-		  strength across the page and lets everything else recede.
-		*/}
 		<script is:inline>
 			(() => {
 				const root = document.documentElement;

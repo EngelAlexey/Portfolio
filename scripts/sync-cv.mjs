@@ -1,21 +1,4 @@
 #!/usr/bin/env node
-/**
- * Copies the built CV PDFs out of the CV repo and into `public/cv/`.
- *
- * Astro serves `public/`, and the deploy host has no access to the CV repo, so
- * the PDFs are committed here. This runs on `prebuild` to keep them current.
- *
- * Two different situations, deliberately handled differently:
- *
- * - The CV repo is not on this machine at all — a build server, a fresh clone.
- *   Nothing to sync, so trust the committed PDFs and carry on. Failing here
- *   would mean the site could only ever be built from one laptop.
- * - The CV repo is here but a PDF is missing. That is a real problem: the
- *   previous version only warned, and because the source filenames had been
- *   renamed months earlier, the site quietly shipped a stale PDF for weeks. A
- *   build that can reach the source and still cannot produce the real document
- *   should not produce a site.
- */
 import { copyFile, mkdir, access } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CV_REPO = process.env.CV_SOURCE_DIR ?? 'D:/GitHub/Personal/CV';
 
-/** `<variant>-<lang>` → the exact filename `build-pdf.mjs` writes. */
 const FILES = [
 	['ciberseguridad-es', 'Alex Herrera Manzanares - CV Ciberseguridad.pdf'],
 	['ciberseguridad-en', 'Alex Herrera Manzanares - CV Cybersecurity (EN).pdf'],

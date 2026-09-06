@@ -17,7 +17,6 @@ const counts = await areaCounts(lang);
 const groups = await projectsByOrg(lang);
 const total = groups.reduce((n, group) => n + group.projects.length, 0);
 
-/** Sentinels the client script substitutes; keeps word order in the dictionary. */
 const COUNT = '{n}' as unknown as number;
 const ORGS = '{orgs}' as unknown as number;
 
@@ -43,7 +42,6 @@ const resultLine = (projects: number, orgs: number) =>
 
 	<Container>
 		<AreaFilter {lang} {counts} />
-		{/* Every phrasing rides along as an attribute so the script needs no import. */}
 		<p
 			class="results"
 			aria-live="polite"
@@ -59,8 +57,6 @@ const resultLine = (projects: number, orgs: number) =>
 	</Container>
 
 	<Container>
-		{/* Rendered up front and hidden by the filter script, so every project is
-		    in the page with JavaScript off. */}
 		<p class="empty" data-empty hidden>{strings.projects.empty}</p>
 
 		<OrgTimeline {groups} {lang} />
@@ -68,8 +64,6 @@ const resultLine = (projects: number, orgs: number) =>
 </Layout>
 
 <script>
-	// No imports: the two phrasings come from data attributes on the results
-	// line, so the dictionary never reaches the browser.
 	const filter = document.querySelector<HTMLElement>('[data-area-filter]');
 
 	if (filter) {
@@ -90,8 +84,6 @@ const resultLine = (projects: number, orgs: number) =>
 				if (match) shown += 1;
 			}
 
-			// A whole organisation drops out when none of its projects match —
-			// heading, node and all — so the chronology never shows an empty stop.
 			let orgs = 0;
 			for (const group of groups) {
 				const keep = [...group.querySelectorAll<HTMLElement>('[data-project-list] > li')].some(
@@ -113,7 +105,6 @@ const resultLine = (projects: number, orgs: number) =>
 			}
 			if (empty) empty.hidden = shown > 0;
 
-			// The rail is measured from node positions, which just moved.
 			document.dispatchEvent(new CustomEvent('projects:filtered'));
 
 			for (const button of buttons) {

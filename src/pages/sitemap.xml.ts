@@ -3,11 +3,6 @@ import { fichaSlugs } from '../lib/content';
 import { LANGS, alternates, path, type RouteKey } from '../lib/i18n';
 import { absolute } from '../lib/site';
 
-/**
- * Hand-rolled rather than `@astrojs/sitemap`: the integration cannot emit the
- * per-locale `xhtml:link` alternates and the `x-default` pointing at Spanish,
- * which is the whole reason this file exists on a bilingual site.
- */
 const STATIC_KEYS: RouteKey[] = ['home', 'projects', 'about', 'contact'];
 
 type Entry = { key: RouteKey; slug?: string };

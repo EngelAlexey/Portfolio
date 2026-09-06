@@ -10,8 +10,6 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const project = await getProject('en', slug!);
 
-// getStaticPaths only emits known slugs, so this is a guard against a future
-// refactor rather than a reachable branch.
 if (!project) throw new Error(`unknown project: ${slug}`);
 ---
 

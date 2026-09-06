@@ -9,17 +9,6 @@ const { lang } = Astro.props;
 const strings = t(lang).a11y;
 ---
 
-{/*
-  Which icon shows is decided entirely by CSS from `data-theme` on <html>, which
-  the pre-paint script in Layout.astro has already set. So the correct icon is
-  in the very first frame and the script below only has to handle the click.
-
-  The label is deliberately neutral in the markup. Which theme the button would
-  switch *to* is not knowable at build time — it depends on stored choice or OS
-  preference — so naming one of them here announced the wrong action to anyone
-  already in dark mode, and stayed wrong forever if the script never ran.
-  `relabel()` sharpens it to the specific direction once JS is available.
-*/}
 <button
 	type="button"
 	class="toggle"
@@ -63,7 +52,6 @@ const strings = t(lang).a11y;
 		border-color: var(--line-strong);
 	}
 
-	/* Light is the default, so the moon (“switch to dark”) shows. */
 	.sun {
 		display: none;
 	}
@@ -126,7 +114,7 @@ const strings = t(lang).a11y;
 			try {
 				localStorage.setItem('theme', next);
 			} catch {
-				/* storage blocked: the choice just does not persist */
+				// Blocked storage: the choice lasts this page only.
 			}
 			relabel();
 		});

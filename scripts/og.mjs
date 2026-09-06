@@ -1,20 +1,4 @@
 #!/usr/bin/env node
-/**
- * Draws the social cards and the raster icons, and writes them to `public/img/`.
- *
- *   pnpm og
- *
- * Rasterised on purpose: LinkedIn and WhatsApp will not render an SVG passed as
- * `og:image`, so a vector card would preview as nothing at all.
- *
- * This is a script rather than a drawing someone made once, because the card has
- * to be redrawn whenever the wording changes or `public/img/alex.jpg` appears —
- * the photo is composited in when it exists and skipped when it does not.
- *
- * Colours are the light-theme tokens from `src/app.css`, converted to sRGB. The
- * card does not follow the reader's theme: it is an image on someone else's
- * timeline, so it always shows the paper side.
- */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
@@ -23,7 +7,6 @@ const root = process.cwd();
 const OUT = join(root, 'public', 'img');
 const PHOTO = join(OUT, 'alex.jpg');
 
-/** Light-theme tokens from src/app.css, resolved to sRGB. */
 const PAPER = '#fafaf9';
 const INK = '#1c1c21';
 const INK_MUTED = '#65656e';
@@ -49,7 +32,6 @@ const COPY = {
 const escape = (s) =>
 	s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-/** The photo, base64-inlined, or null. Resvg resolves no external hrefs. */
 function photoHref() {
 	if (!existsSync(PHOTO)) return null;
 	return `data:image/jpeg;base64,${readFileSync(PHOTO).toString('base64')}`;
@@ -87,7 +69,6 @@ function card(lang) {
 </svg>`;
 }
 
-/** The favicon mark, scaled up for the iOS home screen. */
 const touchIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="180" height="180">
   <rect width="32" height="32" rx="7" fill="#17171c"/>
   <path d="M9.4 23 15 9h2.4l5.6 14h-2.9l-1.3-3.5h-5.6L11.9 23H9.4zm4.7-5.8h4l-2-5.4-2 5.4z" fill="#fafaf9"/>

@@ -50,8 +50,6 @@ export const es = {
 		resultsMany: (n: number) => `${n} proyectos`,
 		orgsOne: '1 organización',
 		orgsMany: (n: number) => `${n} organizaciones`,
-		// Split so the count line pluralises both halves and keeps Spanish word
-		// order in the dictionary rather than in the browser.
 		resultsJoin: (projects: string, orgs: string) => `${projects} en ${orgs}`,
 		independent: 'Por cuenta propia',
 		empty: 'Ningún proyecto coincide con ese filtro.'

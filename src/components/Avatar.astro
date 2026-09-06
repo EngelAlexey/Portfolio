@@ -2,12 +2,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-/**
- * Draws the photo when `public/img/alex.jpg` is there and a monogram when it is
- * not, decided at build time. The previous version took a `hasPhoto` prop that
- * no caller ever passed, so the monogram was the only branch that could ever
- * render — dropping the file in would have changed nothing.
- */
 interface Props {
 	alt: string;
 	size?: number;
@@ -16,9 +10,6 @@ interface Props {
 const { alt, size = 128 } = Astro.props;
 
 const PHOTO = '/img/alex.jpg';
-// Resolved from the project root, not from `import.meta.url`: this component is
-// bundled before it runs, so a path relative to the module lands in the build
-// output rather than in `src/`.
 const hasPhoto = existsSync(join(process.cwd(), 'public', PHOTO));
 ---
 

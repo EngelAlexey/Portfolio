@@ -20,14 +20,6 @@ const meta = project.meta;
 const around = await neighbours(lang, meta.slug);
 const { Content } = await renderProject(project);
 
-/**
- * `https://www.starcargoservice.com/` → `www.starcargoservice.com`,
- * `https://github.com/EngelAlexey/Guias-Scout` → `github.com/EngelAlexey/Guias-Scout`.
- *
- * A link that reads only "Demo" says nothing about where it lands. Showing the
- * address is also the honest thing on a private project: the reader can see it
- * is a public website and not a back door into somebody's internals.
- */
 const address = (url: string): string => {
 	const { host, pathname } = new URL(url);
 	return pathname === '/' ? host : host + pathname.replace(/\/$/, '');
@@ -70,12 +62,6 @@ const period = formatPeriod(meta.period, strings.project.present);
 			<StackList stack={meta.stack} label={strings.project.stack} />
 		</div>
 
-		{/*
-		  The notice and the links are not alternatives. Client work keeps its
-		  source closed and can still have a website anyone may visit, and saying
-		  both — "the code is not mine to show, here is the thing itself" — is more
-		  use to a reader than either sentence alone.
-		*/}
 		{
 			meta.visibility === 'privado' && (
 				<aside class="notice">
@@ -104,10 +90,6 @@ const period = formatPeriod(meta.period, strings.project.present);
 	</Container>
 
 	<Container size="text">
-		{/* The diagram's data lives in front matter, where the schema validates it;
-		    the `.mdx` body decides where in the narrative it is drawn. `content.ts`
-		    fails the build if a `.md` file declares one, so it can never go
-		    unnoticed. */}
 		<Prose>
 			<Content />
 		</Prose>
@@ -243,8 +225,6 @@ const period = formatPeriod(meta.period, strings.project.present);
 		font-size: 0.9375rem;
 	}
 
-	/* Ink and a rule, never a brand blue: on this site a hue means an area, and
-	   a link is not an area. The underline is what says "this is pressable". */
 	.links a {
 		display: inline-flex;
 		align-items: baseline;

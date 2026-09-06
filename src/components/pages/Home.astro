@@ -25,7 +25,6 @@ const tools = heroTools();
 const orgs = EXPERIENCE.filter((role) => role.mark);
 const cvHref = CV[CV_DEFAULT][lang];
 
-// Counted at build so the strip cannot drift from the content it describes.
 const proof = [
 	{ value: String((await allProjects(lang)).length), label: strings.home.proof.projects },
 	{ value: String((await projectsByOrg(lang)).length), label: strings.home.proof.orgs },
@@ -56,12 +55,6 @@ const proof = [
 				<a class="btn" href={cvHref} download>{strings.home.ctaCv}</a>
 			</div>
 
-			{/*
-			  The marks are `aria-hidden`, so each item carries the tool's name as
-			  real text. `title` alone was not enough: it is never announced on
-			  keyboard focus, which left the twelve logos with no accessible name
-			  at all.
-			*/}
 			<ul class="herostack" aria-label={strings.home.heroStackLabel}>
 				{tools.map((tool, i) => (
 					<li title={tool.label} style={`--i: ${i}`}>
@@ -107,8 +100,6 @@ const proof = [
 				<div class="section">
 					<h2>{strings.home.workTitle}</h2>
 
-					{/* `data-areas` is what lets a card recede when the reader points
-					    at an area it does not belong to. */}
 					<ul class="grid">
 						{featured.map((project) => (
 							<li data-areas={project.meta.areas.join(' ')}>
@@ -140,10 +131,6 @@ const proof = [
 		max-width: 44rem;
 	}
 
-	/* Ink pill, live dot — the same language the area chips speak, so the whole
-	   site has one rule: a dot may carry colour, everything else is ink. This
-	   badge was borrowing the `infra` tokens, which made a hue that is supposed
-	   to mean an area stand for availability instead. */
 	.badge {
 		display: inline-flex;
 		align-items: center;
@@ -209,10 +196,6 @@ const proof = [
 		color: var(--ink);
 	}
 
-	/* The one piece of motion the page starts on its own: the marks ink in
-	   strictly left to right, like something passing along a line being
-	   checked. Horizontal on purpose — a vertical fade-up is the house style of
-	   every generated page. It runs once, on load, and nowhere else. */
 	@media (prefers-reduced-motion: no-preference) {
 		.herostack li {
 			opacity: 0;
@@ -296,10 +279,6 @@ const proof = [
 		color: var(--ink-faint);
 	}
 
-	/* The featured set is capped at four by the content rules, so this is a
-	   two-by-two, not a track count that happens to fit. Auto-fill gave three
-	   columns on a wide screen and left the fourth card stranded on its own
-	   row. */
 	.grid {
 		display: grid;
 		grid-template-columns: 1fr;

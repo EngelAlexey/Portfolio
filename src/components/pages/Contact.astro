@@ -11,9 +11,6 @@ interface Props {
 const { lang } = Astro.props;
 const strings = t(lang);
 
-// The security variant leads because that is the profile the site argues for;
-// the other two are there so a reader looking for something else is not forced
-// through the wrong document.
 const variants = [CV_DEFAULT, ...CV_VARIANTS.filter((v) => v !== CV_DEFAULT)];
 const handle = (url: string) => new URL(url).pathname.replace(/\/+$/, '').split('/').pop() ?? url;
 const linkedinHandle = handle(PERSON.linkedin);

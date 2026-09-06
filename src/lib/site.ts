@@ -1,6 +1,3 @@
-/**
- * `site` in astro.config.mjs, exposed by Astro. One definition, in site-url.mjs.
- */
 export const SITE_URL = import.meta.env.SITE.replace(/\/+$/, '');
 
 export const absolute = (path: string): string =>
@@ -21,16 +18,9 @@ export const PERSON = {
 	github: 'https://github.com/EngelAlexey'
 } as const;
 
-/**
- * Three tailored CVs, two languages each, all written by `scripts/sync-cv.mjs`
- * from D:/GitHub/Personal/CV. The site leads with the security variant because
- * that is the profile it argues for; the contact page offers all three so a
- * reader looking for something else is not forced through the wrong document.
- */
 export const CV_VARIANTS = ['ciberseguridad', 'desarrollo', 'general'] as const;
 export type CvVariant = (typeof CV_VARIANTS)[number];
 
-/** The variant the home page hero downloads. */
 export const CV_DEFAULT: CvVariant = 'ciberseguridad';
 
 export const CV: Record<CvVariant, { es: string; en: string }> = {

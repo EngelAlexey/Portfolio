@@ -7,10 +7,6 @@ import { path, t, type Lang } from '../lib/i18n';
 interface Props {
 	project: Project;
 	lang: Lang;
-	/**
-	 * Set where the card already sits under a heading that names its
-	 * organisation, so the eyebrow does not say it a second time.
-	 */
 	omitOrg?: boolean;
 }
 
@@ -102,8 +98,6 @@ const years = formatPeriod(meta.period, strings.project.present, 'year');
 		margin: 0;
 	}
 
-	/* Stretched link: the whole card is the hit target, the anchor stays the
-	   only thing in the tab order. */
 	.title a {
 		text-decoration: none;
 	}

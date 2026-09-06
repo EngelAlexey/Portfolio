@@ -3,14 +3,6 @@ import Layout from '../layouts/Layout.astro';
 import Container from '../components/Container.astro';
 import { DEFAULT_LANG, path, t } from '../lib/i18n';
 
-/**
- * The previous build shipped no 404 page at all: its error component only ran on
- * client-side navigation, so a bad URL got the host's default. This is a real
- * static one.
- *
- * It answers for both language trees, so it stays in the default language:
- * the URL that produced it is unknown at build time.
- */
 const lang = DEFAULT_LANG;
 const strings = t(lang);
 ---

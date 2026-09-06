@@ -13,8 +13,6 @@ const { lang } = Astro.props;
 const strings = t(lang);
 const counts = toolsByArea();
 
-// Sentinels the client script substitutes, so the phrasing (and its word order,
-// which differs between languages) stays in the dictionary.
 const SHOWN = '{shown}' as unknown as number;
 const TOTAL = '{total}' as unknown as number;
 ---
@@ -46,12 +44,6 @@ const TOTAL = '{total}' as unknown as number;
 		}
 	</div>
 
-	{/*
-	  The counts and the label template are rendered into attributes so the
-	  client script never has to import `brands.ts` — that module carries every
-	  SVG paths, and importing it would ship ~50 kB of icon data to do
-	  arithmetic that is already known at build time.
-	*/}
 	<p
 		class="count mono"
 		aria-live="polite"
@@ -62,10 +54,6 @@ const TOTAL = '{total}' as unknown as number;
 		{strings.stack.showing(TOOLS.length, TOOLS.length)}
 	</p>
 
-	{/*
-	  Filtering moves one attribute; the tiles never re-render, so the marks
-	  paint once and stay put.
-	*/}
 	<ul class="grid" data-filter="all">
 		{
 			TOOLS.map((tool) => (
@@ -139,10 +127,6 @@ const TOTAL = '{total}' as unknown as number;
 		color: var(--ink-faint);
 	}
 
-	/* The rules are drawn by the tiles, not by a gap over a coloured backing.
-	   With the backing, the empty cells left at the end of the last row painted
-	   as one solid grey slab — 33 tools never divide evenly into 6, 4 or 2
-	   columns, so the ragged row is permanent and had to stop being a mistake. */
 	.grid {
 		display: grid;
 		grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -226,9 +210,6 @@ const TOTAL = '{total}' as unknown as number;
 </style>
 
 <script>
-	// No imports: everything this needs is already in the markup. Importing
-	// `brands.ts` here would ship every SVG path to the browser to do
-	// arithmetic that is settled at build time.
 	const root = document.querySelector<HTMLElement>('[data-tool-grid]');
 
 	if (root) {
