@@ -14,58 +14,32 @@ type AreaMeta = {
 	/** CSS custom-property prefix declared in app.css (`--area-<token>-fg`, …) */
 	token: string;
 	label: { es: string; en: string };
-	/** One line, used on the home page area strip */
-	blurb: { es: string; en: string };
 };
 
 export const AREAS: Record<AreaId, AreaMeta> = {
 	fullstack: {
 		token: 'fullstack',
-		label: { es: 'Full Stack', en: 'Full Stack' },
-		blurb: {
-			es: 'Aplicaciones web de punta a punta: interfaz, API, base de datos y despliegue.',
-			en: 'End-to-end web apps: interface, API, database and deployment.'
-		}
+		label: { es: 'Full Stack', en: 'Full Stack' }
 	},
 	ia: {
 		token: 'ia',
-		label: { es: 'IA', en: 'AI' },
-		blurb: {
-			es: 'Modelos integrados en producto, con las decisiones y los permisos fuera del prompt.',
-			en: 'Models embedded in products, with decisions and permissions kept out of the prompt.'
-		}
+		label: { es: 'IA', en: 'AI' }
 	},
 	datos: {
 		token: 'datos',
-		label: { es: 'Datos', en: 'Data' },
-		blurb: {
-			es: 'Integración, modelado dimensional, ETL y explotación en tableros.',
-			en: 'Integration, dimensional modelling, ETL and dashboard delivery.'
-		}
+		label: { es: 'Datos', en: 'Data' }
 	},
 	movil: {
 		token: 'movil',
-		label: { es: 'Móvil', en: 'Mobile' },
-		blurb: {
-			es: 'Aplicaciones nativas y multiplataforma, incluido el caso sin conectividad.',
-			en: 'Native and cross-platform apps, including the offline case.'
-		}
+		label: { es: 'Móvil', en: 'Mobile' }
 	},
 	seguridad: {
 		token: 'seguridad',
-		label: { es: 'Seguridad', en: 'Security' },
-		blurb: {
-			es: 'Control de acceso, validación, trazabilidad y análisis de malware.',
-			en: 'Access control, validation, auditability and malware analysis.'
-		}
+		label: { es: 'Seguridad', en: 'Security' }
 	},
 	infra: {
 		token: 'infra',
-		label: { es: 'Infraestructura', en: 'Infrastructure' },
-		blurb: {
-			es: 'Redes, nube y soporte: segmentación, disponibilidad y operación.',
-			en: 'Networking, cloud and support: segmentation, availability and operations.'
-		}
+		label: { es: 'Infraestructura', en: 'Infrastructure' }
 	}
 };
 

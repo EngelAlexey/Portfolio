@@ -18,7 +18,6 @@ export const es = {
 	},
 	home: {
 		badge: 'Disponible para práctica profesional, enero a abril de 2027',
-		title: 'Alex Herrera Manzanares',
 		role: 'Desarrollador de Software · Enfoque en Ciberseguridad',
 		headline: 'Diseño el modelo de seguridad de las plataformas que construyo.',
 		pitch:
@@ -39,7 +38,6 @@ export const es = {
 		stackLabel: 'Herramientas'
 	},
 	stack: {
-		title: 'Filtra por área',
 		lead: 'Cada herramienta está clasificada por el área en la que la uso.',
 		showing: (shown: number, total: number) => `${shown} de ${total} herramientas`
 	},

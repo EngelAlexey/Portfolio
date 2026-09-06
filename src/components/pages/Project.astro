@@ -5,6 +5,7 @@ import Container from '../Container.astro';
 import Prose from '../Prose.astro';
 import StackList from '../StackList.astro';
 import { neighbours, renderProject, type Project } from '../../lib/content';
+import { formatPeriod } from '../../lib/format';
 import { path, t, type Lang } from '../../lib/i18n';
 
 interface Props {
@@ -32,12 +33,7 @@ const address = (url: string): string => {
 	return pathname === '/' ? host : host + pathname.replace(/\/$/, '');
 };
 
-const period =
-	meta.period.end === null
-		? `${meta.period.start} — ${strings.project.present}`
-		: meta.period.start === meta.period.end
-			? meta.period.start
-			: `${meta.period.start} — ${meta.period.end}`;
+const period = formatPeriod(meta.period, strings.project.present);
 ---
 
 <Layout
@@ -168,7 +164,7 @@ const period =
 
 	h1 {
 		margin: 0;
-		font-size: clamp(1.875rem, 5vw, 2.75rem);
+		font-size: var(--h1);
 		font-weight: 600;
 		letter-spacing: -0.03em;
 		line-height: 1.1;

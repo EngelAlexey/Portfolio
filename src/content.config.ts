@@ -31,7 +31,7 @@ const projectSchema = z
 		}),
 
 		/** `ficha` gets its own page; `tarjeta` only ever appears as a short card. */
-		tier: z.enum(['ficha', 'tarjeta']),
+		tier: z.literal('ficha'),
 		/** Featured on the home page. Capped at 4 across the whole content set. */
 		home: z.boolean().default(false),
 
@@ -97,13 +97,6 @@ const projectSchema = z
 			// URL, so that judgement stays with whoever writes the front matter.
 		}
 
-		if (value.home && value.tier !== 'ficha') {
-			ctx.addIssue({
-				code: 'custom',
-				path: ['home'],
-				message: 'only a `ficha` can be featured on the home page'
-			});
-		}
 
 		if (value.period.end && value.period.end < value.period.start) {
 			ctx.addIssue({

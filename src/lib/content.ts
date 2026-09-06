@@ -143,9 +143,6 @@ export async function allProjects(lang: Lang): Promise<Project[]> {
 export const fichas = async (lang: Lang): Promise<Project[]> =>
 	(await allProjects(lang)).filter((p) => p.meta.tier === 'ficha');
 
-export const tarjetas = async (lang: Lang): Promise<Project[]> =>
-	(await allProjects(lang)).filter((p) => p.meta.tier === 'tarjeta');
-
 export const homeProjects = async (lang: Lang): Promise<Project[]> =>
 	(await allProjects(lang)).filter((p) => p.meta.home);
 

@@ -1,11 +1,7 @@
 /**
- * Every canonical, hreflang, Open Graph and sitemap URL is built from this.
- * Set `PUBLIC_SITE_URL` in Vercel when the custom domain lands — no code change.
- * `astro.config.mjs` reads the same variable for `site`.
+ * `site` in astro.config.mjs, exposed by Astro. One definition, in site-url.mjs.
  */
-const FALLBACK_ORIGIN = 'https://alexherrera.vercel.app';
-
-export const SITE_URL = (import.meta.env.PUBLIC_SITE_URL ?? FALLBACK_ORIGIN).replace(/\/+$/, '');
+export const SITE_URL = import.meta.env.SITE.replace(/\/+$/, '');
 
 export const absolute = (path: string): string =>
 	`${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;

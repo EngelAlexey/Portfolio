@@ -1,12 +1,12 @@
 ---
 import AreaChip from './AreaChip.astro';
 import type { Project } from '../lib/content';
+import { formatPeriod } from '../lib/format';
 import { path, t, type Lang } from '../lib/i18n';
 
 interface Props {
 	project: Project;
 	lang: Lang;
-	featured?: boolean;
 	/**
 	 * Set where the card already sits under a heading that names its
 	 * organisation, so the eyebrow does not say it a second time.
@@ -14,22 +14,15 @@ interface Props {
 	omitOrg?: boolean;
 }
 
-const { project, lang, featured = false, omitOrg = false } = Astro.props;
+const { project, lang, omitOrg = false } = Astro.props;
 
 const meta = project.meta;
 const strings = t(lang);
-const href = meta.tier === 'ficha' ? path(lang, 'project', meta.slug) : (meta.repo ?? null);
-const external = meta.tier !== 'ficha';
-
-const years =
-	meta.period.end === null
-		? `${meta.period.start} — ${strings.project.present}`
-		: meta.period.end.slice(0, 4) === meta.period.start.slice(0, 4)
-			? meta.period.start.slice(0, 4)
-			: `${meta.period.start.slice(0, 4)} — ${meta.period.end.slice(0, 4)}`;
+const href = path(lang, 'project', meta.slug);
+const years = formatPeriod(meta.period, strings.project.present, 'year');
 ---
 
-<article class:list={['card', { featured }]}>
+<article class="card">
 	<div class="eyebrow">
 		<span>{strings.kind[meta.kind]}</span>
 		{
@@ -49,9 +42,7 @@ const years =
 	<h3 class="title">
 		{
 			href ? (
-				<a href={href} rel={external ? 'noreferrer' : undefined} target={external ? '_blank' : undefined}>
-					{meta.title}
-				</a>
+				<a href={href}>{meta.title}</a>
 			) : (
 				meta.title
 			)
@@ -88,10 +79,6 @@ const years =
 		box-shadow: var(--shadow-card);
 	}
 
-	.featured {
-		padding: 1.5rem;
-	}
-
 	.eyebrow {
 		display: flex;
 		flex-wrap: wrap;
@@ -113,10 +100,6 @@ const years =
 		font-weight: 600;
 		letter-spacing: -0.01em;
 		margin: 0;
-	}
-
-	.featured .title {
-		font-size: 1.375rem;
 	}
 
 	/* Stretched link: the whole card is the hit target, the anchor stays the

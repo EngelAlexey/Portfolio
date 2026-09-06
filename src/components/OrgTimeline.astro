@@ -3,6 +3,7 @@ import OrgMark from './OrgMark.astro';
 import ProjectCard from './ProjectCard.astro';
 import { postAt, WORDMARKS } from '../lib/about';
 import type { OrgGroup } from '../lib/content';
+import { formatPeriod } from '../lib/format';
 import { t, type Lang } from '../lib/i18n';
 
 /**
@@ -25,12 +26,8 @@ const strings = t(lang);
 const post = (group: OrgGroup) => postAt(group.key, lang);
 const wordmarked = (group: OrgGroup) => WORDMARKS.has(post(group)?.mark ?? '');
 
-const years = (period: OrgGroup['period']) => {
-	const start = period.start.slice(0, 4);
-	if (period.end === null) return `${start} — ${strings.project.present}`;
-	const end = period.end.slice(0, 4);
-	return start === end ? start : `${start} — ${end}`;
-};
+const years = (period: OrgGroup['period']) =>
+	formatPeriod(period, strings.project.present, 'year');
 ---
 
 <div class="timeline" data-timeline>
@@ -60,7 +57,7 @@ const years = (period: OrgGroup['period']) => {
 							</span>
 						)}
 
-						<h2 class:list={{ named: wordmarked(group) }}>
+						<h2 class:list={{ 'sr-only': wordmarked(group) }}>
 							{group.name ?? strings.projects.independent}
 						</h2>
 
@@ -157,19 +154,6 @@ const years = (period: OrgGroup['period']) => {
 		font-size: 1.25rem;
 		font-weight: 600;
 		letter-spacing: -0.015em;
-	}
-
-	/* The wordmark above already reads as the company name, so the heading stays
-	   in the outline and in the accessibility tree but leaves the screen. */
-	.head h2.named {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip-path: inset(50%);
-		white-space: nowrap;
 	}
 
 	.post {

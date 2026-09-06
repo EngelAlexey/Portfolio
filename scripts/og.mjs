@@ -23,12 +23,6 @@ const root = process.cwd();
 const OUT = join(root, 'public', 'img');
 const PHOTO = join(OUT, 'alex.jpg');
 
-/** Same source and fallback as `src/lib/site.ts`, so the card cannot name a
-    different host than the canonical URLs do. */
-const HOST = (process.env.PUBLIC_SITE_URL ?? 'https://alexherrera.vercel.app')
-	.replace(/\/+$/, '')
-	.replace(/^https?:\/\//, '');
-
 /** Light-theme tokens from src/app.css, resolved to sRGB. */
 const PAPER = '#fafaf9';
 const INK = '#1c1c21';
@@ -89,9 +83,6 @@ function card(lang) {
 	)}</text>
   <text x="${textX}" y="420" font-family="Geist, Segoe UI, Helvetica, Arial, sans-serif" font-size="40" font-weight="500" fill="${INK}">${escape(
 		t.line
-	)}</text>
-  <text x="${textX}" y="540" font-family="JetBrains Mono, Consolas, monospace" font-size="24" fill="${INK_MUTED}">${escape(
-		HOST
 	)}</text>
 </svg>`;
 }

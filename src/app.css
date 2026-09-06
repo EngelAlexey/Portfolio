@@ -24,6 +24,8 @@
 	--ink-muted: oklch(45% 0.01 260);
 	--ink-faint: oklch(53% 0.01 260);
 
+	--h1: clamp(2rem, 5vw, 2.75rem);
+
 	--font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 	--font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
 	--ink-inverted: oklch(98.5% 0.002 260);

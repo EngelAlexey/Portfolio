@@ -2,14 +2,13 @@
 interface Props {
 	size?: 'wide' | 'text';
 	as?: 'section' | 'div' | 'article' | 'header';
-	class?: string;
 }
 
-const { size = 'wide', as = 'section', class: className } = Astro.props;
+const { size = 'wide', as = 'section' } = Astro.props;
 const Tag = as;
 ---
 
-<Tag class:list={['container', size, className]}>
+<Tag class:list={['container', size]}>
 	<slot />
 </Tag>
 

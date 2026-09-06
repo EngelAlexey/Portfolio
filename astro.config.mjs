@@ -2,18 +2,10 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import mdx from '@astrojs/mdx';
-
-/**
- * Every canonical, hreflang, Open Graph and sitemap URL is built from this.
- * Set `PUBLIC_SITE_URL` in Vercel when the custom domain lands — no code change.
- */
-const SITE_URL = (process.env.PUBLIC_SITE_URL ?? 'https://alexherrera.vercel.app').replace(
-	/\/+$/,
-	''
-);
+import { siteUrl } from './site-url.mjs';
 
 export default defineConfig({
-	site: SITE_URL,
+	site: siteUrl(),
 	output: 'static',
 	outDir: './dist',
 	trailingSlash: 'never',

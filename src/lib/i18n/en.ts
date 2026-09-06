@@ -20,7 +20,6 @@ export const en: Dict = {
 	},
 	home: {
 		badge: 'Available for a professional internship, January to April 2027',
-		title: 'Alex Herrera Manzanares',
 		role: 'Software Developer · Cybersecurity focus',
 		headline: 'I design the security model of the platforms I build.',
 		pitch:
@@ -41,7 +40,6 @@ export const en: Dict = {
 		stackLabel: 'Tools'
 	},
 	stack: {
-		title: 'Filter by area',
 		lead: 'Every tool is tagged with the area I use it in.',
 		showing: (shown: number, total: number) => `${shown} of ${total} tools`
 	},
