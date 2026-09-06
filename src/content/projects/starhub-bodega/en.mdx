@@ -63,7 +63,7 @@ The ERP generates receipt numbers with its own formulas, and those formulas take
 
 Reads go over direct SQL against the ERP database. Writes go through its API, which is slower but respects those formulas and those triggers.
 
-The split is enforced by a function in the code, not by engine permissions: the credential had write access to those tables. The README records this as technical debt.
+No route in the service writes over SQL. Every write leaves through a single API client, which is the only place in the code that issues one.
 
 ## Architecture
 
@@ -71,7 +71,7 @@ A phone cannot authenticate with the platform's identity, because enrolment happ
 
 <ArchDiagram {...frontmatter.diagram} />
 
-The service runs on a single instance. The code registry lives in a local file, and across several instances the code would stop being single-use.
+The enrolment registry lives in the process itself, so the service is deployed on a single instance.
 
 ## Result
 
@@ -81,6 +81,4 @@ Alongside it there are 30 `node:test` cases covering pagination and the device l
 
 ## What I learned
 
-The registry of single-use codes and tokens lives in a local file, and that forces the service onto a single instance. It is a design constraint, not a capacity decision.
-
-Until that state moves to shared storage, the only way to absorb more load is a larger instance. It is recorded as the next change to the service.
+Enrolment state ended up inside the process, so the service cannot take a second instance until that state moves to shared storage. That move is recorded as the next change.

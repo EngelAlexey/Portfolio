@@ -63,7 +63,7 @@ El ERP genera los números de recibo con fórmulas propias que no toman bloqueo.
 
 Las lecturas van por SQL directo contra la base del ERP. Las escrituras van por su API, que es más lento pero respeta esas fórmulas y esos disparadores.
 
-La separación se aplica en una función del código, no en los permisos del motor: la credencial tenía permiso de escritura sobre esas tablas. El README lo registra como deuda técnica.
+Ninguna ruta del servicio escribe por SQL. Todas las escrituras salen por un único cliente del API, que es el solo punto del código que las emite.
 
 ## Arquitectura
 
@@ -71,7 +71,7 @@ Un teléfono no puede autenticarse con la identidad de la plataforma, porque el 
 
 <ArchDiagram {...frontmatter.diagram} />
 
-El servicio corre en una sola instancia. El registro de códigos vive en un fichero local, y con varias instancias el código dejaría de ser de un solo uso.
+El registro de altas vive en el propio proceso, así que el servicio se despliega en una sola instancia.
 
 ## Resultado
 
@@ -81,6 +81,4 @@ Junto a ella hay 30 casos de `node:test` sobre paginación y sobre el ciclo de v
 
 ## Lo que aprendí
 
-El registro de códigos de un solo uso y de tokens vive en un fichero local, y eso obliga a correr una sola instancia. Es una restricción de diseño, no una decisión de capacidad.
-
-Mientras ese estado no se mueva a almacenamiento compartido, la única forma de absorber más carga es una instancia más grande. Está anotado como el siguiente cambio del servicio.
+El estado de enrolamiento quedó dentro del proceso, así que el servicio no admite una segunda instancia hasta moverlo a almacenamiento compartido. Ese traslado está anotado como el siguiente cambio.
