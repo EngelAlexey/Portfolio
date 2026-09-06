@@ -1,6 +1,6 @@
 ---
 slug: starcargo-crm
-title: Star CRM
+title: Star CRM | Gestión multisucursal
 tagline: Varios roles y sucursales sobre los mismos datos. El permiso se aplica en el servidor y en la base.
 areas: [fullstack, seguridad]
 kind: profesional

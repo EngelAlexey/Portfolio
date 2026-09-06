@@ -1,6 +1,6 @@
 ---
 slug: analisis-spyware
-title: Spyware analysis
+title: Spyware analysis | Signals and countermeasures
 tagline: An inventory of the signals this software leaves on a system and the control that cuts each step.
 areas: [seguridad]
 kind: academico

@@ -1,6 +1,6 @@
 ---
 slug: infraestructura-hotelera
-title: Red para cadena hotelera
+title: Red para cadena hotelera | Cuatro sedes
 tagline: Cuatro sedes bajo un mismo diseño, con segmentación por VLAN, enlaces cifrados y nube híbrida.
 areas: [infra, seguridad]
 kind: academico

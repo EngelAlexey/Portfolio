@@ -1,6 +1,6 @@
 ---
 slug: starcargo-web
-title: Sitio corporativo
+title: Sitio corporativo | Cuatro idiomas
 tagline: Rediseño completo en cuatro idiomas. Cada sección declara un tono y los componentes leen las variables vigentes.
 areas: [fullstack]
 kind: profesional

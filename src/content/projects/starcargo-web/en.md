@@ -1,6 +1,6 @@
 ---
 slug: starcargo-web
-title: Corporate website
+title: Corporate website | Four languages
 tagline: A full redesign in four languages. Each section declares a tone and components read the variables in force.
 areas: [fullstack]
 kind: profesional

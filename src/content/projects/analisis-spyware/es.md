@@ -1,6 +1,6 @@
 ---
 slug: analisis-spyware
-title: Análisis de spyware
+title: Análisis de spyware | Señales y contramedidas
 tagline: Inventario de las señales que deja este software en el sistema y del control que corta cada paso.
 areas: [seguridad]
 kind: academico

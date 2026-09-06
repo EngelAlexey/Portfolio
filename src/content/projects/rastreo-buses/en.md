@@ -1,6 +1,6 @@
 ---
 slug: rastreo-buses
-title: Bus tracking
+title: Bus tracking | One API, three roles
 tagline: One API for passenger, driver and administration, migrating from technical layers to feature modules.
 areas: [movil, fullstack]
 kind: academico
