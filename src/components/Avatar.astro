@@ -22,7 +22,8 @@ const hasPhoto = existsSync(join(process.cwd(), 'public', PHOTO));
 			width={size}
 			height={size}
 			style={`--size: ${size}px`}
-			loading="lazy"
+			loading="eager"
+			fetchpriority="high"
 			decoding="async"
 		/>
 	) : (
