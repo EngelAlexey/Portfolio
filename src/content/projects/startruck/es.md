@@ -1,7 +1,7 @@
 ---
 slug: startruck
-title: Star Track | Rastreo de viajes
-tagline: App Android para el chofer en ruta. Emergencias, servicios cercanos y la cadencia de posiciones que Android no garantiza.
+title: Star Track | Control de flota
+tagline: El chofer escanea la carta porte y el teléfono envía posiciones hasta cerrar el viaje. También reporta emergencias y localiza servicios en carretera.
 areas: [movil]
 kind: profesional
 org: Star Cargo Service

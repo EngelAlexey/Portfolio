@@ -1,7 +1,7 @@
 ---
 slug: dado-triple
 title: Dado Triple | Multiplayer game
-tagline: Web and mobile share an event-contract package, and the client that does not adapt stops compiling.
+tagline: Real-time dice matches, with mobile playing and the web watching the same room. Both clients share one event-contract package.
 areas: [movil, fullstack]
 kind: academico
 org: Universidad Técnica Nacional

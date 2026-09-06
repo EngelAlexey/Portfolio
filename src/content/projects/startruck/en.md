@@ -1,7 +1,7 @@
 ---
 slug: startruck
-title: Star Track | Trip tracking
-tagline: An Android app for the driver on the road. Emergencies, nearby services, and the position cadence Android does not guarantee.
+title: Star Track | Fleet control
+tagline: The driver scans the waybill and the phone sends positions until the trip closes. It also reports emergencies and finds services on the road.
 areas: [movil]
 kind: profesional
 org: Star Cargo Service

@@ -1,7 +1,7 @@
 ---
 slug: guias-scouts
-title: Guías y Scouts | Sitio del Grupo 35
-tagline: Formulario de ingreso y comprobante por correo, en dos idiomas, pensado para que lo mantenga gente que no programa.
+title: Guías y Scouts | Sitio e inscripciones
+tagline: Información del grupo y formulario de ingreso con comprobante por correo, en dos idiomas, pensado para que lo mantenga gente que no programa.
 areas: [fullstack]
 kind: academico
 org: Universidad Técnica Nacional — TCU

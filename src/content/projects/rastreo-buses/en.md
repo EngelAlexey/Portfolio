@@ -1,7 +1,7 @@
 ---
 slug: rastreo-buses
-title: Bus tracking | One API, three roles
-tagline: One API for passenger, driver and administration, migrating from technical layers to feature modules.
+title: Bus tracking | Public transport
+tagline: The passenger follows the bus live, the driver reports and administration supervises, all three over the same API.
 areas: [movil, fullstack]
 kind: academico
 org: Universidad Técnica Nacional

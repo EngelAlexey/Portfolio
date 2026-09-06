@@ -1,6 +1,6 @@
 ---
 slug: infraestructura-hotelera
-title: Hotel chain network | Four sites
+title: Hotel chain network | Design and compliance
 tagline: Four sites under one design, with VLAN segmentation, encrypted links and hybrid cloud.
 areas: [infra, seguridad]
 kind: academico

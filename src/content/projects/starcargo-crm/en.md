@@ -1,7 +1,7 @@
 ---
 slug: starcargo-crm
-title: Star CRM | Multi-branch management
-tagline: Several roles and branches over the same data. Permission is enforced on the server and in the database.
+title: Star CRM | Sales management
+tagline: Clients, contacts, quotes, appointments and shipment deals in a single record. Permission by role and branch is enforced on the server and in the database.
 areas: [fullstack, seguridad]
 kind: profesional
 org: Star Cargo Service

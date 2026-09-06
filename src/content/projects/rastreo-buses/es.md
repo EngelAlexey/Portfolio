@@ -1,7 +1,7 @@
 ---
 slug: rastreo-buses
-title: Rastreo de autobuses | Un API, tres roles
-tagline: Un mismo API para pasajero, conductor y administración, migrando de capas técnicas a módulos por funcionalidad.
+title: Rastreo de autobuses | Transporte público
+tagline: El pasajero sigue el autobús en vivo, el conductor reporta y la administración supervisa, los tres sobre el mismo API.
 areas: [movil, fullstack]
 kind: academico
 org: Universidad Técnica Nacional

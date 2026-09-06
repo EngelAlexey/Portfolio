@@ -1,7 +1,7 @@
 ---
 slug: dado-triple
 title: Dado Triple | Juego multijugador
-tagline: Web y móvil comparten un paquete de contrato de eventos, y el cliente que no se adapte deja de compilar.
+tagline: Partidas de dados en tiempo real, con el móvil jugando y la web observando la misma sala. Ambos clientes comparten un paquete de contrato de eventos.
 areas: [movil, fullstack]
 kind: academico
 org: Universidad Técnica Nacional

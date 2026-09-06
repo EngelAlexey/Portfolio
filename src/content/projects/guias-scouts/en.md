@@ -1,7 +1,7 @@
 ---
 slug: guias-scouts
-title: Guides and Scouts | Group 35 site
-tagline: A membership form and email confirmation, in two languages, built to be maintained by people who do not code.
+title: Guides and Scouts | Site and signups
+tagline: Group information and a signup form with an email receipt, in two languages, built to be kept up by people who do not code.
 areas: [fullstack]
 kind: academico
 org: Universidad Técnica Nacional — TCU
