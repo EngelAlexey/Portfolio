@@ -12,7 +12,7 @@ import { PERSON } from '../lib/site';
 
 interface Props {
 	lang: Lang;
-	key: RouteKey;
+	key: RouteKey | null;
 	slug?: string;
 	title: string;
 	description: string;
@@ -66,7 +66,7 @@ const links = [
 				/* private mode / blocked storage: fall back to prefers-color-scheme */
 			}
 		</script>
-		<Seo {lang} {key} {slug} {title} {description} {image} {person} {noindex} />
+		<Seo lang={lang} key={key ?? 'home'} {slug} {title} {description} {image} {person} {noindex} />
 		<Analytics />
 	</head>
 
@@ -104,7 +104,7 @@ const links = [
 					</nav>
 
 					<div class="tools">
-						<LangSwitch {lang} routeKey={key} {slug} />
+						<LangSwitch {lang} routeKey={key ?? 'home'} {slug} />
 						<ThemeToggle {lang} />
 					</div>
 				</div>
@@ -143,10 +143,21 @@ const links = [
 					else delete root.dataset.areaFocus;
 				};
 
-				document.addEventListener('pointerover', (e) => set(areaOf(e.target)));
-				document.addEventListener('pointerleave', () => set(null));
-				document.addEventListener('focusin', (e) => set(areaOf(e.target)));
+				document.addEventListener('pointerover', (e) => {
+					if (e.pointerType === 'mouse') set(areaOf(e.target));
+				});
+				document.addEventListener('pointerdown', (e) => {
+					if (e.pointerType !== 'mouse') set(null);
+				});
+				root.addEventListener('pointerleave', () => set(null));
+				document.addEventListener('focusin', (e) => {
+					const el = e.target;
+					set(el instanceof Element && el.matches(':focus-visible') ? areaOf(el) : null);
+				});
 				document.addEventListener('focusout', () => set(null));
+				document.addEventListener('keydown', (e) => {
+					if (e.key === 'Escape') set(null);
+				});
 			})();
 		</script>
 	</body>
@@ -275,16 +286,27 @@ const links = [
 
 		.controls {
 			width: 100%;
+			flex-wrap: wrap;
 			justify-content: space-between;
-			gap: 0.75rem;
+			gap: 0.5rem 0.75rem;
+		}
+
+		nav {
+			flex: 1 1 auto;
+			min-width: 0;
 		}
 
 		nav ul {
-			gap: 0.9rem;
+			flex-wrap: wrap;
+			gap: 0.35rem 0.75rem;
 		}
 
 		nav a {
-			font-size: 0.875rem;
+			font-size: 0.8125rem;
+		}
+
+		.tools {
+			flex: none;
 		}
 
 		.built {

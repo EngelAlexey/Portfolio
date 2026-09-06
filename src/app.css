@@ -23,7 +23,7 @@
 	/* Ink */
 	--ink: oklch(18% 0.008 260);
 	--ink-muted: oklch(45% 0.01 260);
-	--ink-faint: oklch(62% 0.01 260);
+	--ink-faint: oklch(53% 0.01 260);
 	--ink-inverted: oklch(98.5% 0.002 260);
 
 	/* Lines */
@@ -88,7 +88,7 @@
 
 		--ink: oklch(96% 0.003 265);
 		--ink-muted: oklch(72% 0.008 265);
-		--ink-faint: oklch(56% 0.01 265);
+		--ink-faint: oklch(62% 0.01 265);
 		--ink-inverted: oklch(15.5% 0.008 265);
 
 		--line: oklch(27% 0.009 265);
@@ -139,7 +139,7 @@
 
 	--ink: oklch(96% 0.003 265);
 	--ink-muted: oklch(72% 0.008 265);
-	--ink-faint: oklch(56% 0.01 265);
+	--ink-faint: oklch(62% 0.01 265);
 	--ink-inverted: oklch(15.5% 0.008 265);
 
 	--line: oklch(27% 0.009 265);
@@ -282,6 +282,36 @@ body {
 	[data-area-focus] .tile[data-area] {
 		transition: none;
 	}
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding: 0 1.15rem;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm);
+	font-size: 0.9375rem;
+	text-decoration: none;
+	color: var(--ink);
+	transition:
+		background-color 120ms ease,
+		border-color 120ms ease;
+}
+
+.btn:hover {
+	border-color: var(--ink);
+}
+
+.btn.primary {
+	background: var(--action);
+	border-color: var(--action);
+	color: var(--action-ink);
+}
+
+.btn.primary:hover {
+	background: var(--action-hover);
+	border-color: var(--action-hover);
 }
 
 /* Text for screen readers only. Global because component styles are scoped, and

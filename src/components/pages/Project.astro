@@ -120,13 +120,11 @@ const period =
 	<Container size="text">
 		<nav class="pager" aria-label={strings.projects.title}>
 			{
-				around.prev ? (
+				around.prev && (
 					<a class="prev" href={path(lang, 'project', around.prev.meta.slug)}>
 						<span>← {strings.project.previous}</span>
 						<strong>{around.prev.meta.title}</strong>
 					</a>
-				) : (
-					<span />
 				)
 			}
 
@@ -280,7 +278,7 @@ const period =
 	.pager {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 1rem;
+		gap: 1rem 1.5rem;
 		margin: clamp(2.5rem, 6vw, 4rem) 0 clamp(3rem, 7vw, 5rem);
 		padding-top: 1.5rem;
 		border-top: 1px solid var(--line);
@@ -290,6 +288,7 @@ const period =
 		display: flex;
 		flex-direction: column;
 		gap: 0.2rem;
+		min-width: 0;
 		text-decoration: none;
 		color: var(--ink-muted);
 	}
@@ -299,12 +298,25 @@ const period =
 	}
 
 	.pager .next {
+		grid-column: 2;
 		text-align: right;
 	}
 
 	.pager span {
 		font-size: 0.75rem;
 		font-family: var(--font-mono);
+	}
+
+	@media (max-width: 34rem) {
+		.pager {
+			grid-template-columns: 1fr;
+			gap: 1.25rem;
+		}
+
+		.pager .next {
+			grid-column: 1;
+			text-align: left;
+		}
 	}
 
 	.pager strong {

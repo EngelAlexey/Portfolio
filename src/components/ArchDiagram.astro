@@ -76,7 +76,7 @@ const cols = layers.length === 4 ? 2 : layers.length;
 		}
 	</div>
 
-	<div class="bodies" aria-live="polite">
+	<div class="bodies" data-active="0" aria-live="polite">
 		{
 			layers.map((layer, i) => (
 				<p
@@ -214,7 +214,6 @@ const cols = layers.length === 4 ? 2 : layers.length;
 
 	.n {
 		font-size: 0.6875rem;
-		opacity: 0.7;
 	}
 
 	.name {
@@ -256,9 +255,6 @@ const cols = layers.length === 4 ? 2 : layers.length;
 		const pipe = figure.querySelector<HTMLElement>('.pipe');
 		const bodies = figure.querySelector<HTMLElement>('.bodies');
 		const buttons = [...figure.querySelectorAll<HTMLButtonElement>('.layer')];
-
-		// Without JS the first body is the one CSS shows, so start there.
-		bodies?.setAttribute('data-active', '0');
 
 		for (const button of buttons) {
 			button.addEventListener('click', () => {

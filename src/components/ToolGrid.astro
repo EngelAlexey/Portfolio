@@ -19,6 +19,8 @@ const SHOWN = '{shown}' as unknown as number;
 const TOTAL = '{total}' as unknown as number;
 ---
 
+<noscript><style>.chips { display: none; }</style></noscript>
+
 <div class="toolgrid" data-tool-grid>
 	<div class="chips">
 		<button type="button" class="chip chip-all" aria-pressed="true" data-area="all">
@@ -123,13 +125,12 @@ const TOTAL = '{total}' as unknown as number;
 		width: 0.4em;
 		height: 0.4em;
 		border-radius: 999px;
-		background: currentColor;
+		background: var(--chip-fg);
 		flex: none;
 	}
 
 	.n {
 		font-size: 0.6875rem;
-		opacity: 0.65;
 	}
 
 	.count {
@@ -199,12 +200,8 @@ const TOTAL = '{total}' as unknown as number;
 	}
 
 	@media (max-width: 34rem) {
-		/* Sideways beats four ragged rows of chips on a phone. */
 		.chips {
-			flex-wrap: nowrap;
-			overflow-x: auto;
-			padding-bottom: 0.6rem;
-			scrollbar-width: none;
+			gap: 0.4rem;
 		}
 
 		.chip {
