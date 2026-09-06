@@ -156,9 +156,28 @@
 	--area-infra-line: oklch(40% 0.07 150);
 }
 
+@view-transition {
+	navigation: auto;
+}
+
+::view-transition-group(*) {
+	animation: none;
+}
+
+::view-transition-old(*) {
+	animation: none;
+	opacity: 0;
+}
+
+::view-transition-new(*) {
+	animation: none;
+	opacity: 1;
+}
+
 html {
 	background-color: var(--paper);
 	-webkit-text-size-adjust: 100%;
+	overflow-y: scroll;
 }
 
 body {

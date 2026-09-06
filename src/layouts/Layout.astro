@@ -61,6 +61,11 @@ const links = [
 			} catch (e) {
 				// Blocked storage: fall back to prefers-color-scheme.
 			}
+
+			window.addEventListener('pagereveal', function (e) {
+				// Arrived through a view transition: skip the entrance animations.
+				if (e.viewTransition) document.documentElement.dataset.vt = '';
+			});
 		</script>
 		<Seo lang={lang} key={key ?? 'home'} {slug} {title} {description} {image} {person} {noindex} />
 		<Analytics />
