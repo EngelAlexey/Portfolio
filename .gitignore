@@ -24,5 +24,8 @@ astro.config.mjs.timestamp-*
 # Not part of the build, and it holds client-owned source art.
 design/
 
+# API tokens used to deploy from this machine.
+.secrets/
+
 # public/cv/*.pdf is committed on purpose: the deploy host cannot reach the CV
 # repo, so the PDFs have to travel with this one.
