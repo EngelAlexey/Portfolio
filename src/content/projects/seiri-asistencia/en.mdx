@@ -61,9 +61,7 @@ Each entry carries its time, its location and its identity check. Payroll is com
 
 Offline, two devices can clock in the same worker without seeing each other. On reconnecting, both send an entry that was valid according to what each one observed. The previous scheme counted the day's entries and then inserted, which are two steps with no guarantee between them.
 
-Validation moved inside an InnoDB transaction at REPEATABLE READ isolation, which locks the day's rows with `SELECT ... FOR UPDATE` before deciding. One of the two devices wins. The other is not discarded: it is flagged for manual review.
-
-The working day is computed against a fixed window in the country's timezone, not the process timezone. The server runs in UTC, and an entry at 23:30 local time would have counted towards the following day.
+Validation moved inside an InnoDB transaction at REPEATABLE READ isolation, which locks the day's rows with `SELECT ... FOR UPDATE` before deciding.
 
 ## Architecture
 
@@ -75,10 +73,10 @@ The four rules that decide whether the entry is accepted are applied on the serv
 
 ## Result
 
-The same geofence formula exists on the server and on the client, because the client has to evaluate it offline. There is a test whose only job is to fail if the two versions stop agreeing.
+Staff clock in within seconds, with a photo and a location, with nobody taking notes and without depending on a signal. The entry uploads on its own as soon as there is a connection.
+
+The geofence formula exists twice, on the server and on the client, because the client has to evaluate it offline. There is a test whose only job is to fail if the two versions stop agreeing.
 
 ## What I learned
 
-While the one-entry-per-day rule lived in the client, each device kept its own count and duplicate entries reached the database.
-
-Moving it into a server transaction does not remove the conflict: it detects it and sends it to review.
+Counting the day's entries on the client does not prevent a duplicate: each device keeps its own count and neither sees the other while they are offline. Inside the server transaction the conflict still happens, but it is detected and sent to review rather than settled by arrival order.

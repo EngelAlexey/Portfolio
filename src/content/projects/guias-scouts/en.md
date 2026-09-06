@@ -28,7 +28,7 @@ order: null
 
 ## Context
 
-University community service, the community-service requirement the degree carries. The team approached Group 35 of the Guides and Scouts, put the proposal to them, and ran the project under the programme's guidelines.
+Trabajo Comunal Universitario (TCU), the compulsory community-service term the degree requires. The team approached Group 35 of the Guides and Scouts, put the proposal to them, and ran the project under the TCU guidelines.
 
 The scope was to open up the local group's digital presence: its public site and its social channels. The site carries the group's information and a membership form, in Spanish and English. That was my part.
 
@@ -36,15 +36,13 @@ The scope was to open up the local group's digital presence: its public site and
 
 The national Guides and Scouts association has a site of its own; Group 35 did not. Locally there was nowhere to publish their information or receive a membership request, so being found depended on direct contact.
 
-The project has an end date and the site does not. When the placement closes, the people maintaining it are the group's communications team, who do not code.
+The community-service term ends on a fixed date. From then on the site is in the hands of the group's communications team, who do not code.
 
 Any text change that required editing a component would have frozen the site the day the university team left.
 
 ## Technical decisions
 
 No visible text lives inside a component. All of it sits in per-language message catalogues, with structural data (routes, identifiers, section colours) in a separate file.
-
-Changing a sentence means editing one line of JSON. Adding a language means copying a catalogue.
 
 There are no loose colours inside components either: all of them come from CSS custom properties.
 
@@ -56,11 +54,9 @@ Submitting the form writes the request and queues a notification. An edge functi
 
 ## Result
 
-That edge function is the most carefully written part. It validates the webhook secret with a constant-time comparison. It claims the notification atomically before sending anything, and retries with growing backoff up to a ceiling.
+The site is live in Spanish and English, carrying the group's information and the membership form. The communications team changes any text by editing its catalogue, without opening a component.
 
-The atomic claim is what stops two simultaneous runs sending the same confirmation twice.
-
-Tables holding personal data have row-level security and are not exposed to public roles.
+The edge function claims each notification atomically, so two simultaneous runs do not send the same confirmation twice. Tables holding personal data have row-level security and are not exposed to public roles.
 
 ## What I learned
 

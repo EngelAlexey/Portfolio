@@ -64,20 +64,24 @@ A marketing site and a portal holding client documents have opposite exposures. 
 
 The boundary is a deployment boundary, not a code boundary. A single image is published as two services with separate identities, and the public service has its database access removed.
 
-The second rule is that server code is never imported from the browser, not even for types. When the client imported a constant from a server module, the dependency graph pulled in the model SDK: **269 KB of dead JavaScript** on every visit. No credential was exposed, because the framework only injects variables with the public prefix, but the weight was real. The rule is now checked by a command inside the pipeline.
+The second rule is that server code is never imported from the browser, not even for types. When the client imported a constant from a server module, the dependency graph pulled in the model SDK: 269 KB of dead JavaScript on every visit. No credential was exposed, because the framework only injects variables with the public prefix, but the weight was real. The rule is now checked by a command inside the pipeline.
 
 ## Architecture
 
+The two services share an image and a binary. What they do not share is the identity they run under, and everything else follows from that.
+
 <ArchDiagram {...frontmatter.diagram} />
+
+A document uploaded by a client passes the size, type and rate limits before it reaches the model. What the model returns is validated against the schema before it is written, so a malformed extraction never reaches the database.
 
 ## Result
 
-The model reads documents and proposes. The code makes the decisions.
+The platform serves the public site, the internal portal, due diligence and accounts receivable from two services with different permissions.
 
-The suite holds **2,243 unit tests** across 144 files and **27 end-to-end suites**. Four of those are dedicated attack suites, one per module: authentication, accounts receivable, due diligence and the public site.
+The suite holds 2,243 unit tests across 144 files and 27 end-to-end suites. Four of those are dedicated attack suites, one per module: authentication, accounts receivable, due diligence and the public site.
 
 ## What I learned
 
 Separation by deployment costs more than a check inside the code: two services to configure, two identities to maintain, and a deployment that can end up split between versions.
 
-In return it does not depend on the application behaving correctly. If the public site ever ran arbitrary code, it would still have no database credentials to use.
+In return, the guarantee does not depend on the application behaving as expected: if the public site ever ran arbitrary code, it would still have no database credentials to use.

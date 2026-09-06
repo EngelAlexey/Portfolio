@@ -64,20 +64,24 @@ Un sitio de marketing y un portal con documentos de clientes tienen exposiciones
 
 La frontera es de despliegue, no de código. Una sola imagen se publica como dos servicios con identidades separadas, y al servicio público se le retira el acceso a la base de datos.
 
-La segunda regla es que el código de servidor nunca se importa desde el navegador, ni siquiera para tipos. Cuando el cliente importó una constante desde un módulo de servidor, el grafo de dependencias arrastró el SDK del modelo: **269 KB de JavaScript muerto** en cada visita. No se expuso ninguna credencial, porque el framework solo inyecta las variables con prefijo público, pero el peso era real. La regla ahora se comprueba con un comando dentro del pipeline.
+La segunda regla es que el código de servidor nunca se importa desde el navegador, ni siquiera para tipos. Cuando el cliente importó una constante desde un módulo de servidor, el grafo de dependencias arrastró el SDK del modelo: 269 KB de JavaScript muerto en cada visita. No se expuso ninguna credencial, porque el framework solo inyecta las variables con prefijo público, pero el peso era real. La regla ahora se comprueba con un comando dentro del pipeline.
 
 ## Arquitectura
 
+Los dos servicios comparten imagen y binario. Lo que no comparten es la identidad con la que corren, y de ahí sale todo lo demás.
+
 <ArchDiagram {...frontmatter.diagram} />
+
+Un documento subido por un cliente pasa por los límites de tamaño, tipo y frecuencia antes de llegar al modelo. Lo que el modelo devuelve se valida contra el esquema antes de escribirse, así que una extracción mal formada no llega a la base.
 
 ## Resultado
 
-El modelo lee documentos y propone. Las decisiones las toma el código.
+La plataforma sirve el sitio público, el portal interno, la debida diligencia y las cuentas por cobrar desde dos servicios con permisos distintos.
 
-La suite tiene **2 243 pruebas unitarias** repartidas en 144 archivos y **27 suites end-to-end**. Cuatro de ellas son suites de ataque dedicadas, una por módulo: autenticación, cuentas por cobrar, debida diligencia y sitio público.
+La suite tiene 2 243 pruebas unitarias repartidas en 144 archivos y 27 suites end-to-end. Cuatro de ellas son suites de ataque dedicadas, una por módulo: autenticación, cuentas por cobrar, debida diligencia y sitio público.
 
 ## Lo que aprendí
 
 La separación por despliegue cuesta más que una comprobación dentro del código: dos servicios que configurar, dos identidades que mantener y un despliegue que puede quedar a medias entre versiones.
 
-A cambio no depende de que la aplicación se comporte correctamente. Si el sitio público llegara a ejecutar código arbitrario, seguiría sin tener credenciales de base de datos que usar.
+A cambio, la garantía no depende de que la aplicación se comporte como se espera: si el sitio público llegara a ejecutar código arbitrario, seguiría sin tener credenciales de base de datos que usar.

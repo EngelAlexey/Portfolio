@@ -43,8 +43,6 @@ If one client added an event and the other did not hear about it, the room broke
 
 The event contract lives in its own package inside the monorepo, imported by both clients: event names, the shape of each payload, and the functions that serialise and validate.
 
-A new event forces a change to the contract, and the client that does not adapt stops compiling.
-
 The game logic also moved into its own package, with no transport or interface dependencies, so it can be tested without starting a server.
 
 ## Architecture
@@ -55,12 +53,10 @@ The web joins as an observer and the phone as a player. Same server, same protoc
 
 ## Result
 
-The constraint that shaped the design most was not technical but a service tier: the database's free plan offers no transactions.
+The phone plays and the web observes the same room in real time against one server, each client in its role.
 
-Relations were modelled as flat arrays of identifiers rather than references, and the reason was written into the schema itself. Anyone opening it knows why before trying to normalise it.
+Relations were modelled as flat arrays of identifiers because the database's free plan offers no transactions. The reason was written into the schema itself, so nobody normalises it without knowing why it is shaped that way.
 
 ## What I learned
 
-While the event names lived duplicated in each client, keeping them in sync depended on somebody telling the other side.
-
-Moving them into a shared package turned that notice into a compile error. The cost was setting up the monorepo; after that, a mistyped event never reaches runtime.
+With event names duplicated in each client, keeping them in sync depended on somebody telling the other side. In the shared package that notice is a compile error, and the cost of getting there was setting up the monorepo.

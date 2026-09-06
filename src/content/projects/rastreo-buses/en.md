@@ -55,14 +55,10 @@ Trip state is not typed in by anyone: it is derived from the live position again
 
 ## Result
 
-Two automated guards proved more useful than any written convention.
+The API serves all three roles from the same data model: the passenger follows their unit, the driver emits position, and administration sees the whole fleet.
 
-The first is a custom static-analysis rule that rejects comments in the code. The second fails verification if any environment variable used in the code is not declared in the example file.
-
-The second one prevents the class of failure that only appears when somebody clones the repository for the first time.
+Two automated guards protect the repository. A custom static-analysis rule rejects comments in the code. A verification step fails if any environment variable used in the code is not declared in the example file, which is the failure that only appears when somebody clones the repository for the first time.
 
 ## What I learned
 
-Announcing the new architecture was not enough: code kept landing in the old folders.
-
-What worked was leaving the old shape operational as an adapter and writing into the repository which of the two receives new code.
+Announcing the new architecture was not enough, and code kept landing in the old folders. What did work was leaving the old shape operational as an adapter and writing into the repository which of the two receives new code.

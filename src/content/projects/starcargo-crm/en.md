@@ -1,7 +1,7 @@
 ---
 slug: starcargo-crm
 title: Star CRM
-tagline: Four roles and several branches over the same data. Permission is enforced on the server and in the database.
+tagline: Several roles and branches over the same data. Permission is enforced on the server and in the database.
 areas: [fullstack, seguridad]
 kind: profesional
 org: Star Cargo Service
@@ -52,12 +52,12 @@ Almost every entity carries its branch, and the user picks which one is active. 
 
 ## Result
 
-The case that tested the design was a sales rep getting 403 on opening the dashboard. The indicators required reporting permission, when the data they returned was deal data.
+The CRM replaced the spreadsheet operation. Clients, contacts, shipping deals, appointments, quotes and branches live in one record, and the system does the consolidation instead of a person.
 
-The required permission was lowered after confirming the service already isolated records per user. The permission asked for was higher than the data handed back, and that is a design error too.
+The design was tested by a rep getting 403 on opening the dashboard: the indicators required reporting permission when the data they returned was deal data. The required permission was lowered after confirming the service already isolated records per user.
 
 ## What I learned
 
-The server authorised an administrative operation with its guard and then used the user's restricted token to write it. The database refused a write the application had already approved.
+The server authorised an administrative operation with its guard and then used the user's restricted token to write it, so the database refused a write the application had already approved.
 
-The two layers are not the same check repeated. The guard decides whether the operation proceeds; the database decides which identity it runs as. The fix was to use the service identity for that write, and only after the guard had authorised it.
+The two layers answer different questions and do not substitute for each other. The fix was to use the service identity for that write, and only after the guard had authorised it.

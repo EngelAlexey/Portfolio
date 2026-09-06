@@ -54,12 +54,10 @@ Los componentes no reciben el tono como propiedad ni lo consultan. Leen las vari
 
 ## Resultado
 
-El conjunto de verificaciones se define una vez y se ejecuta en dos momentos: al integrar un cambio y al desplegar a producción.
+El sitio está en producción en los cuatro idiomas, con la misma estructura y el mismo contenido en todos.
 
-Comprueba tipos y pruebas, y un tope de advertencias que no puede subir sin justificarlo en el commit. También comprueba que los cuatro idiomas tengan exactamente las mismas claves de traducción y que la política de seguridad de contenido siga activa. El despliegue termina con una prueba de humo contra el sitio publicado.
+El conjunto de verificaciones se define una vez y corre en dos momentos, al integrar un cambio y al desplegar. Comprueba tipos, pruebas y un tope de advertencias que no puede subir sin justificarlo en el commit; que los cuatro idiomas tengan exactamente las mismas claves de traducción; y que la política de seguridad de contenido siga activa. El despliegue termina con una prueba de humo contra el sitio publicado.
 
 ## Lo que aprendí
 
-Mientras el proyecto nuevo siguió heredando código del anterior, cada mejora había que aplicarla dos veces y cada divergencia parecía un error de sincronización.
-
-Fijar una fecha de corte eliminó esa ambigüedad. A partir de ahí el sitio anterior dejó de ser una fuente de cambios y pasó a ser solo una referencia.
+Heredar código del sitio anterior obligaba a aplicar cada mejora dos veces, y cualquier divergencia entre los dos parecía un error de sincronización en lugar de una decisión. La fecha de corte quitó esa ambigüedad: desde ahí el sitio anterior es una referencia y no una fuente de cambios.

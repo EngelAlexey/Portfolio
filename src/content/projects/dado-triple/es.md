@@ -43,8 +43,6 @@ Si un cliente añadía un evento y el otro no se enteraba, la sala se rompía pa
 
 El contrato de eventos vive en un paquete propio del monorepo que ambos clientes importan: nombres de evento, forma de cada carga útil y las funciones que serializan y validan.
 
-Un evento nuevo obliga a tocar el contrato, y el cliente que no se adapte deja de compilar.
-
 La lógica del juego también salió a su propio paquete, sin dependencias de transporte ni de interfaz, para poder probarla sin levantar servidor.
 
 ## Arquitectura
@@ -55,12 +53,10 @@ La web entra como observadora y el móvil como jugador. Es el mismo servidor y e
 
 ## Resultado
 
-La restricción que más moldeó el diseño no fue técnica sino del plan de servicio: el nivel gratuito de la base de datos no ofrece transacciones.
+El móvil juega y la web observa la misma sala en tiempo real contra un solo servidor, cada cliente en su papel.
 
-Las relaciones se modelaron como arreglos planos de identificadores en lugar de referencias, y el motivo quedó anotado en el propio esquema. Quien lo abra sabe por qué está así antes de intentar normalizarlo.
+Las relaciones se modelaron como arreglos planos de identificadores porque el nivel gratuito de la base de datos no ofrece transacciones. El motivo quedó anotado en el propio esquema, para que quien lo abra no intente normalizarlo sin saber por qué está así.
 
 ## Lo que aprendí
 
-Mientras los nombres de evento vivieron duplicados en cada cliente, mantenerlos sincronizados dependía de que alguien avisara al otro lado.
-
-Moverlos a un paquete compartido convirtió ese aviso en un error de compilación. El costo fue montar el monorepo; a partir de ahí, un evento mal escrito no llega a ejecutarse.
+Con los nombres de evento duplicados en cada cliente, mantenerlos sincronizados dependía de que alguien avisara al otro lado. En el paquete compartido ese aviso es un error de compilación, y el costo de conseguirlo fue montar el monorepo.

@@ -36,15 +36,13 @@ El alcance fue abrir la presencia digital del grupo local: su sitio público y s
 
 La asociación nacional de Guías y Scouts tiene sitio propio; el Grupo 35 no tenía ninguno. A nivel local no había dónde publicar su información ni recibir una solicitud de ingreso, así que darse a conocer dependía del contacto directo.
 
-El proyecto tiene fecha de terminación y el sitio no. Cuando el TCU cierra, quien lo mantiene es el equipo de comunicación del grupo, que no programa.
+El trabajo comunal termina en una fecha fija. A partir de ahí el sitio queda en manos del equipo de comunicación del grupo, que no programa.
 
 Cualquier cambio de texto que obligara a editar un componente habría dejado el sitio congelado el día que el equipo universitario se retira.
 
 ## Decisiones técnicas
 
 Ningún texto visible vive dentro de un componente. Todo está en catálogos de mensajes por idioma, y los datos estructurales (rutas, identificadores, colores de sección) en un archivo aparte.
-
-Cambiar una frase es editar una línea de JSON. Añadir un idioma es copiar un catálogo.
 
 Tampoco hay colores sueltos dentro de los componentes: todos salen de propiedades personalizadas de CSS.
 
@@ -56,11 +54,9 @@ El envío del formulario escribe la solicitud y encola una notificación. Una fu
 
 ## Resultado
 
-Esa función de borde es la parte con más cuidado. Valida el secreto del webhook comparando en tiempo constante. Reclama la notificación de forma atómica antes de enviar nada, y reintenta con espera creciente hasta un tope.
+El sitio está publicado en español e inglés, con la información del grupo y el formulario de ingreso en línea. El equipo de comunicación cambia cualquier texto editando su catálogo, sin abrir un componente.
 
-La reclamación atómica es lo que impide que dos ejecuciones simultáneas manden el mismo comprobante dos veces.
-
-Las tablas con datos personales tienen seguridad a nivel de fila y no están expuestas a roles públicos.
+La función de borde reclama cada notificación de forma atómica, así que dos ejecuciones simultáneas no mandan el mismo comprobante dos veces. Las tablas con datos personales tienen seguridad a nivel de fila y no están expuestas a roles públicos.
 
 ## Lo que aprendí
 

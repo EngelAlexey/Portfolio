@@ -48,7 +48,7 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-Cobranza por WhatsApp para la misma empresa de logística. El cliente escribe, consulta su estado de cuenta, reporta un pago o promete una fecha, y todo ocurre dentro de la conversación.
+Cobranza por WhatsApp para la operación de Intercargo en Panamá. El cliente escribe, consulta su estado de cuenta, reporta un pago o promete una fecha, y todo ocurre dentro de la conversación.
 
 ## Problema
 
@@ -68,16 +68,16 @@ El servicio no usa framework web: levanta un servidor con `node:http` y trabaja 
 
 ## Arquitectura
 
+El modelo ocupa un solo tramo del recorrido. Lo que entra y lo que sale de él son estructuras que el código valida antes de seguir.
+
 <ArchDiagram {...frontmatter.diagram} />
+
+La máquina de estados devuelve acciones y una capa aparte las traduce al transporte, así que la conversación se puede ejecutar sin credenciales de Meta ni línea de WhatsApp.
 
 ## Resultado
 
-Separar la decisión del envío permite probar la conversación completa sin credenciales de Meta ni línea de WhatsApp. Un comando reproduce un diálogo entero contra la lógica real.
-
-Los casos difíciles se prueban así: una promesa con fecha ambigua, un pago reportado dos veces, un cliente que pide dejar de recibir mensajes.
+El servicio está en operación sobre nueve tablas propias, separadas del resto de la plataforma. Un comando reproduce un diálogo entero contra la lógica real, y con él se prueban los casos difíciles: una promesa con fecha ambigua, un pago reportado dos veces, un cliente que pide dejar de recibir mensajes.
 
 ## Lo que aprendí
 
-El repositorio no tiene pruebas unitarias. La verificación es ese simulador de conversación, que recorre la máquina de estados de extremo a extremo pero no ejercita los módulos por separado.
-
-Sirve para detectar una regresión de flujo y no para localizarla. Añadir pruebas sobre la capa de acciones es el trabajo pendiente.
+Ese simulador recorre la máquina de estados de extremo a extremo, y por eso detecta una regresión de flujo sin poder localizarla: cuando falla, señala el diálogo entero y no el módulo. Las pruebas sobre la capa de acciones son el siguiente paso.

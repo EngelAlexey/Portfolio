@@ -64,22 +64,20 @@ Un componente aparte combina las tres en una puntuación, y solo esa puntuación
 
 ## Arquitectura
 
-<ArchDiagram {...frontmatter.diagram} />
-
 Un observador del sistema de archivos deposita eventos en un búfer con bloqueo. Un hilo de muestreo mantiene la foto más reciente de escritura por proceso. El hilo principal consulta la puntuación cada segundo y decide si actúa.
+
+<ArchDiagram {...frontmatter.diagram} />
 
 La contención mata el árbol de procesos y mueve el binario a un directorio de cuarentena sin permisos de ejecución.
 
-La infraestructura del banco de pruebas está descrita en Terraform. El laboratorio se levanta y se destruye con un comando, en lugar de reconstruirse a mano.
+La infraestructura del banco de pruebas está descrita en Terraform, así que el laboratorio se levanta y se destruye con un comando y cada corrida parte de la misma máquina. El estado de Terraform y el fichero de variables quedan fuera del control de versiones, porque un fichero de estado guarda valores sensibles en claro.
 
 ## Resultado
 
-El detector reacciona a comportamiento y no a identidad, que era el objetivo del ejercicio.
-
-El estado de Terraform y el fichero de variables quedan fuera del control de versiones. Un fichero de estado guarda valores sensibles en claro, y en un repositorio público eso es una filtración.
+El detector contiene un cifrado masivo sin haber visto antes el binario. Reacciona a lo que el proceso hace, que era el objetivo del ejercicio.
 
 ## Lo que aprendí
 
 El umbral fue la parte difícil. Una copia de seguridad legítima produce un patrón muy parecido al de un cifrado masivo: muchos archivos escritos rápido, con contenido de entropía alta.
 
-Con las tres señales disponibles no encontré un valor que separara los dos casos. La versión entregada prioriza no perder un caso real y acepta falsos positivos. Queda documentado como una elección, no como un ajuste óptimo.
+Con las tres señales disponibles no encontré un valor que separara los dos casos. La versión entregada prioriza no perder un caso real y acepta falsos positivos, y el umbral quedó documentado con esa justificación.

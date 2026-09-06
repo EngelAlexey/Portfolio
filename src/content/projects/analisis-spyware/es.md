@@ -24,7 +24,7 @@ order: null
 
 ## Contexto
 
-Curso de Seguridad de TI I. Ejercicio individual, construido y ejecutado en un laboratorio aislado. El entregable era defensivo: qué señales deja este tipo de software y qué control detiene cada paso.
+Curso de Seguridad de TI I. Ejercicio individual: se construye una herramienta que reproduce el ciclo de captura y exfiltración, se ejecuta en un laboratorio aislado y se documenta el rastro que deja.
 
 ## Problema
 
@@ -36,7 +36,7 @@ Una lista memorizada no dice cuál de ellas funciona. Para saber qué observar y
 
 Una herramienta cliente-servidor en Python reproduce a pequeña escala el ciclo de captura y exfiltración, únicamente como generador de actividad para el laboratorio.
 
-El entregable no es esa herramienta sino el inventario que produce: tráfico saliente, accesos a recursos y mecanismos de persistencia, cada uno asociado a un control que lo detiene.
+El entregable es el inventario que produce: tráfico saliente, accesos a recursos y mecanismos de persistencia, cada uno asociado a un control que lo detiene.
 
 ## Arquitectura
 
@@ -46,7 +46,7 @@ Esa disposición es lo que hace medible el ejercicio: qué se toca en el sistema
 
 ## Resultado
 
-Un inventario de indicadores y contramedidas derivado de la observación directa: qué mirar, en qué punto del sistema, y qué control cierra cada paso del ataque.
+El inventario quedó ordenado por el punto del sistema donde actúa cada control: sistema de archivos, red y mecanismo de arranque. Cada indicador va junto al control que lo corta y junto a la evidencia que lo respalda, tomada del propio laboratorio.
 
 ## Lo que aprendí
 

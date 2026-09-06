@@ -1,7 +1,7 @@
 ---
 slug: starcargo-crm
 title: Star CRM
-tagline: Cuatro roles y varias sucursales sobre los mismos datos. El permiso se aplica en el servidor y en la base.
+tagline: Varios roles y sucursales sobre los mismos datos. El permiso se aplica en el servidor y en la base.
 areas: [fullstack, seguridad]
 kind: profesional
 org: Star Cargo Service
@@ -52,12 +52,12 @@ Casi toda entidad lleva su sucursal, y el usuario elige cuál tiene activa. Hay 
 
 ## Resultado
 
-El caso que puso a prueba el diseño fue un comercial que recibía 403 al abrir el tablero. Los indicadores exigían permiso de informes, cuando el dato que devolvían era de negocios.
+El CRM sustituyó la operación en hojas de cálculo. Clientes, contactos, negocios de embarque, citas, cotizaciones y sucursales viven en un solo registro, y la consolidación la hace el sistema en lugar de una persona.
 
-Se bajó el permiso requerido después de comprobar que el servicio ya aislaba los registros por usuario. El permiso pedido era más alto que el dato entregado, y eso también es un error de diseño.
+El diseño se puso a prueba con un ejecutivo que recibía 403 al abrir el tablero: los indicadores exigían permiso de informes cuando el dato que devolvían era de negocios. Se bajó el permiso requerido después de comprobar que el servicio ya aislaba los registros por usuario.
 
 ## Lo que aprendí
 
-El servidor autorizaba una operación de administración con su guard y después usaba el token restringido del usuario para escribirla. La base rechazaba una escritura que la aplicación ya había aprobado.
+El servidor autorizaba una operación de administración con su guard y después usaba el token restringido del usuario para escribirla, así que la base rechazaba una escritura que la aplicación ya había aprobado.
 
-Las dos capas no son la misma comprobación repetida. El guard decide si la operación procede; la base decide con qué identidad se ejecuta. La corrección fue usar la identidad de servicio para esa escritura, y solo después de que el guard autorizara.
+Las dos capas responden preguntas distintas y no se sustituyen entre sí. La corrección fue usar la identidad de servicio para esa escritura, y solo después de que el guard autorizara.

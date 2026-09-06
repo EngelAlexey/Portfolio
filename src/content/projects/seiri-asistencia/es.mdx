@@ -61,9 +61,7 @@ Cada marca lleva su hora, su ubicación y su verificación de identidad. La nóm
 
 Sin conexión, dos dispositivos pueden marcar al mismo colaborador sin verse entre sí. Al reconectar, ambos envían una marca válida según lo que cada uno observó. El esquema anterior contaba las marcas del día y después insertaba, que son dos pasos sin garantía entre ellos.
 
-La validación se movió dentro de una transacción InnoDB con aislamiento REPEATABLE READ, que bloquea las filas del día con `SELECT ... FOR UPDATE` antes de decidir. Uno de los dos dispositivos gana. El otro no se descarta: queda marcado para revisión manual.
-
-El día laboral se calcula con una ventana fija en la zona horaria del país, no en la del proceso. El servidor corre en UTC, y una marca a las 23:30 hora local se habría contado al día siguiente.
+La validación se movió dentro de una transacción InnoDB con aislamiento REPEATABLE READ, que bloquea las filas del día con `SELECT ... FOR UPDATE` antes de decidir.
 
 ## Arquitectura
 
@@ -75,10 +73,10 @@ Las cuatro reglas que deciden si la marca entra se aplican en el servidor.
 
 ## Resultado
 
-La misma fórmula de geocerca existe en el servidor y en el cliente, porque el cliente necesita evaluarla sin red. Hay una prueba cuyo único trabajo es fallar si las dos versiones dejan de coincidir.
+El colaborador marca en segundos, con foto y ubicación, sin nadie tomando nota y sin depender de la señal. La marca sube sola en cuanto hay red.
+
+La fórmula de geocerca existe dos veces, en el servidor y en el cliente, porque el cliente tiene que evaluarla sin red. Hay una prueba cuyo único trabajo es fallar si las dos versiones dejan de coincidir.
 
 ## Lo que aprendí
 
-Mientras la regla de un marcaje por día vivió en el cliente, cada dispositivo mantenía su propio recuento y las marcas duplicadas llegaban a la base.
-
-Moverla a una transacción del servidor no elimina el conflicto: lo detecta y lo envía a revisión.
+Contar las marcas del día en el cliente no impide un duplicado: cada dispositivo lleva su propio recuento y ninguno ve al otro mientras están sin red. En la transacción del servidor el conflicto sigue ocurriendo, pero se detecta y va a revisión en lugar de resolverse por orden de llegada.

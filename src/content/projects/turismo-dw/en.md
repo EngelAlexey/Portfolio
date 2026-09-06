@@ -42,7 +42,7 @@ A Python process extracts each source into flat files. From there they are bulk-
 
 Every dimension carries a "not applicable" row. With it, all joins can be inner joins and no fact row disappears because one source was incomplete.
 
-Daily occupancy stores numerator and denominator separately, never the percentage. A percentage cannot be summed across rows.
+Daily occupancy stores numerator and denominator separately and never the percentage, because a percentage cannot be summed across rows.
 
 ## Architecture
 
@@ -58,6 +58,6 @@ The "primary filegroup only" restriction that nearly forced a redesign belongs t
 
 ## What I learned
 
-The storage cap is the visible limit; the instance class's memory is the one that decides. A `db.t3.micro` instance with 995 MB of RAM left SQL Server with a 125 MB target memory.
+The instance class binds before the storage cap does. A `db.t3.micro` instance with 995 MB of RAM left SQL Server with a 125 MB target memory.
 
 A bulk insert of 2,923 rows sat waiting on `RESOURCE_SEMAPHORE` with no grant. It was not failing: it was waiting, with no error and no timeout. Moving up one instance class resolved it, and the diagnosis was the expensive part.

@@ -64,22 +64,20 @@ A separate component combines the three into a score, and only that score decide
 
 ## Architecture
 
-<ArchDiagram {...frontmatter.diagram} />
-
 A filesystem watcher deposits events into a locked buffer. A sampling thread keeps the most recent snapshot of writes per process. The main thread reads the score once a second and decides whether to act.
+
+<ArchDiagram {...frontmatter.diagram} />
 
 Containment kills the process tree and moves the binary into a quarantine directory with no execute permission.
 
-The test bench's infrastructure is described in Terraform. The lab is created and destroyed with one command, rather than rebuilt by hand.
+The test bench's infrastructure is described in Terraform, so the lab is created and destroyed with one command and every run starts from the same machine. Terraform state and the variables file are kept out of version control, because a state file stores sensitive values in the clear.
 
 ## Result
 
-The detector reacts to behaviour rather than identity, which was the point of the exercise.
-
-Terraform state and the variables file are kept out of version control. A state file stores sensitive values in the clear, and in a public repository that is a leak.
+The detector contains bulk encryption without having seen the binary before. It reacts to what the process does, which was the point of the exercise.
 
 ## What I learned
 
 The threshold was the hard part. A legitimate backup produces a pattern very close to mass encryption: many files written quickly, with high-entropy content.
 
-With the three signals available I found no value that separates the two cases. The delivered version prefers not to miss a real case and accepts false positives. That is documented as a choice, not as an optimal setting.
+With the three signals available I found no value that separates the two cases. The delivered version prefers not to miss a real case and accepts false positives, and the threshold is documented with that justification.

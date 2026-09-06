@@ -55,14 +55,10 @@ El estado del viaje no lo introduce nadie a mano: se deriva de la posición en v
 
 ## Resultado
 
-Dos guardias automáticos resultaron más útiles que cualquier convención escrita.
+El API sirve los tres papeles desde el mismo modelo de datos: el pasajero sigue su unidad, el conductor emite su posición y la administración ve la flota completa.
 
-El primero es una regla propia del analizador estático que rechaza comentarios en el código. El segundo falla la verificación si alguna variable de entorno usada en el código no está declarada en el archivo de ejemplo.
-
-El segundo evita la clase de fallo que solo aparece cuando alguien clona el repositorio por primera vez.
+Dos guardias automáticos protegen el repositorio. Una regla propia del analizador estático rechaza comentarios en el código. Una verificación falla si alguna variable de entorno usada en el código no está declarada en el archivo de ejemplo, que es el fallo que solo aparece cuando alguien clona el repositorio por primera vez.
 
 ## Lo que aprendí
 
-Anunciar la arquitectura nueva no bastó: siguió entrando código en las carpetas antiguas.
-
-Lo que funcionó fue dejar la forma antigua operativa como adaptador y escribir en el repositorio cuál de las dos recibe el código nuevo.
+Anunciar la arquitectura nueva no bastó y siguió entrando código en las carpetas antiguas. Lo que sí funcionó fue dejar la forma antigua operativa como adaptador y escribir en el repositorio cuál de las dos recibe el código nuevo.

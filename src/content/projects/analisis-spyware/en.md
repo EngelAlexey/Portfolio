@@ -24,7 +24,7 @@ order: null
 
 ## Context
 
-An IT Security I course. An individual exercise, built and run inside an isolated lab. The deliverable was defensive: which signals this kind of software leaves, and which control stops each step.
+An IT Security I course. An individual exercise: build a tool that reproduces the capture-and-exfiltration cycle, run it inside an isolated lab, and document the trace it leaves.
 
 ## Problem
 
@@ -36,7 +36,7 @@ A memorised list does not say which of them works. To know what to watch and whe
 
 A client-server tool in Python reproduces the capture-and-exfiltration cycle at small scale, purely as an activity generator for the lab.
 
-The deliverable is not that tool but the inventory it produces: outbound traffic, resource access and persistence mechanisms, each mapped to a control that stops it.
+The deliverable is the inventory it produces: outbound traffic, resource access and persistence mechanisms, each mapped to a control that stops it.
 
 ## Architecture
 
@@ -46,7 +46,7 @@ That arrangement is what makes the exercise measurable: what is touched on the f
 
 ## Result
 
-An inventory of indicators and countermeasures derived from direct observation: what to watch, at which point in the system, and which control closes each step of the attack.
+The inventory is ordered by the point in the system where each control acts: filesystem, network and boot mechanism. Every indicator sits beside the control that stops it and beside the evidence backing it, taken from the lab itself.
 
 ## What I learned
 

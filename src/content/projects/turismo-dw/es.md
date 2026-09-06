@@ -42,7 +42,7 @@ Un proceso en Python extrae cada origen a archivos planos. De ahí van por lote 
 
 Cada dimensión lleva una fila de "no aplica". Con ella todas las uniones pueden ser internas y ninguna fila de hechos desaparece por un origen incompleto.
 
-La ocupación diaria guarda numerador y denominador por separado, nunca el porcentaje. Un porcentaje no se puede sumar entre filas.
+La ocupación diaria guarda numerador y denominador por separado y nunca el porcentaje, porque un porcentaje no se puede sumar entre filas.
 
 ## Arquitectura
 
@@ -58,6 +58,6 @@ La restricción de "solo el grupo primario" que casi obliga a rediseñar el mode
 
 ## Lo que aprendí
 
-El tope de almacenamiento es el límite visible; la memoria de la clase de instancia es el que decide. Una instancia `db.t3.micro` con 995 MB de RAM dejó a SQL Server con 125 MB de memoria objetivo.
+La clase de instancia limita antes que el tope de almacenamiento. Una instancia `db.t3.micro` con 995 MB de RAM dejó a SQL Server con 125 MB de memoria objetivo.
 
 Una inserción masiva de 2 923 filas se quedó esperando `RESOURCE_SEMAPHORE` sin recibir concesión. No fallaba: esperaba, sin error y sin agotar tiempo de espera. Subir un escalón de clase de instancia lo resolvió, y el diagnóstico fue lo que costó.

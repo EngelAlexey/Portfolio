@@ -28,7 +28,7 @@ order: 3
 
 ## Context
 
-Star Cargo moves sea, air and road freight across six Central American countries. Importers use the site to request a quote, check consolidation corridors, or find the office that covers them.
+Star Cargo moves sea, air and road freight across six Central American countries. Importers use the site to request a quote, check consolidation routes, or find the office that covers them.
 
 The site is published in Spanish, English, Chinese and Hindi, because a large share of the shipments come from those markets.
 
@@ -54,12 +54,10 @@ Components are not given the tone as a property and do not query it. They read w
 
 ## Result
 
-The set of checks is defined once and runs at two moments: when a change is merged, and when it is deployed to production.
+The site is in production in all four languages, with the same structure and the same content in each.
 
-It verifies types and tests, plus a warning ceiling that cannot rise without justifying it in the commit. It also checks that the four languages hold exactly the same translation keys and that the content security policy is still active. Deployment ends with a smoke test against the published site.
+The set of checks is defined once and runs at two moments, when a change is merged and when it is deployed. It verifies types, tests and a warning ceiling that cannot rise without justifying it in the commit; that the four languages hold exactly the same translation keys; and that the content security policy is still active. Deployment ends with a smoke test against the published site.
 
 ## What I learned
 
-While the new project kept inheriting code from the old one, every improvement had to be applied twice and every divergence looked like a sync error.
-
-Fixing a cut-off date removed that ambiguity. From then on the previous site stopped being a source of changes and became only a reference.
+Inheriting code from the old site meant applying every improvement twice, and any divergence between the two looked like a sync error rather than a decision. The cut-off date removed that ambiguity: from then on the previous site is a reference, not a source of changes.

@@ -47,7 +47,7 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-Warehouse staff record an incoming container from a phone. They scan the receipt code, log every line as it comes off, mark the slot each pallet went to, and photograph damaged goods.
+The warehouse worker records an incoming container from a phone. They scan the receipt code, log every line as it comes off, mark the slot each pallet went to, and photograph damaged goods.
 
 This service is the backend for that Android app. The Android client was led by another member of the team, with contributions from me.
 
@@ -74,6 +74,8 @@ A phone cannot authenticate with the platform's identity, because enrolment happ
 The enrolment registry lives in the process itself, so the service is deployed on a single instance.
 
 ## Result
+
+A receipt reaches the ERP at the moment the warehouse worker records it, with its lines, the slot for each pallet and the photographs of damaged goods.
 
 A smoke test starts the server and makes real requests against it. It covers TLS, credentials, warehouse scoping, the query and the response mapping. It uses no test doubles and writes no data.
 

@@ -1,7 +1,7 @@
 ---
 slug: intercargo-cobranza
 title: Collections assistant
-tagline: The client writes on WhatsApp. The model reads; the code decides the action and what it may disclose.
+tagline: The client writes on WhatsApp. The model interprets; the code decides the action and what it may disclose.
 areas: [ia, fullstack]
 kind: profesional
 org: Intercargo Panamá — via Kaizen Apps CR
@@ -48,7 +48,7 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-WhatsApp collections for the same logistics company. The client writes in, checks their statement, reports a payment or promises a date, and all of it happens inside the conversation.
+WhatsApp collections for Intercargo's operation in Panama. The client writes in, checks their statement, reports a payment or promises a date, and all of it happens inside the conversation.
 
 ## Problem
 
@@ -68,16 +68,16 @@ The service uses no web framework: it starts a server with `node:http` and works
 
 ## Architecture
 
+The model occupies one stretch of the path. What goes into it and what comes out are structures the code validates before anything continues.
+
 <ArchDiagram {...frontmatter.diagram} />
+
+The state machine returns actions and a separate layer translates them into the transport, so the conversation can be run without Meta credentials or a WhatsApp line.
 
 ## Result
 
-Separating the decision from the delivery makes the whole conversation testable without Meta credentials or a WhatsApp line. One command replays an entire dialogue against the real logic.
-
-The hard cases are tested this way: a promise with an ambiguous date, a payment reported twice, a client asking to stop receiving messages.
+The service is in operation over nine tables of its own, separate from the rest of the platform. One command replays an entire dialogue against the real logic, and that is how the hard cases are tested: a promise with an ambiguous date, a payment reported twice, a client asking to stop receiving messages.
 
 ## What I learned
 
-The repository has no unit tests. Verification is that conversation simulator, which walks the state machine end to end but does not exercise the modules separately.
-
-It catches a flow regression without locating it. Adding tests over the action layer is the outstanding work.
+That simulator walks the state machine end to end, so it catches a flow regression without locating it: when it fails, it points at the whole dialogue rather than the module. Tests over the action layer are the next step.
