@@ -13,7 +13,8 @@ export const es = {
 		themeToDark: 'Cambiar a tema oscuro',
 		themeToLight: 'Cambiar a tema claro',
 		langSwitch: 'Ver esta página en inglés',
-		langSwitchShort: 'EN'
+		langSwitchShort: 'EN',
+		newTab: 'se abre en una pestaña nueva'
 	},
 	home: {
 		badge: 'Disponible para práctica profesional, enero a abril de 2027',

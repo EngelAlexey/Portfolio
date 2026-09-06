@@ -15,7 +15,8 @@ export const en: Dict = {
 		themeToDark: 'Switch to dark theme',
 		themeToLight: 'Switch to light theme',
 		langSwitch: 'View this page in Spanish',
-		langSwitchShort: 'ES'
+		langSwitchShort: 'ES',
+		newTab: 'opens in a new tab'
 	},
 	home: {
 		badge: 'Available for a professional internship, January to April 2027',

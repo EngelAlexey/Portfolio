@@ -15,6 +15,9 @@ const strings = t(lang);
 // the other two are there so a reader looking for something else is not forced
 // through the wrong document.
 const variants = [CV_DEFAULT, ...CV_VARIANTS.filter((v) => v !== CV_DEFAULT)];
+const handle = (url: string) => new URL(url).pathname.replace(/\/+$/, '').split('/').pop() ?? url;
+const linkedinHandle = handle(PERSON.linkedin);
+const githubHandle = handle(PERSON.github);
 ---
 
 <Layout
@@ -31,30 +34,40 @@ const variants = [CV_DEFAULT, ...CV_VARIANTS.filter((v) => v !== CV_DEFAULT)];
 	</Container>
 
 	<Container size="text">
-		<ul class="channels">
-			<li>
-				<span class="label">{strings.contact.email}</span>
-				<a class="value" href={`mailto:${PERSON.email}`}>{PERSON.email}</a>
-			</li>
-			<li>
-				<span class="label">{strings.contact.linkedin}</span>
-				<a class="value" href={PERSON.linkedin} rel="noreferrer" target="_blank">
-					alex-herrera-manzanares ↗
-				</a>
-			</li>
-			<li>
-				<span class="label">{strings.contact.github}</span>
-				<a class="value" href={PERSON.github} rel="noreferrer" target="_blank">EngelAlexey ↗</a>
-			</li>
-			<li>
-				<span class="label">{strings.contact.location}</span>
-				<span class="value plain">{PERSON.location[lang]}</span>
-			</li>
-			<li>
-				<span class="label">{strings.contact.availability}</span>
-				<span class="value plain">{PERSON.availability[lang]}</span>
-			</li>
-		</ul>
+		<dl class="channels">
+			<div>
+				<dt class="label">{strings.contact.email}</dt>
+				<dd><a class="value" href={`mailto:${PERSON.email}`}>{PERSON.email}</a></dd>
+			</div>
+			<div>
+				<dt class="label">{strings.contact.linkedin}</dt>
+				<dd>
+					<a class="value" href={PERSON.linkedin} rel="noreferrer" target="_blank">
+						{linkedinHandle}
+						<span class="ext" aria-hidden="true">↗</span>
+						<span class="sr-only">{strings.a11y.newTab}</span>
+					</a>
+				</dd>
+			</div>
+			<div>
+				<dt class="label">{strings.contact.github}</dt>
+				<dd>
+					<a class="value" href={PERSON.github} rel="noreferrer" target="_blank">
+						{githubHandle}
+						<span class="ext" aria-hidden="true">↗</span>
+						<span class="sr-only">{strings.a11y.newTab}</span>
+					</a>
+				</dd>
+			</div>
+			<div>
+				<dt class="label">{strings.contact.location}</dt>
+				<dd class="value plain">{PERSON.location[lang]}</dd>
+			</div>
+			<div>
+				<dt class="label">{strings.contact.availability}</dt>
+				<dd class="value plain">{PERSON.availability[lang]}</dd>
+			</div>
+		</dl>
 
 		<div class="cv">
 			<div class="cvrow">
@@ -96,19 +109,25 @@ const variants = [CV_DEFAULT, ...CV_VARIANTS.filter((v) => v !== CV_DEFAULT)];
 	}
 
 	.channels {
-		list-style: none;
 		margin: 0;
-		padding: 0;
 		border-top: 1px solid var(--line);
 	}
 
-	.channels li {
+	.channels > div {
 		display: grid;
 		grid-template-columns: minmax(7rem, max-content) 1fr;
 		gap: 1rem;
 		padding: 0.85rem 0;
 		border-bottom: 1px solid var(--line);
 		align-items: baseline;
+	}
+
+	.channels dd {
+		margin: 0;
+	}
+
+	.ext {
+		margin-left: 0.15em;
 	}
 
 	.label {
@@ -151,7 +170,7 @@ const variants = [CV_DEFAULT, ...CV_VARIANTS.filter((v) => v !== CV_DEFAULT)];
 	}
 
 	@media (max-width: 30rem) {
-		.channels li {
+		.channels > div {
 			grid-template-columns: 1fr;
 			gap: 0.2rem;
 		}
