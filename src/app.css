@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import 'tailwindcss' source(none);
 
 /* ─────────────────────────────────────────────────────────────────────────
    Design thesis: colour is semantic. A hue on this site always encodes a
@@ -18,12 +18,14 @@
 	--paper: oklch(98.5% 0.002 260);
 	--paper-sunken: oklch(96.4% 0.003 260);
 	--surface: oklch(100% 0 0);
-	--surface-raised: oklch(100% 0 0);
 
 	/* Ink */
 	--ink: oklch(18% 0.008 260);
 	--ink-muted: oklch(45% 0.01 260);
 	--ink-faint: oklch(53% 0.01 260);
+
+	--font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
 	--ink-inverted: oklch(98.5% 0.002 260);
 
 	/* Lines */
@@ -84,7 +86,6 @@
 		--paper: oklch(15.5% 0.008 265);
 		--paper-sunken: oklch(13% 0.008 265);
 		--surface: oklch(19% 0.009 265);
-		--surface-raised: oklch(22.5% 0.01 265);
 
 		--ink: oklch(96% 0.003 265);
 		--ink-muted: oklch(72% 0.008 265);
@@ -135,7 +136,6 @@
 	--paper: oklch(15.5% 0.008 265);
 	--paper-sunken: oklch(13% 0.008 265);
 	--surface: oklch(19% 0.009 265);
-	--surface-raised: oklch(22.5% 0.01 265);
 
 	--ink: oklch(96% 0.003 265);
 	--ink-muted: oklch(72% 0.008 265);
@@ -180,29 +180,6 @@
 
 /* Expose the semantic tokens to Tailwind utilities. The values are var()
    references, so `bg-surface` / `text-ink` follow the active theme. */
-@theme inline {
-	--color-paper: var(--paper);
-	--color-paper-sunken: var(--paper-sunken);
-	--color-surface: var(--surface);
-	--color-surface-raised: var(--surface-raised);
-	--color-ink: var(--ink);
-	--color-ink-muted: var(--ink-muted);
-	--color-ink-faint: var(--ink-faint);
-	--color-ink-inverted: var(--ink-inverted);
-	--color-line: var(--line);
-	--color-line-strong: var(--line-strong);
-	--color-action: var(--action);
-	--color-action-hover: var(--action-hover);
-	--color-action-ink: var(--action-ink);
-	--color-focus: var(--focus);
-
-	--font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-	--font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
-
-	--radius-token: var(--radius);
-	--radius-token-sm: var(--radius-sm);
-}
-
 /* ── Base ────────────────────────────────────────────────────────────────── */
 
 html {
