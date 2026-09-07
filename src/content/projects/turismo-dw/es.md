@@ -1,7 +1,7 @@
 ---
 slug: turismo-dw
 title: TurismoDW | Almacén de datos
-tagline: Cuatro orígenes a un esquema estrella en SQL Server, y de ahí a servicios gestionados sin reescribir el modelo.
+tagline: Cuatro orígenes incompatibles, con archivos mal formados a propósito para que la validación tuviera algo que rechazar, quedan consultables juntos en un esquema estrella.
 areas: [datos, infra]
 kind: academico
 org: Universidad Técnica Nacional

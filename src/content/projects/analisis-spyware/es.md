@@ -1,7 +1,7 @@
 ---
 slug: analisis-spyware
 title: Análisis de spyware | Señales y contramedidas
-tagline: Inventario de las señales que deja este software en el sistema y del control que corta cada paso.
+tagline: Se construye el spyware para verlo actuar en un laboratorio aislado, y de ese rastro salen las contramedidas, cada una junto al indicador que la dispara.
 areas: [seguridad]
 kind: academico
 org: Universidad Técnica Nacional

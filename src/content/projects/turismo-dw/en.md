@@ -1,7 +1,7 @@
 ---
 slug: turismo-dw
 title: TurismoDW | Data warehouse
-tagline: Four sources into one star schema on SQL Server, and from there onto managed services without rewriting the model.
+tagline: Four incompatible sources, including files deliberately malformed so validation had something to reject, become queryable together in one star schema.
 areas: [datos, infra]
 kind: academico
 org: Universidad Técnica Nacional

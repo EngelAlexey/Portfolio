@@ -1,7 +1,7 @@
 ---
 slug: infraestructura-hotelera
 title: Hotel chain network | Design and compliance
-tagline: Four sites under one design, with VLAN segmentation, encrypted links and hybrid cloud.
+tagline: Four sites that ran as separate companies come under one design, and compliance decides which guest data may leave for the cloud and which may not.
 areas: [infra, seguridad]
 kind: academico
 org: Universidad Técnica Nacional

@@ -1,7 +1,7 @@
 ---
 slug: infraestructura-hotelera
 title: Red para cadena hotelera | Diseño y cumplimiento
-tagline: Cuatro sedes bajo un mismo diseño, con segmentación por VLAN, enlaces cifrados y nube híbrida.
+tagline: Cuatro sedes que operaban como empresas distintas pasan a un solo diseño, y el cumplimiento decide qué dato del huésped puede salir a la nube y cuál no.
 areas: [infra, seguridad]
 kind: academico
 org: Universidad Técnica Nacional

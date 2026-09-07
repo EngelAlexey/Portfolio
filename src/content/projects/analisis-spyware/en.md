@@ -1,7 +1,7 @@
 ---
 slug: analisis-spyware
 title: Spyware analysis | Signals and countermeasures
-tagline: An inventory of the signals this software leaves on a system and the control that cuts each step.
+tagline: The spyware is built so it can be watched in an isolated lab, and the countermeasures come out of that trace, each one next to the indicator that triggers it.
 areas: [seguridad]
 kind: academico
 org: Universidad Técnica Nacional
