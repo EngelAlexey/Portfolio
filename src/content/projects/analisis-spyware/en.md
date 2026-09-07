@@ -7,12 +7,12 @@ kind: academico
 org: Universidad Técnica Nacional
 role: Security analysis
 period:
-  start: '2026-05'
-  end: '2026-06'
+  start: '2026-03'
+  end: '2026-03'
 tier: ficha
 home: false
 visibility: publico
-repo: null
+repo: https://github.com/EngelAlexey/spyware
 site: null
 stack:
   - Python
