@@ -1,5 +1,6 @@
 import { LANGS, alternates, other, path as routePath, type Lang, type RouteKey } from './i18n';
 import { absolute } from './site';
+import { ogCardPath } from './og/paths';
 
 export type SeoInput = {
 	lang: Lang;
@@ -22,15 +23,10 @@ export type SeoTags = {
 
 const OG_LOCALE: Record<Lang, string> = { es: 'es_CR', en: 'en_US' };
 
-const DEFAULT_OG: Record<Lang, string> = {
-	es: '/img/og-es.png',
-	en: '/img/og-en.png'
-};
-
 export function seo({ lang, key, slug, image, noindex = false }: SeoInput): SeoTags {
 	const route = key ?? 'home';
 	const paths = alternates(route, slug);
-	const card = image ?? DEFAULT_OG[lang];
+	const card = image ?? ogCardPath(lang, route, slug);
 
 	return {
 		canonical: absolute(routePath(lang, route, slug)),
