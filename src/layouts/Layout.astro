@@ -97,15 +97,19 @@ const links = [
 	</head>
 
 	<body>
-		<script is:inline>
-			// build.format is 'file', so Astro.url.pathname is "/es.html" and the
-			// analytics client would report a path that is no canonical URL.
-			window.webAnalyticsBeforeSend = function (event) {
-				if (!event || typeof event.url !== 'string') return event;
-				return { ...event, url: event.url.replace(/\.html(?=$|[?#])/, '') };
-			};
-		</script>
 		<Analytics />
+		<script is:inline>
+			// build.format is 'file', so the component stamps data-pathname="/es.html",
+			// and both the reported path and the route derived from it would name a URL
+			// the site never serves. This runs while parsing, after the element exists
+			// and before the deferred module upgrades it.
+			(function () {
+				var el = document.querySelector('vercel-analytics');
+				if (!el) return;
+				var seen = el.getAttribute('data-pathname');
+				if (seen) el.setAttribute('data-pathname', seen.replace(/\.html$/, ''));
+			})();
+		</script>
 
 		<a class="skip" href="#main">{strings.a11y.skipToContent}</a>
 

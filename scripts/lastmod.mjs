@@ -38,11 +38,14 @@ if (isShallow()) {
 	process.exit(0);
 }
 
+const I18N = ['src/lib/i18n/es.ts', 'src/lib/i18n/en.ts'];
+const CONTENT = 'src/content/projects';
+
 const PAGES = {
-	home: ['src/components/pages/Home.astro'],
-	projects: ['src/components/pages/Projects.astro'],
-	about: ['src/components/pages/About.astro', 'src/lib/about.ts'],
-	contact: ['src/components/pages/Contact.astro', 'src/lib/site.ts']
+	home: ['src/components/pages/Home.astro', 'src/lib/about.ts', CONTENT, ...I18N],
+	projects: ['src/components/pages/Projects.astro', CONTENT, ...I18N],
+	about: ['src/components/pages/About.astro', 'src/lib/about.ts', ...I18N],
+	contact: ['src/components/pages/Contact.astro', 'src/lib/site.ts', ...I18N]
 };
 
 /** @type {Record<string, string>} */
