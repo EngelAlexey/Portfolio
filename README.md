@@ -2,7 +2,7 @@
 
 Sitio estático bilingüe construido con Astro 7: español bajo `/es`, inglés bajo `/en`, y la raíz redirigiendo a `/es`. No hay servidor en producción: `pnpm build` deja HTML en `dist/`.
 
-No hay integración de framework de UI. Lo que sí embarca son unos kilobytes de script propio —el conmutador de tema, la retícula de herramientas, el diagrama de capas y el raíl de la línea de tiempo— más `@vercel/analytics`. Sin JavaScript el sitio sigue siendo legible: el tema sigue al sistema, los filtros se ocultan y todos los proyectos quedan a la vista, y el diagrama muestra su primera capa.
+No hay integración de framework de UI. Lo que sí embarca son unos kilobytes de script propio —el conmutador de tema, la retícula de herramientas, el diagrama de capas y el raíl de la línea de tiempo— más `@vercel/analytics` y la etiqueta de Google Analytics 4. Sin JavaScript el sitio sigue siendo legible: el tema sigue al sistema, los filtros se ocultan y todos los proyectos quedan a la vista, y el diagrama muestra su primera capa.
 
 ## Comandos
 
@@ -180,9 +180,10 @@ Vercel, salida estática. `vercel.json` fija:
 
 ## Rendimiento
 
-Tres cosas que es fácil volver a romper:
+Cuatro cosas que es fácil volver a romper:
 
 - **`<Analytics />` va en el `<body>`, no en el `<head>`.** Emite `<vercel-analytics>`, y un elemento desconocido dentro de la cabecera es donde el parser decide que la cabecera terminó: con él arriba, las hojas de estilo que Astro añade después se parseaban dentro del `<body>`.
+- **La etiqueta de GA4 sí va en el `<head>`, y eso no contradice lo anterior.** Lo que rompía la cabecera era el elemento desconocido, no la posición: `<script>` es un elemento de cabecera legítimo. El cuerpo del `gtag` se arma en el front matter y se inyecta con `set:html`, como las `@font-face` y el JSON-LD, porque dentro de una expresión del template las llaves del script se leerían como JSX. Y va detrás de `import.meta.env.PROD`, que es verdadero en cualquier `astro build`: las previsualizaciones y `pnpm preview` también miden. Si algún día estorba ese ruido, la puerta estrecha es `process.env.VERCEL_ENV === 'production'`.
 - **Las `@font-face` se declaran en `Layout.astro`, no se importan de Fontsource.** Sus paquetes *variable* publican una sola hoja con los once subconjuntos y aquí solo se usa el latino. Declararlas es además lo que permite precargarlas: el nombre con hash solo se conoce a través de `?url`, y usar ese mismo valor en el `preload` y en la `@font-face` es lo que garantiza que el navegador no descargue el fichero dos veces.
 - **`assetsInlineLimit` es una función.** El `0` estaba para que fuentes e imágenes no acabaran en base64, pero también apagaba el inlineado de CSS y hojas de 310 B viajaban como petición propia. La función dice solo lo que se quería decir: `false` para los assets, el umbral por defecto para el CSS.
 

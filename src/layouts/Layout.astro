@@ -10,7 +10,7 @@ import LangSwitch from '../components/LangSwitch.astro';
 import Seo from '../components/Seo.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import { path, t, type Lang, type RouteKey } from '../lib/i18n';
-import { PERSON } from '../lib/site';
+import { ANALYTICS, PERSON } from '../lib/site';
 
 interface Props {
 	lang: Lang;
@@ -54,6 +54,17 @@ const fontFaces = [
 	face('JetBrains Mono Variable', '100 800', monoLatinExt, LATIN_EXT)
 ].join('\n');
 
+// Solo en compilaciones: astro dev no manda sesiones de desarrollo a GA4.
+const gaId = import.meta.env.PROD ? ANALYTICS.ga4 : null;
+const gtagInit = gaId
+	? `window.dataLayer = window.dataLayer || [];
+function gtag() {
+	dataLayer.push(arguments);
+}
+gtag('js', new Date());
+gtag('config', '${gaId}');`
+	: '';
+
 const strings = t(lang);
 const current = key;
 
@@ -93,6 +104,8 @@ const links = [
 				if (e.viewTransition) document.documentElement.dataset.vt = '';
 			});
 		</script>
+		{gaId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />}
+		{gaId && <script is:inline set:html={gtagInit}></script>}
 		<Seo {lang} {key} {slug} {title} {description} {image} {noindex} />
 	</head>
 

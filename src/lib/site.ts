@@ -44,3 +44,7 @@ export const CV: Record<CvVariant, { es: string; en: string }> = {
 		en: '/cv/CV-Alex-Herrera-Manzanares-general-en.pdf'
 	}
 };
+
+export const ANALYTICS = {
+	ga4: 'G-TB0F0YLTWX'
+} as const;
