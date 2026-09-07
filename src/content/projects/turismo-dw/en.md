@@ -1,6 +1,6 @@
 ---
 slug: turismo-dw
-title: TurismoDW | Data warehouse
+title: TurismoDW | Data warehouse and cloud migration
 tagline: Four incompatible sources, including files deliberately malformed so validation had something to reject, become queryable in one star schema.
 areas: [datos, infra]
 kind: academico

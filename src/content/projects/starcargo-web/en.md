@@ -1,6 +1,6 @@
 ---
 slug: starcargo-web
-title: Star Cargo site | Online requests and client portal
+title: Star Cargo Service site | Four languages and a client portal
 tagline: Eight online applications feed a signed-in portal where clients follow their submissions and the team works them, with permission resolved against the ERP.
 areas: [fullstack]
 kind: profesional
