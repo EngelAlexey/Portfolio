@@ -1,23 +1,29 @@
 import type { APIRoute } from 'astro';
 import { fichaSlugs } from '../lib/content';
 import { LANGS, alternates, path, type RouteKey } from '../lib/i18n';
-import { absolute } from '../lib/site';
+import { SITE_URL, absolute } from '../lib/site';
+import lastmod from '../lib/lastmod.json';
 
 const STATIC_KEYS: RouteKey[] = ['home', 'projects', 'about', 'contact'];
 
 type Entry = { key: RouteKey; slug?: string };
 
+const dates: Record<string, string> = lastmod;
+
 function urlEntry({ key, slug }: Entry): string {
 	const pair = alternates(key, slug);
+	const date = dates[slug ? `project:${slug}` : key];
+	const stamp = date ? `
+    <lastmod>${date}</lastmod>` : '';
 	const links = LANGS.map(
 		(lang) => `    <xhtml:link rel="alternate" hreflang="${lang}" href="${absolute(pair[lang])}"/>`
 	).join('\n');
 
 	return LANGS.map(
 		(lang) => `  <url>
-    <loc>${absolute(path(lang, key, slug))}</loc>
+    <loc>${absolute(path(lang, key, slug))}</loc>${stamp}
 ${links}
-    <xhtml:link rel="alternate" hreflang="x-default" href="${absolute(pair.es)}"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}/"/>
   </url>`
 	).join('\n');
 }

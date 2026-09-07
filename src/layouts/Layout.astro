@@ -46,8 +46,10 @@ const links = [
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="icon" href="/favicon.svg" />
-		<link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<!-- Google wants a square favicon that is a multiple of 48px to show one in results. -->
+		<link rel="icon" href="/img/favicon-96.png" sizes="96x96" type="image/png" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png" />
 		<meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#17171c" media="(prefers-color-scheme: dark)" />
 		<script is:inline>

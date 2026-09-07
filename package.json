@@ -12,8 +12,9 @@
 		"preview": "astro preview",
 		"check": "astro check",
 		"sync:cv": "node scripts/sync-cv.mjs",
-		"prebuild": "node scripts/sync-cv.mjs",
-		"og": "node scripts/og.mjs"
+		"prebuild": "node scripts/sync-cv.mjs && node scripts/lastmod.mjs",
+		"og": "node scripts/og.mjs",
+		"lastmod": "node scripts/lastmod.mjs"
 	},
 	"devDependencies": {
 		"@astrojs/check": "^0.9.10",

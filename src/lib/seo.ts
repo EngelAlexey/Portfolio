@@ -1,5 +1,5 @@
 import { LANGS, alternates, other, path as routePath, type Lang, type RouteKey } from './i18n';
-import { absolute } from './site';
+import { SITE_URL, absolute } from './site';
 import { ogCardPath } from './og/paths';
 
 export type SeoInput = {
@@ -32,7 +32,9 @@ export function seo({ lang, key, slug, image, noindex = false }: SeoInput): SeoT
 		canonical: absolute(routePath(lang, route, slug)),
 		alternates: [
 			...LANGS.map((l) => ({ hreflang: l, href: absolute(paths[l]) })),
-			{ hreflang: 'x-default', href: absolute(paths.es) }
+			// The root negotiates language, which is exactly what x-default is for.
+			// Pointing it at /es would say Spanish is the fallback for everyone.
+			{ hreflang: 'x-default', href: `${SITE_URL}/` }
 		],
 		// A page that asks not to be indexed has nothing to advertise.
 		ogImage: noindex ? null : absolute(card),
