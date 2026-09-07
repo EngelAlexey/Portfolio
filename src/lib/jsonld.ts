@@ -9,6 +9,7 @@ import {
 	type OrgMark,
 	type Role
 } from './about';
+import { allArticles, getArticle, type Article } from './articles';
 import { areaLabel } from './areas';
 import { fichas, getProject, type ProjectMeta } from './content';
 import { LANGS, path as routePath, t, type Lang, type RouteKey } from './i18n';
@@ -149,12 +150,13 @@ function breadcrumbNode(input: GraphInput, key: RouteKey): Node | null {
 
 	const trail: Node[] = [home];
 
-	if (key === 'project') {
+	if (key === 'project' || key === 'article') {
+		const parent = key === 'project' ? 'projects' : 'blog';
 		trail.push({
 			'@type': 'ListItem',
 			position: 2,
-			name: strings.nav.projects,
-			item: absolute(routePath(input.lang, 'projects'))
+			name: strings.nav[parent],
+			item: absolute(routePath(input.lang, parent))
 		});
 		trail.push({ '@type': 'ListItem', position: 3, name: input.title });
 	} else {
@@ -230,10 +232,51 @@ async function itemListNode(input: GraphInput): Promise<Node> {
 	};
 }
 
+async function articleListNode(input: GraphInput): Promise<Node> {
+	const list = await allArticles(input.lang);
+	return {
+		'@type': 'ItemList',
+		'@id': `${input.canonical}#articles`,
+		numberOfItems: list.length,
+		itemListElement: list.map((article, i) => ({
+			'@type': 'ListItem',
+			position: i + 1,
+			name: article.meta.title,
+			url: absolute(routePath(input.lang, 'article', article.meta.slug))
+		}))
+	};
+}
+
+function articleNode(input: GraphInput, article: Article): Node {
+	const meta = article.meta;
+
+	return {
+		'@type': 'TechArticle',
+		'@id': `${input.canonical}#article`,
+		headline: meta.title,
+		description: meta.tagline,
+		url: input.canonical,
+		mainEntityOfPage: ref(`${input.canonical}#webpage`),
+		inLanguage: input.lang,
+		datePublished: meta.published,
+		dateModified: meta.updated ?? meta.published,
+		author: ref(PERSON_ID),
+		publisher: ref(PERSON_ID),
+		copyrightHolder: ref(PERSON_ID),
+		about: meta.areas.map((area) => ({ '@type': 'Thing', name: areaLabel(area, input.lang) })),
+		articleSection: areaLabel(meta.areas[0], input.lang),
+		wordCount: article.entry.body?.trim().split(/\s+/).filter(Boolean).length ?? 0,
+		...(meta.repo ? { codeRepository: meta.repo } : {}),
+		...(input.ogImage ? { image: ref(`${input.canonical}#card`) } : {})
+	};
+}
+
 const PAGE_TYPE: Record<RouteKey, string> = {
 	home: 'WebPage',
 	projects: 'CollectionPage',
 	project: 'WebPage',
+	blog: 'CollectionPage',
+	article: 'WebPage',
 	about: 'ProfilePage',
 	contact: 'ContactPage'
 };
@@ -281,6 +324,21 @@ export async function buildGraph(input: GraphInput): Promise<string | null> {
 			page.mainEntity = ref(node['@id'] as string);
 			nodes.push(node);
 			used.forEach((mark) => marks.add(mark));
+		}
+	}
+
+	if (key === 'blog') {
+		const list = await articleListNode(input);
+		page.mainEntity = ref(list['@id'] as string);
+		nodes.push(list);
+	}
+
+	if (key === 'article' && input.slug) {
+		const article = await getArticle(input.lang, input.slug);
+		if (article) {
+			const node = articleNode(input, article);
+			page.mainEntity = ref(node['@id'] as string);
+			nodes.push(node);
 		}
 	}
 

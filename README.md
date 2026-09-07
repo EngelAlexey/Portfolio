@@ -32,6 +32,9 @@ Los dos árboles son espejo, cada segmento en su idioma. La tabla de `src/lib/i1
 | Portada | `/es` | `/en` |
 | Proyectos | `/es/proyectos` | `/en/projects` |
 | Ficha | `/es/proyectos/<slug>` | `/en/projects/<slug>` |
+| Blog | `/es/blog` | `/en/blog` |
+| Artículo | `/es/blog/<slug>` | `/en/blog/<slug>` |
+| Feed | `/es/blog.xml` | `/en/blog.xml` |
 | Sobre mí | `/es/sobre-mi` | `/en/about` |
 | Contacto | `/es/contacto` | `/en/contact` |
 
@@ -117,15 +120,108 @@ Qué contesta cada sección, que es lo que decide dónde va cada frase:
 
 **Sus estilos viven en `src/app.css`, no en el componente.** Astro no propaga el CSS con ámbito de un componente `.astro` importado dentro de un `.mdx` que se renderiza con el `render()` de la capa de contenido: el marcado sale con su `data-astro-cid-*` y la hoja de estilos no se enlaza en ninguna parte, ni en dev ni en el build. El diagrama estuvo así, sin estilo, en seis fichas publicadas. Cualquier componente nuevo que se use desde una ficha `.mdx` tiene el mismo problema y sus estilos van también a `app.css`.
 
+## Añadir un artículo
+
+Los artículos del blog son una colección aparte, con la misma forma de carpeta que los proyectos y las dos versiones de idioma obligatorias:
+
+```
+src/content/articles/<slug>/
+├─ es.mdx
+├─ en.mdx
+└─ notas-de-imagen.md   (opcional; el cargador no lo lee)
+```
+
+Siempre `.mdx`, aunque el artículo no importe ningún componente: así el cargador tiene un solo patrón y añadir un `Callout` después no obliga a renombrar el archivo.
+
+```yaml
+---
+slug: revisar-codigo-generado-por-ia   # debe coincidir con el nombre de la carpeta
+title: Siete cosas que revisar en el código que genera tu IA
+tagline: Una línea, 10–180 caracteres.
+areas: [seguridad]                     # 1 a 3 de la misma taxonomía que las fichas
+published: '2026-09-07'                # YYYY-MM-DD
+updated: null                          # YYYY-MM-DD o null
+draft: true                            # true = solo se ve en `astro dev`
+repo: null                             # repositorio de demostración, o null
+related: [kaizen-ai]                   # slugs de fichas existentes, o []
+cover: null                            # ruta bajo /img/ o null
+---
+```
+
+Reglas que el build hace cumplir:
+
+- `slug` en minúsculas y guiones, y debe coincidir con la carpeta.
+- Si existe `es.mdx` debe existir `en.mdx`, con el mismo `draft`, el mismo `published` y el mismo `related`.
+- `updated` no puede ser anterior a `published`.
+
+**`updated` es la fecha de la última edición y hay que ponerla a mano** cuando se corrige o se amplía un artículo ya publicado. Mientras es `null`, el artículo se describe solo con `published`. En cuanto tiene fecha aparece en cinco sitios: la línea de datos de la ficha del artículo, `dateModified` en los datos estructurados, `article:modified_time` en Open Graph, `<lastmod>` en el sitemap y `atom:updated` en el feed. La fecha declarada **gana sobre la del historial de git**: es la que el autor afirma, y el historial queda de reserva para los artículos que no la declaran.
+- `related` solo admite slugs de fichas que existan. Un enlace roto es un fallo de build, no un 404 en producción.
+
+### La compuerta del blog
+
+Un blog con un solo artículo comunica abandono, así que la sección no se enseña hasta que haya algo que leer. Mientras no exista ningún artículo publicado se apagan a la vez el enlace del menú, el bloque de la portada, las entradas del sitemap y el `<link>` del feed, y `/es/blog` se sirve con `noindex`. Todo cuelga de `hasArticles()` en `src/lib/articles.ts`.
+
+Un artículo en `draft: true` se ve entero en `astro dev` y no existe en el build. Publicar es cambiar esa línea.
+
+### Cómo se escribe el cuerpo
+
+Se hereda todo lo de las fichas: registro de documento de ingeniería, una afirmación por oración, 25 palabras o menos y 32 como techo, sin metáforas ni cierres aforísticos. Si una oración podría aparecer sin cambios en otro artículo, sobra.
+
+Reglas propias del blog:
+
+- **El título de un artículo sí describe.** Las fichas nombran la cosa; un artículo nombra lo que el lector se lleva, y tiene que coincidir con algo que la gente teclea en un buscador. «Cómo validar permisos en un ERP multiempresa» se busca; «reflexiones sobre mi stack» no.
+- **Voz impersonal.** Nada de «he tenido que corregir», «me pasó», «en mi experiencia». Un artículo es una recomendación general con información verificable, no una anécdota. La primera persona se queda en la interfaz del sitio, que sí es su voz.
+- **Cada punto termina en algo comprobable:** una petición, una prueba o una salida que el lector puede reproducir. Un punto que solo aconseja se borra.
+- **Cada afirmación cuantificada lleva referencia**, y la referencia se abre antes de citarla para comprobar que dice lo que se le atribuye. OWASP, CWE, la documentación oficial de la herramienta y el paper original sirven; un blog que resume a otro, no.
+- **Decisiones, no incidentes.** Lo que aportan los proyectos reales es la regla que se adoptó, enunciada como principio y sin nombrar el sistema. Un fallo concreto que tuvo un producto de un cliente no entra, aunque esté corregido y aunque se cuente en abstracto.
+- **El carrusel no es el artículo resumido.** El carrusel entrega la lista completa y utilizable; el artículo entrega el código, la captura del fallo y la comprobación.
+
+Y una regla que no se negocia: **todo el código de un artículo está reconstruido para el artículo**. Nada sale de los repositorios de Intercargo, Star Cargo ni Kaizen. Un artículo indexado es público y permanente, así que ningún ejemplo describe una debilidad concreta de un sistema en producción de un cliente.
+
+### Citas y referencias
+
+`[1]` suelto en Markdown es texto, no un enlace: sin una definición `[1]: url` no lo es, y con ella apuntaría fuera en lugar de a la lista. Por eso las citas son dos componentes.
+
+`Cite.astro` marca la cita en el punto donde se afirma, pegada a la última palabra y antes del punto:
+
+```mdx
+… no salieron mejor parados que los pequeños<Cite n={1} />.
+```
+
+Sale como un volado `[1]` en el color del área, enlaza a `#ref-1` y lleva `id="cite-1"` para que la referencia pueda devolver al lector al párrafo.
+
+`References.astro` cierra el artículo y recibe los datos, no marcado. Numera, pone los `id="ref-n"`, deriva el dominio de cada URL y añade la flecha de vuelta:
+
+```mdx
+<References
+	title="Referencias"
+	back="Volver a la cita"
+	items={[
+		{ source: 'OWASP', title: 'Top 10 2021, A03:2021 Injection', url: 'https://…' },
+		{ source: 'Spracklen, J. y otros', title: 'We Have a Package…', note: 'USENIX Security 2025', url: 'https://…' }
+	]}
+/>
+```
+
+El orden del arreglo es la numeración, así que **`n` en cada `<Cite>` tiene que coincidir con la posición del elemento**. Nada lo comprueba en el build.
+
+### Componentes en el cuerpo
+
+`Callout.astro`, con las variantes `riesgo`, `correccion` y `nota`, más `Cite` y `References`. **Los estilos de los tres viven en `src/app.css`**, por la misma razón que los del diagrama: Astro no propaga el CSS con ámbito de un componente importado dentro de un `.mdx`.
+
+Un detalle de MDX que cuesta un build: **el enlace automático de Markdown, `<https://…>`, no existe en MDX**. Todo lo que empieza por `<` se intenta leer como JSX, así que una URL suelta va como `[url](url)` o dentro de un componente. El build falla con un error de sintaxis en la línea del enlace.
+
 ## Estructura
 
 | Ruta | Qué hay |
 |---|---|
 | `src/content.config.ts` | el contrato de front matter |
-| `src/lib/content.ts` | carga, valida y ordena el contenido en build |
+| `src/lib/content.ts` | carga, valida y ordena los proyectos en build |
+| `src/lib/articles.ts` | lo mismo para los artículos, más los minutos de lectura y la compuerta del blog |
+| `src/lib/feed.ts` | el canal RSS, construido a mano como el sitemap |
 | `src/lib/areas.ts` | taxonomía de las 6 áreas |
 | `src/lib/i18n/index.ts` | tabla de rutas ES↔EN — la usan la navegación, el cambio de idioma, `hreflang` y el sitemap |
-| `src/lib/format.ts` | el formato de los rangos de fecha, en un solo sitio |
+| `src/lib/format.ts` | el formato de los rangos de fecha y de las fechas sueltas, en un solo sitio |
 | `src/lib/site.ts` | origen del sitio, contacto, rutas del CV |
 | `src/lib/seo.ts` | canonical, `hreflang` y los metadatos de la cabecera |
 | `src/lib/jsonld.ts` | el grafo de datos estructurados que emite cada página |
@@ -194,6 +290,8 @@ Cada página indexable emite **un solo** `<script type="application/ld+json">` c
 Las entidades duraderas llevan `@id` fijo: `#person`, `#website` y un `#org-<marca>` por organización. Así `/es` y `/en` describen **la misma persona** en vez de dos. La `Person` va completa en la portada y en «sobre mí», y reducida en el resto: un nodo descrito en parte con el mismo `@id` es JSON-LD idiomático, y `sameAs` —el campo que reconcilia la entidad— se queda también en la versión corta.
 
 Las fichas llevan `CreativeWork` y no `Article`. No hay fecha de publicación en el contrato de front matter y sacarla de `period` sería inventarla: `period` es cuándo ocurrió el trabajo, que es lo que significa `temporalCoverage`. `Article` trata `datePublished` como obligatoria, así que sin ella solo se gana un aviso permanente en Search Console. El resultado enriquecido que sí aparece es `BreadcrumbList`, y ese no depende del tipo — es lo que pone `alexherrera.dev › Proyectos › …` bajo el resultado, que es donde las fichas recuperan la atribución que sus títulos deliberadamente no llevan.
+
+Los artículos sí llevan `TechArticle`, y por el motivo contrario: `published` está en el contrato, así que `datePublished` y `dateModified` se afirman con un dato real. El índice del blog emite un `ItemList` con los artículos publicados.
 
 Solo se afirma lo que es cierto: las certificaciones en curso no entran en `hasCredential`, `ORG_LINKS` empieza vacío porque un `sameAs` sin verificar desambigua la entidad equivocada, y no hay `potentialAction: SearchAction` porque el sitio no tiene buscador.
 

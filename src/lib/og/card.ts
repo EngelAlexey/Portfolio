@@ -28,7 +28,7 @@ function portrait(): string | null {
 }
 
 export function cardSvg(spec: CardSpec): string {
-	const colors = palette();
+	const colors = palette(spec.theme);
 	const accent = spec.accent === 'brand' ? colors.area.seguridad : colors.area[spec.accent];
 	const photo = spec.portrait ? portrait() : null;
 

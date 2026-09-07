@@ -2,11 +2,13 @@
 import OrgLink from '../OrgLink.astro';
 import OrgLogoLink from '../OrgLogoLink.astro';
 import Layout from '../../layouts/Layout.astro';
+import ArticleCard from '../ArticleCard.astro';
 import BrandMark from '../BrandMark.astro';
 import Container from '../Container.astro';
 import ProjectCard from '../ProjectCard.astro';
 import ToolGrid from '../ToolGrid.astro';
 import { EXPERIENCE, text } from '../../lib/about';
+import { latestArticles } from '../../lib/articles';
 import { AREA_IDS, areaLabel, areaStyle } from '../../lib/areas';
 import { heroTools } from '../../lib/brands';
 import { areaCounts, homeProjects } from '../../lib/content';
@@ -26,6 +28,8 @@ const orgs = EXPERIENCE.filter((role) => role.mark);
 const cvHref = CV[CV_DEFAULT][lang];
 const counts = await areaCounts(lang);
 const projectsHref = path(lang, 'projects');
+const articles = await latestArticles(lang);
+const blogHref = path(lang, 'blog');
 ---
 
 <Layout
@@ -127,6 +131,29 @@ const projectsHref = path(lang, 'projects');
 
 					<p class="more">
 						<a href={projectsHref}>{strings.home.workAll}</a>
+					</p>
+				</div>
+			</Container>
+		)
+	}
+
+	{
+		articles.length > 0 && (
+			<Container>
+				<div class="section">
+					<h2>{strings.home.articlesTitle}</h2>
+					<p class="seclede">{strings.home.articlesLede}</p>
+
+					<ul class="grid">
+						{articles.map((article) => (
+							<li data-areas={article.meta.areas.join(' ')}>
+								<ArticleCard {article} {lang} />
+							</li>
+						))}
+					</ul>
+
+					<p class="more">
+						<a href={blogHref}>{strings.home.articlesAll}</a>
 					</p>
 				</div>
 			</Container>

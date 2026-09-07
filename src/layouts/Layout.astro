@@ -9,7 +9,8 @@ import Analytics from '@vercel/analytics/astro';
 import LangSwitch from '../components/LangSwitch.astro';
 import Seo from '../components/Seo.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
-import { path, t, type Lang, type RouteKey } from '../lib/i18n';
+import { hasArticles } from '../lib/articles';
+import { feedPath, path, t, type Lang, type RouteKey } from '../lib/i18n';
 import { ANALYTICS, PERSON } from '../lib/site';
 
 interface Props {
@@ -20,6 +21,8 @@ interface Props {
 	description: string;
 	image?: string | null;
 	noindex?: boolean;
+	published?: string | null;
+	updated?: string | null;
 }
 
 const {
@@ -29,7 +32,9 @@ const {
 	title,
 	description,
 	image = null,
-	noindex = false
+	noindex = false,
+	published = null,
+	updated = null
 } = Astro.props;
 
 const face = (family: string, weight: string, url: string, range: string) => `
@@ -68,12 +73,19 @@ gtag('config', '${gaId}');`
 const strings = t(lang);
 const current = key;
 
+// El blog no se enlaza hasta que haya algo publicado. La compuerta vive aqui
+// para que el menu, el feed y el sitemap tomen la misma decision.
+const showBlog = await hasArticles(lang);
+
 const links = [
 	{ key: 'home', href: path(lang, 'home'), label: strings.nav.home },
 	{ key: 'projects', href: path(lang, 'projects'), label: strings.nav.projects },
+	...(showBlog ? [{ key: 'blog', href: path(lang, 'blog'), label: strings.nav.blog }] : []),
 	{ key: 'about', href: path(lang, 'about'), label: strings.nav.about },
 	{ key: 'contact', href: path(lang, 'contact'), label: strings.nav.contact }
-] as const;
+] as { key: RouteKey; href: string; label: string }[];
+
+const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', article: 'blog' };
 ---
 
 <!doctype html>
@@ -106,7 +118,17 @@ const links = [
 		</script>
 		{gaId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />}
 		{gaId && <script is:inline set:html={gtagInit}></script>}
-		<Seo {lang} {key} {slug} {title} {description} {image} {noindex} />
+		{
+			showBlog && (
+				<link
+					rel="alternate"
+					type="application/rss+xml"
+					title={`${PERSON.name} — ${strings.blog.title}`}
+					href={feedPath(lang)}
+				/>
+			)
+		}
+		<Seo {lang} {key} {slug} {title} {description} {image} {noindex} {published} {updated} />
 	</head>
 
 	<body>
@@ -143,7 +165,7 @@ const links = [
 											href={link.href}
 											aria-current={
 												current === link.key ||
-												(link.key === 'projects' && current === 'project')
+												(current !== null && parentOf[current] === link.key)
 													? 'page'
 													: undefined
 											}

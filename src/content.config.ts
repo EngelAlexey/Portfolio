@@ -100,4 +100,41 @@ const projects = defineCollection({
 	schema: projectSchema
 });
 
-export const collections = { projects };
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+const articleSchema = z
+	.object({
+		slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'slug must be lower-case kebab-case'),
+		title: z.string().min(2),
+		tagline: z.string().min(10).max(180),
+
+		areas: z.array(z.enum(AREA_IDS)).min(1).max(3),
+
+		published: z.string().regex(DATE, 'use YYYY-MM-DD'),
+		updated: z.string().regex(DATE, 'use YYYY-MM-DD').nullable().default(null),
+		draft: z.boolean().default(false),
+
+		repo: url.nullable().default(null),
+		related: z.array(z.string().min(1)).max(4).default([]),
+		cover: z.string().startsWith('/img/').nullable().default(null)
+	})
+	.superRefine((value, ctx) => {
+		if (value.updated && value.updated < value.published) {
+			ctx.addIssue({
+				code: 'custom',
+				path: ['updated'],
+				message: 'updated is earlier than published'
+			});
+		}
+	});
+
+const articles = defineCollection({
+	loader: glob({
+		base: './src/content/articles',
+		pattern: '*/{es,en}.mdx',
+		generateId: ({ entry }) => entry.replace(/\.mdx$/, '')
+	}),
+	schema: articleSchema
+});
+
+export const collections = { projects, articles };

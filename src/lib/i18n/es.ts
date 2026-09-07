@@ -2,6 +2,7 @@ export const es = {
 	nav: {
 		home: 'Inicio',
 		projects: 'Proyectos',
+		blog: 'Blog',
 		about: 'Sobre mí',
 		contact: 'Contacto',
 		menu: 'Menú'
@@ -31,6 +32,10 @@ export const es = {
 		workTitle: 'Proyectos destacados',
 		workLede: 'Cuatro sistemas en uso. Cada ficha describe por qué se hizo, las decisiones técnicas y el resultado.',
 		workAll: 'Ver los demás proyectos',
+		articlesTitle: 'Últimos artículos',
+		articlesLede:
+			'Escribo sobre las decisiones de seguridad que aparecen al construir software, con el código que las demuestra.',
+		articlesAll: 'Ver todos los artículos',
 		stackLabel: 'Herramientas'
 	},
 	stack: {
@@ -76,6 +81,29 @@ export const es = {
 		profesional: 'Profesional',
 		academico: 'Académico',
 		personal: 'Personal'
+	},
+	blog: {
+		title: 'Blog',
+		lead: 'Artículos sobre seguridad en desarrollo. Cada uno trae el código que falla, la corrección y cómo se comprueba.',
+		empty: 'Todavía no hay artículos publicados.',
+		read: 'Leer el artículo',
+		minutes: (n: number) => `${n} min de lectura`
+	},
+	article: {
+		back: 'Volver al blog',
+		published: 'Publicado',
+		updated: 'Actualizado',
+		reading: 'Lectura',
+		repo: 'Código de ejemplo',
+		relatedTitle: 'Proyectos relacionados',
+		followTitle: 'Sigue el trabajo',
+		followBody:
+			'Publico en Instagram la versión corta de cada artículo, con la lista completa en imágenes.',
+		followCta: 'Ver en Instagram',
+		next: 'Siguiente artículo',
+		previous: 'Artículo anterior',
+		draft: 'Borrador',
+		draftBody: 'Este artículo aún no está publicado. Solo se ve en desarrollo.'
 	},
 	about: {
 		title: 'Sobre mí',

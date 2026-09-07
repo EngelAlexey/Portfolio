@@ -1,0 +1,444 @@
+---
+import AreaChip from '../AreaChip.astro';
+import Container from '../Container.astro';
+import Layout from '../../layouts/Layout.astro';
+import Prose from '../Prose.astro';
+import { accentStyle } from '../../lib/areas';
+import { neighbours, readingMinutes, renderArticle, type Article } from '../../lib/articles';
+import { getProject } from '../../lib/content';
+import { formatDate } from '../../lib/format';
+import { path, t, type Lang } from '../../lib/i18n';
+import { PERSON } from '../../lib/site';
+
+interface Props {
+	lang: Lang;
+	article: Article;
+}
+
+const { lang, article } = Astro.props;
+
+const strings = t(lang);
+const meta = article.meta;
+const around = await neighbours(lang, meta.slug);
+const { Content } = await renderArticle(article);
+
+const related = (
+	await Promise.all(meta.related.map((slug) => getProject(lang, slug)))
+).filter((project) => project !== undefined);
+
+const address = (url: string): string => {
+	const { host, pathname } = new URL(url);
+	return pathname === '/' ? host : host + pathname.replace(/\/$/, '');
+};
+
+const minutes = strings.blog.minutes(readingMinutes(article));
+---
+
+<Layout
+	{lang}
+	key="article"
+	slug={meta.slug}
+	title={meta.title}
+	description={meta.tagline}
+	image={meta.cover}
+	published={meta.published}
+	updated={meta.updated}
+>
+	<div class="articulo" style={accentStyle(meta.areas[0])}>
+		<Container as="header" size="text">
+			<a class="back" href={path(lang, 'blog')}>← {strings.article.back}</a>
+
+			<div class="head">
+				<p class="kind">{strings.blog.title}</p>
+				<h1>{meta.title}</h1>
+				<p class="tagline">{meta.tagline}</p>
+
+				<div class="tags">
+					<ul class="areas">
+						{meta.areas.map((area) => <li><AreaChip {area} {lang} /></li>)}
+					</ul>
+
+					{
+						meta.repo && (
+							<p class="links">
+								<a href={meta.repo} rel="noreferrer" target="_blank" title={address(meta.repo)}>
+									{strings.article.repo}
+								</a>
+							</p>
+						)
+					}
+				</div>
+			</div>
+		</Container>
+
+		<Container size="text">
+			<dl class="facts">
+				<div>
+					<dt class="meta-label">{strings.article.published}</dt>
+					<dd><time datetime={meta.published}>{formatDate(meta.published, lang)}</time></dd>
+				</div>
+				{
+					meta.updated && (
+						<div>
+							<dt class="meta-label">{strings.article.updated}</dt>
+							<dd><time datetime={meta.updated}>{formatDate(meta.updated, lang)}</time></dd>
+						</div>
+					)
+				}
+				<div>
+					<dt class="meta-label">{strings.article.reading}</dt>
+					<dd>{minutes}</dd>
+				</div>
+			</dl>
+
+			{
+				meta.draft && (
+					<aside class="notice">
+						<h2>{strings.article.draft}</h2>
+						<p>{strings.article.draftBody}</p>
+					</aside>
+				)
+			}
+		</Container>
+
+		<Container size="text">
+			<Prose>
+				<Content />
+			</Prose>
+		</Container>
+
+		{
+			related.length > 0 && (
+				<Container size="text">
+					<section class="related">
+						<h2 class="meta-label">{strings.article.relatedTitle}</h2>
+						<ul>
+							{related.map((project) => (
+								<li data-areas={project.meta.areas.join(' ')}>
+									<a href={path(lang, 'project', project.meta.slug)}>{project.meta.title}</a>
+									<span>{project.meta.tagline}</span>
+								</li>
+							))}
+						</ul>
+					</section>
+				</Container>
+			)
+		}
+
+		<Container size="text">
+			<aside class="follow">
+				<h2>{strings.article.followTitle}</h2>
+				<p>{strings.article.followBody}</p>
+				<a href={PERSON.instagram} rel="me noreferrer" target="_blank">
+					{strings.article.followCta}
+				</a>
+			</aside>
+		</Container>
+
+		{
+			(around.prev || around.next) && (
+				<Container size="text">
+					<nav class="pager" aria-label={strings.blog.title}>
+						{around.prev && (
+							<a class="prev" href={path(lang, 'article', around.prev.meta.slug)}>
+								<span>← {strings.article.previous}</span>
+								<strong>{around.prev.meta.title}</strong>
+							</a>
+						)}
+
+						{around.next && (
+							<a class="next" href={path(lang, 'article', around.next.meta.slug)}>
+								<span>{strings.article.next} →</span>
+								<strong>{around.next.meta.title}</strong>
+							</a>
+						)}
+					</nav>
+				</Container>
+			)
+		}
+	</div>
+</Layout>
+
+<style>
+	.back {
+		display: inline-block;
+		margin-top: 2rem;
+		font-size: 0.875rem;
+		color: var(--ink-muted);
+		text-decoration: none;
+	}
+
+	.back:hover {
+		color: var(--ink);
+	}
+
+	.head {
+		position: relative;
+		padding-block: 1.35rem 1.75rem;
+	}
+
+	.head::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		width: 3.5rem;
+		height: 2px;
+		border-radius: 2px;
+		background: var(--accent);
+	}
+
+	.kind {
+		margin: 0 0 0.65rem;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--accent);
+	}
+
+	h1 {
+		margin: 0;
+		font-size: var(--h1);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+		line-height: 1.1;
+		text-wrap: pretty;
+	}
+
+	.tagline {
+		margin: 0.85rem 0 0;
+		font-size: 1.125rem;
+		line-height: 1.6;
+		color: var(--ink-muted);
+		max-width: 40rem;
+	}
+
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem;
+		margin-top: 1.35rem;
+	}
+
+	.areas {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.facts {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+		gap: 1.1rem;
+		margin: 1.75rem 0;
+		padding: 1.1rem 0 0;
+		border-top: 1px solid var(--line);
+	}
+
+	dd {
+		margin: 0.3rem 0 0;
+		font-size: 0.9375rem;
+		line-height: 1.45;
+	}
+
+	.notice {
+		margin: 1.75rem 0;
+		padding: 0.95rem 1.15rem;
+		border: 1px solid var(--line);
+		border-left: 2px solid var(--accent);
+		border-radius: var(--radius-sm);
+		background: var(--paper-sunken);
+	}
+
+	.notice h2 {
+		margin: 0 0 0.35rem;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.notice p {
+		margin: 0;
+		font-size: 0.9375rem;
+		line-height: 1.6;
+		color: var(--ink-muted);
+	}
+
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem;
+		margin: 0;
+	}
+
+	.links a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4em;
+		padding: 0.25em 0.6em;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		color: var(--ink-muted);
+		font-size: 0.8125rem;
+		font-weight: 500;
+		line-height: 1.35;
+		white-space: nowrap;
+		text-decoration: none;
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.links a::after {
+		content: '↗';
+		font-size: 0.9em;
+		color: var(--ink-faint);
+	}
+
+	.links a:hover,
+	.links a:focus-visible {
+		color: var(--ink);
+		border-color: var(--accent-line);
+	}
+
+	.related {
+		margin-top: clamp(2.5rem, 6vw, 3.5rem);
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--line);
+	}
+
+	.related h2 {
+		margin: 0 0 0.7rem;
+		font-weight: 500;
+	}
+
+	.related ul {
+		display: grid;
+		gap: 0.85rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.related li {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+	}
+
+	.related a {
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--ink);
+		text-decoration: none;
+	}
+
+	.related a:hover {
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
+	}
+
+	.related span {
+		font-size: 0.875rem;
+		line-height: 1.5;
+		color: var(--ink-muted);
+	}
+
+	.follow {
+		margin: clamp(2.5rem, 6vw, 3.5rem) 0 clamp(3rem, 7vw, 5rem);
+		padding: 1.25rem 1.35rem;
+		border: 1px solid var(--line);
+		border-left: 2px solid var(--accent);
+		border-radius: var(--radius);
+		background: var(--paper-sunken);
+	}
+
+	.follow h2 {
+		margin: 0 0 0.35rem;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+
+	.follow p {
+		margin: 0 0 0.85rem;
+		font-size: 0.9375rem;
+		line-height: 1.6;
+		color: var(--ink-muted);
+		max-width: 42ch;
+	}
+
+	.follow a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4em;
+		font-size: 0.9375rem;
+		font-weight: 500;
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
+		text-decoration-color: var(--accent-line);
+	}
+
+	.follow a::after {
+		content: '↗';
+		font-size: 0.9em;
+		color: var(--ink-faint);
+	}
+
+	.follow a:hover {
+		text-decoration-color: var(--accent);
+	}
+
+	.pager {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem 1.5rem;
+		margin: clamp(2.5rem, 6vw, 4rem) 0 clamp(3rem, 7vw, 5rem);
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--line);
+	}
+
+	.pager a {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		min-width: 0;
+		text-decoration: none;
+		color: var(--ink-muted);
+	}
+
+	.pager a:hover {
+		color: var(--ink);
+	}
+
+	.pager .next {
+		grid-column: 2;
+		text-align: right;
+	}
+
+	.pager span {
+		font-size: 0.8125rem;
+	}
+
+	@media (max-width: 34rem) {
+		.pager {
+			grid-template-columns: 1fr;
+			gap: 1.25rem;
+		}
+
+		.pager .next {
+			grid-column: 1;
+			text-align: left;
+		}
+	}
+
+	.pager strong {
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--ink);
+	}
+</style>

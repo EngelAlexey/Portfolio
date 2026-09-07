@@ -447,3 +447,157 @@ body {
 	line-height: 1.5;
 	color: var(--ink-faint);
 }
+
+/* Callout: se usa desde el cuerpo de un articulo .mdx, asi que sus estilos
+   viven aqui. Astro no propaga el CSS con ambito de un componente importado
+   dentro de un .mdx que se renderiza con render(). */
+.callout {
+	margin: 1.5rem 0;
+	padding: 0.95rem 1.15rem;
+	border: 1px solid var(--line);
+	border-left: 2px solid var(--callout-line, var(--line-strong));
+	border-radius: var(--radius-sm);
+	background: var(--paper-sunken);
+}
+
+.callout[data-kind='riesgo'] {
+	--callout-line: var(--area-seguridad-fg);
+	--callout-ink: var(--area-seguridad-fg);
+}
+
+.callout[data-kind='correccion'] {
+	--callout-line: var(--area-infra-fg);
+	--callout-ink: var(--area-infra-fg);
+}
+
+.callout .callout-title {
+	margin: 0 0 0.4rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--callout-ink, var(--ink));
+}
+
+.callout .callout-body > :last-child {
+	margin-bottom: 0;
+}
+
+.callout .callout-body p {
+	margin: 0 0 0.75rem;
+	font-size: 0.9375rem;
+	line-height: 1.65;
+	color: var(--ink-muted);
+}
+
+.callout .callout-body pre {
+	margin-bottom: 0;
+	background: var(--paper);
+}
+
+/* Shiki emite --shiki-light y --shiki-dark con defaultColor: false. Se toma de
+   ahi solo el color del texto; el fondo sigue siendo el del sitio, para que un
+   bloque de codigo sea el mismo objeto en una ficha y en un articulo. */
+.astro-code,
+.astro-code span {
+	color: var(--shiki-light);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) .astro-code,
+	:root:not([data-theme='light']) .astro-code span {
+		color: var(--shiki-dark);
+	}
+}
+
+:root[data-theme='dark'] .astro-code,
+:root[data-theme='dark'] .astro-code span {
+	color: var(--shiki-dark);
+}
+
+/* Cita y lista de referencias. Los dos componentes se usan desde el cuerpo de
+   un articulo .mdx, asi que sus estilos van aqui y no en el componente. */
+.prose .cite {
+	font-size: 0.7em;
+	line-height: 0;
+	vertical-align: super;
+	margin-left: 0.1em;
+	scroll-margin-top: 5rem;
+}
+
+.prose .cite a {
+	padding: 0 0.15em;
+	color: var(--accent);
+	text-decoration: none;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.prose .cite a::before {
+	content: '[';
+}
+
+.prose .cite a::after {
+	content: ']';
+}
+
+.prose .cite a:hover,
+.prose .cite a:focus-visible {
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+
+.prose .refs ol {
+	margin-bottom: 0;
+	font-size: 0.9375rem;
+	line-height: 1.6;
+}
+
+.prose .refs li {
+	margin-bottom: 0.7rem;
+	color: var(--ink-muted);
+	scroll-margin-top: 6rem;
+}
+
+.prose .refs li:target {
+	color: var(--ink);
+}
+
+.prose .refs li:target::marker {
+	color: var(--accent);
+}
+
+.prose .refs .src {
+	color: var(--ink);
+}
+
+.prose .refs .title {
+	color: var(--ink);
+	text-decoration: underline;
+	text-underline-offset: 0.18em;
+	text-decoration-color: var(--line-strong);
+}
+
+.prose .refs .title:hover {
+	text-decoration-color: var(--accent);
+}
+
+.prose .refs .note,
+.prose .refs .host {
+	margin-left: 0.35em;
+}
+
+.prose .refs .host {
+	font-family: var(--font-mono);
+	font-size: 0.8125rem;
+	color: var(--ink-faint);
+}
+
+.prose .refs .back {
+	margin-left: 0.4em;
+	color: var(--ink-faint);
+	text-decoration: none;
+}
+
+.prose .refs .back:hover,
+.prose .refs .back:focus-visible {
+	color: var(--accent);
+}

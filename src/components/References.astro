@@ -1,0 +1,39 @@
+---
+interface Reference {
+	source: string;
+	title: string;
+	url: string;
+	note?: string;
+}
+
+interface Props {
+	title: string;
+	back: string;
+	items: Reference[];
+}
+
+const { title, back, items } = Astro.props;
+
+const host = (url: string): string => new URL(url).host.replace(/^www\./, '');
+---
+
+<section class="refs">
+	<h2>{title}</h2>
+	<ol>
+		{
+			items.map((item, i) => (
+				<li id={`ref-${i + 1}`}>
+					<span class="src">{item.source}.</span>{' '}
+					<a class="title" href={item.url} rel="noreferrer" target="_blank">
+						{item.title}
+					</a>
+					{item.note && <span class="note">{item.note}.</span>}
+					<span class="host">{host(item.url)}</span>
+					<a class="back" href={`#cite-${i + 1}`} aria-label={`${back} ${i + 1}`}>
+						↩
+					</a>
+				</li>
+			))
+		}
+	</ol>
+</section>

@@ -12,7 +12,9 @@ const {
 	title,
 	description,
 	image = null,
-	noindex = false
+	noindex = false,
+	published = null,
+	updated = null
 } = Astro.props;
 
 const tags = seo({ lang, key, slug, title, description, image, noindex });
@@ -46,7 +48,14 @@ const graph = await buildGraph({
 	)
 }
 
-<meta property="og:type" content={key === 'project' ? 'article' : 'website'} />
+<meta
+	property="og:type"
+	content={key === 'project' || key === 'article' ? 'article' : 'website'}
+/>
+{published && <meta property="article:published_time" content={published} />}
+{(updated || published) && (
+	<meta property="article:modified_time" content={updated ?? published} />
+)}
 <meta property="og:site_name" content={siteName} />
 <meta property="og:locale" content={tags.ogLocale} />
 <meta property="og:locale:alternate" content={tags.ogLocaleAlternate} />

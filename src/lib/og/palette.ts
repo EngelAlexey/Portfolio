@@ -61,13 +61,25 @@ export function oklchToHex(l: number, c: number, h: number): string {
 
 const OKLCH = /oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)\s*\)/;
 
-let CACHE: Palette | null = null;
+export type Mode = 'light' | 'dark';
 
-export function palette(): Palette {
-	if (CACHE) return CACHE;
+// El tema claro es el primer bloque `:root` del archivo. El oscuro es el que
+// lleva el atributo, no el que vive dentro de la media query: ese esta anidado
+// y su llave de cierre no seria la que termina la lista de tokens.
+const SELECTOR: Record<Mode, string> = {
+	light: ':root {',
+	dark: ":root[data-theme='dark'] {"
+};
+
+const CACHE = new Map<Mode, Palette>();
+
+export function palette(mode: Mode = 'light'): Palette {
+	const cached = CACHE.get(mode);
+	if (cached) return cached;
 
 	const css = readFileSync(join(process.cwd(), 'src', 'app.css'), 'utf8');
-	const start = css.indexOf(':root');
+	const start = css.indexOf(SELECTOR[mode]);
+	if (start === -1) throw new Error(`[og] src/app.css has no \`${SELECTOR[mode]}\` block`);
 	const open = css.indexOf('{', start);
 	const block = css.slice(open + 1, css.indexOf('}', open));
 
@@ -76,7 +88,7 @@ export function palette(): Palette {
 			.split('\n')
 			.find((l) => l.trim().startsWith(`--${name}:`));
 		const match = line ? OKLCH.exec(line) : null;
-		if (!match) throw new Error(`[og] src/app.css has no --${name} in :root`);
+		if (!match) throw new Error(`[og] src/app.css has no --${name} in \`${SELECTOR[mode]}\``);
 		return oklchToHex(Number(match[1]) / 100, Number(match[2]), Number(match[3]));
 	};
 
@@ -94,12 +106,14 @@ export function palette(): Palette {
 		})
 	) as Record<AreaId, Swatch>;
 
-	CACHE = {
+	const resolved: Palette = {
 		paper: read('paper'),
 		ink: read('ink'),
 		inkMuted: read('ink-muted'),
 		line: read('line'),
 		area
 	};
-	return CACHE;
+
+	CACHE.set(mode, resolved);
+	return resolved;
 }

@@ -4,6 +4,7 @@ export const en: Dict = {
 	nav: {
 		home: 'Home',
 		projects: 'Projects',
+		blog: 'Blog',
 		about: 'About',
 		contact: 'Contact',
 		menu: 'Menu'
@@ -33,6 +34,10 @@ export const en: Dict = {
 		workTitle: 'Featured projects',
 		workLede: 'Four systems in use. Each write-up covers why it was built, the technical decisions and the outcome.',
 		workAll: 'See the rest of the projects',
+		articlesTitle: 'Latest articles',
+		articlesLede:
+			'I write about the security decisions that come up while building software, with the code that demonstrates them.',
+		articlesAll: 'See every article',
 		stackLabel: 'Tools'
 	},
 	stack: {
@@ -78,6 +83,28 @@ export const en: Dict = {
 		profesional: 'Professional',
 		academico: 'Academic',
 		personal: 'Personal'
+	},
+	blog: {
+		title: 'Blog',
+		lead: 'Articles on security in day to day development. Each one carries the failing code, the fix, and how to check it.',
+		empty: 'No articles published yet.',
+		read: 'Read the article',
+		minutes: (n: number) => `${n} min read`
+	},
+	article: {
+		back: 'Back to the blog',
+		published: 'Published',
+		updated: 'Updated',
+		reading: 'Reading time',
+		repo: 'Example code',
+		relatedTitle: 'Related projects',
+		followTitle: 'Follow the work',
+		followBody: 'I post the short version of every article on Instagram, with the full list in images.',
+		followCta: 'View on Instagram',
+		next: 'Next article',
+		previous: 'Previous article',
+		draft: 'Draft',
+		draftBody: 'This article is not published yet. It only shows up in development.'
 	},
 	about: {
 		title: 'About me',

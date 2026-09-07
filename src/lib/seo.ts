@@ -18,6 +18,8 @@ export type SeoInput = {
 	description: string;
 	image?: string | null;
 	noindex?: boolean;
+	published?: string | null;
+	updated?: string | null;
 };
 
 export type SeoTags = {

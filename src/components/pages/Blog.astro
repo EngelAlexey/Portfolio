@@ -1,0 +1,84 @@
+---
+import ArticleCard from '../ArticleCard.astro';
+import Container from '../Container.astro';
+import Layout from '../../layouts/Layout.astro';
+import { allArticles } from '../../lib/articles';
+import { t, type Lang } from '../../lib/i18n';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+const strings = t(lang);
+const articles = await allArticles(lang);
+---
+
+<Layout
+	{lang}
+	key="blog"
+	title={strings.meta.titleTemplate(strings.blog.title)}
+	description={strings.blog.lead}
+	noindex={articles.length === 0}
+>
+	<Container as="header">
+		<div class="head">
+			<h1>{strings.blog.title}</h1>
+			<p class="lead">{strings.blog.lead}</p>
+		</div>
+	</Container>
+
+	<Container>
+		{
+			articles.length === 0 ? (
+				<p class="empty">{strings.blog.empty}</p>
+			) : (
+				<ul class="list">
+					{articles.map((article) => (
+						<li data-areas={article.meta.areas.join(' ')}>
+							<ArticleCard {article} {lang} />
+						</li>
+					))}
+				</ul>
+			)
+		}
+	</Container>
+</Layout>
+
+<style>
+	.head {
+		padding-block: clamp(2.5rem, 6vw, 4rem) 1.5rem;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: var(--h1);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+		line-height: 1.1;
+	}
+
+	.lead {
+		margin: 0.85rem 0 0;
+		max-width: var(--measure);
+		font-size: 1.0625rem;
+		line-height: 1.65;
+		color: var(--ink-muted);
+	}
+
+	.list {
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: 1fr;
+		list-style: none;
+		margin: 0 0 clamp(3rem, 7vw, 5rem);
+		padding: 0;
+		max-width: 46rem;
+	}
+
+	.empty {
+		margin: 0 0 clamp(3rem, 7vw, 5rem);
+		color: var(--ink-muted);
+	}
+</style>

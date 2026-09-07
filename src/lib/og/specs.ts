@@ -1,8 +1,10 @@
+import { allArticles, readingMinutes } from '../articles';
 import { areaLabel, type AreaId } from '../areas';
 import { fichas } from '../content';
-import { formatPeriod } from '../format';
+import { formatDate, formatPeriod } from '../format';
 import { LANGS, t, type Lang, type RouteKey } from '../i18n';
 import { PERSON } from '../site';
+import type { Mode } from './palette';
 import { ogCardPath } from './paths';
 
 export type CardSpec = {
@@ -14,6 +16,7 @@ export type CardSpec = {
 	areas: AreaId[];
 	accent: AreaId | 'brand';
 	portrait: boolean;
+	theme: Mode;
 	footer: string;
 };
 
@@ -36,6 +39,7 @@ function fixedCards(lang: Lang): CardSpec[] {
 			areas: [],
 			accent: 'brand',
 			portrait: true,
+			theme: 'light',
 			footer: strings.home.headline
 		},
 		{
@@ -47,6 +51,7 @@ function fixedCards(lang: Lang): CardSpec[] {
 			areas: [],
 			accent: 'brand',
 			portrait: true,
+			theme: 'light',
 			footer: PERSON.name
 		},
 		{
@@ -58,6 +63,7 @@ function fixedCards(lang: Lang): CardSpec[] {
 			areas: [],
 			accent: 'brand',
 			portrait: false,
+			theme: 'light',
 			footer: PERSON.name
 		},
 		{
@@ -69,6 +75,7 @@ function fixedCards(lang: Lang): CardSpec[] {
 			areas: [],
 			accent: 'brand',
 			portrait: false,
+			theme: 'light',
 			footer: PERSON.name
 		}
 	];
@@ -90,14 +97,58 @@ async function fichaCards(lang: Lang): Promise<CardSpec[]> {
 			areas: meta.areas,
 			accent: meta.areas[0],
 			portrait: false,
+			theme: 'light',
 			footer: PERSON.name
 		} satisfies CardSpec;
 	});
 }
 
+// Las tarjetas del blog van en oscuro para que un enlace compartido se lea
+// como las portadas del feed. El resto del sitio comparte en claro.
+async function articleCards(lang: Lang): Promise<CardSpec[]> {
+	const strings = t(lang);
+	const list = await allArticles(lang);
+	if (list.length === 0) return [];
+
+	const index: CardSpec = {
+		route: routeOf(lang, 'blog'),
+		lang,
+		eyebrow: PLACE.toUpperCase(),
+		heading: strings.blog.title,
+		meta: strings.blog.lead,
+		areas: [],
+		accent: 'brand',
+		portrait: false,
+		theme: 'dark',
+		footer: PERSON.name
+	};
+
+	const cards = list.map((article) => ({
+		route: routeOf(lang, 'article', article.meta.slug),
+		lang,
+		eyebrow: strings.blog.title.toUpperCase(),
+		heading: article.meta.title,
+		meta: [
+			formatDate(article.meta.published, lang),
+			strings.blog.minutes(readingMinutes(article))
+		].join(' · '),
+		areas: article.meta.areas,
+		accent: article.meta.areas[0],
+		portrait: false,
+		theme: 'dark' as Mode,
+		footer: PERSON.name
+	})) satisfies CardSpec[];
+
+	return [index, ...cards];
+}
+
 export async function cardSpecs(): Promise<CardSpec[]> {
 	const perLang = await Promise.all(
-		LANGS.map(async (lang) => [...fixedCards(lang), ...(await fichaCards(lang))])
+		LANGS.map(async (lang) => [
+			...fixedCards(lang),
+			...(await fichaCards(lang)),
+			...(await articleCards(lang))
+		])
 	);
 	return perLang.flat();
 }

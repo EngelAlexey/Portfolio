@@ -40,10 +40,12 @@ if (isShallow()) {
 
 const I18N = ['src/lib/i18n/es.ts', 'src/lib/i18n/en.ts'];
 const CONTENT = 'src/content/projects';
+const ARTICLES = 'src/content/articles';
 
 const PAGES = {
-	home: ['src/components/pages/Home.astro', 'src/lib/about.ts', CONTENT, ...I18N],
+	home: ['src/components/pages/Home.astro', 'src/lib/about.ts', CONTENT, ARTICLES, ...I18N],
 	projects: ['src/components/pages/Projects.astro', CONTENT, ...I18N],
+	blog: ['src/components/pages/Blog.astro', ARTICLES, ...I18N],
 	about: ['src/components/pages/About.astro', 'src/lib/about.ts', ...I18N],
 	contact: ['src/components/pages/Contact.astro', 'src/lib/site.ts', ...I18N]
 };
@@ -56,15 +58,26 @@ for (const [key, files] of Object.entries(PAGES)) {
 	if (date) map[key] = date;
 }
 
-const contentDir = join(root, 'src', 'content', 'projects');
-for (const slug of readdirSync(contentDir, { withFileTypes: true })) {
-	if (!slug.isDirectory()) continue;
-	const files = readdirSync(join(contentDir, slug.name)).map(
-		(file) => `src/content/projects/${slug.name}/${file}`
-	);
-	const date = lastCommit(files);
-	if (date) map[`project:${slug.name}`] = date;
+/**
+ * @param {string} dir
+ * @param {string} prefix
+ */
+function stampCollection(dir, prefix) {
+	const base = join(root, dir);
+	if (!existsSync(base)) return;
+
+	for (const slug of readdirSync(base, { withFileTypes: true })) {
+		if (!slug.isDirectory()) continue;
+		const files = readdirSync(join(base, slug.name)).map(
+			(file) => `${dir}/${slug.name}/${file}`
+		);
+		const date = lastCommit(files);
+		if (date) map[`${prefix}:${slug.name}`] = date;
+	}
 }
+
+stampCollection(CONTENT, 'project');
+stampCollection(ARTICLES, 'article');
 
 writeFileSync(OUT, JSON.stringify(map, null, '\t') + '\n');
 console.log(`[lastmod] ${Object.keys(map).length} entries`);
