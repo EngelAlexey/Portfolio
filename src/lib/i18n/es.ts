@@ -21,7 +21,7 @@ export const es = {
 		role: 'Desarrollador de Software · Enfoque en Ciberseguridad',
 		headline: 'Construyo las plataformas con las que una empresa opera a diario.',
 		pitch:
-			'Desarrollador de software en Costa Rica. Trabajo en plataformas corporativas, herramientas internas y aplicaciones móviles para empresas de logística y de recursos humanos en Costa Rica y Panamá. Cada proyecto de este sitio explica por qué se hizo, qué se decidió y qué quedó funcionando.',
+			'Desarrollador de software en Puntarenas, Costa Rica. Trabajo en plataformas corporativas, herramientas internas y aplicaciones móviles para empresas de logística y de recursos humanos en Costa Rica y Panamá. Cada proyecto de este sitio explica por qué se hizo, qué se decidió y qué quedó funcionando.',
 		ctaProjects: 'Ver proyectos',
 		ctaCv: 'Descargar CV',
 		heroStackLabel: 'Herramientas principales',
@@ -39,7 +39,7 @@ export const es = {
 	},
 	projects: {
 		title: 'Proyectos',
-		lead: 'Trabajo profesional, académico y personal. Filtra por área.',
+		lead: 'Trabajo profesional, académico y personal, hecho desde Costa Rica para empresas de Costa Rica y Panamá. Filtra por área.',
 		filterLegend: 'Filtrar por área',
 		filterAll: 'Todas',
 		resultsOne: '1 proyecto',
@@ -81,7 +81,7 @@ export const es = {
 		title: 'Sobre mí',
 		lead: 'Formación, experiencia y las herramientas con las que trabajo.',
 		intro:
-			'Desarrollador de software en Costa Rica, con enfoque en ciberseguridad. Cubro el ciclo completo: levanto el requerimiento, diseño la solución, la construyo y la mantengo en producción. Trabajo en web, móvil, datos e infraestructura, y la parte que más me ocupa es el modelo de seguridad de lo que construyo.',
+			'Desarrollador de software en Puntarenas, Costa Rica, con enfoque en ciberseguridad. Cubro el ciclo completo: levanto el requerimiento, diseño la solución, la construyo y la mantengo en producción. Trabajo en web con TypeScript, Next.js y Node.js, en móvil con React Native, y en datos e infraestructura con PostgreSQL, Docker y Linux. La parte que más me ocupa es el modelo de seguridad de lo que construyo.',
 		education: 'Educación',
 		certifications: 'Certificaciones',
 		languages: 'Idiomas',

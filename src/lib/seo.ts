@@ -1,5 +1,13 @@
-import { LANGS, alternates, other, path as routePath, type Lang, type RouteKey } from './i18n';
-import { SITE_URL, absolute } from './site';
+import {
+	DEFAULT_LANG,
+	LANGS,
+	alternates,
+	other,
+	path as routePath,
+	type Lang,
+	type RouteKey
+} from './i18n';
+import { absolute } from './site';
 import { ogCardPath } from './og/paths';
 
 export type SeoInput = {
@@ -31,7 +39,10 @@ export function seo({ lang, key, slug, image, noindex = false }: SeoInput): SeoT
 		canonical: absolute(routePath(lang, route, slug)),
 		alternates: [
 			...LANGS.map((l) => ({ hreflang: l, href: absolute(paths[l]) })),
-			{ hreflang: 'x-default', href: `${SITE_URL}/` }
+			// El destino de reserva es esta misma pagina en el idioma por defecto, no
+			// la portada: /es/proyectos/x no se sustituye por /. Y no es la raiz porque
+			// la raiz redirige, y hreflang debe apuntar a la URL final e indexable.
+			{ hreflang: 'x-default', href: absolute(paths[DEFAULT_LANG]) }
 		],
 		ogImage: noindex ? null : absolute(card),
 		ogLocale: OG_LOCALE[lang],

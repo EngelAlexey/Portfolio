@@ -23,7 +23,7 @@ export const en: Dict = {
 		role: 'Software Developer · Cybersecurity focus',
 		headline: 'I build the platforms a company runs on every day.',
 		pitch:
-			'Software developer based in Costa Rica. I work on corporate platforms, internal tools and mobile apps for logistics and HR software companies in Costa Rica and Panama. Every project on this site sets out why it was built, what was decided, and what now runs.',
+			'Software developer based in Puntarenas, Costa Rica. I work on corporate platforms, internal tools and mobile apps for logistics and HR software companies in Costa Rica and Panama. Every project on this site sets out why it was built, what was decided, and what now runs.',
 		ctaProjects: 'View projects',
 		ctaCv: 'Download CV',
 		heroStackLabel: 'Core tools',
@@ -41,7 +41,7 @@ export const en: Dict = {
 	},
 	projects: {
 		title: 'Projects',
-		lead: 'Professional, academic and personal work. Filter by area.',
+		lead: 'Professional, academic and personal work, built from Costa Rica for companies in Costa Rica and Panama. Filter by area.',
 		filterLegend: 'Filter by area',
 		filterAll: 'All',
 		resultsOne: '1 project',
@@ -82,7 +82,7 @@ export const en: Dict = {
 	about: {
 		title: 'About me',
 		intro:
-			'Software developer in Costa Rica, with a cybersecurity focus. I cover the full cycle: I gather the requirement, design the solution, build it and keep it running in production. I work across web, mobile, data and infrastructure, and the part I spend most time on is the security model of what I build.',
+			'Software developer in Puntarenas, Costa Rica, with a cybersecurity focus. I cover the full cycle: I gather the requirement, design the solution, build it and keep it running in production. I work on the web with TypeScript, Next.js and Node.js, on mobile with React Native, and on data and infrastructure with PostgreSQL, Docker and Linux. The part I spend most time on is the security model of what I build.',
 		lead: 'Education, experience and the tools I work with.',
 		education: 'Education',
 		certifications: 'Certifications',

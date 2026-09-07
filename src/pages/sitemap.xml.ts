@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { fichaSlugs } from '../lib/content';
-import { LANGS, alternates, path, type RouteKey } from '../lib/i18n';
-import { SITE_URL, absolute } from '../lib/site';
+import { DEFAULT_LANG, LANGS, alternates, path, type RouteKey } from '../lib/i18n';
+import { absolute } from '../lib/site';
 import lastmod from '../lib/lastmod.json';
 
 const STATIC_KEYS: RouteKey[] = ['home', 'projects', 'about', 'contact'];
@@ -23,7 +23,7 @@ function urlEntry({ key, slug }: Entry): string {
 		(lang) => `  <url>
     <loc>${absolute(path(lang, key, slug))}</loc>${stamp}
 ${links}
-    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="${absolute(pair[DEFAULT_LANG])}"/>
   </url>`
 	).join('\n');
 }
