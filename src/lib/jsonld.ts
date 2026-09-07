@@ -75,7 +75,7 @@ function personNode(lang: Lang, detail: 'full' | 'stub'): Node {
 		alternateName: PERSON.shortName,
 		url: SITE_URL,
 		jobTitle: strings.home.role,
-		sameAs: [PERSON.linkedin, PERSON.github],
+		sameAs: [PERSON.linkedin, PERSON.github, PERSON.instagram],
 		mainEntityOfPage: absolute(routePath(lang, 'about'))
 	};
 

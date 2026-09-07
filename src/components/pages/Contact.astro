@@ -15,6 +15,7 @@ const variants = [CV_DEFAULT, ...CV_VARIANTS.filter((v) => v !== CV_DEFAULT)];
 const handle = (url: string) => new URL(url).pathname.replace(/\/+$/, '').split('/').pop() ?? url;
 const linkedinHandle = handle(PERSON.linkedin);
 const githubHandle = handle(PERSON.github);
+const instagramHandle = handle(PERSON.instagram);
 ---
 
 <Layout
@@ -51,6 +52,16 @@ const githubHandle = handle(PERSON.github);
 				<dd>
 					<a class="value" href={PERSON.github} rel="noreferrer" target="_blank">
 						{githubHandle}
+						<span class="ext" aria-hidden="true">↗</span>
+						<span class="sr-only">{strings.a11y.newTab}</span>
+					</a>
+				</dd>
+			</div>
+			<div>
+				<dt class="label">{strings.contact.instagram}</dt>
+				<dd>
+					<a class="value" href={PERSON.instagram} rel="me noreferrer" target="_blank">
+						{instagramHandle}
 						<span class="ext" aria-hidden="true">↗</span>
 						<span class="sr-only">{strings.a11y.newTab}</span>
 					</a>

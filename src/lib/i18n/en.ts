@@ -93,10 +93,11 @@ export const en: Dict = {
 	},
 	contact: {
 		title: 'Contact',
-		lead: 'Email is the fastest route. I reply within the same business day.',
+		lead: 'Email, LinkedIn, GitHub and Instagram. I reply within the same business day.',
 		email: 'Email',
 		linkedin: 'LinkedIn',
 		github: 'GitHub',
+		instagram: 'Instagram',
 		location: 'Location',
 		availability: 'Availability',
 		cv: 'Download CV',

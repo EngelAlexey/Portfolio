@@ -20,7 +20,8 @@ export const PERSON = {
 		en: 'University internship from January to April 2027. Remote, hybrid or on-site around Puntarenas.'
 	},
 	linkedin: 'https://www.linkedin.com/in/alex-herrera-manzanares-b000ba379',
-	github: 'https://github.com/EngelAlexey'
+	github: 'https://github.com/EngelAlexey',
+	instagram: 'https://www.instagram.com/alexherrera.dev/'
 } as const;
 
 export const locationLine = (): string =>

@@ -91,10 +91,11 @@ export const es = {
 	},
 	contact: {
 		title: 'Contacto',
-		lead: 'La vía más rápida es el correo. Respondo el mismo día hábil.',
+		lead: 'Correo, LinkedIn, GitHub e Instagram. Respondo el mismo día hábil.',
 		email: 'Correo',
 		linkedin: 'LinkedIn',
 		github: 'GitHub',
+		instagram: 'Instagram',
 		location: 'Ubicación',
 		availability: 'Disponibilidad',
 		cv: 'Descargar CV',
