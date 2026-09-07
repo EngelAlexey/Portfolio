@@ -90,17 +90,32 @@ Siempre la misma estructura: **Contexto → Problema → Decisiones técnicas �
 Reglas de redacción, que valen tanto como el contrato de datos:
 
 - Registro de documento de ingeniería. Neutral y declarativo, una afirmación por oración.
-- **Problema es por qué existe el proyecto** —qué estaba roto, era caro o imposible antes—, no un obstáculo encontrado durante el desarrollo. Ese obstáculo va al principio de «Decisiones técnicas», como la restricción que produjo la decisión.
-- **Resultado dice qué quedó funcionando**, no qué se verificó ni qué queda pendiente.
-- **Lo que aprendí es un hecho técnico con síntoma observable**, nunca una lección general.
+Qué contesta cada sección, que es lo que decide dónde va cada frase:
+
+| Sección | Contesta |
+|---|---|
+| Contexto | qué es, quién lo usa y **qué necesidad lo impulsó** |
+| Problema | **qué se sufría antes de que existiera**, en términos del negocio o del usuario |
+| Decisiones técnicas | restricción → decisión → coste, sin comprometer nada del cliente |
+| Arquitectura | cómo funciona, en superficie |
+| Resultado | **qué se consiguió** al implantarlo |
+| Lo que aprendí | una **lección de negocio o técnica**, anclada a un hecho de este proyecto |
+
+- El motivo va en Contexto, no en Problema. Problema es el estado anterior, no la historia del encargo.
+- **Resultado dice qué quedó funcionando**, no qué se verificó ni qué queda pendiente. La verificación va después, como respaldo.
+- **Lo que aprendí cierra con una lección**, pero la lección tiene que salir de un hecho de esta ficha. Si el cierre podría copiarse tal cual a otro proyecto, no está anclado.
 - Si una oración podría aparecer sin cambios en la ficha de otro proyecto, sobra.
+- Tecnicismos solo donde explican el stack o una decisión. En la tagline, que es el texto más leído del sitio, no entran: `AST`, `REPEATABLE READ` y similares se dicen en palabras.
+- Oraciones de 25 palabras o menos. Por encima de 32 hay que partirlas.
 - Los títulos nombran la cosa; lo que la hace interesante va en la tagline. Separador `|` o `,`, nunca raya, y ambas mitades en mayúscula inicial.
 - Una URL en producción no es una «demo». El campo es `site` y la etiqueta, *Sitio en producción*.
 - Nada de reclamos de exclusividad ni de velocidad, y ninguna métrica de negocio del cliente: solo cifras técnicas del propio trabajo.
 - El texto de experiencia en `src/lib/about.ts` y la lista de proyectos tienen que nombrar el mismo conjunto. Si la experiencia nombra un sistema, ese sistema necesita ficha.
 - Nada que describa una debilidad explotable de un sistema en producción de un cliente. El sitio es público.
 
-`ArchDiagram.astro` dibuja una tubería con una compuerta: una etapa donde se aplican varias reglas a la vez. Los datos van en el campo `diagram` —`nodes` de 2 a 6, `gate` señalando cuál es la compuerta, y de 2 a 4 `layers`— y el cuerpo lo coloca con `<ArchDiagram {...frontmatter.diagram} />`. El diagrama enuncia la regla; el cuerpo explica la consecuencia. Repetir el uno en el otro es el error fácil.
+`ArchDiagram.astro` dibuja una tubería con una compuerta: una etapa donde se aplican varias reglas a la vez. Los datos van en el campo `diagram` —`nodes` de 2 a 6, `gate` señalando cuál es la compuerta, y de 2 a 4 `layers`— y el cuerpo lo coloca con `<ArchDiagram {...frontmatter.diagram} />`. El diagrama enuncia la regla; el cuerpo explica la consecuencia. Repetir el uno en el otro es el error fácil. Sus capas no van numeradas: se aplican todas a la vez en la compuerta, no son una secuencia.
+
+**Sus estilos viven en `src/app.css`, no en el componente.** Astro no propaga el CSS con ámbito de un componente `.astro` importado dentro de un `.mdx` que se renderiza con el `render()` de la capa de contenido: el marcado sale con su `data-astro-cid-*` y la hoja de estilos no se enlaza en ninguna parte, ni en dev ni en el build. El diagrama estuvo así, sin estilo, en seis fichas publicadas. Cualquier componente nuevo que se use desde una ficha `.mdx` tiene el mismo problema y sus estilos van también a `app.css`.
 
 ## Estructura
 
@@ -126,7 +141,10 @@ Reglas de redacción, que valen tanto como el contrato de datos:
 - **El color es semántico.** Una tonalidad **siempre** significa un área y nunca decora. Todo lo demás es tinta sobre papel, así que las seis etiquetas de área son lo único que resalta.
 - **El color está racionado.** El tono lo lleva un punto; las palabras de al lado cargan el significado. La excepción es un control que el lector ha pulsado, donde el relleno marca su elección. Rellenar cada etiqueta convertía doce tarjetas en dos docenas de píldoras de color compitiendo con el texto que debían rotular.
 - La insignia de disponibilidad tiene su propio token `--available`, declarado fuera del sistema de áreas: no es un área y no debe tomar prestado el tono de una.
-- La compuerta del diagrama se pinta en tinta, no en el color de seguridad, que estaba tiñendo hasta los diagramas de proyectos que no van de seguridad.
+- **Cada ficha lleva el tono de su primera área.** `accentStyle()` en `src/lib/areas.ts` fija `--accent`, `--accent-bg` y `--accent-line` sobre el envoltorio `.ficha`, y de ahí los toman el rótulo de tipo, la regla bajo el título, el marcador de cada `h2`, el borde del aviso de proyecto privado, los enlaces y la compuerta del diagrama. `:root` los declara en tinta, así que el resto del sitio no cambia. Al resolverse contra los tokens `--area-*`, que ya están declarados en los tres bloques de tema, no hay ningún token nuevo que mantener en modo oscuro.
+- **Las tarjetas llevan un filo de 2 px** en el tono de su primera área, y pasa de `--accent-line` a `--accent` al apuntarla. Es un tono por tarjeta, no una píldora rellena: sigue siendo el punto, con otra forma.
+- **Las secciones de la portada alternan `--paper` y `--paper-sunken`** para que la página no sea un solo plano.
+- **La monoespaciada es para datos, no para rótulos.** Se queda en el stack, las direcciones de repositorio y el código. Los rótulos (`Organización`, `Rol`, `Correo`, `Experiencia`, el tipo de proyecto, la línea superior de las tarjetas) van en la sans a 0.8125 rem, en caja normal y sin tracking. El versalita monoespaciado de 11 px era más difícil de leer y hacía que todo pareciera plantilla. La utilidad global es `.meta-label`, con ese nombre y no `.label` porque `ToolGrid` ya usa `.label` con ámbito para el pie de cada tarjeta.
 - Todos los logotipos se pintan en tinta, nunca en color de marca, por la misma regla. La UTN se dibuja más ancha que las demás porque su lockup carga tres cosas donde las otras cargan una, y a igual ancho su tipografía se leía visiblemente menor.
 - Los tokens viven en `src/app.css` en OKLCH: `:root` define el tema claro completo, y `@media (prefers-color-scheme: dark)` junto a `[data-theme="dark"]` redefinen solo los tokens.
 - Tailwind está solo por su reset. `source(none)` apaga su escáner: sin eso, un `display: flex` dentro de un `<style>` le hacía emitir una utilidad `.flex`, y una de esas utilidades chocaba con el `.sr-only` propio.
@@ -137,6 +155,7 @@ Reglas de redacción, que valen tanto como el contrato de datos:
 
   Solo la enciende un puntero de ratón. En táctil no se enciende, porque nada la apagaría después. Con teclado sí se mantiene mientras la píldora tenga el foco —eso es la función— y `Escape` la apaga.
 - **El raíl de `/proyectos`** se dibuja con la posición del scroll y no con un `IntersectionObserver`: los grupos difieren hasta siete veces en altura y ninguna banda del viewport sirve para todos. Además, el último grupo queda tan abajo que ninguna marca relativa al viewport lo alcanza, así que llegar al final de la página cuenta como llegar al final del registro. Ese código solo se puede verificar con scroll real: asignar `scrollTop` por script no dispara eventos de scroll.
+- **El índice de áreas de la portada enlaza a `/proyectos#area`.** El script de `/proyectos` lee el hash al cargar y en `hashchange`, y el filtro escribe el hash con `replaceState` cuando hay una sola área seleccionada. Así un área concreta es enlazable y compartible; con ninguna o varias, la URL vuelve a la ruta limpia.
 - **Los scripts de cliente no importan nada.** Traer `brands.ts` para hacer una cuenta que ya está resuelta en build embarcaría decenas de kilobytes de trazos SVG.
 - El tema se aplica antes del primer pintado con un script en línea, para que el conmutador no parpadee.
 
