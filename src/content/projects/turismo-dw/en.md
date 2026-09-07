@@ -5,7 +5,7 @@ tagline: Four incompatible sources, including files deliberately malformed so va
 areas: [datos, infra]
 kind: academico
 org: Universidad Técnica Nacional
-role: Analytical base, ETL and cloud migration
+role: Data engineering
 period:
   start: '2026-08'
   end: '2026-08'
@@ -48,7 +48,7 @@ Daily occupancy stores numerator and denominator separately and never the percen
 
 Eight dimensions and six fact tables, holding 8.6 million fact rows. Incremental loading is controlled with watermarks in a separate control schema. That schema records every run, every stage and every rejection, with its rule and its original record.
 
-The migration was a deliberate rehost. The value was in the model, the procedures and the report's measures, so the engines moved and nothing was rewritten. A pilot with ten percent of the data, selected deterministically, ran first to verify the tooling.
+The migration was a deliberate rehost, with no redesign. The value was in the model, the procedures and the report's measures, so the engines moved and nothing was rewritten. A pilot with ten percent of the data, selected deterministically, ran first to verify the tooling.
 
 ## Result
 

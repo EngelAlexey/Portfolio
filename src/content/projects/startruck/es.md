@@ -1,11 +1,11 @@
 ---
 slug: startruck
-title: Star Track | Control de flota
+title: Star Track | Rastreo de viajes
 tagline: El chofer escanea la carta porte y el teléfono envía posiciones hasta cerrar el viaje. También reporta emergencias y localiza servicios en carretera.
 areas: [movil]
 kind: profesional
 org: Star Cargo Service
-role: Rastreo en segundo plano
+role: Desarrollo móvil
 period:
   start: '2026-07'
   end: '2026-08'
@@ -49,7 +49,7 @@ El nivel de batería no entra en la decisión. La función conserva el parámetr
 
 ## Arquitectura
 
-Dos vigilantes independientes reinician el servicio en primer plano cuando Android lo mata o deja de entregar posiciones. Cada reinicio captura además un punto suelto, porque rearmar el servicio no siempre restablece la entrega.
+Dos supervisores independientes reinician el servicio en primer plano cuando Android lo mata o deja de entregar posiciones. Cada reinicio captura además un punto suelto, porque rearmar el servicio no siempre restablece la entrega.
 
 Los puntos no se envían directo. Entran en una bandeja de salida en SQLite. Un trabajador la sincroniza cada diez segundos, con espera creciente ante fallos e idempotencia por identificador de cliente. Un túnel o una zona sin cobertura retrasan el envío sin perder puntos.
 

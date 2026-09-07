@@ -5,7 +5,7 @@ tagline: Se construye el spyware para verlo actuar en un laboratorio aislado, y 
 areas: [seguridad]
 kind: academico
 org: Universidad Técnica Nacional
-role: Análisis y contramedidas
+role: Análisis de seguridad
 period:
   start: '2026'
   end: '2026'
@@ -30,7 +30,7 @@ Curso de Seguridad de TI I, el mismo del que salió el [detector de cifrado masi
 
 El curso pedía derivar las contramedidas de la observación directa, no de un manual.
 
-Una lista memorizada no dice cuál de ellas funciona. Para saber qué observar y en qué punto del sistema, hay que ver primero qué registros quedan cuando ocurren la captura y la salida de datos.
+Una lista memorizada no dice cuál de ellas funciona. Para saber qué observar y en qué punto del sistema, hay que ver primero qué registros quedan cuando ocurren la captura y la exfiltración.
 
 ## Decisiones técnicas
 
@@ -40,7 +40,7 @@ El entregable es el inventario que produce: tráfico saliente, accesos a recurso
 
 ## Arquitectura
 
-Laboratorio cerrado, sin salida a internet y con instantánea previa. La máquina observada y la que recibe están en el mismo segmento aislado, así que todo el tráfico entre ambas puede capturarse y leerse.
+Laboratorio cerrado, sin salida a internet y con instantánea previa. La máquina observada y la que recibe los datos están en el mismo segmento aislado, así que todo el tráfico entre ambas puede capturarse y leerse.
 
 Esa disposición es lo que hace medible el ejercicio: qué se toca en el sistema de archivos, qué conexión se abre y en qué momento, y qué queda escrito para sobrevivir a un reinicio.
 

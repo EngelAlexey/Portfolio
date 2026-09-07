@@ -5,7 +5,7 @@ tagline: The spyware is built so it can be watched in an isolated lab, and the c
 areas: [seguridad]
 kind: academico
 org: Universidad Técnica Nacional
-role: Analysis and countermeasures
+role: Security analysis
 period:
   start: '2026'
   end: '2026'

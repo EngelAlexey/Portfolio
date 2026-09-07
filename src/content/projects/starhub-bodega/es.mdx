@@ -5,7 +5,7 @@ tagline: Recepción de contenedores línea por línea, con la posición de cada 
 areas: [fullstack, movil]
 kind: profesional
 org: Star Cargo Service
-role: API y capa de seguridad
+role: Desarrollo backend
 period:
   start: '2026-08'
   end: null
@@ -26,7 +26,7 @@ order: null
 diagram:
   nodes:
     - "Teléfono"
-    - "Enrolamiento"
+    - "Alta del dispositivo"
     - "Token"
     - "Servicio"
     - "ERP"
@@ -39,7 +39,7 @@ diagram:
     - name: "Lectura y escritura separadas"
       body: "El token da lectura por SQL y escritura solo a través del API del ERP. En la superficie del servicio no existe una operación de escritura directa contra la base."
     - name: "Acotación por bodega"
-      body: "Cada consulta se limita a la bodega del dispositivo enrolado. Un teléfono dado de alta en una bodega no alcanza el inventario de otra."
+      body: "Cada consulta se limita a la bodega del dispositivo dado de alta. Un teléfono dado de alta en una bodega no alcanza el inventario de otra."
   caption: "Cuatro reglas protegen el único endpoint que no exige credencial previa."
 ---
 
@@ -63,7 +63,7 @@ El ERP genera los números de recibo con fórmulas propias que no toman bloqueo.
 
 Las lecturas van por SQL directo contra la base del ERP. Las escrituras van por su API, que es más lento pero respeta esas fórmulas y esos disparadores.
 
-Ninguna ruta del servicio escribe por SQL. Todas las escrituras salen por un único cliente del API, que es el solo punto del código que las emite.
+Ninguna ruta del servicio escribe por SQL. Todas las escrituras salen por un único cliente del API, que es el único punto del código que las emite.
 
 ## Arquitectura
 
@@ -83,4 +83,4 @@ Junto a ella hay 30 casos de `node:test` sobre paginación y sobre el ciclo de v
 
 ## Lo que aprendí
 
-El estado de enrolamiento quedó dentro del proceso, así que el servicio no admite una segunda instancia hasta moverlo a almacenamiento compartido. Ese traslado está anotado como el siguiente cambio.
+El registro de altas quedó dentro del proceso, así que el servicio no admite una segunda instancia hasta moverlo a almacenamiento compartido. Ese traslado está anotado como el siguiente cambio.

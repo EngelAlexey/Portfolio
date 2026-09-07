@@ -5,7 +5,7 @@ tagline: The passenger follows the bus live, the driver reports and administrati
 areas: [movil, fullstack]
 kind: academico
 org: Universidad Técnica Nacional
-role: API and backend
+role: Backend development
 period:
   start: '2026-05'
   end: '2026-07'
@@ -57,7 +57,7 @@ Trip state is not typed in by anyone: it is derived from the live position again
 
 The API serves all three roles from the same data model: the passenger follows their unit, the driver emits position, and administration sees the whole fleet.
 
-Two automated guards protect the repository. A custom static-analysis rule rejects comments in the code. A verification step fails if any environment variable used in the code is not declared in the example file, which is the failure that only appears when somebody clones the repository for the first time.
+Two automated checks protect the repository. A custom static-analysis rule rejects comments in the code. A verification step fails if any environment variable used in the code is not declared in the example file, which is the failure that only appears when somebody clones the repository for the first time.
 
 ## What I learned
 

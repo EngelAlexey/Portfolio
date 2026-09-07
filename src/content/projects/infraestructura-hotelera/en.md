@@ -5,7 +5,7 @@ tagline: Four sites that ran as separate companies come under one design, and co
 areas: [infra, seguridad]
 kind: academico
 org: Universidad Técnica Nacional
-role: Telecoms, logical design and compliance
+role: Network design
 period:
   start: '2025-09'
   end: '2025-12'

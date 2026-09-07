@@ -62,7 +62,7 @@ Un asistente de cobranza expone saldos de terceros. Si el modelo decidiera a qui
 
 Por eso el modelo hace una sola cosa: convertir un mensaje en lenguaje natural en una intención y, cuando aplica, en una fecha.
 
-Todo lo demás es código: validar identidad, consultar cartera, registrar una promesa de pago y decidir si corresponde recordar. La conversación se resuelve en una máquina de estados que devuelve acciones, y una capa separada las traduce al transporte de WhatsApp.
+Todo lo demás es código: validar identidad, consultar cartera, registrar una promesa de pago y decidir si corresponde enviar un recordatorio. La conversación se resuelve en una máquina de estados que devuelve acciones, y una capa separada las traduce al transporte de WhatsApp.
 
 El servicio no usa framework web: levanta un servidor con `node:http` y trabaja sobre nueve tablas propias, separadas del resto de [la plataforma corporativa](/es/proyectos/intercargo-plataforma). El proveedor de modelo es intercambiable, con dos implementaciones detrás de la misma interfaz.
 

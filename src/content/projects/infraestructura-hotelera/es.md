@@ -5,7 +5,7 @@ tagline: Cuatro sedes que operaban como empresas distintas pasan a un solo dise�
 areas: [infra, seguridad]
 kind: academico
 org: Universidad Técnica Nacional
-role: Telecomunicaciones, diseño lógico y cumplimiento
+role: Diseño de red
 period:
   start: '2025-09'
   end: '2025-12'

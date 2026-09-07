@@ -1,11 +1,11 @@
 ---
 slug: startruck
-title: Star Track | Fleet control
+title: Star Track | Trip tracking
 tagline: The driver scans the waybill and the phone sends positions until the trip closes. It also reports emergencies and finds services on the road.
 areas: [movil]
 kind: profesional
 org: Star Cargo Service
-role: Background tracking
+role: Mobile development
 period:
   start: '2026-07'
   end: '2026-08'

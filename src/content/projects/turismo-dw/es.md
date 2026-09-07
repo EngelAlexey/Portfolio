@@ -5,7 +5,7 @@ tagline: Cuatro orígenes incompatibles, con archivos mal formados a propósito 
 areas: [datos, infra]
 kind: academico
 org: Universidad Técnica Nacional
-role: Base analítica, ETL y migración a la nube
+role: Ingeniería de datos
 period:
   start: '2026-08'
   end: '2026-08'
@@ -48,7 +48,7 @@ La ocupación diaria guarda numerador y denominador por separado y nunca el porc
 
 Ocho dimensiones y seis tablas de hechos, con 8,6 millones de filas de hechos. La carga incremental se controla con marcas de agua en un esquema aparte. Ese esquema registra cada ejecución, cada etapa y cada rechazo, con su regla y su registro original.
 
-La migración fue un rehospedaje deliberado. El valor estaba en el modelo, los procedimientos y las medidas del informe, así que se movieron los motores sin reescribir nada. Antes se corrió un piloto con el diez por ciento de los datos, elegido de forma determinista, para comprobar las herramientas.
+La migración fue un traslado deliberado, sin rediseño. El valor estaba en el modelo, los procedimientos y las medidas del informe, así que se movieron los motores sin reescribir nada. Antes se corrió un piloto con el diez por ciento de los datos, elegido de forma determinista, para comprobar las herramientas.
 
 ## Resultado
 

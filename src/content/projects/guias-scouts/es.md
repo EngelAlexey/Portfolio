@@ -50,13 +50,13 @@ Tampoco hay colores sueltos dentro de los componentes: todos salen de propiedade
 
 Las dos rutas llevan prefijo de idioma siempre, y la raíz redirige al idioma por defecto. El conmutador toma la ruta sin prefijo y la reconstruye bajo el otro idioma, así que cambiar de idioma deja al visitante en la misma página.
 
-El envío del formulario escribe la solicitud y encola una notificación. Una función de borde la reclama y manda el comprobante.
+El envío del formulario escribe la solicitud y encola una notificación. Una función de borde la toma y envía el comprobante.
 
 ## Resultado
 
 El sitio está publicado en español e inglés, con la información del grupo y el formulario de ingreso en línea. El equipo de comunicación cambia cualquier texto editando su catálogo, sin abrir un componente.
 
-La función de borde reclama cada notificación de forma atómica, así que dos ejecuciones simultáneas no mandan el mismo comprobante dos veces. Las tablas con datos personales tienen seguridad a nivel de fila y no están expuestas a roles públicos.
+La función de borde toma cada notificación de forma atómica, así que dos ejecuciones simultáneas no mandan el mismo comprobante dos veces. Las tablas con datos personales tienen seguridad a nivel de fila y no están expuestas a roles públicos.
 
 ## Lo que aprendí
 

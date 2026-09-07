@@ -57,11 +57,11 @@ The visual system is a dark theme on a rounded canvas. Each section declares a t
 
 Components are not given the tone as a property and do not query it. They read whichever variables are in force at the point where they are drawn. The same button in a light section and in a dark one is the same component, with no conditionals.
 
-The portal splits fourteen screens between two audiences: six for the client and eight for the team. The menu is not written by hand. Every entry is filtered by audience and by permission, so an option without a grant is never drawn.
+The portal splits fourteen screens between two audiences: six for the client and eight for the team. The menu is not written by hand. Every entry is filtered by audience and by permission, so an option without permission is never drawn.
 
-Permissions do not live in this project. They are resolved against the ERP on every request and the repository holds no permission table at all. An account with no grants signs in and sees nothing. The branch selector changes what the same account sees, and without the personal-data permission a file comes back with those fields hidden and its documents of that class are not served.
+Permissions do not live in this project. They are resolved against the ERP on every request and the repository holds no permission table at all. An account with no permissions signs in and sees nothing. The branch selector changes what the same account sees, and without the personal-data permission a file comes back with those fields hidden and its documents of that class are not served.
 
-Attachments open inside the gate: the token is checked against the file, the applicant against ownership, and the document against its folder. A client opens their own without leaving for external storage.
+Attachments open behind the access check: the token is checked against the file, the applicant against ownership, and the document against its folder. A client opens their own without leaving for external storage.
 
 ## Result
 
