@@ -13,7 +13,6 @@ export type Palette = {
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
-/** Linear-light sRGB from OKLab, then the sRGB transfer function. */
 function oklchToRgb(l: number, c: number, h: number): [number, number, number] {
 	const rad = (h * Math.PI) / 180;
 	const a = c * Math.cos(rad);
@@ -45,11 +44,6 @@ const hex = (rgb: number[]) =>
 		)
 		.join('');
 
-/**
- * Several of the area tints sit outside sRGB. CSS Color 4 maps them by pulling
- * chroma toward zero and keeping lightness and hue; clamping the channels
- * instead would shift the hue and stop matching what the browser paints.
- */
 export function oklchToHex(l: number, c: number, h: number): string {
 	let rgb = oklchToRgb(l, c, h);
 	if (inGamut(rgb)) return hex(rgb);
@@ -69,11 +63,6 @@ const OKLCH = /oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)\s*\)/;
 
 let CACHE: Palette | null = null;
 
-/**
- * The tokens live in src/app.css and the README says so, so the card reads them
- * rather than holding a second copy. Only the first `:root` block: the same names
- * are redeclared for dark mode, and the card is drawn on paper.
- */
 export function palette(): Palette {
 	if (CACHE) return CACHE;
 

@@ -159,6 +159,14 @@ Vercel, salida estática. `vercel.json` fija:
 
 `404.html` lo sirve Vercel solo, sin configuración.
 
+## Rendimiento
+
+Tres cosas que es fácil volver a romper:
+
+- **`<Analytics />` va en el `<body>`, no en el `<head>`.** Emite `<vercel-analytics>`, y un elemento desconocido dentro de la cabecera es donde el parser decide que la cabecera terminó: con él arriba, las hojas de estilo que Astro añade después se parseaban dentro del `<body>`.
+- **Las `@font-face` se declaran en `Layout.astro`, no se importan de Fontsource.** Sus paquetes *variable* publican una sola hoja con los once subconjuntos y aquí solo se usa el latino. Declararlas es además lo que permite precargarlas: el nombre con hash solo se conoce a través de `?url`, y usar ese mismo valor en el `preload` y en la `@font-face` es lo que garantiza que el navegador no descargue el fichero dos veces.
+- **`assetsInlineLimit` es una función.** El `0` estaba para que fuentes e imágenes no acabaran en base64, pero también apagaba el inlineado de CSS y hojas de 310 B viajaban como petición propia. La función dice solo lo que se quería decir: `false` para los assets, el umbral por defecto para el CSS.
+
 ## Datos estructurados
 
 Cada página indexable emite **un solo** `<script type="application/ld+json">` con un `@graph`. Uno y no varios: con varios habría que repetir la `Person` en cada página —que es justo lo que un `@id` estable existe para evitar— o referenciar `@id` entre scripts, que no se puede validar pegando una sola cosa en el test de Google.
@@ -175,7 +183,7 @@ El origen está declarado una sola vez, en `site-url.mjs`: `https://www.alexherr
 
 La raíz negocia idioma: `vercel.json` manda a `/en` cuando `Accept-Language` empieza por `en` y a `/es` en el resto de casos, y `x-default` apunta a la raíz, que es para lo que ese valor está definido. Apuntarlo a `/es` diría que el español es el respaldo para todo el mundo, y los dos idiomas están al mismo nivel.
 
-El sitemap lleva `<lastmod>`, sacado de git por `scripts/lastmod.mjs` a `src/lib/lastmod.json`, que **se versiona**: Vercel clona en superficie y allí `git log` da el commit de la frontera, no el real, así que `prebuild` detecta el clon superficial y no reescribe el fichero.
+El sitemap lleva `<lastmod>`, sacado de git por `scripts/lastmod.mjs` a `src/lib/lastmod.json`, que **se versiona**: Vercel clona en superficie y allí `git log` da el commit de la frontera, no el real, así que `prebuild` detecta el clon superficial y no reescribe el fichero. El JSON va siempre un commit por detrás —no puede contener la fecha del commit que lo transporta—, y esa es la dirección segura: una fecha nunca más nueva que el cambio real. Si te molesta ver el árbol sucio tras un build, `pnpm lastmod` y commitea.
 
 Los PDF del CV llevan `X-Robots-Tag: noindex`. Se siguen enlazando y descargando; lo que no hacen es competir con la propia web en una búsqueda por el nombre, ni exponer el correo y la dirección a los rastreadores.
 

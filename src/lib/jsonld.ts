@@ -36,7 +36,6 @@ const orgId = (mark: OrgMark) => `${SITE_URL}/#org-${mark}`;
 
 const ROLES: Role[] = [...EXPERIENCE, ...EDUCATION];
 
-/** The org string on a ficha is the display one; the mark is what identifies the organisation. */
 function orgMarkOf(org: string | null): OrgMark | null {
 	if (!org) return null;
 	const name = splitOrg(org).name;
@@ -73,11 +72,6 @@ function portraitNode(): Node {
 	};
 }
 
-/**
- * `detail: 'full'` on the two pages that are about the person; a stub everywhere else.
- * Both carry the same @id, so consumers merge them into one entity — and `sameAs`,
- * the field that does the reconciling, stays in the stub.
- */
 function personNode(lang: Lang, detail: 'full' | 'stub'): Node {
 	const strings = t(lang);
 	const base: Node = {
@@ -87,8 +81,6 @@ function personNode(lang: Lang, detail: 'full' | 'stub'): Node {
 		url: SITE_URL,
 		jobTitle: strings.home.role,
 		sameAs: [PERSON.linkedin, PERSON.github],
-		// A plain URL, not an @id: the page it names lives in another document's
-		// graph, and a bare reference that resolves nowhere is harder to read.
 		mainEntityOfPage: absolute(routePath(lang, 'about'))
 	};
 
@@ -125,7 +117,6 @@ function personNode(lang: Lang, detail: 'full' | 'stub'): Node {
 			name: language.label[lang],
 			alternateName: language.code
 		})),
-		// Only what has actually been awarded: `status` marks a certification still in progress.
 		hasCredential: CERTIFICATIONS.filter((cert) => !cert.status).map((cert) => ({
 			'@type': 'EducationalOccupationalCredential',
 			name: cert.name,
@@ -150,7 +141,6 @@ function websiteNode(lang: Lang): Node {
 	};
 }
 
-/** Home has no trail. Everything else hangs off it; the current page carries no `item`. */
 function breadcrumbNode(input: GraphInput, key: RouteKey): Node | null {
 	const strings = t(input.lang);
 	const home = {
@@ -202,8 +192,6 @@ function projectNode(
 	const strings = t(input.lang);
 	const parts = meta.org ? splitOrg(meta.org) : null;
 	const source = orgMarkOf(meta.org);
-	// "Intercargo Panamá — vía Kaizen Apps CR" names two real organisations, not one
-	// with a note: the client the work is for, and the company it came through.
 	const via = parts?.qualifier ? orgMarkOf(parts.qualifier.replace(/^(vía|via)\s+/i, '')) : null;
 	const links = [meta.repo, meta.site].filter((link): link is string => Boolean(link));
 
@@ -218,8 +206,6 @@ function projectNode(
 		genre: strings.kind[meta.kind],
 		author: ref(PERSON_ID),
 		creator: ref(PERSON_ID),
-		// `period` is when the work happened, so it is temporalCoverage and never a
-		// publication date. ".." is the ISO 8601 open end.
 		temporalCoverage: `${meta.period.start}/${meta.period.end ?? '..'}`,
 		about: meta.areas.map((area) => ({ '@type': 'Thing', name: areaLabel(area, input.lang) })),
 		keywords: meta.stack,
@@ -257,13 +243,6 @@ const PAGE_TYPE: Record<RouteKey, string> = {
 	contact: 'ContactPage'
 };
 
-/**
- * One `@graph` per page. Several scripts would mean either a duplicated Person on
- * every page — which is what a stable @id exists to avoid — or @id references that
- * cross script boundaries and cannot be validated as a single paste.
- *
- * Returns null when the page must not describe itself.
- */
 export async function buildGraph(input: GraphInput): Promise<string | null> {
 	if (input.key === null || input.noindex) return null;
 

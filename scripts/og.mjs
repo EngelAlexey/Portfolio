@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-// The Open Graph cards are no longer drawn here: they are a build endpoint now
-// (src/pages/img/og/[...route].png.ts), because a card made out of a ficha's own
-// title and area has to follow that content, and 38 hand-regenerated binaries
-// drift by construction. What is left is the one icon that never depended on
-// content, so it stays a committed file.
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';

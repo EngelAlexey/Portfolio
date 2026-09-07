@@ -15,7 +15,6 @@ export type Role = {
 	mark?: 'intercargo' | 'kaizen' | 'starcargo' | 'utn';
 	post?: Bilingual;
 	shortOrg?: string;
-	// `period` is a display string, so currency has to be stated rather than parsed out of it.
 	current?: boolean;
 };
 
@@ -23,8 +22,6 @@ export type OrgMark = NonNullable<Role['mark']>;
 
 export const WORDMARKS = new Set(['intercargo', 'kaizen', 'starcargo', 'utn']);
 
-// Official pages, for `sameAs` on the organisation nodes. Filled in deliberately:
-// an unverified URL disambiguates the wrong entity.
 export const ORG_LINKS: Partial<Record<OrgMark, string>> = {};
 
 export const EXPERIENCE: Role[] = [

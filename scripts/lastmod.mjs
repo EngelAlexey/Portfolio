@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-// Writes the last-commit date of every page source into src/lib/lastmod.json, so
-// the sitemap can carry <lastmod> without inventing a date field in the content
-// schema. The JSON is committed: Vercel clones shallow, where `git log` reports
-// the boundary commit rather than the real one, so there the file is read as-is
-// and this script refuses to overwrite it.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

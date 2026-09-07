@@ -1,8 +1,4 @@
 ---
-// The @font-face rules are declared here rather than imported from Fontsource.
-// Its variable packages ship one stylesheet with all eleven subsets, and the site
-// only ever renders Latin; declaring the four we use is also what makes the URL
-// available to preload, since the hashed name is only knowable through `?url`.
 import geistLatin from '@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url';
 import geistLatinExt from '@fontsource-variable/geist/files/geist-latin-ext-wght-normal.woff2?url';
 import monoLatin from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url';
@@ -78,7 +74,6 @@ const links = [
 		<link rel="preload" as="font" type="font/woff2" href={monoLatin} crossorigin />
 		<style is:inline set:html={fontFaces}></style>
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-		<!-- Google wants a square favicon that is a multiple of 48px to show one in results. -->
 		<link rel="icon" href="/img/favicon-96.png" sizes="96x96" type="image/png" />
 		<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png" />
 		<meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)" />

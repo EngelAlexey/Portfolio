@@ -92,8 +92,6 @@ export function cardSvg(spec: CardSpec): string {
 export function renderCard(spec: CardSpec): Buffer {
 	return new Resvg(cardSvg(spec), {
 		fitTo: { mode: 'width', value: OG_CARD.width },
-		// Explicit files, not the system database: it is rebuilt on every Resvg()
-		// and Geist is not installed on any of the machines that run this.
 		font: { loadSystemFonts: false, fontFiles: fontFiles(), defaultFontFamily: FAMILY }
 	})
 		.render()

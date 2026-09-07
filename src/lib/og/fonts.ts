@@ -14,11 +14,6 @@ export const fontFiles = (): string[] => [
 
 type Metrics = { unitsPerEm: number; advance: (codePoint: number) => number };
 
-/**
- * Real advances out of the font's own tables. Estimating them would be fine until
- * the first 54-character title silently ran off the card, and the card is the one
- * artefact nobody looks at after it ships.
- */
 function readMetrics(file: string): Metrics {
 	const buf = readFileSync(file);
 	const tables = new Map<string, number>();
@@ -44,7 +39,6 @@ function readMetrics(file: string): Metrics {
 		return buf.readUInt16BE(hmtx + i * 4);
 	};
 
-	// Prefer a full-Unicode subtable, fall back to the BMP one.
 	let best = 0;
 	let bestScore = -1;
 	const numSub = buf.readUInt16BE(cmap + 2);
@@ -118,7 +112,6 @@ const metrics = (weight: number): Metrics => {
 	return CACHE[weight >= 500 ? SEMIBOLD : REGULAR];
 };
 
-/** Width of `value` in px when set at `size` px. */
 export function measure(value: string, size: number, weight = REGULAR): number {
 	const font = metrics(weight);
 	let units = 0;

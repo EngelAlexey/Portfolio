@@ -6,17 +6,14 @@ import { PERSON } from '../site';
 import { ogCardPath } from './paths';
 
 export type CardSpec = {
-	/** The `[...route]` param: the card path without its /img/og prefix or extension. */
 	route: string;
 	lang: Lang;
 	eyebrow: string;
 	heading: string;
 	meta: string | null;
 	areas: AreaId[];
-	/** 'brand' keeps the security hue the card has always been ruled with. */
 	accent: AreaId | 'brand';
 	portrait: boolean;
-	/** Bottom line. Defaults to the name, except where the heading already is it. */
 	footer: string;
 };
 
@@ -39,7 +36,6 @@ function fixedCards(lang: Lang): CardSpec[] {
 			areas: [],
 			accent: 'brand',
 			portrait: true,
-			// The heading is already the name; repeating it in the footer reads as a bug.
 			footer: strings.home.headline
 		},
 		{
@@ -92,7 +88,6 @@ async function fichaCards(lang: Lang): Promise<CardSpec[]> {
 			heading: meta.title,
 			meta: [org, period].filter(Boolean).join(' · '),
 			areas: meta.areas,
-			// The first declared area is the one the page's lead chip shows.
 			accent: meta.areas[0],
 			portrait: false,
 			footer: PERSON.name
@@ -100,7 +95,6 @@ async function fichaCards(lang: Lang): Promise<CardSpec[]> {
 	});
 }
 
-/** Every card the site needs, which is also every route the endpoint serves. */
 export async function cardSpecs(): Promise<CardSpec[]> {
 	const perLang = await Promise.all(
 		LANGS.map(async (lang) => [...fixedCards(lang), ...(await fichaCards(lang))])
