@@ -7,8 +7,8 @@ kind: academico
 org: Universidad Técnica Nacional
 role: Security analysis
 period:
-  start: '2026'
-  end: '2026'
+  start: '2026-05'
+  end: '2026-06'
 tier: ficha
 home: false
 visibility: publico

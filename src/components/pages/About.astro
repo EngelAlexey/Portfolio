@@ -65,7 +65,7 @@ function lanes(list: Role[]): Lane[] {
 
 const work = lanes(EXPERIENCE);
 const study = lanes(EDUCATION);
-work.sort((a, b) => a.start - b.start);
+work.sort((a, b) => b.start - a.start);
 
 const all = [...work, ...study];
 

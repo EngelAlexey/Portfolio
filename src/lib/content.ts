@@ -96,12 +96,6 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Project>>>> {
 const monthKey = (value: string) => (value.length === 4 ? `${value}-06` : value);
 
 function compare(a: Project, b: Project): number {
-	const orderA = a.meta.order;
-	const orderB = b.meta.order;
-	if (orderA !== null && orderB !== null) return orderA - orderB;
-	if (orderA !== null) return -1;
-	if (orderB !== null) return 1;
-
 	const startDiff = monthKey(b.meta.period.start).localeCompare(monthKey(a.meta.period.start));
 	if (startDiff !== 0) return startDiff;
 	return a.meta.title.localeCompare(b.meta.title);
@@ -118,8 +112,12 @@ export async function allProjects(lang: Lang): Promise<Project[]> {
 export const fichas = async (lang: Lang): Promise<Project[]> =>
 	(await allProjects(lang)).filter((p) => p.meta.tier === 'ficha');
 
+const homeRank = (project: Project): number => project.meta.order ?? Number.MAX_SAFE_INTEGER;
+
 export const homeProjects = async (lang: Lang): Promise<Project[]> =>
-	(await allProjects(lang)).filter((p) => p.meta.home);
+	(await allProjects(lang))
+		.filter((p) => p.meta.home)
+		.sort((a, b) => homeRank(a) - homeRank(b));
 
 export async function getProject(lang: Lang, slug: string): Promise<Project | undefined> {
 	return (await load()).get(slug)?.[lang];

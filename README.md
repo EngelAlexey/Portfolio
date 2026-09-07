@@ -66,7 +66,7 @@ repo: null                      # obligatorio null si visibility es privado
 site: null                      # URL pública del producto, si la tiene
 stack: [Next.js, TypeScript]
 cover: null                     # ruta bajo /img/ o null; sustituye la imagen social
-order: 2                        # opcional; sin él ordena por fecha, más reciente primero
+order: 2                        # opcional; solo ordena los cuatro destacados de la portada
 ---
 ```
 
@@ -81,7 +81,7 @@ Reglas que el build hace cumplir:
 - Si existe `es.md` debe existir `en.md`, y al revés, con el mismo `tier`, el mismo `home` y el mismo diagrama.
 - **Un `.md` que declare `diagram` falla el build**: el diagrama necesita `.mdx` para poder colocarse, y un fallo silencioso lo dejaría fuera de la página.
 
-`order` decide más de lo que parece: además de ordenar las tarjetas, fija el orden de los grupos de organización en `/proyectos`, porque cada grupo aparece donde aparece su primer proyecto.
+`order` decide una sola cosa: en qué orden salen los cuatro destacados de la portada. `/proyectos` va siempre por fecha, del más reciente al más antiguo, y cada grupo de organización aparece según la fecha del trabajo más reciente que contiene.
 
 ### Cómo se escribe el cuerpo
 
