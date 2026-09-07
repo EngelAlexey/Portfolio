@@ -156,6 +156,6 @@ Vercel, salida estática. `vercel.json` fija:
 
 ## Dominio
 
-El origen sale de `PUBLIC_SITE_URL`, con el subdominio de Vercel como valor por defecto, y está declarado una sola vez en `site-url.mjs`. Al comprar el dominio propio basta con definir esa variable en Vercel: canonical, `hreflang`, Open Graph y sitemap se recalculan solos, porque `src/lib/site.ts` lee el `site` que Astro ya resolvió.
+El origen está declarado una sola vez, en `site-url.mjs`: `https://www.alexherrera.dev`, el dominio propio. Canonical, `hreflang`, Open Graph y sitemap salen de ahí sin tocar nada más, porque `src/lib/site.ts` lee el `site` que Astro ya resolvió. `PUBLIC_SITE_URL` sobrescribe ese valor por si una build tiene que apuntar a otro origen —un preview, una prueba local—, y por eso mismo, si quedó definida en el entorno Production de Vercel, gana sobre el dominio propio: ahí no debe estar.
 
 Las imágenes Open Graph (`pnpm og`) están fuera de la cadena de build y se versionan ya renderizadas. No imprimen el dominio, precisamente para que un cambio de dominio no las deje mintiendo.
