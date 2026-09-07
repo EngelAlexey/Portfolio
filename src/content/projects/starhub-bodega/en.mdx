@@ -5,10 +5,10 @@ tagline: Container receiving line by line, with the position of each pallet and 
 areas: [fullstack, movil]
 kind: profesional
 org: Star Cargo Service
-role: Backend development
+role: Maintenance and bug fixing
 period:
   start: '2026-08'
-  end: null
+  end: '2026-08'
 tier: ficha
 home: false
 visibility: privado
@@ -49,44 +49,44 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 StarHub is the tool a warehouse operator uses to record a container's arrival from their phone. They scan the receipt code, log every line as it is unloaded, note where each pallet goes, and photograph damaged goods.
 
-This project is the backend behind that Android app. The Android client was led by someone else on the team, with contributions from me.
-
-The project came from a warehouse need: that the ERP's inventory reflect what is actually in the warehouse at the moment goods are unloaded, not hours later.
+The service and the Android app were built by the team. My assignment was maintenance: fixing the defects that surfaced once the system was already in production. On the app, which another colleague had started, I also connected the screens to the service's real data and added the timestamp seal on evidence photos.
 
 ## Problem
 
-Goods-in was recorded on paper and someone transcribed it into the ERP later. Until that transcription happened, the system's inventory did not match what was in the warehouse.
-
-That gap has a commercial cost: quotes go out against stock that has already changed, and a discrepancy only surfaces when someone goes to find the goods and they are not where the system says.
+Goods-in was recorded on paper and someone transcribed it into the ERP later. Until that happened, inventory did not match what was in the warehouse, and the discrepancy only surfaced when someone went to find the goods and they were not where the system said.
 
 Transcription also loses detail. Pallet positions and the condition of damaged goods rarely survive the trip from paper to system.
 
 ## Technical decisions
 
-The ERP generates receipt numbers with formulas of its own that take no lock. Two operators working at once would have been handed the same sequence number. It also has notifications and automatic actions on those tables, which a direct write would not have fired.
+The database schema is not controlled by this service. It is governed by the tool the client runs its operation from, and it can change without the service hearing about it. All the maintenance work starts from that.
 
-Reads go over direct SQL against the ERP's database, which is the fast path. Writes go through its API, which is slower but respects those formulas and those triggers. The latency was accepted because the alternative was an inventory with repeated sequence numbers.
+Database names are translated with SQL aliases inside the data-access layer, rather than propagated to the contract the Android client consumes. That contract stays stable and absorbs a schema change without shipping a new release: the build already tested in production keeps serving untouched. The correspondence between columns is checked against the real data before it is written, because two columns of the same type are easy to cross.
 
-No route in the service writes over SQL. Every write leaves through a single API client, which is the only point in the code that issues one.
+The warehouse queue filters by document type. The table it reads mixes receipts and dispatches, and without that filter an operator would see outbound orders looking like receipts and try to receive cargo against one of them.
+
+A field the database stops offering comes back null, not padded. If that takes away functionality the operation was using, it gets reported as such rather than hidden inside the mapping.
 
 ## Architecture
+
+The service reads over direct SQL against the ERP's database, which is the fast path, and writes only through the ERP's API, slower but respecting the sequence formulas and the triggers a direct write would not fire. That separation already existed, and the maintenance work had to respect it.
 
 A phone cannot authenticate with the platform's identity, because enrolment happens before the device holds any credential at all. That is the service's gate: a single public endpoint, with four rules applied at once.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-Once enrolled, the device works with a token scoped to its warehouse, and from there it reads over SQL and writes through the ERP's API.
+Once enrolled, the device works with a token scoped to its warehouse.
 
 ## Result
 
-Goods-in reaches the ERP at the moment the operator records it, with its lines, each pallet's position and the photos of damaged goods. Inventory stops depending on a later transcription.
+With StarHub, goods-in reaches the ERP at the moment the operator records it, with its lines, each pallet's position and the photos of damaged goods. Inventory stopped depending on a later transcription.
 
-A smoke test starts the server and makes real requests against it. It covers TLS, credentials, warehouse filtering, querying and response mapping. It uses no test doubles and writes no data, so it checks the integration rather than an imitation of it.
+A change in the ERP's schema is absorbed inside the service, with no new release pushed to the phones already on the floor. The queue shows receipts and only receipts, even though they share a table with dispatches.
 
-Alongside it there are 30 `node:test` cases covering pagination and the device lifecycle.
+One case was written down as unverified, because checking it creates real rows in the ERP and needs the client's authorisation.
 
 ## What I learned
 
-The enrolment registry stayed inside the process, so the service cannot take a second instance until it moves to shared storage. That move is written down as the next change.
+A service integrated against a platform another team governs does not control its schema. Putting the translation in the mapping layer, and not in the contract the mobile client consumes, is what avoids pushing a new release to phones already out in the field.
 
-It is a decision that works with one warehouse and breaks with the second. Keeping state in the process costs nothing to write and costs a redesign the day the business grows.
+The other half is commercial. When a schema change takes away something the operation was using, reporting it is part of the job. Quietly resolving it inside the mapping leaves the people running the operation unaware they lost anything.

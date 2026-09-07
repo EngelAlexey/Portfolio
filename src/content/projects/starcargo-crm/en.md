@@ -58,7 +58,7 @@ Almost every entity carries its branch, and the user picks which one is active. 
 
 The CRM replaced the spreadsheet operation. Clients, contacts, shipment deals, appointments, quotes and branches live in a single record, and the system does the consolidation instead of a person.
 
-The design was tested by an executive getting a 403 when opening the dashboard: the indicators demanded reporting permission when the data they returned was deal data. The required permission was lowered after confirming that the service already isolated records per user.
+Management sees the state of the pipeline across every branch without asking anyone for their file, and each executive works on the records that belong to them. Changing what a role can do stopped being a deployment.
 
 ## What I learned
 

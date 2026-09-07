@@ -68,7 +68,7 @@ La pregunta se traduce a SQL y el servidor reescribe esa consulta antes de ejecu
 
 Una consulta que pidiera datos de otra empresa no falla una validación. Se ejecuta ya acotada y devuelve solo lo permitido, que es una garantía más fuerte que rechazarla.
 
-La versión en producción es la cuarta. Cada reconstrucción movió al código una decisión que la anterior dejaba en manos del modelo.
+Ninguna de las tres restricciones se le pide al modelo. El servidor las inyecta pase lo que pase por encima, así que el alcance de una respuesta no depende de cómo esté redactada la pregunta.
 
 ## Arquitectura
 
@@ -88,6 +88,6 @@ La recuperación exige un mínimo de relevancia. Una pregunta sin respaldo en lo
 
 ## Lo que aprendí
 
-El control de visibilidad empezó apoyado en el texto de la instrucción y terminó entero en el código. La diferencia práctica es que ahora se puede ejecutar: una prueba pasa una pregunta por el reescritor y comprueba que el SQL resultante lleva los tres filtros.
+Un control de visibilidad puede vivir en el texto de la instrucción o en el código. La diferencia práctica es que el segundo se puede ejecutar: una prueba pasa una pregunta por el reescritor y comprueba que el SQL resultante lleva los tres filtros.
 
 Sobre un prompt no hay nada equivalente que ejecutar. Cuando una garantía tiene que sostenerse frente a un cliente, conviene ponerla donde una prueba pueda comprobarla.

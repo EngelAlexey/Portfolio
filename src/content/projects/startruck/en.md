@@ -5,7 +5,7 @@ tagline: The driver scans the waybill and the phone sends positions until the tr
 areas: [movil]
 kind: profesional
 org: Star Cargo Service
-role: Mobile development
+role: Maintenance and bug fixing
 period:
   start: '2026-07'
   end: '2026-08'
@@ -20,47 +20,47 @@ stack:
   - SQLite
   - Node.js
   - MySQL
-  - Vercel
+  - Render
 cover: null
 order: null
 ---
 
 ## Context
 
-Star Track is the app a driver carries through a freight trip. They scan their badge to identify themselves and then the trip's waybill. From that moment the phone sends positions until the trip is closed, with nothing for them to operate.
+Star Track is the app a driver carries through a freight trip. They scan their badge to identify themselves and then the trip's waybill. From that moment the phone sends positions until the trip is closed, with nothing for them to operate. On the road it is also their tool for reporting an emergency and finding the nearest hospital, police station or petrol station.
 
-The app is also their tool on the road: they report an emergency and find the nearest hospital, police station or petrol station without leaving it.
-
-I joined with the app already under way, taking over background tracking.
+The app was built by another developer on the team. I joined with it already under way, to fix the defects that surfaced running it on a real device and watching the service in production.
 
 ## Problem
 
-The starting reason was driver safety. A freight trip crosses stretches where a breakdown or an incident leaves a person alone, and the response depends on knowing where they are. Without tracking, that information arrives when the driver manages to send it.
+None of the defects were visible reading the code. They surfaced running the app on an actual handset and following the behaviour of the already deployed service.
 
-The second reason comes out of the same record. The operation and the client need the load's position while the trip is happening, and without it every enquiry ends in a call to the driver, who is driving.
+The five-minute cadence did not exist: the phone stored a point every twenty-seven seconds, ten times the rows budgeted. And when tracking stopped, re-arming the service did not bring it back.
+
+The other sat outside tracking: the trip screen crashed on closing the operation, leaving the driver looking at a blank screen exactly as the trip ended.
 
 ## Technical decisions
 
-Android does not guarantee the cadence it is asked for. Request a position every five minutes and the system delivers several per second. Ask it not to suspend the foreground service and the manufacturer kills it anyway to save battery. Both behaviours were measured on a real device before any of this was written.
+The position interval requested from Android is the desired one, not a minimum, and the request was registered with no floor. So the app now imposes the cadence itself: it accepts whatever the system delivers and discards any point earlier than eighty per cent of the current interval.
 
-So the app imposes the cadence itself. It accepts whatever the system delivers and discards any point earlier than 80% of the current interval: five minutes in normal running, one in live tracking.
+Re-arming the service is not enough, so each watchdog retry also captures a one-off point. And since both existing recovery nets live inside the phone, where none of our code runs once the process is dead, a check was added on the server: it is the only one that does not depend on Android.
 
-Battery level does not enter the decision. The business requirement is that a point goes out every five minutes at 20% charge with power saving on. A trip with no reports is exactly the case where knowing the vehicle's position matters.
+That alert would never have fired. The MySQL driver returned dates in the process timezone while the database stores them in UTC, so the subtraction came out negative, with no error and no log entry. Silence is now computed in SQL against the server's UTC time.
 
 ## Architecture
 
-Two independent supervisors restart the foreground service when Android kills it or it stops delivering positions. Each restart also captures a one-off point, because re-arming the service does not always restore delivery.
+The phone runs a foreground service that collects positions. Points are not sent directly: they enter a local outbox, and a worker syncs it every few seconds, with growing backoff on failure and without duplicating a point already sent. A tunnel or a dead zone delays delivery without losing points.
 
-Points are not sent directly. They enter a local outbox, and a worker syncs it every ten seconds, with growing backoff on failure and without duplicating a point already sent. A tunnel or a dead zone delays delivery without losing points.
+On top of that sit three recovery nets, ordered by how much they depend on the handset: two watchdogs inside the app that restart it when Android kills it, a scheduled notification that fires if tracking stops capturing and survives the death of the process, and a check on the server that alerts Operations when an active trip has gone fifteen minutes without reporting.
 
 ## Result
 
-The phone holds the cadence through a whole trip with no intervention from the driver. The operation and the client can see where the load is without calling anyone.
+The cadence went from a point every twenty-seven seconds to the configured interval, with the reduction in rows that implies on the tracking table. The trip screen stopped crashing on closing the operation.
 
-The app also reports with the vehicle stopped: a driver held three hours at customs still produces a point every five minutes. That is deliberate, because those repeated points are what distinguishes a stopped vehicle from a phone that stopped reporting.
+A trip that stops reporting no longer depends on someone noticing. The alert comes from the server, the only one of the three layers that keeps working with the phone switched off.
 
 ## What I learned
 
-Android's documentation describes the position interval as a request, not a guarantee. On a real device the difference was several positions per second against one every five minutes.
+Android's documentation describes the position interval as a request, not a guarantee. On a real device the difference was a point every twenty-seven seconds against one every five minutes, and no amount of reading the code would have shown it.
 
-Measuring that behaviour on the handset before designing the solution saved the work of building on a promise the system does not keep. With an operational requirement at stake, measurement on the actual device is worth more than the specification.
+The two most expensive defects did not fail visibly. The timezone one produced no error and no log: the condition simply never held. Testing against the real system is what brought them out.

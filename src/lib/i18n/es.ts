@@ -60,8 +60,15 @@ export const es = {
 		repo: 'Repositorio',
 		site: 'Sitio en producción',
 		privateTitle: 'Proyecto privado',
+		shots: 'Capturas del proyecto',
+		shotsOpen: 'Ver capturas',
+		shotsClose: 'Cerrar',
+		shotsGrid: 'Ver todas',
+		shotsSingle: 'Ver una',
+		shotsPrevious: 'Captura anterior',
+		shotsNext: 'Captura siguiente',
 		privateBody:
-			'Es trabajo para una empresa: se describe la arquitectura y las decisiones, sin código, sin repositorio y sin capturas con datos reales.',
+			'Es trabajo para una empresa: se describe la arquitectura y las decisiones, sin código, sin repositorio y sin capturas de las pantallas internas.',
 		next: 'Siguiente proyecto',
 		previous: 'Proyecto anterior'
 	},
@@ -74,7 +81,7 @@ export const es = {
 		title: 'Sobre mí',
 		lead: 'Formación, experiencia y las herramientas con las que trabajo.',
 		intro:
-			'Desarrollador de software en Costa Rica, con enfoque en ciberseguridad. Trabajo a tiempo completo en Kaizen Apps CR, donde diseño y construyo los sistemas nuevos del equipo, y por proyecto para Star Cargo Service. En paralelo termino la carrera.',
+			'Desarrollador de software en Costa Rica, con enfoque en ciberseguridad. Cubro el ciclo completo: levanto el requerimiento, diseño la solución, la construyo y la mantengo en producción. Trabajo en web, móvil, datos e infraestructura, y la parte que más me ocupa es el modelo de seguridad de lo que construyo.',
 		education: 'Educación',
 		certifications: 'Certificaciones',
 		languages: 'Idiomas',

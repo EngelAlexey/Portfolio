@@ -58,7 +58,7 @@ Casi toda entidad lleva su sucursal, y el usuario elige cuál tiene activa. El p
 
 El CRM sustituyó la operación en hojas de cálculo. Clientes, contactos, negocios de embarque, citas, cotizaciones y sucursales viven en un solo registro, y la consolidación la hace el sistema en lugar de una persona.
 
-El diseño se puso a prueba con un ejecutivo que recibía 403 al abrir el tablero: los indicadores exigían permiso de informes cuando el dato que devolvían era de negocios. Se bajó el permiso requerido después de comprobar que el servicio ya aislaba los registros por usuario.
+La gerencia ve el estado de la cartera de todas las sucursales sin pedirle su archivo a nadie, y cada ejecutivo trabaja sobre los registros que le corresponden. Cambiar lo que puede hacer un rol dejó de ser un despliegue.
 
 ## Lo que aprendí
 

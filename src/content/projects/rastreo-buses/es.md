@@ -23,13 +23,27 @@ stack:
   - Expo
   - Next.js
   - Jest
+  - OpenAPI
 cover: null
+shots:
+  - src: /img/shots/bus-api-docs.jpg
+    alt: "Swagger UI del API de rastreo, con los módulos del sistema listados: autenticación, incidentes, rutas, viajes, conductores y telemetría"
+    caption: "El contrato del API en Swagger. Cada módulo del sistema es un grupo de endpoints documentado."
+  - src: /img/shots/bus-api-incidente.jpg
+    alt: "Detalle de un endpoint en Swagger: el reporte de incidentes, con el cuerpo de la solicitud y las respuestas 201 y 400 con sus ejemplos"
+    caption: "Un endpoint por dentro: el reporte de incidentes, con su solicitud y las respuestas de éxito y de validación."
+  - src: /img/shots/bus-app-pasajero.jpg
+    alt: "App móvil del pasajero: pantalla de inicio con viajes disponibles San José–Alajuela y San José–Puntarenas, marcados en ruta y en vivo"
+    caption: "La app del pasajero (cliente móvil del equipo) sobre el API: los viajes en vivo con su estado en ruta."
+  - src: /img/shots/bus-login-admin.jpg
+    alt: "Pantalla de acceso de la consola de administración, con el panel de marca y el formulario de inicio de sesión restringido a administradores"
+    caption: "La consola de administración, la entrada al panel que consume el mismo API."
 order: null
 ---
 
 ## Contexto
 
-Proyecto Integrador III, en equipo de seis. El sistema sigue autobuses en vivo y atiende a tres roles: el pasajero que espera, el conductor al volante y la administración que supervisa la flota.
+Proyecto Integrador III, en equipo de cinco. El sistema sigue autobuses en vivo y atiende a tres roles: el pasajero que espera, el conductor al volante y la administración que supervisa la flota.
 
 Aporté la mayor parte del API. El cliente móvil y el panel web los llevaron sobre todo otros compañeros.
 

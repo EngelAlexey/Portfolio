@@ -56,6 +56,19 @@ const projectSchema = z
 				message: 'diagram.gate must index into diagram.nodes'
 			}),
 
+		shots: z
+			.array(
+				z.object({
+					src: z.string().startsWith('/img/shots/'),
+					alt: z.string().min(4),
+					caption: z.string().min(2).nullable().default(null)
+				})
+			)
+			.min(1)
+			.max(40)
+			.nullable()
+			.default(null),
+
 		order: z.number().int().nullable().default(null)
 	})
 	.superRefine((value, ctx) => {

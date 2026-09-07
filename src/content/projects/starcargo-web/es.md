@@ -24,6 +24,88 @@ stack:
   - Google Cloud Run
   - Playwright
 cover: null
+shots:
+  - src: /img/shots/sc-antes-home.jpg
+    alt: "Portada del sitio anterior, con una fotografía de un camión ocupando toda la pantalla"
+    caption: "Portada, antes. Cuatro entradas en el menú y los trámites colgando de un desplegable."
+  - src: /img/shots/sc-despues-home.jpg
+    alt: "Portada de la plataforma actual, con el titular junto a un globo terráqueo y el próximo cierre de consolidado"
+    caption: "Portada, después. Cotización, rastreo y el próximo cierre de consolidado a la vista."
+  - src: /img/shots/sc-antes-nosotros.jpg
+    alt: "Página Nosotros del sitio anterior, con una fotografía de oficina y el titular Logística de calidad"
+    caption: "Nosotros, antes. Una fotografía de banco de imágenes y un titular sin datos."
+  - src: /img/shots/sc-despues-nosotros.jpg
+    alt: "Página Nosotros actual, con el titular y cuatro cifras: países, centros, servicios y salidas"
+    caption: "Nosotros, después. Países, centros, servicios y frecuencia de salidas en cifras."
+  - src: /img/shots/sc-antes-sucursales.jpg
+    alt: "Página de sucursales del sitio anterior, con horario y teléfono de Costa Rica bajo una fotografía"
+    caption: "Sucursales, antes. Una lista de oficinas, sin forma de escribir desde la página."
+  - src: /img/shots/sc-despues-contacto.jpg
+    alt: "Página de contacto actual, con los canales directos a la izquierda y un formulario de mensaje a la derecha"
+    caption: "Contacto, después. Canales directos junto a un formulario que entra al portal."
+  - src: /img/shots/sc-antes-rastreo.jpg
+    alt: "Pantalla de seguimiento del sitio anterior, con un formulario de búsqueda y un panel de resultado vacío"
+    caption: "Rastreo, antes. Pedía un token opcional y no explicaba qué devolvía la consulta."
+  - src: /img/shots/sc-despues-rastreo.jpg
+    alt: "Pantalla de rastreo actual, con el campo de conocimiento de embarque y la explicación de lo que devuelve la consulta"
+    caption: "Rastreo, después. El formato esperado y lo que la consulta devuelve, antes de escribir."
+  - src: /img/shots/sc-antes-credito.jpg
+    alt: "Formulario de solicitud de crédito del sitio anterior, con cuatro pasos y campos de datos del solicitante"
+    caption: "Solicitud de crédito, antes. El formulario abría directo, sin decir qué pedía ni cuánto tomaba."
+  - src: /img/shots/sc-despues-credito.jpg
+    alt: "Página de solicitud de crédito actual, con pasos, adjuntos, duración, formato de entrega y qué se necesita a mano"
+    caption: "Solicitud de crédito, después. Pasos, adjuntos, duración y qué tener a mano antes de empezar."
+  - src: /img/shots/sc-antes-aduanas.jpg
+    alt: "Formulario de partidas arancelarias del sitio anterior, con carga de factura y bill of lading"
+    caption: "Partidas arancelarias, antes."
+  - src: /img/shots/sc-despues-aduanas.jpg
+    alt: "Página de partidas arancelarias actual, con pasos, adjuntos, duración y formato de entrega"
+    caption: "Partidas arancelarias, después. Cada trámite declara qué produce y en qué formato."
+  - src: /img/shots/sc-antes-diligencia.jpg
+    alt: "Formulario de debida diligencia del sitio anterior, con seis pasos y carga de documentos"
+    caption: "Debida diligencia, antes. Aquí el logotipo ni siquiera llegaba a dibujarse."
+  - src: /img/shots/sc-despues-diligencia.jpg
+    alt: "Página de debida diligencia actual, con pasos, adjuntos, duración y los documentos exigidos"
+    caption: "Debida diligencia, después. Los documentos exigidos por normativa, listados antes de entrar."
+  - src: /img/shots/sc-antes-reexportacion.jpg
+    alt: "Formulario de certificado de reexportación del sitio anterior, con carga de factura comercial"
+    caption: "Certificado de reexportación, antes."
+  - src: /img/shots/sc-despues-reexportacion.jpg
+    alt: "Página de certificado de reexportación actual, con pasos, adjuntos, duración y entrega en XLSX"
+    caption: "Certificado de reexportación, después."
+  - src: /img/shots/sc-antes-empleo.jpg
+    alt: "Formulario de postulación de empleo del sitio anterior, con carga de currículum en cuatro pasos"
+    caption: "Postulación, antes."
+  - src: /img/shots/sc-despues-empleo.jpg
+    alt: "Página Trabaje con nosotros actual, con pasos, adjuntos, duración y los datos que se piden"
+    caption: "Postulación, después. Queda claro que es banco de talento y no una vacante concreta."
+  - src: /img/shots/sc-antes-instalacion.jpg
+    alt: "Página de descarga de aplicaciones Android del sitio anterior, con la ficha técnica de Star Truck"
+    caption: "Descarga de aplicaciones, antes."
+  - src: /img/shots/sc-despues-instalacion.jpg
+    alt: "Página de aplicaciones para Android actual, con plataforma, número de aplicaciones, tamaño y origen"
+    caption: "Descarga de aplicaciones, después."
+  - src: /img/shots/sc-tramites.jpg
+    alt: "Índice de trámites del sitio, con el conteo de trámites, cuáles están en línea y si exigen cuenta"
+    caption: "El índice de trámites, que el sitio anterior no tenía: cuántos hay y cuáles piden cuenta."
+  - src: /img/shots/sc-reserva.jpg
+    alt: "Página de reserva de bodega, con pasos, adjuntos, duración y entrega del comprobante por correo"
+    caption: "Reserva de bodega. Trámite nuevo, sin equivalente en el sitio anterior."
+  - src: /img/shots/sc-ayuda.jpg
+    alt: "Página de ayuda, con tipos de solicitud, acuse de reclamo, tiempo de respuesta y número de referencia"
+    caption: "Ayuda. Trámite nuevo: la solicitud queda registrada con categoría, prioridad y número de referencia."
+  - src: /img/shots/sc-servicios.jpg
+    alt: "Página de servicios, con el catálogo dividido en mover, desaduanar y almacenar y entregar"
+    caption: "Servicios, organizados por el ciclo de la carga y no por lista."
+  - src: /img/shots/sc-rutas.jpg
+    alt: "Página de rutas principales, con países, centros de consolidación, modalidades y destinos"
+    caption: "Rutas. Centros de consolidación, modalidades y destinos."
+  - src: /img/shots/sc-itinerarios.jpg
+    alt: "Página de itinerarios de salida, con salidas al mes, centros, países y modalidades"
+    caption: "Itinerarios. Las próximas salidas, filtrables por modalidad."
+  - src: /img/shots/sc-chino.jpg
+    alt: "La misma portada servida en chino, con la navegación y el próximo cierre traducidos"
+    caption: "La portada en chino. Los cuatro idiomas comparten estructura y contenido."
 order: 3
 ---
 

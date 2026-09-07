@@ -66,7 +66,7 @@ Un sitio de marketing y un portal con documentos de clientes tienen exposiciones
 
 La frontera quedó en el despliegue y no en el código. Una sola imagen se publica como dos servicios con identidades separadas, y al servicio público se le retira el acceso a la base de datos.
 
-La segunda regla es que el código de servidor nunca se importa desde el navegador, ni siquiera para tipos. Cuando el cliente importó una constante desde un módulo de servidor, el grafo de dependencias arrastró consigo el SDK del modelo: 269 KB de JavaScript inútil en cada visita. No se expuso ninguna credencial, porque el framework solo publica las variables con prefijo público, pero el peso era real. La regla se comprueba ahora con un comando dentro del pipeline.
+La segunda regla es que el código de servidor nunca se importa desde el navegador, ni siquiera para tipos. Una sola constante importada de un módulo de servidor arrastró consigo, por el grafo de dependencias, el SDK del modelo entero: cientos de kilobytes de JavaScript inútil en cada visita. La regla se comprueba ahora con un comando dentro del pipeline.
 
 ## Arquitectura
 
@@ -80,10 +80,10 @@ Un documento subido por un cliente pasa por los límites de tamaño, tipo y frec
 
 La plataforma sirve el sitio público, el portal interno, la debida diligencia y las cuentas por cobrar desde dos servicios con permisos distintos. La revisión documental que antes ocupaba a una persona ahora la propone el sistema, y la persona confirma o corrige.
 
-La verificación acompaña a cada despliegue: 2 243 pruebas unitarias en 144 archivos y 27 suites end to end. Cuatro de ellas son suites de ataque dedicadas, una por módulo: autenticación, cuentas por cobrar, debida diligencia y sitio público.
+La verificación acompaña a cada despliegue: 2 243 pruebas unitarias en 144 archivos y 27 suites end to end, entre ellas suites de ataque dedicadas.
 
 ## Lo que aprendí
 
 Separar por despliegue cuesta más que una comprobación dentro del código. Son dos servicios que configurar, dos identidades que mantener y un despliegue que puede quedar a medias entre versiones.
 
-A cambio, la garantía deja de depender de que la aplicación se comporte como se espera. Si el sitio público llegara a ejecutar código arbitrario, seguiría sin tener credenciales de base de datos que usar. Para un portal que guarda documentos de clientes, esa diferencia justifica el coste de operar dos servicios.
+A cambio, la garantía deja de depender de que la aplicación se comporte como se espera: el servicio que sirve el sitio público no tiene credenciales de base de datos, y eso es cierto pase lo que pase por encima. Para un portal que guarda documentos de clientes, esa diferencia justifica el coste de operar dos servicios.

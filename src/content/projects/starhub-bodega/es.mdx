@@ -5,10 +5,10 @@ tagline: Recepción de contenedores línea por línea, con la posición de cada 
 areas: [fullstack, movil]
 kind: profesional
 org: Star Cargo Service
-role: Desarrollo backend
+role: Mantenimiento y corrección de errores
 period:
   start: '2026-08'
-  end: null
+  end: '2026-08'
 tier: ficha
 home: false
 visibility: privado
@@ -49,44 +49,44 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 StarHub es la herramienta con la que el bodeguero registra la recepción de un contenedor desde el teléfono. Escanea el código del recibo, anota cada línea que descarga, indica la posición de cada tarima y fotografía la mercancía dañada.
 
-Este proyecto es el backend de esa aplicación Android. El cliente Android lo llevó otra persona del equipo, con aportes míos.
-
-El proyecto salió de una necesidad de la bodega: que el inventario del ERP refleje lo que hay en el almacén en el momento en que se descarga, y no horas después.
+El servicio y la aplicación Android los construyó el equipo. Mi encargo fue el mantenimiento: corregir los defectos que aparecieron con el sistema ya en producción. En la aplicación, iniciada por otro compañero, conecté además las pantallas a los datos reales del servicio y añadí el sellado temporal de las fotos de evidencia.
 
 ## Problema
 
-El registro de recepción se hacía en papel y alguien lo transcribía al ERP más tarde. Hasta que esa transcripción ocurría, el inventario del sistema no correspondía con lo que había en bodega.
-
-Esa diferencia tiene coste comercial: se cotiza sobre existencias que ya cambiaron, y una discrepancia solo aparece cuando alguien va a buscar la mercancía y no está donde el sistema dice.
+La recepción se anotaba en papel y alguien la transcribía al ERP más tarde. Hasta que eso ocurría, el inventario no correspondía con lo que había en la bodega, y la discrepancia solo aparecía cuando alguien iba a buscar la mercancía y no estaba donde el sistema decía.
 
 La transcripción además pierde detalle. La posición de cada tarima y el estado de la mercancía dañada rara vez sobreviven al paso del papel al sistema.
 
 ## Decisiones técnicas
 
-El ERP genera los números de recibo con fórmulas propias que no toman bloqueo. Dos bodegueros trabajando a la vez habrían recibido el mismo consecutivo. También tiene notificaciones y acciones automáticas sobre esas tablas, que una escritura directa no habría disparado.
+El esquema de la base no lo controla este servicio. Lo gobierna la herramienta con la que el cliente administra su operación, y puede cambiar sin que el servicio se entere. Todo el mantenimiento parte de ahí.
 
-Las lecturas van por SQL directo contra la base del ERP, que es lo rápido. Las escrituras van por su API, que es más lento pero respeta esas fórmulas y esos disparadores. Se aceptó la latencia porque la alternativa era un inventario con consecutivos repetidos.
+Los nombres de la base se traducen con alias de SQL dentro de la capa de acceso a datos, en lugar de propagarlos hasta el contrato que consume Android. Ese contrato queda estable y absorbe un cambio de esquema sin publicar una versión nueva: la que ya está probada en producción sigue sirviendo sin tocarse. La correspondencia entre columnas se verifica contra los datos reales antes de escribirla, porque dos columnas del mismo tipo son fáciles de cruzar.
 
-Ninguna ruta del servicio escribe por SQL. Todas las escrituras salen por un único cliente del API, que es el único punto del código que las emite.
+La cola de bodega filtra por tipo de documento. La tabla de la que lee mezcla recibos y despachos, y sin ese filtro un bodeguero vería órdenes de salida con aspecto de recibo e intentaría recibir carga contra una de ellas.
+
+Un campo que la base deja de ofrecer sale nulo, no relleno. Si eso quita funcionalidad que la operación usaba, se reporta como tal en vez de disimularlo en el mapeo.
 
 ## Arquitectura
+
+El servicio lee por SQL directo contra la base del ERP, que es el camino rápido, y escribe únicamente por el API del ERP, más lento pero que respeta las fórmulas de consecutivo y los disparadores que una escritura directa no activaría. Esa separación ya existía y el mantenimiento tenía que respetarla.
 
 Un teléfono no puede autenticarse con la identidad de la plataforma, porque el alta ocurre antes de que el aparato tenga credencial alguna. Esa es la compuerta del servicio: un solo endpoint público, con cuatro reglas aplicadas a la vez.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-Una vez dado de alta, el dispositivo trabaja con un token acotado a su bodega, y desde ahí lee por SQL y escribe por el API del ERP.
+Una vez dado de alta, el dispositivo trabaja con un token acotado a su bodega.
 
 ## Resultado
 
-La recepción entra al ERP en el momento en que el bodeguero la anota, con sus líneas, la posición de cada tarima y las fotos de la mercancía dañada. El inventario deja de depender de una transcripción posterior.
+Con StarHub la recepción entra al ERP en el momento en que el bodeguero la anota, con sus líneas, la posición de cada tarima y las fotos de la mercancía dañada. El inventario dejó de depender de una transcripción posterior.
 
-Una prueba de humo arranca el servidor y le hace peticiones reales. Cubre TLS, credenciales, filtrado por bodega, consulta y mapeo de la respuesta. No usa dobles de prueba ni escribe datos, así que comprueba la integración y no una imitación de ella.
+Un cambio en el esquema del ERP se absorbe dentro del servicio, sin repartir una versión nueva a los teléfonos que ya están en el almacén. La cola muestra recibos y solo recibos, aunque compartan tabla con los despachos.
 
-Junto a ella hay 30 casos de `node:test` sobre paginación y sobre el ciclo de vida de los dispositivos.
+Un caso quedó anotado como no verificado, porque comprobarlo crea filas reales en el ERP y requiere autorización del cliente.
 
 ## Lo que aprendí
 
-El registro de altas quedó dentro del proceso, así que el servicio no admite una segunda instancia hasta moverlo a almacenamiento compartido. Ese traslado está anotado como el siguiente cambio.
+Un servicio que se integra contra una plataforma que gobierna otro equipo no controla su esquema. Poner la traducción en la capa de mapeo, y no en el contrato que consume el cliente móvil, es lo que evita repartir una versión nueva a los teléfonos que ya están en la calle.
 
-Es una decisión que funciona con una bodega y se rompe con la segunda. Guardar estado en el proceso no cuesta nada al escribirlo y cuesta un rediseño el día que el negocio crece.
+La otra mitad es de negocio. Cuando un cambio de esquema se lleva por delante algo que la operación usaba, informarlo es parte del trabajo. Resolverlo en silencio dentro del mapeo deja a quien opera sin saber que perdió algo.

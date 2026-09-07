@@ -1,0 +1,458 @@
+---
+type Shot = {
+	src: string;
+	alt: string;
+	caption: string | null;
+};
+
+interface Props {
+	shots: Shot[];
+	strings: {
+		title: string;
+		open: string;
+		close: string;
+		previous: string;
+		next: string;
+		grid: string;
+		single: string;
+	};
+}
+
+const { shots, strings } = Astro.props;
+---
+
+<button type="button" class="launch" data-gallery-open>
+	{strings.open}
+	<span class="count">{shots.length}</span>
+</button>
+
+<dialog class="gallery" data-gallery aria-label={strings.title}>
+	<div class="panel" data-view="single" data-label-grid={strings.grid} data-label-single={strings.single}>
+		<div class="bar">
+			<p class="counter">
+				<span data-gallery-index>1</span> / {shots.length}
+			</p>
+
+			<div class="controls">
+				{
+					shots.length > 1 && (
+						<button type="button" class="pill" data-gallery-view>
+							{strings.grid}
+						</button>
+					)
+				}
+				<button type="button" class="pill" data-gallery-close>{strings.close}</button>
+			</div>
+		</div>
+
+		<div class="stage">
+			<button type="button" class="nav" data-gallery-step="-1" aria-label={strings.previous}>←</button>
+
+			<div class="frame">
+				{
+					shots.map((shot, index) => (
+						<img
+							src={shot.src}
+							alt={shot.alt}
+							data-gallery-slide={index}
+							data-caption={shot.caption ?? ''}
+							hidden={index !== 0}
+							loading="lazy"
+							decoding="async"
+						/>
+					))
+				}
+			</div>
+
+			<button type="button" class="nav" data-gallery-step="1" aria-label={strings.next}>→</button>
+		</div>
+
+		<ul class="grid">
+			{
+				shots.map((shot, index) => (
+					<li>
+						<button type="button" data-gallery-pick={index}>
+							<img src={shot.src} alt={shot.alt} loading="lazy" decoding="async" />
+							{shot.caption && <span class="tile-caption">{shot.caption}</span>}
+						</button>
+					</li>
+				))
+			}
+		</ul>
+
+		<p class="caption meta-label" data-gallery-caption>{shots[0].caption}</p>
+
+		{
+			shots.length > 1 && (
+				<ul class="rail">
+					{shots.map((shot, index) => (
+						<li>
+							<button
+								type="button"
+								data-gallery-thumb={index}
+								aria-label={shot.alt}
+								aria-current={index === 0 ? 'true' : 'false'}
+							>
+								<img src={shot.src} alt="" loading="lazy" decoding="async" />
+							</button>
+						</li>
+					))}
+				</ul>
+			)
+		}
+	</div>
+</dialog>
+
+<style>
+	.launch {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4em;
+		padding: 0.25em 0.6em;
+		font: inherit;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		line-height: 1.35;
+		white-space: nowrap;
+		color: var(--ink-muted);
+		background: transparent;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		cursor: pointer;
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.launch:hover,
+	.launch:focus-visible {
+		color: var(--ink);
+		border-color: var(--accent-line);
+	}
+
+	.count {
+		font-family: var(--font-mono);
+		font-size: 0.9em;
+		color: var(--ink-faint);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.gallery {
+		width: 100vw;
+		max-width: 100vw;
+		height: 100dvh;
+		max-height: 100dvh;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		overflow: hidden;
+	}
+
+	.gallery::backdrop {
+		background: rgb(0 0 0 / 0.72);
+	}
+
+	.gallery[open] {
+		display: grid;
+		place-items: center;
+	}
+
+	.panel {
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr) auto auto;
+		gap: 0.75rem;
+		width: min(100vw - 2rem, 78rem);
+		max-height: calc(100dvh - 2rem);
+		padding: 0.9rem;
+		color: var(--ink);
+		background: var(--paper);
+		border: 1px solid var(--line-strong);
+		border-radius: 4px;
+		overflow: hidden;
+	}
+
+	.bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.controls {
+		display: flex;
+		gap: 0.4rem;
+	}
+
+	.counter {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		color: var(--ink-faint);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.pill {
+		padding: 0.3rem 0.75rem;
+		font: inherit;
+		font-size: 0.8125rem;
+		color: var(--ink-muted);
+		background: none;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	.pill:hover,
+	.pill:focus-visible {
+		color: var(--ink);
+		border-color: var(--line-strong);
+	}
+
+	.stage {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 0.5rem;
+		min-height: 0;
+	}
+
+	.nav {
+		padding: 0.6rem 0.7rem;
+		font: inherit;
+		font-size: 1rem;
+		line-height: 1;
+		color: var(--ink-muted);
+		background: none;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		cursor: pointer;
+	}
+
+	.nav:hover,
+	.nav:focus-visible {
+		color: var(--ink);
+		border-color: var(--line-strong);
+	}
+
+	.frame {
+		display: grid;
+		place-items: center;
+		min-height: 0;
+		height: 100%;
+	}
+
+	.frame img {
+		display: block;
+		max-width: 100%;
+		max-height: calc(100dvh - 16rem);
+		width: auto;
+		height: auto;
+		border: 1px solid var(--line);
+		border-radius: 2px;
+		background: var(--paper-sunken);
+	}
+
+	.frame img[hidden] {
+		display: none;
+	}
+
+	.caption {
+		margin: 0;
+		text-align: center;
+		min-height: 1.4em;
+	}
+
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+		gap: 0.6rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		overflow-y: auto;
+		min-height: 0;
+		scrollbar-width: thin;
+	}
+
+	.grid button {
+		display: grid;
+		gap: 0.4rem;
+		width: 100%;
+		padding: 0;
+		text-align: left;
+		background: none;
+		border: 0;
+		cursor: pointer;
+	}
+
+	.grid img {
+		display: block;
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		object-position: top center;
+		border: 1px solid var(--line);
+		border-radius: 2px;
+		background: var(--paper-sunken);
+		transition: border-color 0.15s ease;
+	}
+
+	.grid button:hover img,
+	.grid button:focus-visible img {
+		border-color: var(--accent-line);
+	}
+
+	.tile-caption {
+		font-size: 0.75rem;
+		line-height: 1.4;
+		color: var(--ink-faint);
+	}
+
+	.rail {
+		display: flex;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0.25rem 0 0;
+		list-style: none;
+		overflow-x: auto;
+		scrollbar-width: thin;
+	}
+
+	.rail button {
+		display: block;
+		padding: 0;
+		width: 6.5rem;
+		background: none;
+		border: 1px solid var(--line);
+		border-radius: 2px;
+		cursor: pointer;
+		opacity: 0.55;
+		transition: opacity 0.15s ease;
+	}
+
+	.rail button[aria-current='true'] {
+		opacity: 1;
+		border-color: var(--accent-line);
+	}
+
+	.rail button:hover,
+	.rail button:focus-visible {
+		opacity: 1;
+	}
+
+	.rail img {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+
+	.panel[data-view='single'] .grid {
+		display: none;
+	}
+
+	.panel[data-view='grid'] .stage,
+	.panel[data-view='grid'] .caption,
+	.panel[data-view='grid'] .rail,
+	.panel[data-view='grid'] .counter {
+		display: none;
+	}
+
+	.panel[data-view='grid'] {
+		grid-template-rows: auto minmax(0, 1fr);
+	}
+
+	.panel[data-view='grid'] .bar {
+		justify-content: flex-end;
+	}
+
+	@media (max-width: 40rem) {
+		.panel {
+			padding: 0.7rem;
+		}
+
+		.rail button {
+			width: 4.5rem;
+		}
+
+		.grid {
+			grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+		}
+	}
+</style>
+
+<script>
+	const dialog = document.querySelector<HTMLDialogElement>('[data-gallery]');
+	const panel = dialog?.querySelector<HTMLElement>('.panel');
+
+	if (dialog && panel) {
+		const slides = [...dialog.querySelectorAll<HTMLImageElement>('[data-gallery-slide]')];
+		const thumbs = [...dialog.querySelectorAll<HTMLButtonElement>('[data-gallery-thumb]')];
+		const picks = [...dialog.querySelectorAll<HTMLButtonElement>('[data-gallery-pick]')];
+		const caption = dialog.querySelector<HTMLElement>('[data-gallery-caption]');
+		const index = dialog.querySelector<HTMLElement>('[data-gallery-index]');
+		const viewButton = dialog.querySelector<HTMLButtonElement>('[data-gallery-view]');
+		let at = 0;
+
+		const show = (next: number) => {
+			at = (next + slides.length) % slides.length;
+			slides.forEach((slide, i) => {
+				slide.hidden = i !== at;
+			});
+			thumbs.forEach((thumb, i) => {
+				thumb.setAttribute('aria-current', i === at ? 'true' : 'false');
+			});
+			if (caption) caption.textContent = slides[at].dataset.caption ?? '';
+			if (index) index.textContent = String(at + 1);
+		};
+
+		const setView = (view: 'single' | 'grid') => {
+			panel.dataset.view = view;
+			if (viewButton) {
+				viewButton.textContent =
+					view === 'grid' ? (panel.dataset.labelSingle ?? '') : (panel.dataset.labelGrid ?? '');
+			}
+		};
+
+		document.querySelector('[data-gallery-open]')?.addEventListener('click', () => {
+			show(0);
+			setView('single');
+			dialog.showModal();
+			document.documentElement.style.overflow = 'hidden';
+		});
+
+		dialog.addEventListener('close', () => {
+			document.documentElement.style.overflow = '';
+		});
+
+		dialog.querySelector('[data-gallery-close]')?.addEventListener('click', () => dialog.close());
+
+		viewButton?.addEventListener('click', () =>
+			setView(panel.dataset.view === 'grid' ? 'single' : 'grid')
+		);
+
+		dialog.addEventListener('click', (event) => {
+			if (event.target === dialog) dialog.close();
+		});
+
+		dialog.querySelectorAll<HTMLButtonElement>('[data-gallery-step]').forEach((button) => {
+			button.addEventListener('click', () => show(at + Number(button.dataset.galleryStep)));
+		});
+
+		thumbs.forEach((thumb, i) => thumb.addEventListener('click', () => show(i)));
+
+		picks.forEach((pick, i) =>
+			pick.addEventListener('click', () => {
+				show(i);
+				setView('single');
+			})
+		);
+
+		dialog.addEventListener('keydown', (event) => {
+			if (panel.dataset.view !== 'single') return;
+			if (event.key === 'ArrowRight') show(at + 1);
+			if (event.key === 'ArrowLeft') show(at - 1);
+		});
+	}
+</script>

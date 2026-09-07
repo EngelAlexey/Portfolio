@@ -104,13 +104,13 @@ export const EXPERIENCE: Role[] = [
 				'Construí el CRM comercial que sustituyó la gestión en hojas de cálculo.',
 				'Amplié el sitio y sus trámites en línea a lo largo del año, hasta rediseñarlo por completo como un proyecto aparte dentro del mismo repositorio, con build y dependencias propias.',
 				'Levanté el portal con sesión donde el cliente sigue sus solicitudes, con los permisos resueltos contra el ERP en cada petición.',
-				'Di mantenimiento, corregí defectos y escribí pruebas sobre el API de bodega y la app de rastreo de viajes.'
+				'Di mantenimiento y corregí defectos del API de bodega y de la app de rastreo de viajes, probándolas contra el sistema real.'
 			],
 			en: [
 				'Built the sales CRM that replaced the spreadsheet workflow.',
 				'Extended the site and its online forms through the year, then rebuilt it entirely as a separate project inside the same repository, with its own build and dependencies.',
 				'Stood up the portal where clients follow their requests behind a session, with permissions resolved against the ERP on every request.',
-				'Maintained, debugged and wrote tests for the warehouse API and the trip-tracking app.'
+				'Maintained and fixed defects in the warehouse API and the trip-tracking app, testing them against the real system.'
 			]
 		}
 	},
@@ -154,18 +154,24 @@ export const EDUCATION: Role[] = [
 		post: { es: 'Ingeniería en Tecnologías de la Información', en: 'Information Technology Engineering' },
 		detail: {
 			es: [
+				'Construí el cliente web del sistema de gestión de obra de Proyecto Integrador I, en equipo de cinco: autenticación, planilla y los formularios de las demás entidades.',
 				'Diseñé la red lógica y el apartado de cumplimiento de una cadena hotelera de cuatro sedes, en Proyecto Integrador II.',
-				'Aporté la mayor parte del API de seguimiento de flota en tiempo real de Proyecto Integrador III, en equipo de seis.',
+				'Aporté la mayor parte del API de seguimiento de flota en tiempo real de Proyecto Integrador III, en equipo de cinco.',
+				'Monté el directorio activo de una red empresarial Windows Server en Plataformas Tecnológicas II: unidades por departamento, usuarios y permisos de carpeta.',
+				'Entregué dos proyectos en el curso de metodologías ágiles, uno bajo Scrum y otro bajo Programación Extrema, con backlog priorizado, roles rotando, ramas por historia y definición de Terminado.',
 				'Construí en Seguridad de TI I un detector que contiene un cifrado masivo sin firmas, a partir de tres señales del sistema.',
 				'Levanté la base analítica, el ETL y el informe de un almacén de 8,6 millones de filas, y llevé su migración a la nube.',
-				'Ejecuté el trabajo comunal universitario para el Grupo 35 de Guías y Scouts: sitio en dos idiomas e inscripciones en línea.'
+				'Llevé la arquitectura, los datos y la seguridad del sitio del Grupo 35 de Guías y Scouts en el trabajo comunal universitario, y construí la mayor parte: dos idiomas, inscripciones en línea y un portal interno para la junta.'
 			],
 			en: [
+				'Built the web client for the construction-management system of Integrative Project I, in a team of five: authentication, payroll and the forms for the remaining entities.',
 				'Designed the logical network and the compliance section for a four-site hotel chain, in Integrative Project II.',
-				'Contributed most of the API behind the real-time fleet tracking of Integrative Project III, in a team of six.',
+				'Contributed most of the API behind the real-time fleet tracking of Integrative Project III, in a team of five.',
+				'Built the Active Directory of a Windows Server enterprise network in Technology Platforms II: per-department units, users and folder permissions.',
+				'Delivered two projects in the agile methodologies course, one under Scrum and one under Extreme Programming, with a prioritised backlog, rotating roles, a branch per story and a definition of Done.',
 				'Built, in IT Security I, a detector that contains mass encryption without signatures, from three system signals.',
 				'Built the analytical database, the ETL and the report for an 8.6 million row warehouse, and led its move to the cloud.',
-				'Delivered the community-service requirement for Group 35 of the Guides and Scouts: a two-language site and online enrolment.'
+				'Led the architecture, data and security of the Group 35 Guides and Scouts site for the community-service requirement, and built most of it: two languages, online enrolment and an internal portal for the board.'
 			]
 		}
 	}
@@ -207,7 +213,7 @@ export const SKILL_GROUPS: { label: Bilingual; items: Text[] }[] = [
 	},
 	{
 		label: { es: 'Backend', en: 'Backend' },
-		items: ['Node.js', 'NestJS', 'REST', 'WebSockets']
+		items: ['Node.js', 'NestJS', 'REST', 'WebSockets', 'OpenAPI']
 	},
 	{
 		label: { es: 'Móvil', en: 'Mobile' },
@@ -223,7 +229,7 @@ export const SKILL_GROUPS: { label: Bilingual; items: Text[] }[] = [
 	},
 	{
 		label: { es: 'Redes y sistemas', en: 'Networking & systems' },
-		items: ['Linux', 'VLAN', 'DNS', 'VPN', 'ACLs', 'Cisco Packet Tracer']
+		items: ['Linux', 'Windows Server', 'Active Directory', 'VLAN', 'DNS', 'VPN', 'ACLs', 'Cisco Packet Tracer']
 	},
 	{
 		label: { es: 'Seguridad', en: 'Security' },

@@ -39,7 +39,7 @@ diagram:
     - name: "Conflicto a revisión"
       body: "La marca que pierde no se descarta. Queda registrada y señalada para revisión manual, con su dispositivo y su hora, para que alguien pueda decidir cuál era la buena."
     - name: "Verificación consultiva"
-      body: "Si el servicio de reconocimiento no responde, la marca se acepta igual y queda anotada como no verificada. Un fallo de infraestructura no puede impedir que alguien registre su jornada."
+      body: "La verificación de identidad acompaña a la marca en lugar de condicionarla. Toda marca guarda el resultado de esa verificación junto a su hora y su ubicación, y la revisión posterior trabaja sobre ese dato."
   caption: "Las cuatro reglas se aplican dentro de la misma transacción, antes de escribir la marca."
 ---
 
@@ -65,7 +65,7 @@ La validación se movió dentro de una transacción de base de datos que bloquea
 
 La marca que pierde el conflicto no se descarta. Queda registrada y señalada para revisión, con su dispositivo y su hora, porque descartarla en silencio dejaría a alguien sin jornada registrada y sin forma de reclamarla.
 
-La verificación de identidad es consultiva a propósito. Si el servicio de reconocimiento no responde, la marca se acepta y queda anotada como no verificada. Un fallo de infraestructura no puede impedir que alguien registre su jornada.
+La verificación de identidad es consultiva a propósito: acompaña a la marca en lugar de condicionarla. El registro de la jornada de un colaborador no puede quedar sujeto a que un servicio de apoyo esté disponible, así que el resultado de la verificación viaja con la marca y la revisión posterior trabaja sobre ese dato.
 
 ## Arquitectura
 

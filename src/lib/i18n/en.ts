@@ -62,8 +62,15 @@ export const en: Dict = {
 		repo: 'Repository',
 		site: 'Live site',
 		privateTitle: 'Private project',
+		shots: 'Project screenshots',
+		shotsOpen: 'View screenshots',
+		shotsClose: 'Close',
+		shotsGrid: 'Show all',
+		shotsSingle: 'Show one',
+		shotsPrevious: 'Previous screenshot',
+		shotsNext: 'Next screenshot',
 		privateBody:
-			'This is client work: the architecture and the decisions are described, with no code, no repository and no screenshots holding real data.',
+			'This is client work: the architecture and the decisions are described, with no code, no repository and no screenshots of the internal screens.',
 		next: 'Next project',
 		previous: 'Previous project'
 	},
@@ -75,7 +82,7 @@ export const en: Dict = {
 	about: {
 		title: 'About me',
 		intro:
-			'Software developer in Costa Rica, with a cybersecurity focus. I work full-time at Kaizen Apps CR, where I design and build the new systems the team delivers, and on a project basis for Star Cargo Service. I am finishing my degree alongside that.',
+			'Software developer in Costa Rica, with a cybersecurity focus. I cover the full cycle: I gather the requirement, design the solution, build it and keep it running in production. I work across web, mobile, data and infrastructure, and the part I spend most time on is the security model of what I build.',
 		lead: 'Education, experience and the tools I work with.',
 		education: 'Education',
 		certifications: 'Certifications',

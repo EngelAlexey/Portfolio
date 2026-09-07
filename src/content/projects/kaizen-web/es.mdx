@@ -1,0 +1,116 @@
+---
+slug: kaizen-web
+title: Kaizen Apps | Sitio corporativo
+tagline: Sitio bilingüe de la empresa, con las demostraciones de producto bajo el mismo dominio y un formulario de reserva que llega a una persona.
+areas: [fullstack, seguridad]
+kind: profesional
+org: Kaizen Apps CR
+role: Desarrollo
+period:
+  start: '2026-01'
+  end: null
+tier: ficha
+home: false
+visibility: publico
+repo: null
+site: https://kaizenapps.net
+stack:
+  - Astro
+  - TypeScript
+  - React
+  - Tailwind CSS
+  - Cloudflare Turnstile
+  - Resend
+  - Render
+cover: null
+shots:
+  - src: /img/shots/kz-portada.jpg
+    alt: "Portada de kaizenapps.net en español, con el conmutador de idioma y de tema en la cabecera"
+    caption: "Portada en español, con el conmutador de idioma y de tema en la cabecera."
+  - src: /img/shots/kz-en.jpg
+    alt: "La misma portada servida en inglés, con la navegación y las llamadas a la acción traducidas"
+    caption: "La misma portada en inglés. Las dos salen de la misma tabla de rutas."
+  - src: /img/shots/kz-servicios.jpg
+    alt: "Página de servicios, con las seis plataformas de la empresa y las marcadas como en desarrollo"
+    caption: "Servicios. Las seis plataformas, con las que siguen en desarrollo señaladas como tales."
+  - src: /img/shots/kz-soluciones.jpg
+    alt: "Página de soluciones, con los módulos integrados y el primero desplegado"
+    caption: "Soluciones. Los módulos del producto en una sola página con anclas por sección."
+  - src: /img/shots/kz-asistencias.jpg
+    alt: "Sección de control de asistencia, con la explicación del módulo y sus funciones"
+    caption: "Cada sección tiene su propia ruta y su SEO, aunque comparta página con las demás."
+  - src: /img/shots/kz-nominas.jpg
+    alt: "Sección de nómina y finanzas, con el cálculo de planillas y los centros de costo"
+    caption: "Nómina y finanzas, otra de las secciones con ruta propia."
+  - src: /img/shots/kz-agendar.jpg
+    alt: "Formulario de solicitud de demostración, con el reto anti-robot al pie"
+    caption: "El formulario de reserva, único endpoint de servidor del sitio, con el reto anti-robot antes del envío."
+  - src: /img/shots/kz-nosotros.jpg
+    alt: "Página de la empresa, con la descripción del ecosistema y sus cifras"
+    caption: "Nosotros. Qué es Kaizen, en una página con su propia entrada en la tabla de rutas."
+  - src: /img/shots/kz-privacidad.jpg
+    alt: "Página de política de privacidad, con la fecha de última actualización y el detalle de datos recopilados"
+    caption: "Las páginas legales, localizadas igual que el resto del sitio."
+order: null
+diagram:
+  nodes:
+    - "Formulario"
+    - "Verificación"
+    - "API"
+    - "Correo"
+  gate: 1
+  layers:
+    - name: "El reto se verifica en el servidor"
+      body: "El formulario obtiene un token de Cloudflare Turnstile y el servidor lo valida contra Cloudflare antes de mirar el resto del envío. El navegador no decide si el reto se superó."
+    - name: "Los campos se comprueban antes de nada"
+      body: "Tipo, presencia y longitud de cada campo se verifican en el servidor. Un envío que no cumple no llega ni a la verificación del reto ni al correo."
+    - name: "Errores opacos hacia fuera"
+      body: "La respuesta pública dice que el envío falló y nada más. El código de error real queda en el registro del servidor, donde no orienta a quien prueba el formulario a ciegas."
+    - name: "Secretos solo del lado servidor"
+      body: "En el HTML viaja únicamente la clave pública del reto. La clave secreta y la del servicio de correo existen solo en el entorno del servidor."
+  caption: "El único endpoint público del sitio, con cuatro reglas antes de que un envío se convierta en correo."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Contexto
+
+Kaizen Apps vende software a medida, así que su sitio es el primer contacto comercial y el lugar donde un prospecto ve el producto funcionando antes de hablar con nadie.
+
+El encargo fue rehacerlo entero: las páginas de marketing en español e inglés, las demostraciones de las aplicaciones bajo el mismo dominio y un canal de reserva que no dependa de que alguien revise un buzón compartido.
+
+## Problema
+
+El sitio anterior no traía metadatos de posicionamiento. No había títulos ni descripciones por página, ni relación declarada entre la versión en español y la inglesa, de modo que un buscador no tenía forma de saber que eran la misma página en dos idiomas.
+
+Las aplicaciones que la empresa vende viven cada una en su propia dirección, fuera del sitio. Un prospecto que quería verlas funcionando salía del sitio comercial y, una vez fuera, no tenía manera de volver ni de pasar a la siguiente.
+
+## Decisiones técnicas
+
+Las rutas se declaran en un solo archivo. Cada página lleva ahí su identificador, sus dos rutas y sus metadatos, y de esa misma tabla salen el menú y el mapa de equivalencias entre idiomas que alimenta el cambio de idioma. Añadir una página es añadir una entrada, no recorrer seis archivos.
+
+El sitio es estático salvo donde no puede serlo. Solo la reserva necesita servidor, así que solo ella se sirve como ruta de servidor; el resto se genera en el build. Eso permitió llevarlo de un alojamiento a otro cambiando el adaptador, sin tocar las páginas.
+
+Las ocho páginas que envuelven una demostración eran ocho copias del mismo HTML. Se redujeron a una función compartida a la que cada ruta delega: el menú flotante y la política del marco se editan en un archivo, no en ocho.
+
+El reto anti-robot se valida contra Cloudflare desde el servidor, no en el navegador, y la respuesta pública no distingue entre un token inválido, un campo mal formado y un fallo del servicio de correo. El código real se registra del lado servidor.
+
+## Arquitectura
+
+El sitio tiene tres clases de página. Las de marketing son estáticas y bilingües, generadas desde la tabla de rutas. Las envolturas de demostración son respuestas HTML que montan la aplicación correspondiente dentro del sitio. Y hay un único endpoint de servidor, el de la reserva.
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Resultado
+
+El sitio se publica en español e inglés desde una sola definición de rutas, con los metadatos de cada página y la correspondencia entre idiomas declaradas donde se declara la página.
+
+Las demostraciones quedaron bajo el mismo dominio y comparten navegación, de modo que un prospecto puede recorrerlas sin volver atrás en el navegador.
+
+Una solicitud de reunión llega ahora como correo formateado a la casilla comercial, y el remitente recibe su confirmación en el idioma en que escribió.
+
+## Lo que aprendí
+
+Un sitio bilingüe se rompe por la duplicación, no por la traducción. Mientras las rutas vivieron en el menú, en el cambio de idioma y en cada página, cada sección nueva costaba tres ediciones y producía al menos un enlace roto. Con una tabla única el idioma dejó de ser un caso especial.
+
+La otra lección es comercial. El formulario no es un detalle de la página de contacto: es el único punto del sitio donde el visitante deja algo. Fue lo que más atención de seguridad recibió y lo único que justificó tener servidor.

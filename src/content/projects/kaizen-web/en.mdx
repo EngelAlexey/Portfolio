@@ -1,0 +1,116 @@
+---
+slug: kaizen-web
+title: Kaizen Apps | Corporate site
+tagline: The company's bilingual site, with the product demonstrations under the same domain and a booking form that reaches a person.
+areas: [fullstack, seguridad]
+kind: profesional
+org: Kaizen Apps CR
+role: Development
+period:
+  start: '2026-01'
+  end: null
+tier: ficha
+home: false
+visibility: publico
+repo: null
+site: https://kaizenapps.net
+stack:
+  - Astro
+  - TypeScript
+  - React
+  - Tailwind CSS
+  - Cloudflare Turnstile
+  - Resend
+  - Render
+cover: null
+shots:
+  - src: /img/shots/kz-portada.jpg
+    alt: "Home page of kaizenapps.net in Spanish, with the language and theme switches in the header"
+    caption: "The Spanish home page, with the language and theme switches in the header."
+  - src: /img/shots/kz-en.jpg
+    alt: "The same home page served in English, with the navigation and calls to action translated"
+    caption: "The same home page in English. Both come out of the same route table."
+  - src: /img/shots/kz-servicios.jpg
+    alt: "Services page, with the six company platforms and those marked as under development"
+    caption: "Services. The six platforms, with the ones still in development flagged as such."
+  - src: /img/shots/kz-soluciones.jpg
+    alt: "Solutions page, with the integrated modules and the first one expanded"
+    caption: "Solutions. The product modules on one page with per-section anchors."
+  - src: /img/shots/kz-asistencias.jpg
+    alt: "Attendance control section, with the module explained and its features listed"
+    caption: "Each section has its own route and its own SEO, even sharing a page with the rest."
+  - src: /img/shots/kz-nominas.jpg
+    alt: "Payroll and finance section, with payroll calculation and cost centres"
+    caption: "Payroll and finance, another section with a route of its own."
+  - src: /img/shots/kz-agendar.jpg
+    alt: "Demonstration request form, with the anti-bot challenge at the foot"
+    caption: "The booking form, the site's one server endpoint, with the anti-bot challenge before submission."
+  - src: /img/shots/kz-nosotros.jpg
+    alt: "Company page, with the ecosystem described and its figures"
+    caption: "About. What Kaizen is, on a page with its own entry in the route table."
+  - src: /img/shots/kz-privacidad.jpg
+    alt: "Privacy policy page, with the last-updated date and the detail of data collected"
+    caption: "The legal pages, localised like the rest of the site."
+order: null
+diagram:
+  nodes:
+    - "Form"
+    - "Verification"
+    - "API"
+    - "Email"
+  gate: 1
+  layers:
+    - name: "The challenge is verified on the server"
+      body: "The form obtains a Cloudflare Turnstile token and the server validates it against Cloudflare before looking at the rest of the submission. The browser does not decide whether the challenge was passed."
+    - name: "Fields are checked before anything else"
+      body: "The type, presence and length of every field are verified on the server. A submission that fails those checks reaches neither the challenge verification nor the email."
+    - name: "Opaque errors on the way out"
+      body: "The public response says the submission failed and nothing more. The real error code stays in the server log, where it gives no guidance to anyone probing the form blind."
+    - name: "Secrets stay server-side"
+      body: "Only the challenge's public key travels in the HTML. The secret key and the email service key exist only in the server environment."
+  caption: "The site's one public endpoint, with four rules before a submission becomes an email."
+---
+
+import ArchDiagram from '../../../components/ArchDiagram.astro';
+
+## Context
+
+Kaizen Apps sells bespoke software, so its site is the first commercial contact and the place where a prospect sees the product running before speaking to anyone.
+
+The assignment was to rebuild it entirely: the marketing pages in Spanish and English, the application demonstrations under the same domain, and a booking channel that does not depend on someone checking a shared inbox.
+
+## Problem
+
+The previous site carried no search metadata. There were no per-page titles or descriptions, and no declared relationship between the Spanish and English versions, so a search engine had no way of knowing they were the same page in two languages.
+
+The applications the company sells each live at their own address, off the site. A prospect who wanted to see them running left the commercial site, and once outside had no way back and no way across to the next one.
+
+## Technical decisions
+
+Routes are declared in a single file. Every page carries its identifier, its two routes and its metadata there, and both the menu and the language equivalence map behind the language switch come out of that same table. Adding a page means adding an entry, not walking through six files.
+
+The site is static except where it cannot be. Only the booking needs a server, so only the booking is served as a server route; the rest is generated at build time. That made moving it from one host to another a matter of swapping the adapter, without touching the pages.
+
+The eight pages that wrap a demonstration were eight copies of the same HTML. They were reduced to one shared function each route delegates to: the floating menu and the frame policy are edited in one file, not eight.
+
+The anti-bot challenge is validated against Cloudflare from the server, not in the browser, and the public response does not distinguish between an invalid token, a malformed field and a failure of the email service. The real code is recorded server-side.
+
+## Architecture
+
+The site has three classes of page. The marketing pages are static and bilingual, generated from the route table. The demonstration wrappers are HTML responses that mount the corresponding application inside the site. And there is a single server endpoint, the booking one.
+
+<ArchDiagram {...frontmatter.diagram} />
+
+## Result
+
+The site publishes in Spanish and English from a single route definition, with each page's metadata and the correspondence between languages declared where the page itself is declared.
+
+The demonstrations ended up under the same domain and share navigation, so a prospect can walk through them without going back in the browser.
+
+A meeting request now arrives as a formatted email in the commercial inbox, and the sender gets their confirmation in the language they wrote in.
+
+## What I learned
+
+A bilingual site breaks on duplication, not on translation. While routes lived in the menu, in the language switch and in every page, each new section cost three edits and produced at least one broken link. With a single table, language stopped being a special case.
+
+The other lesson is commercial. The form is not a detail of the contact page: it is the one point on the site where a visitor leaves something behind. It received the most security attention, and it was the only thing that justified having a server at all.

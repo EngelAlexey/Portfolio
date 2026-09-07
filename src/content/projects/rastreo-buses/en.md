@@ -23,13 +23,27 @@ stack:
   - Expo
   - Next.js
   - Jest
+  - OpenAPI
 cover: null
+shots:
+  - src: /img/shots/bus-api-docs.jpg
+    alt: "Swagger UI of the tracking API, with the system's modules listed: authentication, incidents, routes, trips, drivers and telemetry"
+    caption: "The API contract in Swagger. Each module of the system is a documented group of endpoints."
+  - src: /img/shots/bus-api-incidente.jpg
+    alt: "Detail of one endpoint in Swagger: the incident report, with the request body and the 201 and 400 responses with their examples"
+    caption: "One endpoint from the inside: the incident report, with its request and the success and validation responses."
+  - src: /img/shots/bus-app-pasajero.jpg
+    alt: "Passenger mobile app: home screen with available trips San José–Alajuela and San José–Puntarenas, marked on route and live"
+    caption: "The passenger app (the team's mobile client) over the API: the live trips with their on-route status."
+  - src: /img/shots/bus-login-admin.jpg
+    alt: "Sign-in screen of the administration console, with the brand panel and the admin-restricted login form"
+    caption: "The administration console, the entry to the dashboard that consumes the same API."
 order: null
 ---
 
 ## Context
 
-Integrative Project III, in a team of six. The system tracks buses live and serves three roles: the passenger waiting, the driver at the wheel, and the administration supervising the fleet.
+Integrative Project III, in a team of five. The system tracks buses live and serves three roles: the passenger waiting, the driver at the wheel, and the administration supervising the fleet.
 
 I contributed most of the API. The mobile client and the web dashboard were mainly led by other teammates.
 

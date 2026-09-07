@@ -68,7 +68,7 @@ The question is translated into SQL and the server rewrites that query before ru
 
 A query asking for another company's data does not fail a validation. It runs already narrowed and returns only what is allowed, which is a stronger guarantee than rejecting it.
 
-The version in production is the fourth. Each rebuild moved into code a decision the previous one left to the model.
+None of the three restrictions is asked of the model. The server injects them whatever happens above, so the reach of an answer does not depend on how the question is worded.
 
 ## Architecture
 
@@ -88,6 +88,6 @@ Retrieval requires a minimum relevance. A question with no backing in the data r
 
 ## What I learned
 
-Visibility control started out resting on the wording of the instruction and ended up entirely in code. The practical difference is that it can now be executed: a test passes a question through the rewriter and checks that the resulting SQL carries all three filters.
+Visibility control can live in the wording of the instruction or in the code. The practical difference is that the second can be executed: a test passes a question through the rewriter and checks that the resulting SQL carries all three filters.
 
 There is nothing equivalent to run against a prompt. When a guarantee has to hold up in front of a client, it belongs somewhere a test can check it.

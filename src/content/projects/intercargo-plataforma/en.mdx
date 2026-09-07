@@ -66,7 +66,7 @@ A marketing site and a portal holding client documents have opposite exposure. S
 
 The boundary went into the deployment rather than the code. A single image is published as two services with separate identities, and the public service has its database access removed.
 
-The second rule is that server code is never imported from the browser, not even for types. When the client imported one constant from a server module, the dependency graph pulled in the model SDK with it: 269 KB of dead JavaScript on every visit. No credential was exposed, because the framework only publishes variables with a public prefix, but the weight was real. The rule is now checked by a command inside the pipeline.
+The second rule is that server code is never imported from the browser, not even for types. A single constant imported from a server module pulled the whole model SDK along the dependency graph with it: hundreds of kilobytes of dead JavaScript on every visit. The rule is now checked by a command inside the pipeline.
 
 ## Architecture
 
@@ -80,10 +80,10 @@ A document uploaded by a client passes size, type and rate limits before it reac
 
 The platform serves the public site, the internal portal, due diligence and accounts receivable from two services with different permissions. The document review that used to occupy a person is now proposed by the system, and the person confirms or corrects it.
 
-Verification travels with every deployment: 2,243 unit tests across 144 files and 27 end-to-end suites. Four of those are dedicated attack suites, one per module: authentication, accounts receivable, due diligence and the public site.
+Verification travels with every deployment: 2,243 unit tests across 144 files and 27 end-to-end suites, among them dedicated attack suites.
 
 ## What I learned
 
 Splitting by deployment costs more than a check inside the code. It is two services to configure, two identities to maintain, and a deployment that can end up half-applied between versions.
 
-In exchange, the guarantee stops depending on the application behaving as expected. If the public site were ever to run arbitrary code, it would still have no database credentials to use. For a portal that holds client documents, that difference justifies the cost of running two services.
+In exchange, the guarantee stops depending on the application behaving as expected: the service that serves the public site holds no database credentials, and that stays true whatever happens above it. For a portal that holds client documents, that difference justifies the cost of running two services.

@@ -39,7 +39,7 @@ diagram:
     - name: "Conflicts go to review"
       body: "The losing entry is not discarded. It is stored and flagged for manual review, with its device and its time, so somebody can decide which one was right."
     - name: "Advisory verification"
-      body: "If the recognition service does not respond, the entry is still accepted and recorded as unverified. An infrastructure failure cannot stop somebody logging their shift."
+      body: "Identity verification travels with the entry rather than gating it. Every entry stores the outcome of that check alongside its time and its location, and later review works from that record."
   caption: "All four rules are applied inside the same transaction, before the entry is written."
 ---
 
@@ -65,7 +65,7 @@ Validation moved inside a database transaction that locks the day's rows before 
 
 The entry that loses the conflict is not discarded. It is recorded and flagged for review, with its device and its time, because discarding it silently would leave someone with no shift on record and no way to dispute it.
 
-Identity verification is advisory on purpose. If the recognition service does not respond, the entry is accepted and noted as unverified. An infrastructure failure cannot stop someone recording their working day.
+Identity verification is advisory on purpose: it travels with the entry rather than gating it. Logging a worker's shift cannot be made to depend on a supporting service being available, so the outcome of the check rides along with the entry and later review works from that record.
 
 ## Architecture
 

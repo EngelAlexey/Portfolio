@@ -4,6 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import AreaChip from '../AreaChip.astro';
 import Container from '../Container.astro';
 import Prose from '../Prose.astro';
+import Gallery from '../Gallery.astro';
 import StackList from '../StackList.astro';
 import { accentStyle } from '../../lib/areas';
 import { neighbours, renderProject, type Project } from '../../lib/content';
@@ -47,9 +48,42 @@ const period = formatPeriod(meta.period, strings.project.present);
 				<h1>{meta.title}</h1>
 				<p class="tagline">{meta.tagline}</p>
 
-				<ul class="areas">
-					{meta.areas.map((area) => <li><AreaChip {area} {lang} /></li>)}
-				</ul>
+				<div class="tags">
+					<ul class="areas">
+						{meta.areas.map((area) => <li><AreaChip {area} {lang} /></li>)}
+					</ul>
+
+					{
+						(meta.repo || meta.site || meta.shots) && (
+							<p class="links">
+								{meta.repo && (
+									<a href={meta.repo} rel="noreferrer" target="_blank" title={address(meta.repo)}>
+										{strings.project.repo}
+									</a>
+								)}
+								{meta.site && (
+									<a href={meta.site} rel="noreferrer" target="_blank" title={address(meta.site)}>
+										{strings.project.site}
+									</a>
+								)}
+								{meta.shots && (
+									<Gallery
+										shots={meta.shots}
+										strings={{
+											title: strings.project.shots,
+											open: strings.project.shotsOpen,
+											close: strings.project.shotsClose,
+											previous: strings.project.shotsPrevious,
+											next: strings.project.shotsNext,
+											grid: strings.project.shotsGrid,
+											single: strings.project.shotsSingle
+										}}
+									/>
+								)}
+							</p>
+						)
+					}
+				</div>
 			</div>
 		</Container>
 
@@ -69,23 +103,6 @@ const period = formatPeriod(meta.period, strings.project.present);
 				<h2 class="meta-label">{strings.project.stack}</h2>
 				<StackList stack={meta.stack} label={strings.project.stack} />
 			</div>
-
-			{
-				(meta.repo || meta.site) && (
-					<p class="links">
-						{meta.repo && (
-							<a href={meta.repo} rel="noreferrer" target="_blank">
-								{strings.project.repo} <span class="where">{address(meta.repo)}</span>
-							</a>
-						)}
-						{meta.site && (
-							<a href={meta.site} rel="noreferrer" target="_blank">
-								{strings.project.site} <span class="where">{address(meta.site)}</span>
-							</a>
-						)}
-					</p>
-				)
-			}
 
 			{
 				meta.visibility === 'privado' && (
@@ -180,12 +197,20 @@ const period = formatPeriod(meta.period, strings.project.present);
 		max-width: 40rem;
 	}
 
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem;
+		margin-top: 1.35rem;
+	}
+
 	.areas {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.4rem;
 		list-style: none;
-		margin: 1.35rem 0 0;
+		margin: 0;
 		padding: 0;
 	}
 
@@ -235,35 +260,39 @@ const period = formatPeriod(meta.period, strings.project.present);
 	.links {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.75rem 1.75rem;
-		margin: 1.75rem 0 0;
-		font-size: 0.9375rem;
+		align-items: center;
+		gap: 0.4rem;
+		margin: 0;
 	}
 
 	.links a {
 		display: inline-flex;
-		align-items: baseline;
-		gap: 0.5rem;
-		padding-bottom: 0.2rem;
-		border-bottom: 1px solid var(--accent-line);
-		color: var(--ink);
-		text-decoration: none;
-		transition: border-color 0.18s ease;
-	}
-
-	.links a:hover {
-		border-bottom-color: var(--accent);
-	}
-
-	.where {
-		font-family: var(--font-mono);
-		font-size: 0.8125rem;
-		color: var(--ink-faint);
-		transition: color 0.18s ease;
-	}
-
-	.links a:hover .where {
+		align-items: center;
+		gap: 0.4em;
+		padding: 0.25em 0.6em;
+		border: 1px solid var(--line);
+		border-radius: 999px;
 		color: var(--ink-muted);
+		font-size: 0.8125rem;
+		font-weight: 500;
+		line-height: 1.35;
+		white-space: nowrap;
+		text-decoration: none;
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.links a::after {
+		content: '↗';
+		font-size: 0.9em;
+		color: var(--ink-faint);
+	}
+
+	.links a:hover,
+	.links a:focus-visible {
+		color: var(--ink);
+		border-color: var(--accent-line);
 	}
 
 	.pager {
