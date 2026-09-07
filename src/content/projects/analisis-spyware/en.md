@@ -24,7 +24,7 @@ order: null
 
 ## Context
 
-An IT Security I course. An individual exercise: build a tool that reproduces the capture-and-exfiltration cycle, run it inside an isolated lab, and document the trace it leaves.
+An IT Security I course, the same one the [mass-encryption detector](/en/projects/deteccion-por-umbral) came out of. An individual exercise: build a tool that reproduces the capture-and-exfiltration cycle, run it inside an isolated lab, and document the trace it leaves.
 
 ## Problem
 

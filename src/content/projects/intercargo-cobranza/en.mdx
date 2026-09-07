@@ -64,7 +64,7 @@ So the model does one thing: turn a natural-language message into an intent and,
 
 Everything else is code: validating identity, querying the account, recording a payment promise and deciding whether a reminder is due. The conversation runs on a state machine that returns actions, and a separate layer translates them into the WhatsApp transport.
 
-The service uses no web framework: it starts a server with `node:http` and works over nine tables of its own, separate from the rest of the platform. The model provider is swappable, with two implementations behind the same interface.
+The service uses no web framework: it starts a server with `node:http` and works over nine tables of its own, separate from the rest of [the corporate platform](/en/projects/intercargo-plataforma). The model provider is swappable, with two implementations behind the same interface.
 
 ## Architecture
 

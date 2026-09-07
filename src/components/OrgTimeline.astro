@@ -1,4 +1,5 @@
 ---
+import OrgLink from './OrgLink.astro';
 import OrgMark from './OrgMark.astro';
 import ProjectCard from './ProjectCard.astro';
 import { postAt, WORDMARKS } from '../lib/about';
@@ -38,7 +39,7 @@ const years = (period: OrgGroup['period']) =>
 						)}
 
 						<h2 class:list={{ 'sr-only': wordmarked(group) }}>
-							{group.name ?? strings.projects.independent}
+							{group.name ? <OrgLink name={group.name} {lang} /> : strings.projects.independent}
 						</h2>
 
 						{post(group) && <p class="post">{post(group)!.title}</p>}

@@ -1,4 +1,5 @@
 ---
+import OrgLink from '../OrgLink.astro';
 import Layout from '../../layouts/Layout.astro';
 import AreaChip from '../AreaChip.astro';
 import Container from '../Container.astro';
@@ -52,7 +53,12 @@ const period = formatPeriod(meta.period, strings.project.present);
 
 	<Container size="text">
 		<dl class="facts">
-			{meta.org && <div><dt>{strings.project.org}</dt><dd>{meta.org}</dd></div>}
+			{meta.org && (
+				<div>
+					<dt>{strings.project.org}</dt>
+					<dd><OrgLink name={meta.org} {lang} /></dd>
+				</div>
+			)}
 			{meta.role && <div><dt>{strings.project.role}</dt><dd>{meta.role}</dd></div>}
 			<div><dt>{strings.project.period}</dt><dd>{period}</dd></div>
 		</dl>

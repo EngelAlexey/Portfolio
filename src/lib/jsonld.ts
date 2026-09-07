@@ -10,8 +10,9 @@ import {
 	type Role
 } from './about';
 import { areaLabel } from './areas';
-import { fichas, getProject, splitOrg, type ProjectMeta } from './content';
+import { fichas, getProject, type ProjectMeta } from './content';
 import { LANGS, path as routePath, t, type Lang, type RouteKey } from './i18n';
+import { orgMark, splitOrg } from './org';
 import { PERSON, SITE_URL, absolute } from './site';
 
 type Node = Record<string, unknown>;
@@ -35,15 +36,6 @@ const ref = (id: string) => ({ '@id': id });
 const orgId = (mark: OrgMark) => `${SITE_URL}/#org-${mark}`;
 
 const ROLES: Role[] = [...EXPERIENCE, ...EDUCATION];
-
-function orgMarkOf(org: string | null): OrgMark | null {
-	if (!org) return null;
-	const name = splitOrg(org).name;
-	const match = ROLES.find((role) =>
-		LANGS.some((l) => splitOrg(text(role.org, l)).name === name)
-	);
-	return match?.mark ?? null;
-}
 
 function orgName(mark: OrgMark, lang: Lang): string {
 	const match = ROLES.find((role) => role.mark === mark);
@@ -191,8 +183,8 @@ function projectNode(
 ): { node: Node; marks: OrgMark[] } {
 	const strings = t(input.lang);
 	const parts = meta.org ? splitOrg(meta.org) : null;
-	const source = orgMarkOf(meta.org);
-	const via = parts?.qualifier ? orgMarkOf(parts.qualifier.replace(/^(vía|via)\s+/i, '')) : null;
+	const source = orgMark(meta.org);
+	const via = parts?.qualifier ? orgMark(parts.qualifier.replace(/^(vía|via)\s+/i, '')) : null;
 	const links = [meta.repo, meta.site].filter((link): link is string => Boolean(link));
 
 	const node: Node = {

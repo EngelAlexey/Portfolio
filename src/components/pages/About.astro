@@ -48,12 +48,12 @@ const toItems = (roles: typeof EXPERIENCE) =>
 	<Container size="text">
 		<section>
 			<h2>{strings.about.experience}</h2>
-			<Timeline items={toItems(EXPERIENCE)} label={strings.about.experience} />
+			<Timeline items={toItems(EXPERIENCE)} label={strings.about.experience} {lang} />
 		</section>
 
 		<section>
 			<h2>{strings.about.education}</h2>
-			<Timeline items={toItems(EDUCATION)} label={strings.about.education} />
+			<Timeline items={toItems(EDUCATION)} label={strings.about.education} {lang} />
 		</section>
 
 		<section>

@@ -1,0 +1,46 @@
+---
+import { t, type Lang } from '../lib/i18n';
+import { orgHref } from '../lib/org';
+
+interface Props {
+	name: string;
+	lang: Lang;
+}
+
+const { name, lang } = Astro.props;
+const href = orgHref(name);
+const strings = t(lang);
+---
+
+{
+	href ? (
+		<a class="orglink" {href} rel="noreferrer" target="_blank">
+			{name}
+			<span class="ext" aria-hidden="true">
+				↗
+			</span>
+			<span class="sr-only">{strings.a11y.newTab}</span>
+		</a>
+	) : (
+		name
+	)
+}
+
+<style>
+	.orglink {
+		color: inherit;
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
+		text-decoration-color: var(--line-strong);
+	}
+
+	.orglink:hover {
+		text-decoration-color: currentColor;
+	}
+
+	.ext {
+		margin-left: 0.15em;
+		font-size: 0.85em;
+		color: var(--ink-faint);
+	}
+</style>

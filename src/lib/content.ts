@@ -3,6 +3,7 @@ import type { AreaId } from './areas';
 import { AREA_IDS } from './areas';
 import type { Lang } from './i18n';
 import { LANGS } from './i18n';
+import { splitOrg } from './org';
 
 export type ProjectEntry = CollectionEntry<'projects'>;
 export type ProjectMeta = ProjectEntry['data'];
@@ -134,12 +135,6 @@ export async function areaCounts(lang: Lang): Promise<Record<AreaId, number>> {
 		for (const area of project.meta.areas) counts[area] += 1;
 	}
 	return counts;
-}
-
-export function splitOrg(org: string): { name: string; qualifier: string | null } {
-	const parts = org.split(' — ');
-	const name = (parts.shift() ?? org).trim();
-	return { name, qualifier: parts.length ? parts.join(' — ').trim() : null };
 }
 
 export type OrgGroup = {

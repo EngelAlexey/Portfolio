@@ -1,4 +1,5 @@
 ---
+import OrgLink from '../OrgLink.astro';
 import Layout from '../../layouts/Layout.astro';
 import BrandMark from '../BrandMark.astro';
 import Container from '../Container.astro';
@@ -65,7 +66,9 @@ const cvHref = CV[CV_DEFAULT][lang];
 						<li>
 							<OrgMark org={role.mark!} />
 							<span class="orgtext">
-								<strong>{role.shortOrg ?? text(role.org, lang)}</strong>
+								<strong>
+									<OrgLink name={role.shortOrg ?? text(role.org, lang)} {lang} />
+								</strong>
 								<span class="mono">
 									{role.title[lang]} · {role.period[lang]}
 								</span>

@@ -1,4 +1,7 @@
 ---
+import OrgLink from './OrgLink.astro';
+import type { Lang } from '../lib/i18n';
+
 export type TimelineItem = {
 	period: string;
 	title: string;
@@ -9,9 +12,10 @@ export type TimelineItem = {
 interface Props {
 	items: readonly TimelineItem[];
 	label?: string;
+	lang: Lang;
 }
 
-const { items, label } = Astro.props;
+const { items, label, lang } = Astro.props;
 ---
 
 <ol class="timeline" aria-label={label}>
@@ -21,7 +25,11 @@ const { items, label } = Astro.props;
 				<span class="period">{item.period}</span>
 				<div class="body">
 					<h3>{item.title}</h3>
-					{item.org && <p class="org">{item.org}</p>}
+					{item.org && (
+						<p class="org">
+							<OrgLink name={item.org} {lang} />
+						</p>
+					)}
 					{item.detail && <p class="detail">{item.detail}</p>}
 				</div>
 			</li>

@@ -24,7 +24,7 @@ order: null
 
 ## Contexto
 
-Curso de Seguridad de TI I. Ejercicio individual: se construye una herramienta que reproduce el ciclo de captura y exfiltración, se ejecuta en un laboratorio aislado y se documenta el rastro que deja.
+Curso de Seguridad de TI I, el mismo del que salió el [detector de cifrado masivo](/es/proyectos/deteccion-por-umbral). Ejercicio individual: se construye una herramienta que reproduce el ciclo de captura y exfiltración, se ejecuta en un laboratorio aislado y se documenta el rastro que deja.
 
 ## Problema
 
