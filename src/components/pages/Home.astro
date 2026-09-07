@@ -1,9 +1,9 @@
 ---
 import OrgLink from '../OrgLink.astro';
+import OrgLogoLink from '../OrgLogoLink.astro';
 import Layout from '../../layouts/Layout.astro';
 import BrandMark from '../BrandMark.astro';
 import Container from '../Container.astro';
-import OrgMark from '../OrgMark.astro';
 import ProjectCard from '../ProjectCard.astro';
 import ToolGrid from '../ToolGrid.astro';
 import { EXPERIENCE, text } from '../../lib/about';
@@ -64,7 +64,7 @@ const cvHref = CV[CV_DEFAULT][lang];
 				{
 					orgs.map((role) => (
 						<li>
-							<OrgMark org={role.mark!} />
+							<OrgLogoLink org={role.mark!} />
 							<span class="orgtext">
 								<strong>
 									<OrgLink name={role.shortOrg ?? text(role.org, lang)} {lang} />

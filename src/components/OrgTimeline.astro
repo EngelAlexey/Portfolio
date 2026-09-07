@@ -1,6 +1,6 @@
 ---
 import OrgLink from './OrgLink.astro';
-import OrgMark from './OrgMark.astro';
+import OrgLogoLink from './OrgLogoLink.astro';
 import ProjectCard from './ProjectCard.astro';
 import { postAt, WORDMARKS } from '../lib/about';
 import type { OrgGroup } from '../lib/content';
@@ -34,7 +34,7 @@ const years = (period: OrgGroup['period']) =>
 					<div class="head">
 						{post(group)?.mark && (
 							<span class="logo">
-								<OrgMark org={post(group)!.mark!} width={112} />
+								<OrgLogoLink org={post(group)!.mark!} width={112} />
 							</span>
 						)}
 

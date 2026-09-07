@@ -16,7 +16,9 @@ export function orgMark(org: string | null): OrgMark | null {
 	return match?.mark ?? null;
 }
 
+export const markHref = (mark: OrgMark): string | null => ORG_LINKS[mark] ?? null;
+
 export function orgHref(org: string | null): string | null {
 	const mark = orgMark(org);
-	return mark ? (ORG_LINKS[mark] ?? null) : null;
+	return mark ? markHref(mark) : null;
 }
