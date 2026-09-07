@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Container from '../Container.astro';
 import { t, type Lang } from '../../lib/i18n';
-import { CV, CV_DEFAULT, CV_VARIANTS, PERSON } from '../../lib/site';
+import { CV, CV_DEFAULT, CV_VARIANTS, locationLine, PERSON } from '../../lib/site';
 
 interface Props {
 	lang: Lang;
@@ -58,7 +58,7 @@ const githubHandle = handle(PERSON.github);
 			</div>
 			<div>
 				<dt class="label">{strings.contact.location}</dt>
-				<dd class="value plain">{PERSON.location[lang]}</dd>
+				<dd class="value plain">{locationLine()}</dd>
 			</div>
 			<div>
 				<dt class="label">{strings.contact.availability}</dt>

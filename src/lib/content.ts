@@ -136,7 +136,7 @@ export async function areaCounts(lang: Lang): Promise<Record<AreaId, number>> {
 	return counts;
 }
 
-function splitOrg(org: string): { name: string; qualifier: string | null } {
+export function splitOrg(org: string): { name: string; qualifier: string | null } {
 	const parts = org.split(' — ');
 	const name = (parts.shift() ?? org).trim();
 	return { name, qualifier: parts.length ? parts.join(' — ').trim() : null };

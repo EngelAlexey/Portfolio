@@ -15,9 +15,17 @@ export type Role = {
 	mark?: 'intercargo' | 'kaizen' | 'starcargo' | 'utn';
 	post?: Bilingual;
 	shortOrg?: string;
+	// `period` is a display string, so currency has to be stated rather than parsed out of it.
+	current?: boolean;
 };
 
+export type OrgMark = NonNullable<Role['mark']>;
+
 export const WORDMARKS = new Set(['intercargo', 'kaizen', 'starcargo', 'utn']);
+
+// Official pages, for `sameAs` on the organisation nodes. Filled in deliberately:
+// an unverified URL disambiguates the wrong entity.
+export const ORG_LINKS: Partial<Record<OrgMark, string>> = {};
 
 export const EXPERIENCE: Role[] = [
 	{
@@ -26,6 +34,7 @@ export const EXPERIENCE: Role[] = [
 		org: { es: 'Intercargo Panamá — vía Kaizen Apps CR', en: 'Intercargo Panamá — via Kaizen Apps CR' },
 		shortOrg: 'Intercargo Panamá',
 		mark: 'intercargo',
+		current: true,
 		detail: {
 			es: 'Trabajo en la plataforma corporativa: sitio público, portal interno, debida diligencia y cuentas por cobrar. Definí su modelo de seguridad, con dos instancias separadas por criticidad de secretos, identidad por invitación y sesiones revocables.',
 			en: 'I work on the corporate platform: public site, internal portal, due diligence and accounts receivable. I defined its security model, with two instances split by how critical their secrets are, invite-based identity and revocable sessions.'
@@ -39,6 +48,7 @@ export const EXPERIENCE: Role[] = [
 		},
 		org: 'Kaizen Apps CR',
 		mark: 'kaizen',
+		current: true,
 		detail: {
 			es: 'Desarrollo sobre el ERP de recursos humanos que licencia la empresa y sobre las herramientas que lo acompañan, de la propuesta a producción. En soporte N2 rastreo la falla hasta el código y la corrijo.',
 			en: 'Development on the HR ERP the company licenses and on the tools around it, from proposal to production. In N2 support I trace the fault down to the code and fix it.'
@@ -49,6 +59,7 @@ export const EXPERIENCE: Role[] = [
 		title: { es: 'Desarrollador Web', en: 'Web Developer' },
 		org: 'Star Cargo Service',
 		mark: 'starcargo',
+		current: true,
 		detail: {
 			es: 'Desarrollo a la medida para la operación: CRM comercial, API de bodega para la app Android, app de rastreo de viajes y rediseño del sitio corporativo. Vigilo los avisos de seguridad de Supabase y delimito los permisos por rol sobre las tablas.',
 			en: 'Bespoke development for the operation: a sales CRM, the warehouse API behind the Android app, a trip-tracking app, and the corporate site redesign. I watch Supabase security advisories and scope per-role permissions over the tables.'
@@ -83,6 +94,7 @@ export const EDUCATION: Role[] = [
 		},
 		org: 'Universidad Técnica Nacional — Sede Pacífico, El Roble',
 		mark: 'utn',
+		current: true,
 		post: { es: 'Estudiante', en: 'Student' },
 		detail: { es: '', en: '' }
 	}
@@ -97,12 +109,14 @@ export const CERTIFICATIONS: { name: string; issuer: string; status?: Bilingual 
 	}
 ];
 
-export const LANGUAGES: { label: Bilingual; level: Bilingual }[] = [
+export const LANGUAGES: { code: Lang; label: Bilingual; level: Bilingual }[] = [
 	{
+		code: 'es',
 		label: { es: 'Español', en: 'Spanish' },
 		level: { es: 'Nativo', en: 'Native' }
 	},
 	{
+		code: 'en',
 		label: { es: 'Inglés', en: 'English' },
 		level: {
 			es: 'Avanzado — certificado PIT-UTN',

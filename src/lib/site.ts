@@ -5,10 +5,14 @@ export const absolute = (path: string): string =>
 
 export const PERSON = {
 	name: 'Alex Herrera Manzanares',
+	givenName: 'Alex',
+	familyName: 'Herrera Manzanares',
 	email: 'alexhmanzanares@gmail.com',
-	location: {
-		es: 'El Roble, Puntarenas, Costa Rica',
-		en: 'El Roble, Puntarenas, Costa Rica'
+	address: {
+		locality: 'El Roble',
+		region: 'Puntarenas',
+		country: 'Costa Rica',
+		countryCode: 'CR'
 	},
 	availability: {
 		es: 'Práctica profesional universitaria de enero a abril de 2027. Remoto, híbrido o presencial en Puntarenas y alrededores.',
@@ -17,6 +21,9 @@ export const PERSON = {
 	linkedin: 'https://www.linkedin.com/in/alex-herrera-manzanares-b000ba379',
 	github: 'https://github.com/EngelAlexey'
 } as const;
+
+export const locationLine = (): string =>
+	`${PERSON.address.locality}, ${PERSON.address.region}, ${PERSON.address.country}`;
 
 export const CV_VARIANTS = ['ciberseguridad', 'desarrollo', 'general'] as const;
 export type CvVariant = (typeof CV_VARIANTS)[number];
