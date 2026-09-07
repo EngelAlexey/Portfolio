@@ -1,0 +1,323 @@
+import {
+	CERTIFICATIONS,
+	EDUCATION,
+	EXPERIENCE,
+	LANGUAGES,
+	ORG_LINKS,
+	SKILL_GROUPS,
+	text,
+	type OrgMark,
+	type Role
+} from './about';
+import { areaLabel } from './areas';
+import { fichas, getProject, splitOrg, type ProjectMeta } from './content';
+import { LANGS, path as routePath, t, type Lang, type RouteKey } from './i18n';
+import { PERSON, SITE_URL, absolute } from './site';
+
+type Node = Record<string, unknown>;
+
+export type GraphInput = {
+	lang: Lang;
+	key: RouteKey | null;
+	slug?: string;
+	title: string;
+	description: string;
+	canonical: string;
+	ogImage: string | null;
+	noindex?: boolean;
+};
+
+const PERSON_ID = `${SITE_URL}/#person`;
+const WEBSITE_ID = `${SITE_URL}/#website`;
+const PORTRAIT_ID = `${SITE_URL}/#portrait`;
+
+const ref = (id: string) => ({ '@id': id });
+const orgId = (mark: OrgMark) => `${SITE_URL}/#org-${mark}`;
+
+const ROLES: Role[] = [...EXPERIENCE, ...EDUCATION];
+
+/** The org string on a ficha is the display one; the mark is what identifies the organisation. */
+function orgMarkOf(org: string | null): OrgMark | null {
+	if (!org) return null;
+	const name = splitOrg(org).name;
+	const match = ROLES.find((role) =>
+		LANGS.some((l) => splitOrg(text(role.org, l)).name === name)
+	);
+	return match?.mark ?? null;
+}
+
+function orgName(mark: OrgMark, lang: Lang): string {
+	const match = ROLES.find((role) => role.mark === mark);
+	if (!match) return mark;
+	return match.shortOrg ?? splitOrg(text(match.org, lang)).name;
+}
+
+function organisationNode(mark: OrgMark, lang: Lang): Node {
+	const link = ORG_LINKS[mark];
+	return {
+		'@type': mark === 'utn' ? 'CollegeOrUniversity' : 'Organization',
+		'@id': orgId(mark),
+		name: orgName(mark, lang),
+		...(link ? { sameAs: link } : {})
+	};
+}
+
+function portraitNode(): Node {
+	return {
+		'@type': 'ImageObject',
+		'@id': PORTRAIT_ID,
+		url: absolute('/img/alex.jpg'),
+		contentUrl: absolute('/img/alex.jpg'),
+		width: 448,
+		height: 448
+	};
+}
+
+/**
+ * `detail: 'full'` on the two pages that are about the person; a stub everywhere else.
+ * Both carry the same @id, so consumers merge them into one entity — and `sameAs`,
+ * the field that does the reconciling, stays in the stub.
+ */
+function personNode(lang: Lang, detail: 'full' | 'stub'): Node {
+	const strings = t(lang);
+	const base: Node = {
+		'@type': 'Person',
+		'@id': PERSON_ID,
+		name: PERSON.name,
+		url: SITE_URL,
+		jobTitle: strings.home.role,
+		sameAs: [PERSON.linkedin, PERSON.github],
+		mainEntityOfPage: ref(`${absolute(routePath(lang, 'about'))}#webpage`)
+	};
+
+	if (detail === 'stub') return base;
+
+	const currentOrgs = EXPERIENCE.filter((role) => role.current && role.mark);
+
+	return {
+		...base,
+		givenName: PERSON.givenName,
+		familyName: PERSON.familyName,
+		description: strings.home.headline,
+		email: `mailto:${PERSON.email}`,
+		image: ref(PORTRAIT_ID),
+		address: {
+			'@type': 'PostalAddress',
+			addressLocality: PERSON.address.locality,
+			addressRegion: PERSON.address.region,
+			addressCountry: PERSON.address.countryCode
+		},
+		homeLocation: {
+			'@type': 'Place',
+			name: `${PERSON.address.locality}, ${PERSON.address.region}`,
+			address: {
+				'@type': 'PostalAddress',
+				addressLocality: PERSON.address.locality,
+				addressRegion: PERSON.address.region,
+				addressCountry: PERSON.address.countryCode
+			}
+		},
+		knowsAbout: SKILL_GROUPS.flatMap((group) => group.items.map((item) => text(item, lang))),
+		knowsLanguage: LANGUAGES.map((language) => ({
+			'@type': 'Language',
+			name: language.label[lang],
+			alternateName: language.code
+		})),
+		// Only what has actually been awarded: `status` marks a certification still in progress.
+		hasCredential: CERTIFICATIONS.filter((cert) => !cert.status).map((cert) => ({
+			'@type': 'EducationalOccupationalCredential',
+			name: cert.name,
+			credentialCategory: 'certificate',
+			recognizedBy: { '@type': 'Organization', name: cert.issuer }
+		})),
+		alumniOf: EDUCATION.filter((role) => role.mark).map((role) => ref(orgId(role.mark!))),
+		worksFor: [...new Set(currentOrgs.map((role) => role.mark!))].map((mark) => ref(orgId(mark)))
+	};
+}
+
+function websiteNode(lang: Lang): Node {
+	return {
+		'@type': 'WebSite',
+		'@id': WEBSITE_ID,
+		url: SITE_URL,
+		name: t(lang).meta.siteName,
+		inLanguage: LANGS,
+		author: ref(PERSON_ID),
+		publisher: ref(PERSON_ID),
+		copyrightHolder: ref(PERSON_ID)
+	};
+}
+
+/** Home has no trail. Everything else hangs off it; the current page carries no `item`. */
+function breadcrumbNode(input: GraphInput, key: RouteKey): Node | null {
+	const strings = t(input.lang);
+	const home = {
+		'@type': 'ListItem',
+		position: 1,
+		name: strings.nav.home,
+		item: absolute(routePath(input.lang, 'home'))
+	};
+
+	if (key === 'home') return null;
+
+	const trail: Node[] = [home];
+
+	if (key === 'project') {
+		trail.push({
+			'@type': 'ListItem',
+			position: 2,
+			name: strings.nav.projects,
+			item: absolute(routePath(input.lang, 'projects'))
+		});
+		trail.push({ '@type': 'ListItem', position: 3, name: input.title });
+	} else {
+		trail.push({ '@type': 'ListItem', position: 2, name: strings.nav[key] });
+	}
+
+	return {
+		'@type': 'BreadcrumbList',
+		'@id': `${input.canonical}#breadcrumb`,
+		itemListElement: trail
+	};
+}
+
+function cardNode(input: GraphInput): Node | null {
+	if (!input.ogImage) return null;
+	return {
+		'@type': 'ImageObject',
+		'@id': `${input.canonical}#card`,
+		url: input.ogImage,
+		contentUrl: input.ogImage,
+		width: 1200,
+		height: 630
+	};
+}
+
+function projectNode(
+	input: GraphInput,
+	meta: ProjectMeta
+): { node: Node; marks: OrgMark[] } {
+	const strings = t(input.lang);
+	const parts = meta.org ? splitOrg(meta.org) : null;
+	const source = orgMarkOf(meta.org);
+	// "Intercargo Panamá — vía Kaizen Apps CR" names two real organisations, not one
+	// with a note: the client the work is for, and the company it came through.
+	const via = parts?.qualifier ? orgMarkOf(parts.qualifier.replace(/^(vía|via)\s+/i, '')) : null;
+	const links = [meta.repo, meta.site].filter((link): link is string => Boolean(link));
+
+	const node: Node = {
+		'@type': 'CreativeWork',
+		'@id': `${input.canonical}#work`,
+		name: meta.title,
+		description: meta.tagline,
+		url: input.canonical,
+		mainEntityOfPage: ref(`${input.canonical}#webpage`),
+		inLanguage: input.lang,
+		genre: strings.kind[meta.kind],
+		author: ref(PERSON_ID),
+		creator: ref(PERSON_ID),
+		// `period` is when the work happened, so it is temporalCoverage and never a
+		// publication date. ".." is the ISO 8601 open end.
+		temporalCoverage: `${meta.period.start}/${meta.period.end ?? '..'}`,
+		about: meta.areas.map((area) => ({ '@type': 'Thing', name: areaLabel(area, input.lang) })),
+		keywords: meta.stack,
+		...(links.length ? { sameAs: links } : {}),
+		...(source ? { sourceOrganization: ref(orgId(source)) } : {}),
+		...(via ? { provider: ref(orgId(via)) } : {}),
+		copyrightHolder:
+			meta.kind === 'profesional' && source ? ref(orgId(source)) : ref(PERSON_ID)
+	};
+
+	const marks = [source, via].filter((mark): mark is OrgMark => Boolean(mark));
+	return { node, marks };
+}
+
+async function itemListNode(input: GraphInput): Promise<Node> {
+	const list = await fichas(input.lang);
+	return {
+		'@type': 'ItemList',
+		'@id': `${input.canonical}#projects`,
+		numberOfItems: list.length,
+		itemListElement: list.map((project, i) => ({
+			'@type': 'ListItem',
+			position: i + 1,
+			name: project.meta.title,
+			url: absolute(routePath(input.lang, 'project', project.meta.slug))
+		}))
+	};
+}
+
+const PAGE_TYPE: Record<RouteKey, string> = {
+	home: 'WebPage',
+	projects: 'CollectionPage',
+	project: 'WebPage',
+	about: 'ProfilePage',
+	contact: 'ContactPage'
+};
+
+/**
+ * One `@graph` per page. Several scripts would mean either a duplicated Person on
+ * every page — which is what a stable @id exists to avoid — or @id references that
+ * cross script boundaries and cannot be validated as a single paste.
+ *
+ * Returns null when the page must not describe itself.
+ */
+export async function buildGraph(input: GraphInput): Promise<string | null> {
+	if (input.key === null || input.noindex) return null;
+
+	const key = input.key;
+	const profile = key === 'home' || key === 'about';
+	const marks = new Set<OrgMark>();
+
+	const page: Node = {
+		'@type': PAGE_TYPE[key],
+		'@id': `${input.canonical}#webpage`,
+		url: input.canonical,
+		name: input.title,
+		description: input.description,
+		inLanguage: input.lang,
+		isPartOf: ref(WEBSITE_ID)
+	};
+
+	const nodes: Node[] = [personNode(input.lang, profile ? 'full' : 'stub'), websiteNode(input.lang)];
+
+	if (profile) {
+		nodes.push(portraitNode());
+		for (const role of ROLES) {
+			if (role.mark && (role.current || EDUCATION.includes(role))) marks.add(role.mark);
+		}
+	}
+
+	if (key === 'home' || key === 'about' || key === 'contact') {
+		page[key === 'home' ? 'about' : 'mainEntity'] = ref(PERSON_ID);
+	}
+
+	if (key === 'projects') {
+		const list = await itemListNode(input);
+		page.mainEntity = ref(list['@id'] as string);
+		nodes.push(list);
+	}
+
+	if (key === 'project' && input.slug) {
+		const project = await getProject(input.lang, input.slug);
+		if (project) {
+			const { node, marks: used } = projectNode(input, project.meta);
+			page.mainEntity = ref(node['@id'] as string);
+			nodes.push(node);
+			used.forEach((mark) => marks.add(mark));
+		}
+	}
+
+	const breadcrumb = breadcrumbNode(input, key);
+	if (breadcrumb) page.breadcrumb = ref(breadcrumb['@id'] as string);
+
+	const card = cardNode(input);
+	if (card) page.primaryImageOfPage = ref(card['@id'] as string);
+
+	for (const mark of marks) nodes.push(organisationNode(mark, input.lang));
+	nodes.push(page);
+	if (breadcrumb) nodes.push(breadcrumb);
+	if (card) nodes.push(card);
+
+	return JSON.stringify({ '@context': 'https://schema.org', '@graph': nodes });
+}
