@@ -91,13 +91,13 @@ export const EDUCATION: Role[] = [
 	{
 		period: { es: 'Ene 2024 — Actualidad', en: 'Jan 2024 — Present' },
 		title: {
-			es: 'Bachillerato en Ingeniería en Tecnologías de la Información',
+			es: 'Bachillerato en Ingeniería en Tecnologías de Información',
 			en: 'BSc in Information Technology Engineering'
 		},
 		org: 'Universidad Técnica Nacional — Sede Pacífico, El Roble',
 		mark: 'utn',
 		current: true,
-		post: { es: 'Estudiante', en: 'Student' },
+		post: { es: 'Ingeniería en Tecnologías de Información', en: 'Information Technology Engineering' },
 		detail: { es: '', en: '' }
 	}
 ];
