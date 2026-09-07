@@ -1,6 +1,6 @@
 ---
 slug: starcargo-web
-title: Página web | Gestión de solicitudes
+title: Sitio de Star Cargo | Trámites y portal de clientes
 tagline: Ocho trámites en línea alimentan un portal con sesión donde el cliente sigue sus solicitudes y el equipo las atiende, con el permiso resuelto contra el ERP.
 areas: [fullstack]
 kind: profesional

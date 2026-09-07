@@ -1,7 +1,7 @@
 ---
 slug: turismo-dw
 title: TurismoDW | Almacén de datos
-tagline: Cuatro orígenes incompatibles, con archivos mal formados a propósito para que la validación tuviera algo que rechazar, quedan consultables juntos en un esquema estrella.
+tagline: Cuatro orígenes incompatibles, con archivos mal formados a propósito para que la validación tuviera algo que rechazar, quedan juntos en un esquema estrella.
 areas: [datos, infra]
 kind: academico
 org: Universidad Técnica Nacional

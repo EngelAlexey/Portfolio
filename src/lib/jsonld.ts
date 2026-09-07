@@ -87,7 +87,9 @@ function personNode(lang: Lang, detail: 'full' | 'stub'): Node {
 		url: SITE_URL,
 		jobTitle: strings.home.role,
 		sameAs: [PERSON.linkedin, PERSON.github],
-		mainEntityOfPage: ref(`${absolute(routePath(lang, 'about'))}#webpage`)
+		// A plain URL, not an @id: the page it names lives in another document's
+		// graph, and a bare reference that resolves nowhere is harder to read.
+		mainEntityOfPage: absolute(routePath(lang, 'about'))
 	};
 
 	if (detail === 'stub') return base;

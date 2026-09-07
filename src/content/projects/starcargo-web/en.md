@@ -1,6 +1,6 @@
 ---
 slug: starcargo-web
-title: Corporate website | Request management
+title: Star Cargo site | Online requests and client portal
 tagline: Eight online applications feed a signed-in portal where clients follow their submissions and the team works them, with permission resolved against the ERP.
 areas: [fullstack]
 kind: profesional
