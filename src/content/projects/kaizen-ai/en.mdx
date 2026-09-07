@@ -1,7 +1,7 @@
 ---
 slug: kaizen-ai
 title: Kaizen AI | Business intelligence
-tagline: Companies licensing the ERP query their own data by typing the question. An AST rewriter injects three permission filters before the SQL runs.
+tagline: Companies licensing the ERP query their own data by typing the question. The server narrows every query to what that company and that role may see.
 areas: [ia, seguridad]
 kind: profesional
 org: Kaizen Apps CR
@@ -50,38 +50,44 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-A tool Kaizen puts in the hands of the companies that license its ERP. They query their own data by writing the question in natural language.
+Kaizen licenses an HR ERP to other companies. Kaizen AI is the tool it puts in those companies' hands. They query their own data by writing the question in plain language, without going through a report or through the support team.
 
-The version in production is the fourth. Each rebuild moved into code a decision the previous one had left to the model.
+The project came out of an operational need, not a product idea: the support team answered every client's questions one by one, and that work grew at the same rate as the client base.
 
 ## Problem
 
-Every client question was handled by someone on the support team. As demand for help grows, that team is overwhelmed and the client waits.
+Every client question was answered by someone on the support team. As demand for help grows, that team saturates and the client waits.
 
-A large share of those questions repeat: how to do something, what a human-resources or occupational-health concept means, what labour law says about it. The tool exists so a client resolves those on their own, and the team handles what genuinely needs a person.
+A large share of those questions repeat: how to do something, what an HR or occupational-health concept means, what labour law says about it. Those were hours of a specialist team spent on questions that already had an answer.
 
 ## Technical decisions
 
-With several client companies on the same installation, a model querying production data raises a question a prompt cannot answer: who may read what. If access control depended on the model following instructions, rephrasing the question would be enough to get around it.
+Several client companies use the tool on the same installation. That makes access control the central decision of the project: a model querying production data raises a question a prompt cannot settle, which is who may read what. If the restriction depended on the model following instructions, rephrasing the question would be enough to get around it.
 
-So the question is translated to SQL, and the server rewrites that query before executing it. A rewriter over the syntax tree injects three filters: client database, session role and action scope.
+The question is translated into SQL and the server rewrites that query before running it. A rewriter over the syntax tree injects three filters: the client's database, the session role, and the scope of the action.
 
-A query asking for another company's data does not fail a validation: it runs already scoped and returns only what is permitted.
+A query asking for another company's data does not fail a validation. It runs already narrowed and returns only what is allowed, which is a stronger guarantee than rejecting it.
+
+The version in production is the fourth. Each rebuild moved into code a decision the previous one left to the model.
 
 ## Architecture
 
-The model does not talk to the database. It proposes SQL, and that text passes through the rewriter before it executes.
+The model does not talk to the database. It proposes SQL, and that text passes through the rewriter before it runs.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-The rewriter is the only point on the path that sets how much comes back, so permission tests are written against it rather than against the conversation.
+The rewriter is the only point on the path that fixes how much comes back, so the permission tests are written against it rather than against the conversation.
 
 ## Result
 
-The tool is in production for the companies that license the ERP. It answers over each company's own data, separates what a developer, an administrator and a user can see, sanitises sensitive fields and records every query.
+The tool is in production for the companies that license the ERP. Each one queries its own data, developers, administrators and users see different sets, sensitive fields are masked, and every executed query is logged.
 
-Retrieval enforces a relevance minimum. A question with no support in the data returns that there is no information, rather than a text assembled from loosely related fragments.
+The questions that used to occupy the support team are now answered by the client, and the team handles what genuinely needs a person.
+
+Retrieval requires a minimum relevance. A question with no backing in the data returns that there is no information, rather than text assembled from loosely related fragments.
 
 ## What I learned
 
-Visibility control started out resting on the instruction text and ended up entirely in code. The practical difference is that it can now be executed: a test puts a question through the rewriter and checks that the resulting SQL carries all three filters. There is nothing equivalent to run against a prompt.
+Visibility control started out resting on the wording of the instruction and ended up entirely in code. The practical difference is that it can now be executed: a test passes a question through the rewriter and checks that the resulting SQL carries all three filters.
+
+There is nothing equivalent to run against a prompt. When a guarantee has to hold up in front of a client, it belongs somewhere a test can check it.

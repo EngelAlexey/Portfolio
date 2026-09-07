@@ -47,40 +47,46 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-The warehouse worker records an incoming container from a phone. They scan the receipt code, log every line as it comes off, mark the slot each pallet went to, and photograph damaged goods.
+StarHub is the tool a warehouse operator uses to record a container's arrival from their phone. They scan the receipt code, log every line as it is unloaded, note where each pallet goes, and photograph damaged goods.
 
-This service is the backend for that Android app. The Android client was led by another member of the team, with contributions from me.
+This project is the backend behind that Android app. The Android client was led by someone else on the team, with contributions from me.
+
+The project came from a warehouse need: that the ERP's inventory reflect what is actually in the warehouse at the moment goods are unloaded, not hours later.
 
 ## Problem
 
-Receiving was recorded on paper and transcribed into the ERP afterwards. Until that transcription happened, the system's inventory did not match what was in the warehouse.
+Goods-in was recorded on paper and someone transcribed it into the ERP later. Until that transcription happened, the system's inventory did not match what was in the warehouse.
 
-The service exists so a receipt reaches the ERP at the moment the warehouse worker records it.
+That gap has a commercial cost: quotes go out against stock that has already changed, and a discrepancy only surfaces when someone goes to find the goods and they are not where the system says.
+
+Transcription also loses detail. Pallet positions and the condition of damaged goods rarely survive the trip from paper to system.
 
 ## Technical decisions
 
-The ERP generates receipt numbers with its own formulas, and those formulas take no lock. Two warehouse workers operating at once would have been given the same sequence number. It also has notifications and automated actions over those tables, which a direct `INSERT` would not have fired.
+The ERP generates receipt numbers with formulas of its own that take no lock. Two operators working at once would have been handed the same sequence number. It also has notifications and automatic actions on those tables, which a direct write would not have fired.
 
-Reads go over direct SQL against the ERP database. Writes go through its API, which is slower but respects those formulas and those triggers.
+Reads go over direct SQL against the ERP's database, which is the fast path. Writes go through its API, which is slower but respects those formulas and those triggers. The latency was accepted because the alternative was an inventory with repeated sequence numbers.
 
-No route in the service writes over SQL. Every write leaves through a single API client, which is the only place in the code that issues one.
+No route in the service writes over SQL. Every write leaves through a single API client, which is the only point in the code that issues one.
 
 ## Architecture
 
-A phone cannot authenticate with the platform's identity, because enrolment happens before the device holds any credential. That is the service's gate: a single public endpoint with four rules applied at once.
+A phone cannot authenticate with the platform's identity, because enrolment happens before the device holds any credential at all. That is the service's gate: a single public endpoint, with four rules applied at once.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-The enrolment registry lives in the process itself, so the service is deployed on a single instance.
+Once enrolled, the device works with a token scoped to its warehouse, and from there it reads over SQL and writes through the ERP's API.
 
 ## Result
 
-A receipt reaches the ERP at the moment the warehouse worker records it, with its lines, the slot for each pallet and the photographs of damaged goods.
+Goods-in reaches the ERP at the moment the operator records it, with its lines, each pallet's position and the photos of damaged goods. Inventory stops depending on a later transcription.
 
-A smoke test starts the server and makes real requests against it. It covers TLS, credentials, warehouse scoping, the query and the response mapping. It uses no test doubles and writes no data.
+A smoke test starts the server and makes real requests against it. It covers TLS, credentials, warehouse filtering, querying and response mapping. It uses no test doubles and writes no data, so it checks the integration rather than an imitation of it.
 
 Alongside it there are 30 `node:test` cases covering pagination and the device lifecycle.
 
 ## What I learned
 
-The enrolment registry ended up inside the process, so the service cannot take a second instance until that state moves to shared storage. That move is recorded as the next change.
+The enrolment registry stayed inside the process, so the service cannot take a second instance until it moves to shared storage. That move is written down as the next change.
+
+It is a decision that works with one warehouse and breaks with the second. Keeping state in the process costs nothing to write and costs a redesign the day the business grows.

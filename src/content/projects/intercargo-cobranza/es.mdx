@@ -48,13 +48,15 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-Cobranza por WhatsApp para la operación de Intercargo en Panamá. El cliente escribe, consulta su estado de cuenta, reporta un pago o promete una fecha, y todo ocurre dentro de la conversación.
+Asistente de cobranza por WhatsApp para la operación de Intercargo en Panamá. El cliente escribe, consulta su estado de cuenta, reporta un pago o promete una fecha, y todo ocurre dentro de la conversación.
+
+El cliente pidió automatizar ese ciclo. La cobranza ocupaba a su equipo en un trabajo repetitivo de contacto y verificación que crecía con la cartera, y quería que el deudor pudiera resolver lo rutinario por su cuenta.
 
 ## Problema
 
-La cobranza se apoyaba en listas de clientes a los que había que contactar uno a uno. Cada comprobante de pago lo revisaba una persona antes de que el saldo quedara al día.
+La cobranza se apoyaba en listas de clientes a los que había que contactar uno a uno. Cada recordatorio era una llamada o un mensaje escrito a mano, y el orden dependía de quién revisara la lista ese día.
 
-El cliente pidió automatizar ese ciclo. El deudor consulta su propio saldo y adjunta su propio comprobante, y el equipo interviene solo donde hace falta criterio.
+Cada comprobante de pago lo revisaba una persona antes de que el saldo quedara al día. Hasta que esa revisión ocurría, el estado de cuenta que veía la empresa no correspondía con lo que el cliente ya había pagado.
 
 ## Decisiones técnicas
 
@@ -64,7 +66,7 @@ Por eso el modelo hace una sola cosa: convertir un mensaje en lenguaje natural e
 
 Todo lo demás es código: validar identidad, consultar cartera, registrar una promesa de pago y decidir si corresponde enviar un recordatorio. La conversación se resuelve en una máquina de estados que devuelve acciones, y una capa separada las traduce al transporte de WhatsApp.
 
-El servicio no usa framework web: levanta un servidor con `node:http` y trabaja sobre nueve tablas propias, separadas del resto de [la plataforma corporativa](/es/proyectos/intercargo-plataforma). El proveedor de modelo es intercambiable, con dos implementaciones detrás de la misma interfaz.
+El servicio no usa framework web. Levanta un servidor con `node:http` y trabaja sobre nueve tablas propias, separadas del resto de [la plataforma corporativa](/es/proyectos/intercargo-plataforma), para que un cambio en la cobranza no toque los datos del portal. El proveedor de modelo es intercambiable, con dos implementaciones detrás de la misma interfaz.
 
 ## Arquitectura
 
@@ -72,12 +74,18 @@ El modelo ocupa un solo tramo del recorrido. Lo que entra y lo que sale de él s
 
 <ArchDiagram {...frontmatter.diagram} />
 
-La máquina de estados devuelve acciones y una capa aparte las traduce al transporte, así que la conversación se puede ejecutar sin credenciales de Meta ni línea de WhatsApp.
+La máquina de estados devuelve acciones y una capa aparte las traduce al transporte, así que la conversación se puede ejecutar entera sin credenciales de Meta ni línea de WhatsApp.
 
 ## Resultado
 
-El servicio está en operación sobre nueve tablas propias, separadas del resto de la plataforma. Un comando reproduce un diálogo entero contra la lógica real, y con él se prueban los casos difíciles: una promesa con fecha ambigua, un pago reportado dos veces, un cliente que pide dejar de recibir mensajes.
+El servicio está en operación. El deudor consulta su propio saldo y adjunta su propio comprobante, los recordatorios salen solos un día hábil antes del vencimiento, y el equipo interviene solo donde hace falta criterio.
+
+Quien pide no recibir más mensajes deja de recibirlos, y los días hábiles y feriados se calculan en el servidor, así que la operación no depende de que alguien vigile el calendario.
+
+Un comando reproduce un diálogo entero contra la lógica real. Con él se prueban los casos difíciles: una promesa con fecha ambigua, un pago reportado dos veces, un cliente que pide dejar de recibir mensajes.
 
 ## Lo que aprendí
 
-Ese simulador recorre la máquina de estados de extremo a extremo, y por eso detecta una regresión de flujo sin poder localizarla: cuando falla, señala el diálogo entero y no el módulo. Las pruebas sobre la capa de acciones son el siguiente paso.
+Ese simulador recorre la máquina de estados de extremo a extremo, y por eso detecta una regresión de flujo sin poder localizarla: cuando falla, señala el diálogo entero y no el módulo.
+
+Una prueba que cubre todo el recorrido avisa de que algo se rompió, pero no dice dónde. Las pruebas sobre la capa de acciones son el siguiente paso, precisamente para acortar ese diagnóstico.

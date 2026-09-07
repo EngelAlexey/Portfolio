@@ -47,21 +47,25 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-El bodeguero registra la recepción de un contenedor desde el teléfono. Escanea el código del recibo, anota cada línea que descarga, indica la posición de cada tarima y fotografía la mercancía dañada.
+StarHub es la herramienta con la que el bodeguero registra la recepción de un contenedor desde el teléfono. Escanea el código del recibo, anota cada línea que descarga, indica la posición de cada tarima y fotografía la mercancía dañada.
 
-Este servicio es el backend de esa app Android. El cliente Android lo llevó otra persona del equipo, con aportes míos.
+Este proyecto es el backend de esa aplicación Android. El cliente Android lo llevó otra persona del equipo, con aportes míos.
+
+El proyecto salió de una necesidad de la bodega: que el inventario del ERP refleje lo que hay en el almacén en el momento en que se descarga, y no horas después.
 
 ## Problema
 
-El registro de recepción se hacía en papel y alguien lo transcribía al ERP después. Hasta que esa transcripción ocurría, el inventario del sistema no correspondía con lo que había en bodega.
+El registro de recepción se hacía en papel y alguien lo transcribía al ERP más tarde. Hasta que esa transcripción ocurría, el inventario del sistema no correspondía con lo que había en bodega.
 
-El servicio existe para que la recepción entre al ERP en el momento en que el bodeguero la anota.
+Esa diferencia tiene coste comercial: se cotiza sobre existencias que ya cambiaron, y una discrepancia solo aparece cuando alguien va a buscar la mercancía y no está donde el sistema dice.
+
+La transcripción además pierde detalle. La posición de cada tarima y el estado de la mercancía dañada rara vez sobreviven al paso del papel al sistema.
 
 ## Decisiones técnicas
 
-El ERP genera los números de recibo con fórmulas propias que no toman bloqueo. Dos bodegueros trabajando a la vez habrían recibido el mismo consecutivo. También tiene notificaciones y acciones automáticas sobre esas tablas, que un `INSERT` directo no habría disparado.
+El ERP genera los números de recibo con fórmulas propias que no toman bloqueo. Dos bodegueros trabajando a la vez habrían recibido el mismo consecutivo. También tiene notificaciones y acciones automáticas sobre esas tablas, que una escritura directa no habría disparado.
 
-Las lecturas van por SQL directo contra la base del ERP. Las escrituras van por su API, que es más lento pero respeta esas fórmulas y esos disparadores.
+Las lecturas van por SQL directo contra la base del ERP, que es lo rápido. Las escrituras van por su API, que es más lento pero respeta esas fórmulas y esos disparadores. Se aceptó la latencia porque la alternativa era un inventario con consecutivos repetidos.
 
 Ninguna ruta del servicio escribe por SQL. Todas las escrituras salen por un único cliente del API, que es el único punto del código que las emite.
 
@@ -71,16 +75,18 @@ Un teléfono no puede autenticarse con la identidad de la plataforma, porque el 
 
 <ArchDiagram {...frontmatter.diagram} />
 
-El registro de altas vive en el propio proceso, así que el servicio se despliega en una sola instancia.
+Una vez dado de alta, el dispositivo trabaja con un token acotado a su bodega, y desde ahí lee por SQL y escribe por el API del ERP.
 
 ## Resultado
 
-La recepción entra al ERP en el momento en que el bodeguero la anota, con sus líneas, la posición de cada tarima y las fotos de la mercancía dañada.
+La recepción entra al ERP en el momento en que el bodeguero la anota, con sus líneas, la posición de cada tarima y las fotos de la mercancía dañada. El inventario deja de depender de una transcripción posterior.
 
-Una prueba de humo arranca el servidor y le hace peticiones reales. Cubre TLS, credenciales, filtrado por bodega, consulta y mapeo de la respuesta. No usa dobles de prueba ni escribe datos.
+Una prueba de humo arranca el servidor y le hace peticiones reales. Cubre TLS, credenciales, filtrado por bodega, consulta y mapeo de la respuesta. No usa dobles de prueba ni escribe datos, así que comprueba la integración y no una imitación de ella.
 
 Junto a ella hay 30 casos de `node:test` sobre paginación y sobre el ciclo de vida de los dispositivos.
 
 ## Lo que aprendí
 
 El registro de altas quedó dentro del proceso, así que el servicio no admite una segunda instancia hasta moverlo a almacenamiento compartido. Ese traslado está anotado como el siguiente cambio.
+
+Es una decisión que funciona con una bodega y se rompe con la segunda. Guardar estado en el proceso no cuesta nada al escribirlo y cuesta un rediseño el día que el negocio crece.

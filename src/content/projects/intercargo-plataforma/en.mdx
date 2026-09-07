@@ -1,7 +1,7 @@
 ---
 slug: intercargo-plataforma
 title: Intercargo platform | Internal ERP and public site
-tagline: Public site, internal portal, client due diligence and accounts receivable. The same image is deployed as two services with different permissions.
+tagline: Public site, internal portal, client due diligence and accounts receivable. The open site and the portal run separately, with different permissions.
 areas: [seguridad, fullstack]
 kind: profesional
 org: Intercargo Panamá — via Kaizen Apps CR
@@ -50,38 +50,40 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-The platform brings together the public site and the staff portal: client due diligence, accounts receivable, payroll, and tracking of the requests that arrive through the site. It is under active development and grows module by module. I joined to build on it and to define its security model.
+The platform brings together Intercargo's public site and the portal its staff works in: client due diligence, accounts receivable, payroll, and tracking for the enquiries that arrive through the site. It is under active development and grows module by module.
+
+The original brief was the internal portal. Rebuilding the public site as well was the team's proposal, because moving both onto infrastructure we control was the only way to run the portal with the guarantees the client asked for. I came in to build on the platform and to define its security model.
 
 ## Problem
 
-The site ran on a third-party service the team did not administer. The client was asking for a portal for their staff holding critical information, and that piece needed guarantees only owned infrastructure can hold.
+The site ran on a third-party service the team did not administer. Without control over that infrastructure there was no way to host a portal holding client documents alongside it.
 
-The proposal to rebuild came from the team. Moving to configurable infrastructure made it possible to support the portal with the guarantees it required and redesign the public site at the same time. It also opened the way to automating due diligence, which until then meant reading documents by hand.
+Due diligence was done by reading those documents by hand, file by file. Every new client took up a person's time before they could start operating, and the rate of new clients depended on how many people were free to review them.
 
 ## Technical decisions
 
-A marketing site and a portal holding client documents have opposite exposures. Serving them from the same process would turn any failure on the first into access to the second.
+A marketing site and a portal holding client documents have opposite exposure. Serving them from the same process would turn any fault in the first into access to the second.
 
-The boundary is a deployment boundary, not a code boundary. A single image is published as two services with separate identities, and the public service has its database access removed.
+The boundary went into the deployment rather than the code. A single image is published as two services with separate identities, and the public service has its database access removed.
 
-The second rule is that server code is never imported from the browser, not even for types. When the client imported a constant from a server module, the dependency graph pulled in the model SDK: 269 KB of dead JavaScript on every visit. No credential was exposed, because the framework only injects variables with the public prefix, but the weight was real. The rule is now checked by a command inside the pipeline.
+The second rule is that server code is never imported from the browser, not even for types. When the client imported one constant from a server module, the dependency graph pulled in the model SDK with it: 269 KB of dead JavaScript on every visit. No credential was exposed, because the framework only publishes variables with a public prefix, but the weight was real. The rule is now checked by a command inside the pipeline.
 
 ## Architecture
 
-The two services share an image and a binary. What they do not share is the identity they run under, and everything else follows from that.
+The two services share an image and a binary. What they do not share is the identity they run as, and everything else follows from that.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-A document uploaded by a client passes the size, type and rate limits before it reaches the model. What the model returns is validated against the schema before it is written, so a malformed extraction never reaches the database.
+A document uploaded by a client passes size, type and rate limits before it reaches the model. What the model returns is validated against the schema before it is written, so a malformed extraction never reaches the database.
 
 ## Result
 
-The platform serves the public site, the internal portal, due diligence and accounts receivable from two services with different permissions.
+The platform serves the public site, the internal portal, due diligence and accounts receivable from two services with different permissions. The document review that used to occupy a person is now proposed by the system, and the person confirms or corrects it.
 
-The suite holds 2,243 unit tests across 144 files and 27 end-to-end suites. Four of those are dedicated attack suites, one per module: authentication, accounts receivable, due diligence and the public site.
+Verification travels with every deployment: 2,243 unit tests across 144 files and 27 end-to-end suites. Four of those are dedicated attack suites, one per module: authentication, accounts receivable, due diligence and the public site.
 
 ## What I learned
 
-Separation by deployment costs more than a check inside the code: two services to configure, two identities to maintain, and a deployment that can end up split between versions.
+Splitting by deployment costs more than a check inside the code. It is two services to configure, two identities to maintain, and a deployment that can end up half-applied between versions.
 
-In return, the guarantee does not depend on the application behaving as expected: if the public site ever ran arbitrary code, it would still have no database credentials to use.
+In exchange, the guarantee stops depending on the application behaving as expected. If the public site were ever to run arbitrary code, it would still have no database credentials to use. For a portal that holds client documents, that difference justifies the cost of running two services.

@@ -28,38 +28,42 @@ order: null
 
 ## Context
 
-Trabajo Comunal Universitario (TCU), the compulsory community-service term the degree requires. The team approached Group 35 of the Guides and Scouts, put the proposal to them, and ran the project under the TCU guidelines.
+University community service, the outreach requirement the degree carries. The team approached Group 35 of the Guides and Scouts, presented the proposal, and ran the project under the programme's terms.
 
-The scope was to open up the local group's digital presence: its public site and its social channels. The site carries the group's information and a membership form, in Spanish and English. That was my part.
+The scope was to open up the group's digital presence: its public site and its social channels. The site carries the group's information and a joining form, in Spanish and English. That was my part.
+
+The condition that shaped the project is its ending. Community service finishes on a fixed date, and from then on the site is in the hands of the group's communications team, who do not write code.
 
 ## Problem
 
-The national Guides and Scouts association has a site of its own; Group 35 did not. Locally there was nowhere to publish their information or receive a membership request, so being found depended on direct contact.
+The national Guides and Scouts association has its own site; Group 35 had none. Locally there was nowhere to publish its information or receive a joining request, so getting known depended on direct contact and on somebody knowing somebody.
 
-The community-service term ends on a fixed date. From then on the site is in the hands of the group's communications team, who do not code.
-
-Any text change that required editing a component would have frozen the site the day the university team left.
+An interested family had no way to find out what the group does, where it meets, or how to enrol a child without asking in person.
 
 ## Technical decisions
 
-No visible text lives inside a component. All of it sits in per-language message catalogues, with structural data (routes, identifiers, section colours) in a separate file.
+The site has to stay alive without the team that built it. Any text change that required editing a component would have frozen it on handover day.
 
-There are no loose colours inside components either: all of them come from CSS custom properties.
+So no visible text lives inside a component. All of it sits in per-language message catalogues, with the structural data, such as routes, identifiers and section colours, in a separate file. There are no loose colours inside components either: they all come from CSS custom properties.
+
+The admin panel was deliberately left out of scope. It would have added authentication, roles and an interface to maintain, for a group with nobody to repair it.
 
 ## Architecture
 
-Both routes always carry a language prefix, and the root redirects to the default language. The switcher takes the path without its prefix and rebuilds it under the other language, so changing language leaves the visitor on the same page.
+Both routes always carry a language prefix, and the root redirects to the default language. The switcher takes the route without its prefix and rebuilds it under the other language, so switching language leaves the visitor on the same page.
 
-Submitting the form writes the request and queues a notification. An edge function claims it and sends the confirmation.
+Submitting the form writes the request and queues a notification. An edge function picks it up and sends the confirmation to the applicant.
 
 ## Result
 
-The site is live in Spanish and English, carrying the group's information and the membership form. The communications team changes any text by editing its catalogue, without opening a component.
+The site is published in Spanish and English, with the group's information and the joining form online. An interested family finds the group, reads what it does and sends the request without speaking to anyone first.
+
+The communications team changes any text by editing its catalogue, without opening a component. Documentation and a training session on those catalogues were handed over with it.
 
 The edge function claims each notification atomically, so two simultaneous runs do not send the same confirmation twice. Tables holding personal data have row-level security and are not exposed to public roles.
 
 ## What I learned
 
-The admin panel was left out of scope deliberately. It would have added authentication, roles and an interface to maintain, for a group with nobody to repair it.
+Leaving out the admin panel has a real cost: any change that is not text still needs a deployment, and that needs someone technical.
 
-Documentation and a training session on the message catalogues were delivered instead. That decision has a real cost: any change beyond text still needs a deployment.
+It was still the right decision for this client. Scope was not set by what the site could do, but by what a communications team with no technical background could keep running after handover.

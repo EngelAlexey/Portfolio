@@ -47,36 +47,44 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-An attendance clock-in app for the companies running Kaizen's systems. Staff clock in with a photo and a location. The entry is stored on the phone and uploaded when there is a connection, because much of the work happens on site and on the road.
+Seiri is the attendance clock-in app Kaizen offers to the companies using its systems. Staff clock in and out from their phone, with a photo and a location, and the record feeds the payroll calculation.
+
+A good share of those staff work on site and on the road, where there is no time clock and no guaranteed signal. That is the reason for the project: take the clock-in point to where the person is, instead of making them travel to a fixed one.
 
 ## Problem
 
-Without a system, entries are written in a notebook or taken down name by name by a supervisor. At sites with large headcounts that queue consumes productive time every morning, before anyone reaches their post.
+With no system, arrival is written in a notebook or taken down by a supervisor name by name. In sites with a lot of staff that queue eats productive time every morning, before anyone reaches their post.
 
-The goal was twofold. Clocking in should take seconds and require nobody taking notes, and the resulting record should stand on its own.
-
-Each entry carries its time, its location and its identity check. Payroll is computed on data that does not depend on anyone confirming it afterwards.
+The record that comes out of it does not stand on its own either. The time is whatever someone wrote down, there is no evidence of where the person was, and payroll is calculated on data that depends on somebody confirming it later.
 
 ## Technical decisions
 
-Offline, two devices can clock in the same worker without seeing each other. On reconnecting, both send an entry that was valid according to what each one observed. The previous scheme counted the day's entries and then inserted, which are two steps with no guarantee between them.
+Offline, two devices can clock in the same person without seeing each other. On reconnecting, both send a clock-in that was valid according to what each one observed. The earlier scheme counted the day's entries and then inserted, which are two steps with no guarantee between them.
 
-Validation moved inside an InnoDB transaction at REPEATABLE READ isolation, which locks the day's rows with `SELECT ... FOR UPDATE` before deciding.
+Validation moved inside a database transaction that locks the day's rows before deciding. Two simultaneous syncs can no longer both get through: the second waits for the first to finish.
+
+The entry that loses the conflict is not discarded. It is recorded and flagged for review, with its device and its time, because discarding it silently would leave someone with no shift on record and no way to dispute it.
+
+Identity verification is advisory on purpose. If the recognition service does not respond, the entry is accepted and noted as unverified. An infrastructure failure cannot stop someone recording their working day.
 
 ## Architecture
 
-The phone writes to SQLite first and queues the entry. A background task drains the queue against the API when there is a connection. The token is held in the system's secure store, with a migration from the location used previously.
+The phone writes to its local database first and queues the entry. A background task drains the queue against the API when there is a connection. The token is kept in the system's secure store.
 
-The four rules that decide whether the entry is accepted are applied on the server.
+The four rules that decide whether an entry is accepted are applied on the server, inside the same transaction.
 
 <ArchDiagram {...frontmatter.diagram} />
 
 ## Result
 
-Staff clock in within seconds, with a photo and a location, with nobody taking notes and without depending on a signal. The entry uploads on its own as soon as there is a connection.
+Staff clock in within seconds, with a photo and a location, with nobody taking notes and without depending on signal. The entry uploads on its own as soon as there is a connection.
+
+Every record arrives with its time, its location and its identity check, so payroll is calculated on data that does not need confirming afterwards.
 
 The geofence formula exists twice, on the server and on the client, because the client has to evaluate it offline. There is a test whose only job is to fail if the two versions stop agreeing.
 
 ## What I learned
 
-Counting the day's entries on the client does not prevent a duplicate: each device keeps its own count and neither sees the other while they are offline. Inside the server transaction the conflict still happens, but it is detected and sent to review rather than settled by arrival order.
+Counting the day's entries on the client does not prevent a duplicate: each device keeps its own count and neither sees the other while they are offline.
+
+Inside the server transaction the conflict still happens, but it is detected and sent to review instead of being settled by whoever arrives first. When clients can work offline, the check that decides something has to sit at the one point that sees every client at once.

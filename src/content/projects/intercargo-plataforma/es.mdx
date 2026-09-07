@@ -1,7 +1,7 @@
 ---
 slug: intercargo-plataforma
 title: Plataforma de Intercargo | ERP interno y sitio público
-tagline: Sitio público, portal interno, debida diligencia de clientes y cuentas por cobrar. La misma imagen se despliega como dos servicios con permisos distintos.
+tagline: Sitio público, portal interno, debida diligencia de clientes y cuentas por cobrar. El sitio abierto y el portal corren separados, con permisos distintos.
 areas: [seguridad, fullstack]
 kind: profesional
 org: Intercargo Panamá — vía Kaizen Apps CR
@@ -50,21 +50,23 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-La plataforma reúne el sitio público y el portal del personal: debida diligencia de clientes, cuentas por cobrar, nómina y el seguimiento de las solicitudes que entran por el sitio. Está en desarrollo activo y crece por módulos. Entré a construir sobre ella y a definir su modelo de seguridad.
+La plataforma reúne el sitio público de Intercargo y el portal donde trabaja su personal: debida diligencia de clientes, cuentas por cobrar, nómina y seguimiento de las solicitudes que entran por el sitio. Está en desarrollo activo y crece por módulos.
+
+El encargo original fue el portal interno. La propuesta de rehacer también el sitio público salió del equipo. Mover ambos a una infraestructura propia era la única forma de sostener el portal con las garantías que el cliente pedía. Entré a construir sobre la plataforma y a definir su modelo de seguridad.
 
 ## Problema
 
-El sitio corría sobre un servicio de terceros que el equipo no administraba. El cliente pedía un portal para su personal con información crítica, y esa pieza necesitaba garantías que solo se sostienen sobre infraestructura propia.
+El sitio corría sobre un servicio de terceros que el equipo no administraba. Sin control sobre esa infraestructura no había manera de alojar junto a él un portal con documentos de clientes.
 
-La propuesta de rehacerlo salió del equipo. Mover el sitio a una infraestructura configurable permitía sostener el portal con las garantías que exigía y rediseñar el sitio público al mismo tiempo. Abrió además la puerta a automatizar la debida diligencia, que hasta entonces era leer documentos a mano.
+La debida diligencia se resolvía leyendo esos documentos a mano, expediente por expediente. Cada alta consumía tiempo de una persona antes de que el cliente pudiera operar, y el ritmo de altas dependía de cuánta gente hubiera disponible para revisarlas.
 
 ## Decisiones técnicas
 
 Un sitio de marketing y un portal con documentos de clientes tienen exposiciones opuestas. Servirlos desde el mismo proceso convertiría cualquier fallo del primero en un acceso al segundo.
 
-La frontera es de despliegue, no de código. Una sola imagen se publica como dos servicios con identidades separadas, y al servicio público se le retira el acceso a la base de datos.
+La frontera quedó en el despliegue y no en el código. Una sola imagen se publica como dos servicios con identidades separadas, y al servicio público se le retira el acceso a la base de datos.
 
-La segunda regla es que el código de servidor nunca se importa desde el navegador, ni siquiera para tipos. Cuando el cliente importó una constante desde un módulo de servidor, el grafo de dependencias arrastró el SDK del modelo: 269 KB de JavaScript muerto en cada visita. No se expuso ninguna credencial, porque el framework solo inyecta las variables con prefijo público, pero el peso era real. La regla ahora se comprueba con un comando dentro del pipeline.
+La segunda regla es que el código de servidor nunca se importa desde el navegador, ni siquiera para tipos. Cuando el cliente importó una constante desde un módulo de servidor, el grafo de dependencias arrastró consigo el SDK del modelo: 269 KB de JavaScript inútil en cada visita. No se expuso ninguna credencial, porque el framework solo publica las variables con prefijo público, pero el peso era real. La regla se comprueba ahora con un comando dentro del pipeline.
 
 ## Arquitectura
 
@@ -76,12 +78,12 @@ Un documento subido por un cliente pasa por los límites de tamaño, tipo y frec
 
 ## Resultado
 
-La plataforma sirve el sitio público, el portal interno, la debida diligencia y las cuentas por cobrar desde dos servicios con permisos distintos.
+La plataforma sirve el sitio público, el portal interno, la debida diligencia y las cuentas por cobrar desde dos servicios con permisos distintos. La revisión documental que antes ocupaba a una persona ahora la propone el sistema, y la persona confirma o corrige.
 
-La suite tiene 2 243 pruebas unitarias repartidas en 144 archivos y 27 suites end-to-end. Cuatro de ellas son suites de ataque dedicadas, una por módulo: autenticación, cuentas por cobrar, debida diligencia y sitio público.
+La verificación acompaña a cada despliegue: 2 243 pruebas unitarias en 144 archivos y 27 suites end to end. Cuatro de ellas son suites de ataque dedicadas, una por módulo: autenticación, cuentas por cobrar, debida diligencia y sitio público.
 
 ## Lo que aprendí
 
-La separación por despliegue cuesta más que una comprobación dentro del código: dos servicios que configurar, dos identidades que mantener y un despliegue que puede quedar a medias entre versiones.
+Separar por despliegue cuesta más que una comprobación dentro del código. Son dos servicios que configurar, dos identidades que mantener y un despliegue que puede quedar a medias entre versiones.
 
-A cambio, la garantía no depende de que la aplicación se comporte como se espera: si el sitio público llegara a ejecutar código arbitrario, seguiría sin tener credenciales de base de datos que usar.
+A cambio, la garantía deja de depender de que la aplicación se comporte como se espera. Si el sitio público llegara a ejecutar código arbitrario, seguiría sin tener credenciales de base de datos que usar. Para un portal que guarda documentos de clientes, esa diferencia justifica el coste de operar dos servicios.

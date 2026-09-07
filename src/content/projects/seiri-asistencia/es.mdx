@@ -47,27 +47,31 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-App de marcaje de asistencia para las empresas que usan los sistemas de Kaizen. El colaborador marca con foto y ubicación. El registro se guarda en el teléfono y sube cuando hay red, porque buena parte del trabajo ocurre en obra y en ruta.
+Seiri es la aplicación de marcaje de asistencia que Kaizen ofrece a las empresas que usan sus sistemas. El colaborador marca su entrada y su salida desde el teléfono, con foto y ubicación, y el registro alimenta el cálculo de nómina.
+
+Buena parte de esos colaboradores trabaja en obra y en ruta, donde no hay reloj marcador ni cobertura garantizada. Ese es el motivo del proyecto: llevar el punto de marcaje a donde está la persona, en lugar de obligarla a pasar por un lugar fijo.
 
 ## Problema
 
 Sin sistema, la entrada se anota en un cuaderno o la toma un encargado nombre por nombre. En centros con mucho personal esa fila consume tiempo productivo cada mañana, antes de que nadie llegue a su puesto.
 
-El objetivo fue doble. Que marcar tome segundos y no requiera a nadie tomando nota, y que el registro resultante se sostenga solo.
-
-Cada marca lleva su hora, su ubicación y su verificación de identidad. La nómina se calcula sobre datos que no dependen de que alguien los confirme después.
+El registro que sale de ahí tampoco se sostiene solo. La hora es la que alguien apuntó, no hay constancia de dónde estaba la persona, y la nómina se calcula sobre datos que dependen de que otro los confirme después.
 
 ## Decisiones técnicas
 
 Sin conexión, dos dispositivos pueden marcar al mismo colaborador sin verse entre sí. Al reconectar, ambos envían una marca válida según lo que cada uno observó. El esquema anterior contaba las marcas del día y después insertaba, que son dos pasos sin garantía entre ellos.
 
-La validación se movió dentro de una transacción InnoDB con aislamiento REPEATABLE READ, que bloquea las filas del día con `SELECT ... FOR UPDATE` antes de decidir.
+La validación se movió dentro de una transacción de base de datos que bloquea las filas del día antes de decidir. Dos sincronizaciones simultáneas dejan de poder pasar ambas: la segunda espera a que la primera termine.
+
+La marca que pierde el conflicto no se descarta. Queda registrada y señalada para revisión, con su dispositivo y su hora, porque descartarla en silencio dejaría a alguien sin jornada registrada y sin forma de reclamarla.
+
+La verificación de identidad es consultiva a propósito. Si el servicio de reconocimiento no responde, la marca se acepta y queda anotada como no verificada. Un fallo de infraestructura no puede impedir que alguien registre su jornada.
 
 ## Arquitectura
 
-El teléfono escribe primero en SQLite y encola la marca. Una tarea en segundo plano vacía la cola contra el API cuando hay red. El token se guarda en el almacén seguro del sistema, con migración desde la ubicación que se usaba antes.
+El teléfono escribe primero en su base local y encola la marca. Una tarea en segundo plano vacía la cola contra el API cuando hay red. El token se guarda en el almacén seguro del sistema.
 
-Las cuatro reglas que deciden si la marca entra se aplican en el servidor.
+Las cuatro reglas que deciden si la marca entra se aplican en el servidor, dentro de la misma transacción.
 
 <ArchDiagram {...frontmatter.diagram} />
 
@@ -75,8 +79,12 @@ Las cuatro reglas que deciden si la marca entra se aplican en el servidor.
 
 El colaborador marca en segundos, con foto y ubicación, sin nadie tomando nota y sin depender de la señal. La marca sube sola en cuanto hay red.
 
+Cada registro llega con su hora, su ubicación y su verificación de identidad, así que la nómina se calcula sobre datos que no hay que confirmar después.
+
 La fórmula de geocerca existe dos veces, en el servidor y en el cliente, porque el cliente tiene que evaluarla sin red. Hay una prueba cuyo único trabajo es fallar si las dos versiones dejan de coincidir.
 
 ## Lo que aprendí
 
-Contar las marcas del día en el cliente no impide un duplicado: cada dispositivo lleva su propio recuento y ninguno ve al otro mientras están sin red. En la transacción del servidor el conflicto sigue ocurriendo, pero se detecta y va a revisión en lugar de resolverse por orden de llegada.
+Contar las marcas del día en el cliente no impide un duplicado: cada dispositivo lleva su propio recuento y ninguno ve al otro mientras están sin red.
+
+En la transacción del servidor el conflicto sigue ocurriendo, pero se detecta y va a revisión en lugar de resolverse por orden de llegada. Cuando el cliente puede trabajar sin conexión, la comprobación que decide algo tiene que estar en el único punto que ve a todos los clientes a la vez.

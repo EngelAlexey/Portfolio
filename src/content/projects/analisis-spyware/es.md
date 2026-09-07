@@ -24,19 +24,21 @@ order: null
 
 ## Contexto
 
-Curso de Seguridad de TI I, el mismo del que salió el [detector de cifrado masivo](/es/proyectos/deteccion-por-umbral). Ejercicio individual: se construye una herramienta que reproduce el ciclo de captura y exfiltración, se ejecuta en un laboratorio aislado y se documenta el rastro que deja.
+Curso de Seguridad de TI I, el mismo del que salió el [detector de cifrado masivo](/es/proyectos/deteccion-por-umbral). Ejercicio individual: construir una herramienta que reproduzca el ciclo de captura y exfiltración, ejecutarla en un laboratorio aislado y documentar el rastro que deja.
+
+El objetivo del ejercicio es derivar las contramedidas de la observación directa y no de un manual, porque una lista memorizada no dice cuál de sus puntos funciona.
 
 ## Problema
 
-El curso pedía derivar las contramedidas de la observación directa, no de un manual.
+Quien defiende un sistema necesita saber en qué punto mirar. Un inventario de controles copiado de una guía no responde a eso: enumera medidas sin decir qué evidencia produce cada ataque ni dónde queda registrada.
 
-Una lista memorizada no dice cuál de ellas funciona. Para saber qué observar y en qué punto del sistema, hay que ver primero qué registros quedan cuando ocurren la captura y la exfiltración.
+Para saber qué observar hay que ver primero qué rastro dejan la captura y la exfiltración cuando ocurren de verdad.
 
 ## Decisiones técnicas
 
 Una herramienta cliente-servidor en Python reproduce a pequeña escala el ciclo de captura y exfiltración, únicamente como generador de actividad para el laboratorio.
 
-El entregable es el inventario que produce: tráfico saliente, accesos a recursos y mecanismos de persistencia, cada uno asociado a un control que lo detiene.
+El entregable no es la herramienta sino el inventario que produce: tráfico saliente, accesos a recursos y mecanismos de persistencia, cada uno asociado a un control que lo detiene y a la evidencia que lo respalda.
 
 ## Arquitectura
 
@@ -47,6 +49,8 @@ Esa disposición es lo que hace medible el ejercicio: qué se toca en el sistema
 ## Resultado
 
 El inventario quedó ordenado por el punto del sistema donde actúa cada control: sistema de archivos, red y mecanismo de arranque. Cada indicador va junto al control que lo corta y junto a la evidencia que lo respalda, tomada del propio laboratorio.
+
+Es un documento que se puede contrastar, porque cada línea remite a una observación concreta y no a una recomendación general.
 
 ## Lo que aprendí
 

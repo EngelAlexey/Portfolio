@@ -29,34 +29,38 @@ order: null
 
 ## Context
 
-A Mobile Applications II project, built by a team. A dice game with real-time matches: the phone plays and the web observes the same room.
+A Mobile Applications II project, built as a team. A dice game with real-time rounds: the phone plays and the web watches the same room.
+
+The course asked for a real-time multiplayer game. The team added the web client on its own initiative, so that a round could be followed from a screen other than the one playing it.
 
 ## Problem
 
-The course asked for a real-time multiplayer game. The team added a web client that observes the same match the phone is playing.
+Two clients written in different technologies had to understand exactly the same messages over one server.
 
-That turned the exercise into two clients written in different technologies over one server, and both had to understand exactly the same messages.
+With event names duplicated in each client, keeping them in step depended on somebody telling the other side. If one client added an event and the other did not hear about it, the room broke for half the players, and the fault showed up at runtime rather than at compile time.
 
 ## Technical decisions
 
-If one client added an event and the other did not hear about it, the room broke for half the players. The failure showed up at runtime, not at compile time.
-
-The event contract lives in its own package inside the monorepo, imported by both clients: event names, the shape of each payload, and the functions that serialise and validate.
+The event contract moved into its own package in the monorepo that both clients import: event names, the shape of each message, and the functions that serialise and validate. From there, a mismatch between clients is a compile error.
 
 The game logic also moved into its own package, with no transport or interface dependencies, so it can be tested without starting a server.
 
+Relations were modelled as flat arrays of identifiers because the database's free tier offers no transactions. The reason was noted in the schema itself, so that whoever opens it does not try to normalise it without knowing why it is that way.
+
 ## Architecture
 
-The server holds the rooms and distributes the events. Clients connect through a configurable address, so neither carries a hardcoded URL.
+The server holds the rooms and dispatches events. Clients connect through a configurable address, so neither carries a fixed URL in its code.
 
 The web joins as an observer and the phone as a player. Same server, same protocol, different role.
 
 ## Result
 
-The phone plays and the web observes the same room in real time against one server, each client in its role.
+The phone plays and the web watches the same room in real time against a single server, each client in its role.
 
-Relations were modelled as flat arrays of identifiers because the database's free plan offers no transactions. The reason was written into the schema itself, so nobody normalises it without knowing why it is shaped that way.
+The shared contract turned what used to be a runtime fault into a compile error, so a mismatch between clients is caught before anyone opens the app.
 
 ## What I learned
 
-With event names duplicated in each client, keeping them in sync depended on somebody telling the other side. In the shared package that notice is a compile error, and the cost of getting there was setting up the monorepo.
+The cost of getting there was setting up the monorepo: configuration, tooling and a structure the project needed for nothing else.
+
+With two clients that cost is paid once and the warning becomes automatic. With a single client it would not have paid off, and it is the number of consumers of the contract that decides the answer.

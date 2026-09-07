@@ -1,7 +1,7 @@
 ---
 slug: kaizen-ai
 title: Kaizen AI | Inteligencia de negocio
-tagline: Las empresas que licencian el ERP consultan sus propios datos escribiendo la pregunta. Un reescritor de AST inyecta tres filtros de permiso antes del SQL.
+tagline: Las empresas que licencian el ERP consultan sus propios datos escribiendo la pregunta. El servidor acota cada consulta a lo que esa empresa y ese rol pueden ver.
 areas: [ia, seguridad]
 kind: profesional
 org: Kaizen Apps CR
@@ -50,23 +50,25 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-Herramienta que Kaizen pone en manos de las empresas que licencian su ERP, para que consulten sus propios datos escribiendo la pregunta en lenguaje natural.
+Kaizen licencia un ERP de recursos humanos a otras empresas. Kaizen AI es la herramienta que pone en manos de esas empresas. Consultan sus propios datos escribiendo la pregunta en lenguaje natural, sin pasar por un informe ni por el equipo de soporte.
 
-La versión en producción es la cuarta. Cada reconstrucción movió al código una decisión que la anterior dejaba en manos del modelo.
+El proyecto nació de una necesidad de la operación, no de una idea de producto: el equipo de soporte atendía una a una las consultas de todos los clientes, y ese trabajo crecía al mismo ritmo que la cartera.
 
 ## Problema
 
-Cada consulta de un cliente la atendía una persona del equipo de soporte. Conforme crece la demanda de ayuda, ese equipo se satura y el cliente espera.
+Cada consulta de un cliente la respondía una persona del equipo de soporte. Conforme crece la demanda de ayuda, ese equipo se satura y el cliente espera.
 
-Buena parte de esas consultas se repiten: cómo se hace algo, qué significa un concepto de recursos humanos o de salud ocupacional, qué dice la legislación laboral al respecto. La herramienta existe para que el cliente resuelva esas por su cuenta, y el equipo atienda lo que sí necesita a una persona.
+Buena parte de esas consultas se repiten: cómo se hace algo, qué significa un concepto de recursos humanos o de salud ocupacional, qué dice la legislación laboral al respecto. Eran horas de un equipo especializado dedicadas a preguntas que ya tenían respuesta.
 
 ## Decisiones técnicas
 
-Si la herramienta la usan varias empresas cliente sobre la misma instalación, un modelo que consulta datos productivos plantea una pregunta que un prompt no resuelve: quién puede leer qué. Si el control de acceso dependiera de que el modelo siga instrucciones, bastaría reformular la pregunta para saltárselo.
+Varias empresas cliente usan la herramienta sobre la misma instalación. Eso convierte el control de acceso en la decisión central del proyecto: un modelo que consulta datos productivos plantea una pregunta que un prompt no resuelve, que es quién puede leer qué. Si la restricción dependiera de que el modelo siga instrucciones, bastaría reformular la pregunta para saltársela.
 
-Así que la pregunta se traduce a SQL y el servidor reescribe esa consulta antes de ejecutarla. Un reescritor sobre el árbol sintáctico inyecta tres filtros: base de datos del cliente, rol de la sesión y alcance de la acción.
+La pregunta se traduce a SQL y el servidor reescribe esa consulta antes de ejecutarla. Un reescritor sobre el árbol sintáctico inyecta tres filtros: base de datos del cliente, rol de la sesión y alcance de la acción.
 
-Una consulta que pidiera datos de otra empresa no falla una validación: se ejecuta ya acotada y devuelve solo lo permitido.
+Una consulta que pidiera datos de otra empresa no falla una validación. Se ejecuta ya acotada y devuelve solo lo permitido, que es una garantía más fuerte que rechazarla.
+
+La versión en producción es la cuarta. Cada reconstrucción movió al código una decisión que la anterior dejaba en manos del modelo.
 
 ## Arquitectura
 
@@ -78,10 +80,14 @@ El reescritor es el único punto del recorrido que fija cuánto se devuelve, as�
 
 ## Resultado
 
-La herramienta está en producción para las empresas que licencian el ERP. Responde sobre los datos de cada una, distingue lo que ve un desarrollador, un administrador y un usuario, sanea los campos sensibles y deja registro por consulta.
+La herramienta está en producción para las empresas que licencian el ERP. Cada una consulta sus propios datos, distingue lo que ve un desarrollador, un administrador y un usuario, oculta los campos sensibles y deja registro de cada consulta ejecutada.
+
+Las preguntas que antes ocupaban al equipo de soporte las resuelve ahora el cliente, y el equipo atiende lo que sí necesita a una persona.
 
 La recuperación exige un mínimo de relevancia. Una pregunta sin respaldo en los datos devuelve que no hay información, en lugar de un texto armado con fragmentos poco relacionados.
 
 ## Lo que aprendí
 
-El control de visibilidad empezó apoyado en el texto de la instrucción y terminó entero en el código. La diferencia práctica es que ahora se puede ejecutar: una prueba pasa una pregunta por el reescritor y comprueba que el SQL resultante lleva los tres filtros. Sobre un prompt no hay nada equivalente que ejecutar.
+El control de visibilidad empezó apoyado en el texto de la instrucción y terminó entero en el código. La diferencia práctica es que ahora se puede ejecutar: una prueba pasa una pregunta por el reescritor y comprueba que el SQL resultante lleva los tres filtros.
+
+Sobre un prompt no hay nada equivalente que ejecutar. Cuando una garantía tiene que sostenerse frente a un cliente, conviene ponerla donde una prueba pueda comprobarla.

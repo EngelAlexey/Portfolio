@@ -48,36 +48,44 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-WhatsApp collections for Intercargo's operation in Panama. The client writes in, checks their statement, reports a payment or promises a date, and all of it happens inside the conversation.
+A collections assistant over WhatsApp for Intercargo's operation in Panama. The client writes in, checks their statement, reports a payment or promises a date, and all of it happens inside the conversation.
+
+The client asked to automate that cycle. Collections tied up their team in repetitive contact and verification work that grew with the receivables book, and they wanted debtors able to handle the routine part themselves.
 
 ## Problem
 
-Collections relied on lists of clients to be contacted one by one. Every payment receipt was reviewed by a person before the balance was up to date.
+Collections relied on lists of clients to be contacted one by one. Every reminder was a call or a message written by hand, and the order depended on who reviewed the list that day.
 
-The client asked for that cycle to be automated. The debtor checks their own balance and attaches their own receipt, and the team steps in only where judgement is needed.
+Every payment receipt was checked by a person before the balance was brought up to date. Until that check happened, the statement the company saw did not match what the client had already paid.
 
 ## Technical decisions
 
-A collections assistant discloses other people's balances. If the model decided who sees them, every reply would depend on it never being wrong, and a language model does not give that guarantee.
+A collections assistant exposes third-party balances. If the model decided who they are shown to, every reply would depend on it not making a mistake, and a language model does not offer that guarantee.
 
-So the model does one thing: turn a natural-language message into an intent and, where applicable, a date.
+So the model does one thing: turn a plain-language message into an intent and, where applicable, into a date.
 
-Everything else is code: validating identity, querying the account, recording a payment promise and deciding whether a reminder is due. The conversation runs on a state machine that returns actions, and a separate layer translates them into the WhatsApp transport.
+Everything else is code: validating identity, querying the receivables book, recording a payment promise and deciding whether a reminder is due. The conversation is resolved in a state machine that returns actions, and a separate layer translates them to the WhatsApp transport.
 
-The service uses no web framework: it starts a server with `node:http` and works over nine tables of its own, separate from the rest of [the corporate platform](/en/projects/intercargo-plataforma). The model provider is swappable, with two implementations behind the same interface.
+The service uses no web framework. It starts a server with `node:http` and works over nine tables of its own, separate from the rest of [the corporate platform](/en/projects/intercargo-plataforma), so a change in collections does not touch the portal's data. The model provider is swappable, with two implementations behind the same interface.
 
 ## Architecture
 
-The model occupies one stretch of the path. What goes into it and what comes out are structures the code validates before anything continues.
+The model occupies a single leg of the path. What goes into it and what comes out are structures the code validates before continuing.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-The state machine returns actions and a separate layer translates them into the transport, so the conversation can be run without Meta credentials or a WhatsApp line.
+The state machine returns actions and a separate layer translates them to the transport, so the whole conversation can be run without Meta credentials or a WhatsApp line.
 
 ## Result
 
-The service is in operation over nine tables of its own, separate from the rest of the platform. One command replays an entire dialogue against the real logic, and that is how the hard cases are tested: a promise with an ambiguous date, a payment reported twice, a client asking to stop receiving messages.
+The service is in operation. Debtors check their own balance and attach their own receipt, reminders go out on their own one business day before the due date, and the team steps in only where judgement is needed.
+
+Anyone who asks to stop receiving messages stops receiving them, and business days and public holidays are calculated on the server, so the operation does not depend on someone watching the calendar.
+
+One command replays a whole dialogue against the real logic. It is used to test the hard cases: a promise with an ambiguous date, a payment reported twice, a client asking to be left alone.
 
 ## What I learned
 
-That simulator walks the state machine end to end, so it catches a flow regression without locating it: when it fails, it points at the whole dialogue rather than the module. Tests over the action layer are the next step.
+That simulator walks the state machine end to end, which is why it detects a flow regression without being able to locate it: when it fails, it points at the whole dialogue rather than the module.
+
+A test that covers the entire path tells you something broke, but not where. Tests over the action layer are the next step, precisely to shorten that diagnosis.
