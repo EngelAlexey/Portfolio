@@ -38,8 +38,8 @@ diagram:
       body: "The day's window is computed in the country's timezone, not the process timezone. The server runs in UTC, and without this rule an entry at 23:30 local time would count towards the next day."
     - name: "Conflicts go to review"
       body: "The losing entry is not discarded. It is stored and flagged for manual review, with its device and its time, so somebody can decide which one was right."
-    - name: "Advisory verification"
-      body: "Identity verification travels with the entry rather than gating it. Every entry stores the outcome of that check alongside its time and its location, and later review works from that record."
+    - name: "Verification on record"
+      body: "Every entry stores the outcome of the identity check alongside its time and its location. Later review works from that stored record rather than from a fresh check."
   caption: "All four rules are applied inside the same transaction, before the entry is written."
 ---
 
@@ -65,7 +65,7 @@ Validation moved inside a database transaction that locks the day's rows before 
 
 The entry that loses the conflict is not discarded. It is recorded and flagged for review, with its device and its time, because discarding it silently would leave someone with no shift on record and no way to dispute it.
 
-Identity verification is advisory on purpose: it travels with the entry rather than gating it. Logging a worker's shift cannot be made to depend on a supporting service being available, so the outcome of the check rides along with the entry and later review works from that record.
+Logging a worker's shift cannot be made to depend on a supporting service being available. So the outcome of the identity check rides along with the entry, and later review works from that record.
 
 ## Architecture
 
@@ -81,7 +81,7 @@ Staff clock in within seconds, with a photo and a location, with nobody taking n
 
 Every record arrives with its time, its location and its identity check, so payroll is calculated on data that does not need confirming afterwards.
 
-The geofence formula exists twice, on the server and on the client, because the client has to evaluate it offline. There is a test whose only job is to fail if the two versions stop agreeing.
+The geofence formula exists twice, on the server and on the client. There is a test whose only job is to fail if the two versions stop agreeing.
 
 ## What I learned
 

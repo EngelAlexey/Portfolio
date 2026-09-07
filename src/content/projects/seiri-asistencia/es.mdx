@@ -38,8 +38,8 @@ diagram:
       body: "La ventana del día se calcula en la zona horaria del país, no en la del proceso. El servidor corre en UTC, y sin esta regla una marca a las 23:30 locales contaría al día siguiente."
     - name: "Conflicto a revisión"
       body: "La marca que pierde no se descarta. Queda registrada y señalada para revisión manual, con su dispositivo y su hora, para que alguien pueda decidir cuál era la buena."
-    - name: "Verificación consultiva"
-      body: "La verificación de identidad acompaña a la marca en lugar de condicionarla. Toda marca guarda el resultado de esa verificación junto a su hora y su ubicación, y la revisión posterior trabaja sobre ese dato."
+    - name: "Verificación registrada"
+      body: "Toda marca guarda el resultado de la verificación de identidad junto a su hora y su ubicación. La revisión posterior trabaja sobre ese dato guardado y no sobre una consulta nueva."
   caption: "Las cuatro reglas se aplican dentro de la misma transacción, antes de escribir la marca."
 ---
 
@@ -65,7 +65,7 @@ La validación se movió dentro de una transacción de base de datos que bloquea
 
 La marca que pierde el conflicto no se descarta. Queda registrada y señalada para revisión, con su dispositivo y su hora, porque descartarla en silencio dejaría a alguien sin jornada registrada y sin forma de reclamarla.
 
-La verificación de identidad es consultiva a propósito: acompaña a la marca en lugar de condicionarla. El registro de la jornada de un colaborador no puede quedar sujeto a que un servicio de apoyo esté disponible, así que el resultado de la verificación viaja con la marca y la revisión posterior trabaja sobre ese dato.
+El registro de la jornada de un colaborador no puede quedar sujeto a que un servicio de apoyo esté disponible. Por eso el resultado de la verificación de identidad viaja con la marca, y la revisión posterior trabaja sobre ese dato.
 
 ## Arquitectura
 
@@ -81,7 +81,7 @@ El colaborador marca en segundos, con foto y ubicación, sin nadie tomando nota 
 
 Cada registro llega con su hora, su ubicación y su verificación de identidad, así que la nómina se calcula sobre datos que no hay que confirmar después.
 
-La fórmula de geocerca existe dos veces, en el servidor y en el cliente, porque el cliente tiene que evaluarla sin red. Hay una prueba cuyo único trabajo es fallar si las dos versiones dejan de coincidir.
+La fórmula de geocerca existe dos veces, en el servidor y en el cliente. Hay una prueba cuyo único trabajo es fallar si las dos versiones dejan de coincidir.
 
 ## Lo que aprendí
 

@@ -28,7 +28,7 @@ order: 4
 
 ## Contexto
 
-CRM a la medida para una empresa de carga con varias sucursales. Gestiona clientes, contactos, negocios de embarque, citas, cotizaciones y sucursales, y es el registro donde los ejecutivos comerciales llevan su gestión diaria.
+CRM a la medida para Star Cargo Service, empresa de carga con varias sucursales. Gestiona clientes, contactos, negocios de embarque, citas, cotizaciones y sucursales, y es el registro donde los ejecutivos comerciales llevan su gestión diaria.
 
 El proyecto se pidió porque la operación comercial crecía y la información de ventas no estaba en ningún sistema. Vivía en hojas de cálculo repartidas entre las personas que las escribían.
 

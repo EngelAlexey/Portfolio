@@ -28,7 +28,7 @@ order: 4
 
 ## Context
 
-A bespoke CRM for a freight company with several branches. It handles clients, contacts, shipment deals, appointments, quotes and branches, and it is the record where sales executives keep their day-to-day work.
+A bespoke CRM for Star Cargo Service, a freight company with several branches. It handles clients, contacts, shipment deals, appointments, quotes and branches, and it is the record where sales executives keep their day-to-day work.
 
 The project was commissioned because the sales operation was growing and none of its information lived in a system. It lived in spreadsheets spread across the people who wrote them.
 

@@ -36,7 +36,7 @@ El servicio ya existía y ya estaba en producción cuando lo tomé, levantado po
 
 ## Problema
 
-Comparar dos personas significaba descargar ambas imágenes a archivos temporales y ejecutar una verificación completa entre ellas. El rostro de referencia se volvía a procesar en cada marcaje, todos los días, sin haber cambiado.
+Cada marcaje del día pasaba por el servicio, y el servicio repetía en cada uno el trabajo entero. Comparar dos personas significaba descargar ambas imágenes a archivos temporales y ejecutar una verificación completa entre ellas. El rostro de referencia se volvía a procesar en cada marcaje, todos los días, sin haber cambiado.
 
 Cada petición abría además su propia conexión a la base de datos, sin grupo ni reintento. Un corte momentáneo dejaba el marcaje sin puntuación.
 
@@ -58,7 +58,7 @@ Cada petición lleva un identificador propio y sus registros salen estructurados
 
 El servicio recibe la imagen de dos formas, según de dónde venga: por identificador de un archivo en Drive, para lo que ya vivía allí, o incrustada en la petición, que es el camino que usa Seiri.
 
-De ahí en adelante el camino es el mismo: detección del rostro, cálculo del vector, comparación contra el vector guardado de esa persona y escritura de la puntuación en la fila del marcaje. Si la persona no tiene vector de referencia, el servicio lo deriva de su foto de perfil y lo guarda, de modo que el primer marcaje no falla por una ficha incompleta.
+De ahí en adelante el camino es el mismo: detección del rostro, cálculo del vector, comparación contra el vector guardado de esa persona y escritura de la puntuación en la fila del marcaje. El vector de referencia se calcula al dar de alta a la persona, así que en el marcaje ya está guardado.
 
 La instancia que sostiene el modelo se suspende y se reanuda por horario, llamando al API del alojamiento desde dos tareas programadas. Un servicio que carga un modelo en memoria cuesta lo mismo ocupado que ocioso.
 

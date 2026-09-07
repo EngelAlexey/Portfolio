@@ -40,7 +40,7 @@ diagram:
       body: "The token grants reads over SQL and writes only through the ERP's API. The service's surface exposes no direct write against the database."
     - name: "Warehouse scoping"
       body: "Every query is limited to the warehouse of the enrolled device. A phone enrolled at one warehouse cannot reach another warehouse's inventory."
-  caption: "Four rules protect the one endpoint that does not require a prior credential."
+  caption: "Four rules protect enrolment, which is where the device does not yet hold a credential."
 ---
 
 import ArchDiagram from '../../../components/ArchDiagram.astro';
@@ -71,7 +71,7 @@ A field the database stops offering comes back null, not padded. If that takes a
 
 The service reads over direct SQL against the ERP's database, which is the fast path, and writes only through the ERP's API, slower but respecting the sequence formulas and the triggers a direct write would not fire. That separation already existed, and the maintenance work had to respect it.
 
-A phone cannot authenticate with the platform's identity, because enrolment happens before the device holds any credential at all. That is the service's gate: a single public endpoint, with four rules applied at once.
+A phone cannot authenticate with the platform's identity, because enrolment happens before the device holds any credential at all. That is the service's gate, and it carries four rules applied at once.
 
 <ArchDiagram {...frontmatter.diagram} />
 

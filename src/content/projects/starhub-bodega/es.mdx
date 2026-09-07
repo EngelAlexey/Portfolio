@@ -40,7 +40,7 @@ diagram:
       body: "El token da lectura por SQL y escritura solo a través del API del ERP. En la superficie del servicio no existe una operación de escritura directa contra la base."
     - name: "Acotación por bodega"
       body: "Cada consulta se limita a la bodega del dispositivo dado de alta. Un teléfono dado de alta en una bodega no alcanza el inventario de otra."
-  caption: "Cuatro reglas protegen el único endpoint que no exige credencial previa."
+  caption: "Cuatro reglas protegen el alta, que es donde el dispositivo todavía no tiene credencial."
 ---
 
 import ArchDiagram from '../../../components/ArchDiagram.astro';
@@ -71,7 +71,7 @@ Un campo que la base deja de ofrecer sale nulo, no relleno. Si eso quita funcion
 
 El servicio lee por SQL directo contra la base del ERP, que es el camino rápido, y escribe únicamente por el API del ERP, más lento pero que respeta las fórmulas de consecutivo y los disparadores que una escritura directa no activaría. Esa separación ya existía y el mantenimiento tenía que respetarla.
 
-Un teléfono no puede autenticarse con la identidad de la plataforma, porque el alta ocurre antes de que el aparato tenga credencial alguna. Esa es la compuerta del servicio: un solo endpoint público, con cuatro reglas aplicadas a la vez.
+Un teléfono no puede autenticarse con la identidad de la plataforma, porque el alta ocurre antes de que el aparato tenga credencial alguna. Esa es la compuerta del servicio, y lleva cuatro reglas aplicadas a la vez.
 
 <ArchDiagram {...frontmatter.diagram} />
 

@@ -36,7 +36,7 @@ The service already existed and was already in production when I took it over, s
 
 ## Problem
 
-Comparing two people meant downloading both images to temporary files and running a full verification between them. The reference face was reprocessed on every clock-in, every day, without having changed.
+Every clock-in of the day went through the service, and the service repeated the whole job on each one. Comparing two people meant downloading both images to temporary files and running a full verification between them. The reference face was reprocessed on every clock-in, every day, without having changed.
 
 Every request also opened its own database connection, with no pool and no retry. A momentary drop left the clock-in with no score.
 
@@ -58,7 +58,7 @@ Every request carries its own identifier and its logs come out structured, with 
 
 The service receives the image in two ways, depending on where it comes from: by the identifier of a file on Drive, for what already lived there, or embedded in the request, which is the path Seiri uses.
 
-From there the path is the same: face detection, vector computation, comparison against that person's stored vector, and writing the score onto the clock-in row. If the person has no reference vector, the service derives one from their profile photo and stores it, so a first clock-in does not fail on an incomplete record.
+From there the path is the same: face detection, vector computation, comparison against that person's stored vector, and writing the score onto the clock-in row. The reference vector is computed when the person is enrolled, so it is already stored by the time they clock in.
 
 The instance that holds the model is suspended and resumed on a schedule, by calling the host's API from two scheduled jobs. A service that loads a model into memory costs the same busy as idle.
 
