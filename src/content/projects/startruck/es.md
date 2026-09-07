@@ -33,13 +33,15 @@ La aplicación la construyó otro desarrollador del equipo. Entré con ella ya e
 
 ## Problema
 
-Ninguno de los defectos se veía leyendo el código. Aparecieron corriendo la aplicación en un teléfono real y siguiendo el comportamiento del servicio ya desplegado.
+La empresa necesita la posición de un viaje mientras ocurre, y el chofer necesita pedir ayuda desde la carretera sin buscar un número.
 
-La cadencia de cinco minutos no existía: el teléfono guardaba un punto cada veintisiete segundos, diez veces las filas presupuestadas. Y cuando el rastreo se detenía, rearmar el servicio no lo recuperaba.
-
-El otro estaba fuera del rastreo: la pantalla de viaje reventaba al cerrar la operación, y el chofer se quedaba mirando una pantalla en blanco justo al terminar el viaje.
+Eso obliga a que el registro salga del propio teléfono y se sostenga solo durante horas. Un viaje que deja de reportar sin que nadie lo note deja la carga sin seguimiento hasta que alguien pregunta por ella.
 
 ## Decisiones técnicas
+
+Ninguno de los defectos se veía leyendo el código. Aparecieron corriendo la aplicación en un teléfono real y siguiendo el comportamiento del servicio ya desplegado.
+
+La cadencia de cinco minutos no existía: el teléfono guardaba un punto cada veintisiete segundos, diez veces las filas presupuestadas. Cuando el rastreo se detenía, rearmar el servicio no lo recuperaba. Y la pantalla de viaje reventaba al cerrar la operación, dejando al chofer ante una pantalla en blanco justo al terminar el viaje.
 
 El intervalo de posición que se le pide a Android es el deseado, no un mínimo, y la petición quedaba registrada sin piso. Así que la cadencia la impone ahora la aplicación: acepta lo que el sistema entregue y descarta cualquier punto anterior al ochenta por ciento del intervalo vigente.
 
@@ -51,7 +53,7 @@ Ese aviso no se habría disparado nunca. El controlador de MySQL devolvía las f
 
 El teléfono ejecuta un servicio en primer plano que recoge posiciones. Los puntos no salen directo: entran en una bandeja local y un trabajador la sincroniza cada pocos segundos, con espera creciente ante fallos y sin duplicar un punto ya enviado. Un túnel o una zona sin cobertura retrasan el envío sin perder puntos.
 
-Sobre esa base hay tres redes de recuperación, en orden de dependencia del aparato: dos vigilantes dentro de la aplicación que la reinician cuando Android la mata, una notificación programada que salta si el rastreo deja de capturar y sobrevive a la muerte del proceso, y una comprobación en el servidor que avisa a Operaciones cuando un viaje activo lleva quince minutos sin reportar.
+Sobre esa base hay tres redes de recuperación, ordenadas por cuánto dependen del aparato. Dos vigilantes dentro de la aplicación la reinician cuando Android la mata. Una notificación programada salta si el rastreo deja de capturar, y sobrevive a la muerte del proceso. Y una comprobación en el servidor avisa a Operaciones cuando un viaje activo lleva quince minutos sin reportar.
 
 ## Resultado
 

@@ -48,7 +48,7 @@ Group policies push to the workstations what should not be left to the user: the
 
 ## Architecture
 
-One server concentrates the four roles: it is domain controller with the directory, DNS server to resolve the network's names and external ones, FTP server over IIS with access by domain groups, and DHCP server with a bounded scope — a range with its exclusions and its lease term — for the workstations.
+One server concentrates the four roles. It is domain controller with the directory, and DNS server to resolve the network's names and external ones. It is also FTP server over IIS, with access by domain groups. And it is DHCP server for the workstations, with a bounded scope: a range with its exclusions and its lease term.
 
 The workstations join the domain and receive their address from DHCP, their permissions from the directory and their configuration from the group policies. None of them holds accounts or rules of its own: everything resolves against the server.
 

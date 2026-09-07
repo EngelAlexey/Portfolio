@@ -35,7 +35,7 @@ The course asked for a real-time multiplayer game. The team added the web client
 
 ## Problem
 
-Two clients written in different technologies had to understand exactly the same messages over one server.
+A real-time round breaks for everyone the moment one client stops understanding what the other sends. Two clients written in different technologies had to understand exactly the same messages over one server.
 
 With event names duplicated in each client, keeping them in step depended on somebody telling the other side. If one client added an event and the other did not hear about it, the room broke for half the players, and the fault showed up at runtime rather than at compile time.
 

@@ -48,7 +48,7 @@ Las políticas de grupo bajan a las estaciones lo que no debería quedar a crite
 
 ## Arquitectura
 
-Un servidor concentra los cuatro roles: es controlador de dominio con directorio activo, servidor DNS para resolver los nombres de la red y los externos, servidor FTP sobre IIS con acceso por grupos del dominio, y servidor DHCP con un ámbito acotado —un rango con sus exclusiones y su plazo de concesión— para las estaciones.
+Un servidor concentra los cuatro roles. Es controlador de dominio con el directorio activo, y servidor DNS para resolver los nombres de la red y los externos. Es también servidor FTP sobre IIS, con acceso por grupos del dominio. Y es servidor DHCP para las estaciones, con un ámbito acotado: un rango con sus exclusiones y su plazo de concesión.
 
 Las estaciones se unen al dominio y reciben su dirección del DHCP, sus permisos del directorio y su configuración de las políticas de grupo. Ninguna guarda cuentas ni reglas propias: todo se resuelve contra el servidor.
 

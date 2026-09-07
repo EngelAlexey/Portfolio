@@ -35,7 +35,7 @@ El curso pedía un juego multijugador en tiempo real. El equipo añadió el clie
 
 ## Problema
 
-Dos clientes escritos con tecnologías distintas tenían que entender exactamente los mismos mensajes sobre un mismo servidor.
+Una partida en tiempo real se rompe para todos en cuanto un cliente deja de entender lo que el otro envía. Dos clientes escritos con tecnologías distintas tenían que entender exactamente los mismos mensajes sobre un mismo servidor.
 
 Con los nombres de evento duplicados en cada cliente, mantenerlos sincronizados dependía de que alguien avisara al otro lado. Si un cliente añadía un evento y el otro no se enteraba, la sala se rompía para la mitad de los jugadores, y el fallo aparecía en ejecución y no al compilar.
 
