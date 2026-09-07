@@ -23,8 +23,10 @@ export type OrgMark = NonNullable<Role['mark']>;
 export const WORDMARKS = new Set(['intercargo', 'kaizen', 'starcargo', 'utn']);
 
 export const ORG_LINKS: Partial<Record<OrgMark, string>> = {
-	utn: 'https://www.utn.ac.cr',
-	starcargo: 'https://www.starcargoservice.com'
+	intercargo: 'https://intercargopanama.com',
+	kaizen: 'https://www.kaizenapps.net',
+	starcargo: 'https://www.starcargoservice.com',
+	utn: 'https://www.utn.ac.cr'
 };
 
 export const EXPERIENCE: Role[] = [
