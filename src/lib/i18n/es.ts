@@ -29,7 +29,7 @@ export const es = {
 		orgsLabel: 'Mi experiencia',
 		orgsLede: 'Trabajo con tres empresas en paralelo: logística en Costa Rica y Panamá, y software de recursos humanos.',
 		workTitle: 'Proyectos destacados',
-		workLede: 'Cuatro sistemas en producción. Cada ficha describe por qué se hizo, las decisiones técnicas y el resultado.',
+		workLede: 'Cuatro sistemas en uso. Cada ficha describe por qué se hizo, las decisiones técnicas y el resultado.',
 		workAll: 'Ver los demás proyectos',
 		stackLabel: 'Herramientas'
 	},
@@ -39,7 +39,7 @@ export const es = {
 	},
 	projects: {
 		title: 'Proyectos',
-		lead: 'Trabajo profesional, académico y personal, hecho desde Costa Rica para empresas de Costa Rica y Panamá. Filtra por área.',
+		lead: 'Trabajo profesional y académico, hecho desde Costa Rica para empresas de Costa Rica y Panamá. Filtra por área.',
 		filterLegend: 'Filtrar por área',
 		filterAll: 'Todas',
 		resultsOne: '1 proyecto',
@@ -68,7 +68,7 @@ export const es = {
 		shotsPrevious: 'Captura anterior',
 		shotsNext: 'Captura siguiente',
 		privateBody:
-			'Es trabajo para una empresa: se describe la arquitectura y las decisiones, sin código, sin repositorio y sin capturas de las pantallas internas.',
+			'Es trabajo para una empresa: se describe la arquitectura y las decisiones, sin código y sin repositorio. Las capturas, cuando las hay, son de las pantallas públicas del producto.',
 		next: 'Siguiente proyecto',
 		previous: 'Proyecto anterior'
 	},

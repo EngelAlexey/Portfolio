@@ -45,7 +45,7 @@ order: null
 
 Proyecto Integrador III, en equipo de cinco. El sistema sigue autobuses en vivo y atiende a tres roles: el pasajero que espera, el conductor al volante y la administración que supervisa la flota.
 
-Aporté la mayor parte del API. El cliente móvil y el panel web los llevaron sobre todo otros compañeros.
+Aporté la mayor parte del API y diseñé la interfaz del cliente móvil y del panel web. Mis compañeros los construyeron sobre ese diseño y lo fueron modificando.
 
 ## Problema
 

@@ -45,7 +45,7 @@ order: null
 
 Integrative Project III, in a team of five. The system tracks buses live and serves three roles: the passenger waiting, the driver at the wheel, and the administration supervising the fleet.
 
-I contributed most of the API. The mobile client and the web dashboard were mainly led by other teammates.
+I contributed most of the API, and designed the interface of the mobile client and the web dashboard. My teammates built on that design and reshaped it as they went.
 
 ## Problem
 

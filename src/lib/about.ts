@@ -46,48 +46,20 @@ export const EXPERIENCE: Role[] = [
 		current: true,
 		detail: {
 			es: [
-				'Construyo la plataforma corporativa: sitio público, portal del personal, debida diligencia y cuentas por cobrar.',
+				'Construyo la plataforma corporativa: sitio público, portal del personal, debida diligencia, cuentas por cobrar y nómina.',
+				'Construyo el asistente de cobranza por WhatsApp: identifica al cliente, le muestra su saldo, recibe su comprobante y registra su promesa de pago.',
 				'Definí el modelo de seguridad: dos instancias separadas por criticidad de secretos, identidad por invitación y sesiones revocables.',
 				'Automaticé la debida diligencia, con extracción por modelo y validación contra esquema en el código.',
 				'Cubrí el sistema con 2 243 pruebas unitarias y 27 suites end to end.',
 				'Desplegué la infraestructura en contenedores sobre Google Cloud Run.'
 			],
 			en: [
-				'Build the corporate platform: public site, staff portal, client due diligence and accounts receivable.',
+				'Build the corporate platform: public site, staff portal, client due diligence, accounts receivable and payroll.',
+				'Build the WhatsApp collections assistant: it identifies the client, shows their balance, takes their receipt and records their payment promise.',
 				'Defined the security model: two instances split by how critical their secrets are, invite-based identity and revocable sessions.',
 				'Automated due diligence, with model-driven extraction and schema validation enforced in code.',
 				'Covered the system with 2,243 unit tests and 27 end-to-end suites.',
 				'Deployed the infrastructure in containers on Google Cloud Run.'
-			]
-		}
-	},
-	{
-		period: { es: 'Ene 2024 — Actualidad', en: 'Jan 2024 — Present' },
-		engagement: { es: 'Empleado, tiempo completo', en: 'Employee, full-time' },
-		range: { start: '2024-01', end: null },
-		title: {
-			es: 'Desarrollador de Software y Soporte Técnico N2',
-			en: 'Software Developer & N2 Technical Support'
-		},
-		org: 'Kaizen Apps CR',
-		mark: 'kaizen',
-		current: true,
-		detail: {
-			es: [
-				'Diseño y construyo los sistemas nuevos del equipo, del levantamiento de requerimientos a producción y mantenimiento.',
-				'Entregué cuatro sistemas a la medida, entre ellos Kaizen AI y Seiri.',
-				'Rehice el sitio de la empresa, kaizenapps.net, con español e inglés desde una sola fuente y el SEO que antes no existía.',
-				'Corrijo y actualizo el ERP que la empresa licencia cuando la tarea me toca; su desarrollo y su soporte diario los lleva el resto del equipo.',
-				'Doy soporte de nivel 2, rastreando la falla hasta el código que la produce.',
-				'Ningún sistema se libera sin pruebas del equipo y del cliente ni sin aprobación de gerencia.'
-			],
-			en: [
-				'Design and build the new systems the team delivers, from requirements through to production and maintenance.',
-				'Delivered four bespoke systems, among them Kaizen AI and Seiri.',
-				'Rebuilt the company site, kaizenapps.net, with Spanish and English from a single source and the SEO it previously lacked.',
-				'Fix and update the ERP the company licenses when the task falls to me; its development and its day-to-day support sit with the rest of the team.',
-				'Provide level 2 support, tracing a fault down to the code behind it.',
-				'No system ships without testing by the team and the client, and without management approval.'
 			]
 		}
 	},
@@ -127,6 +99,36 @@ export const EXPERIENCE: Role[] = [
 				'Resolved connectivity and workstation-configuration incidents for the people in the organisation, remotely and on site.'
 			]
 		}
+	},
+	{
+		period: { es: 'Ene 2024 — Actualidad', en: 'Jan 2024 — Present' },
+		engagement: { es: 'Empleado, tiempo completo', en: 'Employee, full-time' },
+		range: { start: '2024-01', end: null },
+		title: {
+			es: 'Desarrollador de Software y Soporte Técnico N2',
+			en: 'Software Developer & N2 Technical Support'
+		},
+		org: 'Kaizen Apps CR',
+		mark: 'kaizen',
+		current: true,
+		detail: {
+			es: [
+				'Diseño y construyo los sistemas nuevos del equipo, del levantamiento de requerimientos a producción y mantenimiento.',
+				'Entregué cuatro sistemas a la medida, construidos o rehechos por completo, entre ellos Kaizen AI y Seiri.',
+				'Rehice el sitio de la empresa, kaizenapps.net, con español e inglés desde una sola fuente y el SEO que antes no existía.',
+				'Corrijo y actualizo el ERP que la empresa licencia cuando la tarea me toca; su desarrollo y su soporte diario los lleva el resto del equipo.',
+				'Doy soporte de nivel 2, rastreando la falla hasta el código que la produce.',
+				'Ningún sistema se libera sin pruebas del equipo y del cliente ni sin aprobación de gerencia.'
+			],
+			en: [
+				'Design and build the new systems the team delivers, from requirements through to production and maintenance.',
+				'Delivered four bespoke systems, built or rebuilt from the inside, among them Kaizen AI and Seiri.',
+				'Rebuilt the company site, kaizenapps.net, with Spanish and English from a single source and the SEO it previously lacked.',
+				'Fix and update the ERP the company licenses when the task falls to me; its development and its day-to-day support sit with the rest of the team.',
+				'Provide level 2 support, tracing a fault down to the code behind it.',
+				'No system ships without testing by the team and the client, and without management approval.'
+			]
+		}
 	}
 ];
 
@@ -154,24 +156,28 @@ export const EDUCATION: Role[] = [
 		post: { es: 'Ingeniería en Tecnologías de la Información', en: 'Information Technology Engineering' },
 		detail: {
 			es: [
-				'Construí el cliente web del sistema de gestión de obra de Proyecto Integrador I, en equipo de cinco: autenticación, planilla y los formularios de las demás entidades.',
-				'Diseñé la red lógica y el apartado de cumplimiento de una cadena hotelera de cuatro sedes, en Proyecto Integrador II.',
-				'Aporté la mayor parte del API de seguimiento de flota en tiempo real de Proyecto Integrador III, en equipo de cinco.',
-				'Monté el directorio activo de una red empresarial Windows Server en Plataformas Tecnológicas II: unidades por departamento, usuarios y permisos de carpeta.',
+				'Levanté la base analítica, el ETL y el informe de un almacén de 8,6 millones de filas, y llevé su migración a la nube.',
 				'Entregué dos proyectos en el curso de metodologías ágiles, uno bajo Scrum y otro bajo Programación Extrema, con backlog priorizado, roles rotando, ramas por historia y definición de Terminado.',
 				'Construí en Seguridad de TI I un detector que contiene un cifrado masivo sin firmas, a partir de tres señales del sistema.',
-				'Levanté la base analítica, el ETL y el informe de un almacén de 8,6 millones de filas, y llevé su migración a la nube.',
-				'Llevé la arquitectura, los datos y la seguridad del sitio del Grupo 35 de Guías y Scouts en el trabajo comunal universitario, y construí la mayor parte: dos idiomas, inscripciones en línea y un portal interno para la junta.'
+				'Documenté, en ese mismo curso, el rastro que dejan la captura y la exfiltración dentro de un laboratorio aislado, y derivé de ahí el inventario de contramedidas.',
+				'Aporté la mayor parte del API de seguimiento de flota en tiempo real de Proyecto Integrador III, en equipo de cinco.',
+				'Llevé la arquitectura, los datos y la seguridad del sitio del Grupo 35 de Guías y Scouts en el trabajo comunal universitario, y construí la mayor parte: dos idiomas, inscripciones en línea y un portal interno para la junta.',
+				'Construí en equipo un juego de dados multijugador en tiempo real para Aplicaciones Móviles II, con el contrato de eventos compartido entre el cliente móvil y el web.',
+				'Diseñé la red lógica y el apartado de cumplimiento de una cadena hotelera de cuatro sedes, en Proyecto Integrador II.',
+				'Construí el cliente web del sistema de gestión de obra de Proyecto Integrador I, en equipo de cinco: autenticación, planilla y los formularios de las demás entidades.',
+				'Monté el directorio activo de una red empresarial Windows Server en Plataformas Tecnológicas II: unidades por departamento, usuarios y permisos de carpeta.'
 			],
 			en: [
-				'Built the web client for the construction-management system of Integrative Project I, in a team of five: authentication, payroll and the forms for the remaining entities.',
-				'Designed the logical network and the compliance section for a four-site hotel chain, in Integrative Project II.',
-				'Contributed most of the API behind the real-time fleet tracking of Integrative Project III, in a team of five.',
-				'Built the Active Directory of a Windows Server enterprise network in Technology Platforms II: per-department units, users and folder permissions.',
+				'Built the analytical database, the ETL and the report for an 8.6 million row warehouse, and led its move to the cloud.',
 				'Delivered two projects in the agile methodologies course, one under Scrum and one under Extreme Programming, with a prioritised backlog, rotating roles, a branch per story and a definition of Done.',
 				'Built, in IT Security I, a detector that contains mass encryption without signatures, from three system signals.',
-				'Built the analytical database, the ETL and the report for an 8.6 million row warehouse, and led its move to the cloud.',
-				'Led the architecture, data and security of the Group 35 Guides and Scouts site for the community-service requirement, and built most of it: two languages, online enrolment and an internal portal for the board.'
+				'Documented, in that same course, the trace capture and exfiltration leave inside an isolated lab, and derived the countermeasure inventory from it.',
+				'Contributed most of the API behind the real-time fleet tracking of Integrative Project III, in a team of five.',
+				'Led the architecture, data and security of the Group 35 Guides and Scouts site for the community-service requirement, and built most of it: two languages, online enrolment and an internal portal for the board.',
+				'Built, as a team, a real-time multiplayer dice game for Mobile Applications II, with the event contract shared between the mobile and the web client.',
+				'Designed the logical network and the compliance section for a four-site hotel chain, in Integrative Project II.',
+				'Built the web client for the construction-management system of Integrative Project I, in a team of five: authentication, payroll and the forms for the remaining entities.',
+				'Built the Active Directory of a Windows Server enterprise network in Technology Platforms II: per-department units, users and folder permissions.'
 			]
 		}
 	}

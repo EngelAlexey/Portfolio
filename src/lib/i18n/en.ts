@@ -31,7 +31,7 @@ export const en: Dict = {
 		orgsLabel: 'My experience',
 		orgsLede: 'I work with three companies in parallel: logistics in Costa Rica and Panama, and HR software.',
 		workTitle: 'Featured projects',
-		workLede: 'Four systems in production. Each write-up covers why it was built, the technical decisions and the outcome.',
+		workLede: 'Four systems in use. Each write-up covers why it was built, the technical decisions and the outcome.',
 		workAll: 'See the rest of the projects',
 		stackLabel: 'Tools'
 	},
@@ -41,7 +41,7 @@ export const en: Dict = {
 	},
 	projects: {
 		title: 'Projects',
-		lead: 'Professional, academic and personal work, built from Costa Rica for companies in Costa Rica and Panama. Filter by area.',
+		lead: 'Professional and academic work, built from Costa Rica for companies in Costa Rica and Panama. Filter by area.',
 		filterLegend: 'Filter by area',
 		filterAll: 'All',
 		resultsOne: '1 project',
@@ -70,7 +70,7 @@ export const en: Dict = {
 		shotsPrevious: 'Previous screenshot',
 		shotsNext: 'Next screenshot',
 		privateBody:
-			'This is client work: the architecture and the decisions are described, with no code, no repository and no screenshots of the internal screens.',
+			'This is client work: the architecture and the decisions are described, with no code and no repository. Screenshots, where there are any, are of the public screens of the product.',
 		next: 'Next project',
 		previous: 'Previous project'
 	},
