@@ -25,6 +25,7 @@ const ALIASES: Record<string, string> = {
 	claude: 'anthropic',
 	gemini: 'googlegemini',
 	'cisco packet tracer': 'cisco',
+	'cloudflare turnstile': 'cloudflare',
 	'cohere rerank': 'cohere',
 	'sql server': 'sqlserver',
 	'power bi': 'powerbi',
