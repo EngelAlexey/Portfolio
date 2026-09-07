@@ -35,7 +35,7 @@ export function cardSvg(spec: CardSpec): string {
 	const x = photo ? 300 : PAD;
 	const column = OG_CARD.width - x - PAD;
 
-	const heading = fitHeading(spec.heading, column);
+	const heading = fitHeading(spec.heading, column, 2);
 	const metaLines = spec.meta ? wrap(spec.meta, 28, REGULAR, column).slice(0, 2) : [];
 
 	let y = 258;
@@ -57,7 +57,7 @@ export function cardSvg(spec: CardSpec): string {
 	const chips = areaChips(spec);
 	if (chips.length) {
 		let chipX = x;
-		const chipY = OG_CARD.height - 158;
+		const chipY = Math.max(y + 10, OG_CARD.height - 158);
 		for (const chip of chips) {
 			const width = Math.round(measure(chip.label, 24, REGULAR) + 40);
 			const swatch = colors.area[chip.id];

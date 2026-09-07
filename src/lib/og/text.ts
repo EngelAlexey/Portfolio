@@ -23,7 +23,7 @@ export function wrap(value: string, size: number, weight: number, maxPx: number)
 	return lines;
 }
 
-const SIZES = [60, 52, 46, 40];
+const SIZES = [60, 52, 46, 40, 36];
 
 export function fitHeading(
 	title: string,
