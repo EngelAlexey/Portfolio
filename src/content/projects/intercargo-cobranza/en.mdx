@@ -20,6 +20,7 @@ stack:
   - MySQL
   - WhatsApp
   - Claude
+  - OpenAI
   - Docker
   - Google Cloud Run
 cover: null
@@ -38,7 +39,7 @@ diagram:
     - name: "What may be asked"
       body: "The model returns an intent, not a command. The available actions are a closed set defined in code, so an intent with no matching action executes nothing."
     - name: "When we may write"
-      body: "Working days, holidays and the contact window are computed on the server. Anyone who asks to stop receiving messages stops receiving them. The reminder goes out one working day before the due date."
+      body: "Working days, holidays and the contact window are computed on the server. Anyone who asks to stop receiving messages stops receiving them. The reminder goes out one working day before the date the client promised."
     - name: "What is recorded"
       body: "Every turn stores the message received, the intent resolved and the action executed. An unexpected reply can be reconstructed later without consulting the model again."
   caption: "Identity is resolved before the action: without it, there is no balance to show."
@@ -50,7 +51,7 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 A collections assistant over WhatsApp for Intercargo's operation in Panama. The client writes in, checks their statement, reports a payment or promises a date, and all of it happens inside the conversation.
 
-The client asked to automate that cycle. Collections tied up their team in repetitive contact and verification work that grew with the receivables book, and they wanted debtors able to handle the routine part themselves.
+It is still in development. The client asked to automate that cycle. Collections tied up their team in repetitive contact and verification work that grew with the receivables book, and they wanted debtors able to handle the routine part themselves.
 
 ## Problem
 
@@ -66,7 +67,11 @@ So the model does one thing: turn a plain-language message into an intent and, w
 
 Everything else is code: validating identity, querying the receivables book, recording a payment promise and deciding whether a reminder is due. The conversation is resolved in a state machine that returns actions, and a separate layer translates them to the WhatsApp transport.
 
-The service uses no web framework. It starts a server with `node:http` and works over nine tables of its own, separate from the rest of [the corporate platform](/en/projects/intercargo-plataforma), so a change in collections does not touch the portal's data. The model provider is swappable, with two implementations behind the same interface.
+The service uses no web framework. It starts a server with `node:http` and runs as its own deployment.
+
+It was started before [the corporate platform](/en/projects/intercargo-plataforma), so it carries its own model of the receivables book: customers, invoices, promises and payment reports, across nine tables of its own. Folding it into the platform is outstanding work, not a separation that was sought.
+
+The model provider is swappable, with two implementations behind the same interface.
 
 ## Architecture
 
@@ -78,7 +83,7 @@ The state machine returns actions and a separate layer translates them to the tr
 
 ## Result
 
-The service is in operation. Debtors check their own balance and attach their own receipt, reminders go out on their own one business day before the due date, and the team steps in only where judgement is needed.
+The assistant resolves the whole cycle inside the conversation. Debtors check their own balance and attach their own receipt, the reminder goes out on its own one business day before the date they promised, and the team steps in only where judgement is needed.
 
 Anyone who asks to stop receiving messages stops receiving them, and business days and public holidays are calculated on the server, so the operation does not depend on someone watching the calendar.
 

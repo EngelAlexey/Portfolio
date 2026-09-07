@@ -20,6 +20,7 @@ stack:
   - MySQL
   - WhatsApp
   - Claude
+  - OpenAI
   - Docker
   - Google Cloud Run
 cover: null
@@ -38,7 +39,7 @@ diagram:
     - name: "Qué puede pedir"
       body: "El modelo devuelve una intención, no una orden. Las acciones disponibles son un conjunto cerrado definido en el código, así que una intención sin acción correspondiente no ejecuta nada."
     - name: "Cuándo se puede escribir"
-      body: "Días hábiles, feriados y ventana de contacto se calculan en el servidor. Quien pide no recibir más mensajes deja de recibirlos. El recordatorio sale un día hábil antes del vencimiento."
+      body: "Días hábiles, feriados y ventana de contacto se calculan en el servidor. Quien pide no recibir más mensajes deja de recibirlos. El recordatorio sale un día hábil antes de la fecha que el cliente prometió."
     - name: "Qué queda registrado"
       body: "Cada turno guarda el mensaje recibido, la intención resuelta y la acción ejecutada. Una respuesta inesperada se puede reconstruir después sin volver a consultar al modelo."
   caption: "La identidad se resuelve antes que la acción: sin ella, no hay saldo que mostrar."
@@ -50,7 +51,7 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 Asistente de cobranza por WhatsApp para la operación de Intercargo en Panamá. El cliente escribe, consulta su estado de cuenta, reporta un pago o promete una fecha, y todo ocurre dentro de la conversación.
 
-El cliente pidió automatizar ese ciclo. La cobranza ocupaba a su equipo en un trabajo repetitivo de contacto y verificación que crecía con la cartera, y quería que el deudor pudiera resolver lo rutinario por su cuenta.
+Está en desarrollo. El cliente pidió automatizar ese ciclo. La cobranza ocupaba a su equipo en un trabajo repetitivo de contacto y verificación que crecía con la cartera, y quería que el deudor pudiera resolver lo rutinario por su cuenta.
 
 ## Problema
 
@@ -66,7 +67,11 @@ Por eso el modelo hace una sola cosa: convertir un mensaje en lenguaje natural e
 
 Todo lo demás es código: validar identidad, consultar cartera, registrar una promesa de pago y decidir si corresponde enviar un recordatorio. La conversación se resuelve en una máquina de estados que devuelve acciones, y una capa separada las traduce al transporte de WhatsApp.
 
-El servicio no usa framework web. Levanta un servidor con `node:http` y trabaja sobre nueve tablas propias, separadas del resto de [la plataforma corporativa](/es/proyectos/intercargo-plataforma), para que un cambio en la cobranza no toque los datos del portal. El proveedor de modelo es intercambiable, con dos implementaciones detrás de la misma interfaz.
+El servicio no usa framework web. Levanta un servidor con `node:http` y corre como su propio despliegue.
+
+Se empezó antes que [la plataforma corporativa](/es/proyectos/intercargo-plataforma), así que lleva su propio modelo de la cartera: clientes, facturas, promesas y reportes de pago, en nueve tablas propias. Unificarlo con la plataforma es trabajo pendiente y no una separación buscada.
+
+El proveedor de modelo es intercambiable, con dos implementaciones detrás de la misma interfaz.
 
 ## Arquitectura
 
@@ -78,7 +83,7 @@ La máquina de estados devuelve acciones y una capa aparte las traduce al transp
 
 ## Resultado
 
-El servicio está en operación. El deudor consulta su propio saldo y adjunta su propio comprobante, los recordatorios salen solos un día hábil antes del vencimiento, y el equipo interviene solo donde hace falta criterio.
+El asistente resuelve el ciclo entero dentro de la conversación. El deudor consulta su propio saldo y adjunta su propio comprobante, el recordatorio sale solo un día hábil antes de la fecha que prometió, y el equipo interviene solo donde hace falta criterio.
 
 Quien pide no recibir más mensajes deja de recibirlos, y los días hábiles y feriados se calculan en el servidor, así que la operación no depende de que alguien vigile el calendario.
 
