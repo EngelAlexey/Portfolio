@@ -67,16 +67,17 @@ const githubHandle = handle(PERSON.github);
 		</dl>
 
 		<div class="cv">
+			<h2>{strings.contact.cv}</h2>
+			<p class="note">{strings.contact.cvNote}</p>
 			<div class="cvrow">
 				{
 					variants.map((variant, i) => (
 						<a class:list={['btn', { primary: i === 0 }]} href={CV[variant][lang]} download>
-							{strings.contact.cv} · {strings.contact.cvVariants[variant]}
+							{strings.contact.cvVariants[variant]}
 						</a>
 					))
 				}
 			</div>
-			<p class="note">{strings.contact.cvNote}</p>
 		</div>
 	</Container>
 </Layout>
@@ -128,10 +129,8 @@ const githubHandle = handle(PERSON.github);
 	}
 
 	.label {
-		font-family: var(--font-mono);
-		font-size: 0.6875rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		font-size: 0.8125rem;
+		font-weight: 500;
 		color: var(--ink-faint);
 	}
 
@@ -153,16 +152,19 @@ const githubHandle = handle(PERSON.github);
 	}
 
 	.cv {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.75rem 1rem;
-		margin: 2rem 0 clamp(3rem, 7vw, 5rem);
+		margin: 2.25rem 0 clamp(3rem, 7vw, 5rem);
+	}
+
+	.cv h2 {
+		margin: 0;
+		font-size: 1.125rem;
+		font-weight: 600;
+		letter-spacing: -0.01em;
 	}
 
 	.note {
-		margin: 0;
-		font-size: 0.8125rem;
+		margin: 0.3rem 0 1rem;
+		font-size: 0.875rem;
 		color: var(--ink-faint);
 	}
 

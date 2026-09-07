@@ -14,8 +14,8 @@ const items = stack.map((entry) => toolFor(entry));
 <ul class="stack" aria-label={label}>
 	{
 		items.map((tool) => (
-			<li class:list={{ 'with-mark': Boolean(tool.d) }}>
-				{tool.d && (
+			<li class:list={{ 'with-mark': Boolean(tool.d) || tool.lettered }}>
+				{(tool.d || tool.lettered) && (
 					<span class="mark">
 						<BrandMark tool={tool} size={16} />
 					</span>

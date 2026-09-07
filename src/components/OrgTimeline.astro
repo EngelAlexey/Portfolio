@@ -46,7 +46,7 @@ const years = (period: OrgGroup['period']) =>
 
 						<p class="meta">
 							{group.qualifier && <span class="qualifier">{group.qualifier}</span>}
-							<span class="mono years">{years(group.period)}</span>
+							<span class="years">{years(group.period)}</span>
 						</p>
 					</div>
 
@@ -156,7 +156,7 @@ const years = (period: OrgGroup['period']) =>
 	}
 
 	.years {
-		font-size: 0.75rem;
+		font-size: 0.8125rem;
 		color: var(--ink-faint);
 	}
 

@@ -24,7 +24,21 @@ const ALIASES: Record<string, string> = {
 	java: 'openjdk',
 	claude: 'anthropic',
 	gemini: 'googlegemini',
-	'cisco packet tracer': 'cisco'
+	'cisco packet tracer': 'cisco',
+	'cohere rerank': 'cohere',
+	'sql server': 'sqlserver',
+	'power bi': 'powerbi',
+	'auth.js': 'authjs',
+	'amazon web services': 'aws'
+};
+
+const LETTERED: Record<string, string> = {
+	aws: 'AWS',
+	azure: 'AZ',
+	authjs: 'AJ',
+	cohere: 'CO',
+	powerbi: 'BI',
+	sqlserver: 'SQL'
 };
 
 const areaBySlug = new Map<string, AreaId>(TOOLS.map((tool) => [tool.slug, tool.area]));
@@ -49,20 +63,21 @@ function fromBrand(slug: string, label: string): Tool {
 	};
 }
 
-export function toolFor(label: string): Tool {
+export type StackItem = Tool & { lettered: boolean };
+
+export function toolFor(label: string): StackItem {
 	const key = label.toLowerCase().trim();
+	const slug = ALIASES[key] ?? key.replace(/[^a-z0-9]+/g, '');
 
-	const asSlug = key.replace(/[^a-z0-9]+/g, '');
-	if (BRANDS[asSlug]) return fromBrand(asSlug, label);
+	if (BRANDS[slug]) return { ...fromBrand(slug, label), lettered: false };
 
-	const aliased = ALIASES[key];
-	if (aliased && BRANDS[aliased]) return fromBrand(aliased, label);
-
+	const letters = LETTERED[slug];
 	return {
 		slug: key.replace(/[^a-z0-9]+/g, '-'),
 		label,
-		area: 'fullstack',
-		monogram: monogramFor(label),
-		d: null
+		area: areaBySlug.get(slug) ?? 'fullstack',
+		monogram: letters ?? monogramFor(label),
+		d: null,
+		lettered: Boolean(letters)
 	};
 }

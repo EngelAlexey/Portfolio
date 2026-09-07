@@ -40,3 +40,8 @@ export function areaStyle(id: AreaId): string {
 	const t = AREAS[id].token;
 	return `--chip-fg: var(--area-${t}-fg); --chip-bg: var(--area-${t}-bg); --chip-line: var(--area-${t}-line);`;
 }
+
+export function accentStyle(id: AreaId): string {
+	const t = AREAS[id].token;
+	return `--accent: var(--area-${t}-fg); --accent-bg: var(--area-${t}-bg); --accent-line: var(--area-${t}-line);`;
+}

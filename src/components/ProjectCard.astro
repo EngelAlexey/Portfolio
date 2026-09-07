@@ -1,5 +1,6 @@
 ---
 import AreaChip from './AreaChip.astro';
+import { accentStyle } from '../lib/areas';
 import type { Project } from '../lib/content';
 import { formatPeriod } from '../lib/format';
 import { path, t, type Lang } from '../lib/i18n';
@@ -16,22 +17,12 @@ const meta = project.meta;
 const strings = t(lang);
 const href = path(lang, 'project', meta.slug);
 const years = formatPeriod(meta.period, strings.project.present, 'year');
+const where = meta.org && !omitOrg ? `${strings.kind[meta.kind]} · ${meta.org}` : strings.kind[meta.kind];
 ---
 
-<article class="card">
+<article class="card" style={accentStyle(meta.areas[0])}>
 	<div class="eyebrow">
-		<span>{strings.kind[meta.kind]}</span>
-		{
-			meta.org && !omitOrg && (
-				<>
-					<span class="sep" aria-hidden="true">
-						·
-					</span>
-					<span>{meta.org}</span>
-				</>
-			)
-		}
-		<span class="sep" aria-hidden="true">·</span>
+		<span class="where">{where}</span>
 		<span class="years">{years}</span>
 	</div>
 
@@ -58,8 +49,10 @@ const years = formatPeriod(meta.period, strings.project.present, 'year');
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-		padding: 1.25rem;
+		height: 100%;
+		padding: 1.25rem 1.25rem 1.35rem;
 		border: 1px solid var(--line);
+		border-left: 2px solid var(--accent-line);
 		border-radius: var(--radius);
 		background: var(--surface);
 		transition:
@@ -71,6 +64,7 @@ const years = formatPeriod(meta.period, strings.project.present, 'year');
 	.card:has(a:hover),
 	.card:has(a:focus-visible) {
 		border-color: var(--line-strong);
+		border-left-color: var(--accent);
 		transform: translateY(-2px);
 		box-shadow: var(--shadow-card);
 	}
@@ -78,24 +72,23 @@ const years = formatPeriod(meta.period, strings.project.present, 'year');
 	.eyebrow {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.4rem;
-		font-family: var(--font-mono);
-		font-size: 0.6875rem;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.2rem 1rem;
+		font-size: 0.8125rem;
+		line-height: 1.4;
 		color: var(--ink-faint);
 	}
 
-	.sep {
-		color: var(--line-strong);
+	.years {
+		flex: none;
 	}
 
 	.title {
 		font-size: 1.0625rem;
 		font-weight: 600;
 		letter-spacing: -0.01em;
-		margin: 0;
+		margin: 0.15rem 0 0;
 	}
 
 	.title a {
@@ -122,7 +115,7 @@ const years = formatPeriod(meta.period, strings.project.present, 'year');
 		flex-wrap: wrap;
 		gap: 0.375rem;
 		list-style: none;
-		margin: 0.25rem 0 0;
-		padding: 0;
+		margin: auto 0 0;
+		padding: 0.35rem 0 0;
 	}
 </style>

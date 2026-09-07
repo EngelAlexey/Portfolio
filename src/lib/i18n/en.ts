@@ -21,14 +21,17 @@ export const en: Dict = {
 	home: {
 		badge: 'Available for a professional internship, January to April 2027',
 		role: 'Software Developer · Cybersecurity focus',
-		headline: 'I design the security model of the platforms I build.',
+		headline: 'I build the platforms a company runs on every day.',
 		pitch:
-			'I work on the corporate platform of a logistics company in Panama, and I defined its security model. The same image is deployed as two services with different permissions. Identity is by invitation and sessions are revoked from the server. Each module of the platform has its own attack suite.',
+			'Software developer based in Costa Rica. I work on corporate platforms, internal tools and mobile apps for logistics and HR software companies in Costa Rica and Panama. Every project on this site sets out why it was built, what was decided, and what now runs.',
 		ctaProjects: 'View projects',
 		ctaCv: 'Download CV',
 		heroStackLabel: 'Core tools',
+		areasLabel: 'Areas of work',
 		orgsLabel: 'My experience',
+		orgsLede: 'I work with three companies in parallel: logistics in Costa Rica and Panama, and HR software.',
 		workTitle: 'Featured projects',
+		workLede: 'Four systems in production. Each write-up covers why it was built, the technical decisions and the outcome.',
 		workAll: 'See the rest of the projects',
 		stackLabel: 'Tools'
 	},
@@ -71,6 +74,8 @@ export const en: Dict = {
 	},
 	about: {
 		title: 'About me',
+		intro:
+			'Software developer in Costa Rica, with a cybersecurity focus. I work full-time at Kaizen Apps CR, where I design and build the new systems the team delivers, and on a project basis for Star Cargo Service. I am finishing my degree alongside that.',
 		lead: 'Education, experience and the tools I work with.',
 		education: 'Education',
 		certifications: 'Certifications',
@@ -88,7 +93,7 @@ export const en: Dict = {
 		location: 'Location',
 		availability: 'Availability',
 		cv: 'Download CV',
-		cvNote: '2-page PDF. Three versions depending on the role.',
+		cvNote: '2-page PDF. Pick the version that matches the role.',
 		cvVariants: {
 			ciberseguridad: 'Cybersecurity',
 			desarrollo: 'Development',

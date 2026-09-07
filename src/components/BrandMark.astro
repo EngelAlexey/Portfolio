@@ -30,13 +30,17 @@ const { tool, size = 22 } = Astro.props;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: var(--size);
+		box-sizing: border-box;
+		min-width: var(--size);
 		height: var(--size);
+		padding-inline: calc(var(--size) * 0.14);
 		border: 1px solid currentColor;
 		border-radius: 4px;
 		font-family: var(--font-mono);
-		font-size: calc(var(--size) * 0.4);
+		font-size: calc(var(--size) * 0.42);
+		font-weight: 500;
 		line-height: 1;
 		letter-spacing: 0.02em;
+		white-space: nowrap;
 	}
 </style>

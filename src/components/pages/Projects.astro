@@ -122,9 +122,21 @@ const resultLine = (projects: number, orgs: number) =>
 				if (area === 'all') selected.clear();
 				else if (selected.has(area)) selected.delete(area);
 				else selected.add(area);
+				history.replaceState(null, '', selected.size === 1 ? `#${area}` : location.pathname);
 				apply();
 			});
 		}
+
+		function fromHash() {
+			const area = location.hash.slice(1);
+			const known = buttons.some((button) => button.dataset.area === area);
+			selected.clear();
+			if (known && area !== 'all') selected.add(area);
+			apply();
+		}
+
+		fromHash();
+		window.addEventListener('hashchange', fromHash);
 	}
 </script>
 
@@ -150,8 +162,7 @@ const resultLine = (projects: number, orgs: number) =>
 
 	.results {
 		margin: 0.9rem 0 1.5rem;
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		font-size: 0.8125rem;
 		color: var(--ink-faint);
 	}
 

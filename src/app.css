@@ -53,9 +53,13 @@
 	--area-infra-bg: oklch(96.5% 0.03 150);
 	--area-infra-line: oklch(85% 0.07 150);
 
-	--measure: 68ch;
+	--measure: 66ch;
 	--radius: 0.625rem;
 	--radius-sm: 0.375rem;
+
+	--accent: var(--ink);
+	--accent-bg: var(--paper-sunken);
+	--accent-line: var(--line-strong);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -291,4 +295,155 @@ body {
 		transition-duration: 0.01ms !important;
 		scroll-behavior: auto !important;
 	}
+}
+
+.meta-label {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.4;
+	color: var(--ink-faint);
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+.diagram {
+	margin: 2.25rem 0;
+}
+
+.diagram .pipe {
+	display: flex;
+	align-items: stretch;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	padding: 1.5rem 1.25rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--paper-sunken);
+}
+
+.diagram .node {
+	display: inline-flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.55rem 0.85rem;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	font-size: 0.8125rem;
+	line-height: 1.3;
+	text-align: center;
+	color: var(--ink-muted);
+}
+
+.diagram .node.gate {
+	border-color: var(--accent);
+	background: var(--accent-bg);
+	color: var(--accent);
+	font-weight: 600;
+}
+
+.diagram .arrow {
+	flex: 1 1 14px;
+	min-width: 14px;
+	align-self: center;
+	height: 1px;
+	background: var(--line-strong);
+}
+
+.diagram .bars {
+	display: flex;
+	gap: 3px;
+}
+
+.diagram .bars i {
+	display: block;
+	width: 20px;
+	height: 4px;
+	border-radius: 2px;
+	background: currentColor;
+	opacity: 0.3;
+	transition:
+		opacity 160ms ease,
+		transform 160ms ease;
+}
+
+.diagram .pipe[data-active='0'] .bars i[data-layer='0'],
+.diagram .pipe[data-active='1'] .bars i[data-layer='1'],
+.diagram .pipe[data-active='2'] .bars i[data-layer='2'],
+.diagram .pipe[data-active='3'] .bars i[data-layer='3'] {
+	opacity: 1;
+	transform: scaleY(1.7);
+}
+
+.diagram .layers {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.5rem;
+	margin-top: 0.6rem;
+}
+
+@media (min-width: 30rem) {
+	.diagram .layers {
+		grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+	}
+}
+
+.diagram .layer {
+	display: block;
+	padding: 0.7rem 0.9rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--ink-muted);
+	font: inherit;
+	font-size: 0.875rem;
+	line-height: 1.35;
+	text-align: left;
+	cursor: pointer;
+	transition:
+		border-color 120ms ease,
+		background-color 120ms ease,
+		color 120ms ease;
+}
+
+.diagram .layer:hover {
+	border-color: var(--accent-line);
+	color: var(--ink);
+}
+
+.diagram .layer[aria-pressed='true'] {
+	border-color: var(--accent);
+	background: var(--accent-bg);
+	color: var(--accent);
+	font-weight: 500;
+}
+
+.diagram .bodies {
+	margin-top: 0.9rem;
+	border-left: 2px solid var(--accent);
+	padding-left: 1.1rem;
+}
+
+.diagram .body {
+	margin: 0;
+	font-size: 0.9375rem;
+	line-height: 1.65;
+	color: var(--ink-muted);
+	display: none;
+}
+
+.diagram .bodies[data-active='0'] .body[data-layer='0'],
+.diagram .bodies[data-active='1'] .body[data-layer='1'],
+.diagram .bodies[data-active='2'] .body[data-layer='2'],
+.diagram .bodies[data-active='3'] .body[data-layer='3'] {
+	display: block;
+}
+
+.diagram figcaption {
+	margin-top: 0.85rem;
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: var(--ink-faint);
 }

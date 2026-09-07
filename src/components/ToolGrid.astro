@@ -22,7 +22,7 @@ const TOTAL = '{total}' as unknown as number;
 <div class="toolgrid" data-tool-grid>
 	<div class="chips">
 		<button type="button" class="chip chip-all" aria-pressed="true" data-area="all">
-			{strings.projects.filterAll}<span class="mono n">{TOOLS.length}</span>
+			{strings.projects.filterAll}<span class="n">{TOOLS.length}</span>
 		</button>
 
 		{
@@ -38,14 +38,14 @@ const TOTAL = '{total}' as unknown as number;
 				>
 					<span class="dot" aria-hidden="true" />
 					{areaLabel(area, lang)}
-					<span class="mono n">{counts[area]}</span>
+					<span class="n">{counts[area]}</span>
 				</button>
 			))
 		}
 	</div>
 
 	<p
-		class="count mono"
+		class="count"
 		aria-live="polite"
 		data-tool-count
 		data-total={TOOLS.length}
@@ -118,12 +118,13 @@ const TOTAL = '{total}' as unknown as number;
 	}
 
 	.n {
-		font-size: 0.6875rem;
+		font-size: 0.75rem;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.count {
 		margin: 0.9rem 0 1.25rem;
-		font-size: 0.75rem;
+		font-size: 0.8125rem;
 		color: var(--ink-faint);
 	}
 

@@ -19,14 +19,17 @@ export const es = {
 	home: {
 		badge: 'Disponible para práctica profesional, enero a abril de 2027',
 		role: 'Desarrollador de Software · Enfoque en Ciberseguridad',
-		headline: 'Diseño el modelo de seguridad de las plataformas que construyo.',
+		headline: 'Construyo las plataformas con las que una empresa opera a diario.',
 		pitch:
-			'Trabajo en la plataforma corporativa de una empresa logística en Panamá y definí su modelo de seguridad. La misma imagen se despliega como dos servicios con permisos distintos. La identidad es por invitación y las sesiones se revocan desde el servidor. Cada módulo de la plataforma tiene su propia suite de ataque.',
+			'Desarrollador de software en Costa Rica. Trabajo en plataformas corporativas, herramientas internas y aplicaciones móviles para empresas de logística y de recursos humanos en Costa Rica y Panamá. Cada proyecto de este sitio explica por qué se hizo, qué se decidió y qué quedó funcionando.',
 		ctaProjects: 'Ver proyectos',
 		ctaCv: 'Descargar CV',
 		heroStackLabel: 'Herramientas principales',
+		areasLabel: 'Áreas de trabajo',
 		orgsLabel: 'Mi experiencia',
+		orgsLede: 'Trabajo con tres empresas en paralelo: logística en Costa Rica y Panamá, y software de recursos humanos.',
 		workTitle: 'Proyectos destacados',
+		workLede: 'Cuatro sistemas en producción. Cada ficha describe por qué se hizo, las decisiones técnicas y el resultado.',
 		workAll: 'Ver los demás proyectos',
 		stackLabel: 'Herramientas'
 	},
@@ -70,6 +73,8 @@ export const es = {
 	about: {
 		title: 'Sobre mí',
 		lead: 'Formación, experiencia y las herramientas con las que trabajo.',
+		intro:
+			'Desarrollador de software en Costa Rica, con enfoque en ciberseguridad. Trabajo a tiempo completo en Kaizen Apps CR, donde diseño y construyo los sistemas nuevos del equipo, y por proyecto para Star Cargo Service. En paralelo termino la carrera.',
 		education: 'Educación',
 		certifications: 'Certificaciones',
 		languages: 'Idiomas',
@@ -86,7 +91,7 @@ export const es = {
 		location: 'Ubicación',
 		availability: 'Disponibilidad',
 		cv: 'Descargar CV',
-		cvNote: 'PDF de 2 páginas. Tres versiones según el puesto.',
+		cvNote: 'PDF de 2 páginas. Elige la versión que corresponda al puesto.',
 		cvVariants: {
 			ciberseguridad: 'Ciberseguridad',
 			desarrollo: 'Desarrollo',

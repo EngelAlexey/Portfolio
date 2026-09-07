@@ -7,8 +7,9 @@ import Container from '../Container.astro';
 import ProjectCard from '../ProjectCard.astro';
 import ToolGrid from '../ToolGrid.astro';
 import { EXPERIENCE, text } from '../../lib/about';
+import { AREA_IDS, areaLabel, areaStyle } from '../../lib/areas';
 import { heroTools } from '../../lib/brands';
-import { homeProjects } from '../../lib/content';
+import { areaCounts, homeProjects } from '../../lib/content';
 import { path, t, type Lang } from '../../lib/i18n';
 import { CV, CV_DEFAULT } from '../../lib/site';
 
@@ -23,6 +24,8 @@ const featured = await homeProjects(lang);
 const tools = heroTools();
 const orgs = EXPERIENCE.filter((role) => role.mark);
 const cvHref = CV[CV_DEFAULT][lang];
+const counts = await areaCounts(lang);
+const projectsHref = path(lang, 'projects');
 ---
 
 <Layout
@@ -33,18 +36,42 @@ const cvHref = CV[CV_DEFAULT][lang];
 >
 	<Container as="header" size="wide">
 		<div class="hero">
-			<p class="badge">
-				<span class="pulse" aria-hidden="true"></span>
-				{strings.home.badge}
-			</p>
+			<div class="lede">
+				<p class="badge">
+					<span class="pulse" aria-hidden="true"></span>
+					{strings.home.badge}
+				</p>
 
-			<h1>{strings.home.headline}</h1>
-			<p class="pitch">{strings.home.pitch}</p>
+				<h1>{strings.home.headline}</h1>
+				<p class="pitch">{strings.home.pitch}</p>
 
-			<div class="actions">
-				<a class="btn primary" href={path(lang, 'projects')}>{strings.home.ctaProjects}</a>
-				<a class="btn" href={cvHref} download>{strings.home.ctaCv}</a>
+				<div class="actions">
+					<a class="btn primary" href={projectsHref}>{strings.home.ctaProjects}</a>
+					<a class="btn" href={cvHref} download>{strings.home.ctaCv}</a>
+				</div>
 			</div>
+
+			<nav class="index" aria-label={strings.home.areasLabel}>
+				<p class="indexhead">{strings.home.areasLabel}</p>
+				<ul>
+					{
+						AREA_IDS.map((area) => (
+							<li>
+								<a
+									href={`${projectsHref}#${area}`}
+									style={areaStyle(area)}
+									data-area={area}
+									data-area-source
+								>
+									<span class="dot" aria-hidden="true" />
+									<span class="name">{areaLabel(area, lang)}</span>
+									<span class="n">{counts[area]}</span>
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</nav>
 
 			<ul class="herostack" aria-label={strings.home.heroStackLabel}>
 				{tools.map((tool, i) => (
@@ -57,34 +84,38 @@ const cvHref = CV[CV_DEFAULT][lang];
 		</div>
 	</Container>
 
-	<Container>
-		<div class="section">
-			<h2>{strings.home.orgsLabel}</h2>
-			<ul class="orgs">
-				{
-					orgs.map((role) => (
-						<li>
-							<OrgLogoLink org={role.mark!} />
-							<span class="orgtext">
-								<strong>
-									<OrgLink name={role.shortOrg ?? text(role.org, lang)} {lang} />
-								</strong>
-								<span class="mono">
-									{role.title[lang]} · {role.period[lang]}
+	<div class="band">
+		<Container>
+			<div class="section">
+				<h2>{strings.home.orgsLabel}</h2>
+				<p class="seclede">{strings.home.orgsLede}</p>
+				<ul class="orgs">
+					{
+						orgs.map((role) => (
+							<li>
+								<OrgLogoLink org={role.mark!} />
+								<span class="orgtext">
+									<strong>
+										<OrgLink name={role.shortOrg ?? text(role.org, lang)} {lang} />
+									</strong>
+									<span class="meta">
+										{role.title[lang]} · {role.period[lang]}
+									</span>
 								</span>
-							</span>
-						</li>
-					))
-				}
-			</ul>
-		</div>
-	</Container>
+							</li>
+						))
+					}
+				</ul>
+			</div>
+		</Container>
+	</div>
 
 	{
 		featured.length > 0 && (
 			<Container>
 				<div class="section">
 					<h2>{strings.home.workTitle}</h2>
+					<p class="seclede">{strings.home.workLede}</p>
 
 					<ul class="grid">
 						{featured.map((project) => (
@@ -95,26 +126,34 @@ const cvHref = CV[CV_DEFAULT][lang];
 					</ul>
 
 					<p class="more">
-						<a href={path(lang, 'projects')}>{strings.home.workAll}</a>
+						<a href={projectsHref}>{strings.home.workAll}</a>
 					</p>
 				</div>
 			</Container>
 		)
 	}
 
-	<Container>
-		<div class="section last">
-			<h2>{strings.home.stackLabel}</h2>
-			<p class="seclede">{strings.stack.lead}</p>
-			<ToolGrid {lang} />
-		</div>
-	</Container>
+	<div class="band">
+		<Container>
+			<div class="section last">
+				<h2>{strings.home.stackLabel}</h2>
+				<p class="seclede">{strings.stack.lead}</p>
+				<ToolGrid {lang} />
+			</div>
+		</Container>
+	</div>
 </Layout>
 
 <style>
 	.hero {
-		padding-block: clamp(3rem, 8vw, 5.5rem) clamp(2rem, 5vw, 3rem);
-		max-width: 44rem;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 2.5rem;
+		padding-block: clamp(3rem, 8vw, 5.5rem) clamp(2rem, 5vw, 3.25rem);
+	}
+
+	.lede {
+		max-width: 40rem;
 	}
 
 	.badge {
@@ -141,8 +180,8 @@ const cvHref = CV[CV_DEFAULT][lang];
 
 	h1 {
 		margin: 0;
-		font-size: clamp(2rem, 5.5vw, 3.5rem);
-		line-height: 1.05;
+		font-size: clamp(2rem, 4.6vw, 3.25rem);
+		line-height: 1.06;
 		letter-spacing: -0.035em;
 		font-weight: 600;
 		text-wrap: pretty;
@@ -162,13 +201,79 @@ const cvHref = CV[CV_DEFAULT][lang];
 		margin-top: 2rem;
 	}
 
+	.index {
+		align-self: start;
+	}
+
+	.indexhead {
+		margin: 0 0 0.75rem;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--ink-faint);
+	}
+
+	.index ul {
+		display: grid;
+		gap: 1px;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--line);
+		overflow: hidden;
+	}
+
+	.index a {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		padding: 0.6rem 0.9rem;
+		background: var(--surface);
+		text-decoration: none;
+		font-size: 0.9375rem;
+		color: var(--ink-muted);
+		transition:
+			background-color 120ms ease,
+			color 120ms ease;
+	}
+
+	.index a:hover,
+	.index a:focus-visible {
+		background: var(--chip-bg);
+		color: var(--chip-fg);
+	}
+
+	.index .dot {
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 999px;
+		background: var(--chip-fg);
+		flex: none;
+	}
+
+	.index .name {
+		flex: 1;
+	}
+
+	.index .n {
+		font-size: 0.8125rem;
+		color: var(--ink-faint);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.index a:hover .n,
+	.index a:focus-visible .n {
+		color: inherit;
+	}
+
 	.herostack {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 1.35rem;
 		list-style: none;
-		margin: 2.75rem 0 0;
+		margin: 0;
 		padding: 0;
 		color: var(--ink-faint);
 	}
@@ -180,6 +285,23 @@ const cvHref = CV[CV_DEFAULT][lang];
 
 	.herostack li:hover {
 		color: var(--ink);
+	}
+
+	@media (min-width: 64rem) {
+		.hero {
+			grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem);
+			column-gap: clamp(2.5rem, 6vw, 5rem);
+			row-gap: 3rem;
+			align-items: start;
+		}
+
+		.index {
+			padding-top: 3.15rem;
+		}
+
+		.herostack {
+			grid-column: 1 / -1;
+		}
 	}
 
 	@media (prefers-reduced-motion: no-preference) {
@@ -198,8 +320,17 @@ const cvHref = CV[CV_DEFAULT][lang];
 		}
 	}
 
+	.band {
+		background: var(--paper-sunken);
+		border-block: 1px solid var(--line);
+	}
+
+	.band + .band {
+		border-top: 0;
+	}
+
 	.section {
-		padding-top: clamp(2.5rem, 6vw, 4rem);
+		padding-block: clamp(2.5rem, 6vw, 4rem);
 	}
 
 	.section.last {
@@ -214,9 +345,11 @@ const cvHref = CV[CV_DEFAULT][lang];
 	}
 
 	.seclede {
-		margin: 0.4rem 0 1.75rem;
+		margin: 0.45rem 0 1.75rem;
+		max-width: 52ch;
 		color: var(--ink-muted);
 		font-size: 0.9375rem;
+		line-height: 1.6;
 	}
 
 	.orgs {
@@ -251,7 +384,7 @@ const cvHref = CV[CV_DEFAULT][lang];
 	.orgtext {
 		display: flex;
 		flex-direction: column;
-		gap: 0.15rem;
+		gap: 0.2rem;
 		min-width: 0;
 	}
 
@@ -260,8 +393,8 @@ const cvHref = CV[CV_DEFAULT][lang];
 		font-weight: 600;
 	}
 
-	.orgtext .mono {
-		font-size: 0.75rem;
+	.orgtext .meta {
+		font-size: 0.8125rem;
 		color: var(--ink-faint);
 	}
 
@@ -270,7 +403,7 @@ const cvHref = CV[CV_DEFAULT][lang];
 		grid-template-columns: 1fr;
 		gap: 1rem;
 		list-style: none;
-		margin: 1.5rem 0 0;
+		margin: 0;
 		padding: 0;
 	}
 
@@ -288,10 +421,13 @@ const cvHref = CV[CV_DEFAULT][lang];
 	.more a {
 		color: var(--ink-muted);
 		text-decoration: none;
+		border-bottom: 1px solid var(--line-strong);
+		padding-bottom: 0.15rem;
 	}
 
 	.more a:hover {
 		color: var(--ink);
+		border-bottom-color: var(--ink);
 	}
 
 	@media (max-width: 40rem) {
