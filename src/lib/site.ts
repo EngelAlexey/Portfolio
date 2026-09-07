@@ -5,6 +5,7 @@ export const absolute = (path: string): string =>
 
 export const PERSON = {
 	name: 'Alex Herrera Manzanares',
+	shortName: 'Alex Herrera',
 	givenName: 'Alex',
 	familyName: 'Herrera Manzanares',
 	email: 'alexhmanzanares@gmail.com',

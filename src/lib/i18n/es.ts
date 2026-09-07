@@ -115,10 +115,11 @@ export const es = {
 	},
 	meta: {
 		siteName: 'Alex Herrera Manzanares',
-		defaultTitle: 'Alex Herrera | Desarrollador de Software con enfoque en ciberseguridad',
+		defaultTitle:
+			'Alex Herrera Manzanares | Desarrollador de Software con enfoque en ciberseguridad',
 		defaultDescription:
 			'Portafolio de Alex Herrera Manzanares: desarrollador de software con enfoque en ciberseguridad. Modelo de seguridad de una plataforma corporativa, pruebas de ataque, redes e infraestructura. Costa Rica.',
-		titleTemplate: (page: string) => `${page} | Alex Herrera`
+		titleTemplate: (page: string) => `${page} | Alex Herrera Manzanares`
 	}
 };
 

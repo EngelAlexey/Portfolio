@@ -70,6 +70,9 @@ function personNode(lang: Lang, detail: 'full' | 'stub'): Node {
 		'@type': 'Person',
 		'@id': PERSON_ID,
 		name: PERSON.name,
+		// La forma corta es la que la gente teclea y la que comparten miles de
+		// homonimos. Declararla aqui la ata a esta entidad sin cederle el <title>.
+		alternateName: PERSON.shortName,
 		url: SITE_URL,
 		jobTitle: strings.home.role,
 		sameAs: [PERSON.linkedin, PERSON.github],
