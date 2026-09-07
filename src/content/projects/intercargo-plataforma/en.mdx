@@ -1,6 +1,6 @@
 ---
 slug: intercargo-plataforma
-title: Intercargo site | Client portal and due diligence
+title: Intercargo platform | Internal ERP and public site
 tagline: Public site, internal portal, client due diligence and accounts receivable. The same image is deployed as two services with different permissions.
 areas: [seguridad, fullstack]
 kind: profesional
@@ -50,11 +50,11 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-The platform brings together the public site, the internal portal, client due diligence and accounts receivable. I joined to build on it and to define its security model.
+The platform brings together the public site and the staff portal: client due diligence, accounts receivable, payroll, and tracking of the requests that arrive through the site. It is under active development and grows module by module. I joined to build on it and to define its security model.
 
 ## Problem
 
-The site ran on a third-party service the team did not administer. The client was asking for a user portal holding critical information, and that piece needed guarantees only owned infrastructure can hold.
+The site ran on a third-party service the team did not administer. The client was asking for a portal for their staff holding critical information, and that piece needed guarantees only owned infrastructure can hold.
 
 The proposal to rebuild came from the team. Moving to configurable infrastructure made it possible to support the portal with the guarantees it required and redesign the public site at the same time. It also opened the way to automating due diligence, which until then meant reading documents by hand.
 

@@ -1,6 +1,6 @@
 ---
 slug: starcargo-web
-title: Sitio de Star Cargo Service | Cuatro idiomas y portal de clientes
+title: Sitio de Star Cargo Service | Cuatro idiomas y portal con sesión
 tagline: Ocho trámites en línea alimentan un portal con sesión donde el cliente sigue sus solicitudes y el equipo las atiende, con el permiso resuelto contra el ERP.
 areas: [fullstack]
 kind: profesional
