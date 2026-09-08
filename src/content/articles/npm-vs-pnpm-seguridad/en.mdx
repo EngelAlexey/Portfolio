@@ -1,7 +1,7 @@
 ---
 slug: npm-vs-pnpm-seguridad
 title: 'npm vs pnpm: what changes in the security of installing dependencies'
-tagline: Four behaviours measured on both package managers, with the command that reproduces each one and the configuration that makes them match.
+tagline: Four behaviours measured across four versions of the two package managers, with the command that reproduces each one and the configuration that makes them match.
 areas: [seguridad, infra]
 published: '2026-09-07'
 updated: '2026-09-07'
@@ -18,18 +18,20 @@ import References from '../../../components/References.astro';
 
 Installing a dependency runs code. Not the code that will be imported later, but the code that runs during the install itself, before anyone has reviewed the package. That code runs with the same access to the system as whoever typed the command.
 
-Both package managers ran that code without asking for confirmation. In January 2025 pnpm 10 stopped, and announced it as a breaking change made to increase security<Cite n={1} />. Version 11 turned the warning into an error and added a second defence. npm keeps the behaviour it always had and offers, instead, a setting that switches it off.
+Both package managers ran that code without asking for confirmation, and both have stopped. pnpm 10 went first, in January 2025, and announced it as a breaking change made to increase security<Cite n={1} />; version 11 turned the warning into an error and added a second defence. npm arrived at the same place in July 2026 with version 12, which blocks dependency install scripts unless they are named in a new field, `allowScripts`<Cite n={12} />.
 
-That does not classify one as safe and the other as unsafe: both reach the same result through different configurations. What follows compares npm 11.8.0 against pnpm 10.0.0 and pnpm 11.26.0 across four behaviours, measuring what each one does with nothing configured. Point 7 collects the configuration that gets npm to the same place. Every cell comes from running the command, except the value in the last row, which is the one pnpm's documentation declares. The test projects fit in two files written out in full below.
+The useful comparison, then, is no longer between manager names. It is between versions: of the four that follow, two block with a warning that does not stop the install, one blocks with an error, and one runs the script.
 
-| Behaviour | npm 11.8.0 | pnpm 10.0.0 | pnpm 11.26.0 |
-|---|---|---|---|
-| A dependency's `postinstall` | runs | blocked, warning, exit 0 | blocked, exit 1 |
-| `require` of an undeclared package | resolves | `MODULE_NOT_FOUND` | `MODULE_NOT_FOUND` |
-| CI install with a stale lockfile | installs another version, exit 0 | exit 1 | exit 1 |
-| Wait before resolving a freshly published version | none | none | 1440 minutes |
+What follows compares npm 11.8.0 and npm 12.0.2 against pnpm 10.0.0 and pnpm 11.26.0 across four behaviours, measuring what each one does with nothing configured. Point 7 collects the configuration that gets a pre-12 npm to the same place. Every cell comes from running the command, except the `1440` in the last row, which is the value pnpm's documentation declares. The test projects fit in two files written out in full below.
 
-The table measures defaults and not capabilities. Three of the four rows can be matched in npm by writing two files.
+| Behaviour | npm 11.8.0 | npm 12.0.2 | pnpm 10.0.0 | pnpm 11.26.0 |
+|---|---|---|---|---|
+| A dependency's `postinstall` | runs | blocked, warning, exit 0 | blocked, warning, exit 0 | blocked, exit 1 |
+| `require` of an undeclared package | resolves | resolves | `MODULE_NOT_FOUND` | `MODULE_NOT_FOUND` |
+| CI install with a stale lockfile | installs another version, exit 0 | installs another version, exit 0 | exit 1 | exit 1 |
+| Wait before resolving a freshly published version | setting does not exist | setting present, unset | none | 1440 minutes |
+
+The table measures defaults and not capabilities. The first row changes with the manager's major version and with no file in the project, so the operative question is which version the machine runs. The other three can be matched by writing two files, except the second, which depends on how each manager lays packages out on disk.
 
 ## 1. The install runs third-party code
 
@@ -56,7 +58,7 @@ A package can declare a script that runs when it is installed, and a two-file pr
 
 The name `evil-postinstall` was invented for this article and does not exist in the public registry, checked on 7 September 2026 with `npm view evil-postinstall`, which returns `E404`.
 
-With npm the install finishes cleanly and the file appears, with nothing in the output to mention it.
+With npm 11.8.0 the install finishes cleanly and the file appears, with nothing in the output to mention it.
 
 ```bash
 npm install
@@ -64,14 +66,30 @@ npm install
 ls evil-postinstall/IT-RAN.txt
 ```
 
+With npm 12.0.2, the same command over the same project does not create the file. It warns and exits 0.
+
+```bash
+npm install
+# npm warn install-scripts 1 package had install scripts blocked because they are
+# npm warn install-scripts not covered by allowScripts:
+# npm warn install-scripts   evil-postinstall@1.0.0 (postinstall: node -e "...")
+# npm warn install-scripts Run `npm install-scripts ls` to review, or
+# npm warn install-scripts `npm install-scripts approve <pkg>` to allow.
+# exit 0
+```
+
+Exiting 0 matters: a warning stops no continuous integration pipeline, so the block protects the machine but obliges nobody to read the list. The two commands the output names are the ones that review and resolve it, and the permission is granted from `allowScripts` in `package.json`<Cite n={12} repeat />.
+
 With pnpm 11 the install stops before it gets there.
 
 ```bash
 pnpm install
-# Error: ERR_PNPM_IGNORED_BUILDS
-#   ╰─▶ Ignored build scripts: evil-postinstall@file:evil-postinstall
+# [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: evil-postinstall@file:evil-postinstall
+# Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
 # exit 1
 ```
+
+Of the four behaviours measured, this is the only one that ends with an exit code other than 0, and so the only one that stops a pipeline without anybody having written anything.
 
 Writing an empty file is harmless. The opening that allows it, however, draws no line between that and reading environment variables, searching the disk for credentials, or publishing packages with the credentials of whoever is installing.
 
@@ -83,7 +101,7 @@ The malicious payload that hit `chalk`, `debug` and seventeen other packages on 
 
 Blocking by default answers a problem that recognition does not solve. When the hostile package is one nobody has seen yet, there is nothing to recognise, and all that is left is restricting what any package may do while it installs.
 
-In npm the same block comes from one line in the project configuration file, because the `ignore-scripts` setting already exists and defaults to `false`<Cite n={5} />.
+On a pre-12 npm the same block comes from one line in the project configuration file, because the `ignore-scripts` setting has existed for years and defaults to `false`<Cite n={5} />. It still defaults to `false` in npm 12: the `allowScripts` block is a new and parallel mechanism, not a change to that setting's value.
 
 ```ini
 # .npmrc
@@ -130,7 +148,7 @@ allowBuilds:
 A versioned file changing during a `pnpm install` is not the usual behaviour. The result, though, is that the decision lands in the repository history instead of on the machine of whoever installed. The `pnpm approve-builds` command walks the list interactively and writes the answers into that same place<Cite n={7} repeat />.
 
 <Callout kind="riesgo" title="dangerouslyAllowAllBuilds cancels the defence entirely">
-The `dangerouslyAllowAllBuilds` setting makes every install script run without approval<Cite n={7} repeat />, and it applies to dependencies added later too. It is not a one-off exception but the permanent removal of the block. An `allowBuilds` list with three names is reviewed entry by entry; this setting leaves no entry to review.
+The `dangerouslyAllowAllBuilds` setting switches the whole check off: the install ends in 0 naming nothing, and it applies to dependencies added later too<Cite n={7} repeat />. It is not a one-off exception but the permanent removal of the block. An `allowBuilds` list with three names is reviewed entry by entry; this setting leaves no entry to review.
 </Callout>
 
 ## 3. The code imports packages nobody declared
@@ -152,7 +170,7 @@ A project that only declares `debug` also receives `ms`, because `debug` needs i
 node -e "require('ms')"
 ```
 
-With npm the line works. With pnpm it fails with `MODULE_NOT_FOUND` on both versions in the table, because pnpm does not leave indirect dependencies within reach of the project root.
+With npm the line works on both versions in the table. With pnpm it fails with `MODULE_NOT_FOUND` on both of its own, because pnpm does not leave indirect dependencies within reach of the project root.
 
 A `require` that works without being declared means the version of that package is being chosen by somebody else. Nobody pinned it, nobody reviews it on an update, and it disappears the day `debug` changes its own dependency or swaps it out. What ends up running is whatever a third party's tree resolved, which is a decision nobody made.
 
@@ -193,7 +211,7 @@ The difference, then, is not in the file format nor in what either manager is ca
 
 ## 5. The age of a version as a defence
 
-pnpm 11 brought a second change of default, and it is the only one of the four with no counterpart on the other side. A freshly published version is not resolved until it is at least a day old: the setting is called `minimumReleaseAge`, it is measured in minutes, and it went from `0` to `1440`<Cite n={10} />.
+pnpm 11 brought a second change of default, and it is the only one of the four that is still a real difference. A freshly published version is not resolved until it is at least a day old: the setting is called `minimumReleaseAge`, it is measured in minutes, and it went from `0` to `1440`<Cite n={10} />.
 
 ```yaml
 # pnpm-workspace.yaml
@@ -202,14 +220,31 @@ minimumReleaseAge: 1440
 
 The setting answers the shape these incidents have. The malicious versions of `chalk` and `debug` were published in two bursts minutes apart, and were detected the same day<Cite n={4} repeat />. A twenty-four hour wait covers exactly that window: the compromised package is already published and not yet flagged.
 
-It is worth knowing where it does not apply. The wait governs resolution, not an explicit request: asking for an exact version published a few hours ago works, and pnpm installs it while recording the package in `minimumReleaseAgeExclude`. The `minimumReleaseAgeStrict` setting turns that note into a prompt, and `minimumReleaseAgeExclude` also serves to name permanent exceptions<Cite n={10} repeat />.
+It is worth knowing how it behaves when somebody asks for a specific version. Asking for it exactly does not exempt it from the wait: with `debug` pinned to `4.4.3` and a high `minimumReleaseAge`, the install fails.
 
-npm has no equivalent setting. The closest is `before`, which pins resolutions to a fixed date and comes with no value:
+```text
+Error: ERR_PNPM_NO_MATURE_MATCHING_VERSION
+  × installing dependencies
+  ╰─▶ 2 versions do not meet the minimumReleaseAge constraint:
+        debug@4.4.3 was published at 2025-09-13T17:25:19.732Z, within the
+      minimumReleaseAge cutoff
+  help: Run the install interactively to approve these picks, add them to
+        minimumReleaseAgeExclude in pnpm-workspace.yaml, or wait for the
+        packages to mature.
+# exit 1
+```
+
+Exceptions are named by hand in `minimumReleaseAgeExclude`: pnpm tells you to add them and does not write to the file, unlike what it does with `allowBuilds`. The neighbouring setting, `minimumReleaseAgeStrict`, decides something else: whether pnpm fails resolution or falls back to an older version that does meet the constraint<Cite n={10} repeat />.
+
+npm 12 gained the equivalent setting, with two differences. It is called `min-release-age`, it is measured in days rather than minutes, and it comes with no value, so by default it waits for nothing. Its companion `min-release-age-exclude` accepts names and `minimatch` patterns<Cite n={5} repeat />.
 
 ```bash
-npm config get before
-# null
+npm config get min-release-age
+# npm 11.8.0 -> undefined   (the setting does not exist)
+# npm 12.0.2 -> null        (it exists, unset)
 ```
+
+`before` still exists too, pinning every resolution to a fixed date, and it also comes with no value.
 
 ## 6. Where the two do the same thing
 
@@ -217,11 +252,15 @@ It is worth separating what changes from what does not, because the list of real
 
 Both record the integrity of every package in the lockfile and both refuse to continue if the downloaded content does not match. Tampering with one lockfile entry by hand, npm fails with `EINTEGRITY` and pnpm with `ERR_PNPM_TARBALL_INTEGRITY`. Both have, as already seen, a command that forces that file to be respected. And neither inspects what the package code does once installed, which is precisely the `chalk` and `debug` case.
 
-The registry is moving on its own too. In September 2025 npm announced trusted publishing, the retirement of classic tokens, and a maximum seven-day lifetime for tokens with publishing permission<Cite n={11} />. These are changes to how a package is published rather than to what happens when it is installed, so they add to the above instead of replacing it.
+In their current versions both also block install scripts, and they do it in the same shape: a list of approved names versioned with the repository, and an interactive command that fills it. The file and the vocabulary differ — `allowScripts` in `package.json` with `npm install-scripts approve`, `allowBuilds` in `pnpm-workspace.yaml` with `pnpm approve-builds` — and so does the severity, which is the difference that remains: npm 12 warns and exits 0, pnpm 11 exits 1.
+
+The registry is moving on its own too. In September 2025 npm announced trusted publishing, the retirement of classic tokens, and a seven-day cap on the lifetime of granular tokens, with a shorter expiration for those that can publish<Cite n={11} />. These are changes to how a package is published rather than to what happens when it is installed, so they add to the above instead of replacing it.
 
 ## 7. How to configure npm safely
 
 None of the above forces a change of tool. Three of the four behaviours can be matched in npm with two files and one command, and it is worth having them together in one place.
+
+The step before that, since July 2026, is the version itself. Moving to npm 12 brings the script block and the age setting without writing anything, and no line of configuration achieves the first on an earlier version with the same coverage. What follows holds for both situations: on npm 12 it stacks on top of the `allowScripts` block, and on an earlier version it is the only route.
 
 The first is the project configuration file, versioned with the repository so that it holds for the whole team and not only for whoever wrote it.
 
@@ -236,7 +275,7 @@ The second is the install command on the server. `npm ci` honours that file, so 
 npm ci
 ```
 
-With those two things, the project from point 1 installs without creating `IT-RAN.txt` and ends in 0, which is the same result pnpm 11 gives, reached by another route. Checking that the setting is active on the machine where it matters is one more line:
+With those two things, the project from point 1 installs without creating `IT-RAN.txt` and ends in 0, which is the result pnpm 10 and npm 12 give, reached by another route. Checking that the setting is active on the machine where it matters is one more line:
 
 ```bash
 npm config get ignore-scripts
@@ -250,7 +289,14 @@ npm audit signatures
 # 2 packages have verified registry signatures
 ```
 
-One difference remains that npm does not cover today. There is no equivalent to `minimumReleaseAge`, and indirect dependencies stay importable without being declared, because the flat tree is part of how npm resolves. The first is partly compensated by pinning `before` by hand; the second is caught by an analysis tool, not by a setting.
+The wait before resolving is no longer a difference in capability but in default, and naming it closes it:
+
+```ini
+# .npmrc, npm 12 or later
+min-release-age=1
+```
+
+One difference remains that no npm setting covers. Indirect dependencies stay importable without being declared, because the flat tree is part of how npm resolves, and that is caught by an analysis tool rather than by a line of configuration.
 
 ## 8. What switching costs
 
@@ -268,9 +314,10 @@ The one-day wait delays any freshly published update, including the urgent fix t
 
 None of the four behaviours depends on the name of the package manager. They depend on the installed version and on what has been written in the configuration files, and both of those are checked with a couple of commands.
 
-A project on pnpm 9 blocks nothing. One on pnpm 10 warns and carries on. One on npm with an `.npmrc` holding `ignore-scripts=true` blocks as much as pnpm 11 does. The first check is to determine which of those cases applies:
+A project on pnpm 9 blocks nothing, and neither does one on npm 11. One on pnpm 10 or npm 12 warns and carries on. One on npm 11 with an `.npmrc` holding `ignore-scripts=true` blocks more than an unconfigured npm 12, because it does not depend on a list of exceptions. The first check is to determine which of those cases applies, and it is two lines:
 
 ```bash
+npm --version
 pnpm --version
 ```
 
@@ -310,8 +357,9 @@ In a project carrying that field without Corepack enabled, `pnpm --version` stil
 	},
 	{
 		source: 'npm',
-		title: 'config, ignore-scripts',
-		url: 'https://docs.npmjs.com/cli/v11/using-npm/config'
+		title: 'config, ignore-scripts and min-release-age',
+		note: 'v12 documentation',
+		url: 'https://docs.npmjs.com/cli/v12/using-npm/config'
 	},
 	{
 		source: 'pnpm',
@@ -332,7 +380,7 @@ In a project carrying that field without Corepack enabled, `pnpm --version` stil
 	{
 		source: 'npm',
 		title: 'npm-ci',
-		url: 'https://docs.npmjs.com/cli/v11/commands/npm-ci'
+		url: 'https://docs.npmjs.com/cli/v12/commands/npm-ci'
 	},
 	{
 		source: 'pnpm',
@@ -344,6 +392,12 @@ In a project carrying that field without Corepack enabled, `pnpm --version` stil
 		title: 'Our plan for a more secure npm supply chain',
 		note: '22 September 2025',
 		url: 'https://github.blog/security/supply-chain-security/our-plan-for-a-more-secure-npm-supply-chain/'
+	},
+	{
+		source: 'npm',
+		title: 'npm-install-scripts',
+		note: 'npm 12.0.0, 8 July 2026; allowScripts and the default block',
+		url: 'https://docs.npmjs.com/cli/v12/commands/npm-install-scripts'
 	}
 ]}
 />
