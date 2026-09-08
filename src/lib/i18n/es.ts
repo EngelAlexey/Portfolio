@@ -34,7 +34,7 @@ export const es = {
 		workAll: 'Ver los demás proyectos',
 		articlesTitle: 'Últimos artículos',
 		articlesLede:
-			'Escribo sobre las decisiones de seguridad que aparecen al construir software, con el código que las demuestra.',
+			'Escribo sobre las decisiones de seguridad que aparecen al construir software, y sobre qué las impone cuando nadie las revisa.',
 		articlesAll: 'Ver todos los artículos',
 		stackLabel: 'Herramientas'
 	},

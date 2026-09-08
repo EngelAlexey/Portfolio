@@ -1,0 +1,277 @@
+---
+slug: codigo-seguro-con-ia
+title: How to ask an AI for secure code
+tagline: Six practices set up once that act on every change, so the assistant writes correct code from the start instead of accumulating defects.
+areas: [ia, seguridad]
+published: '2026-09-07'
+updated: null
+draft: false
+path: ask-ai-for-secure-code
+repo: null
+related: []
+cover: null
+---
+
+import Callout from '../../../components/Callout.astro';
+import Cite from '../../../components/Cite.astro';
+import References from '../../../components/References.astro';
+
+The volume of code an assistant produces per unit of time exceeds what a team can review in that same time. That mismatch, rather than the model's success rate, determines how many defects reach production.
+
+In March 2026 Veracode tested more than 150 models against 80 coding tasks in four languages. 55% of those tasks produced secure code<Cite n={1} />. A peer-reviewed study generated 1,689 programs five years earlier and found roughly 40% of them vulnerable<Cite n={2} />. The models behind the two figures have nothing in common, and the numbers are not comparable to each other. Neither reaches 100%.
+
+The defects that pass that filter produce no signal. The code compiles, the application starts and the tests pass, so nothing separates the correct part from the rest. Without a review tied to each change, defects are not caught one at a time: they accumulate until somebody audits the whole tree, which is the most expensive way to find them.
+
+What follows are six practices set up once that act on every change. None of them depends on the model having followed an instruction. Another article on this blog lists [seven failures to look for by hand in a diff](/en/blog/seven-things-to-check-in-ai-generated-code); this one is about not having to look for them.
+
+Every piece of code was rebuilt for this article. Measured versions: Node.js 24.19.0, TypeScript 7.0.2, Zod 4.5.4, ESLint 10.10.0 with typescript-eslint 8.70.0, Slonik 49.10.9 and eslint-plugin-security 4.0.1.
+
+## 1. A rule reaches the model only if something decides to load it
+
+Writing the project's rules does not guarantee they are applied. A rule influences the result only when it is in the context window at the moment of the change. What decides whether it gets there is not the topic it was filed under, but the trigger attached to it.
+
+The two most used tools solve this in similar ways. Claude Code loads rules in three levels. The name and description of every rule are always present, and cost around 100 tokens each. The body is read only when the request matches that description, and is recommended to stay under 5,000 tokens. Bundled files cost nothing until they are opened<Cite n={3} />. The documentation is explicit that the description has to say **what the rule does and when to apply it**, because it is the only text the decision is made against<Cite n={4} />. Cursor offers four modes and two of them are automatic: one decides by the description, the other by the file patterns the change touches<Cite n={5} />.
+
+The practical consequence is that rules are split by **trigger moment**, not by topic. A rule filed under "security" does not load when somebody writes a test; one filed under "when writing a test" does.
+
+The second half of the principle matters as much as the first. Anthropic's documentation states it plainly: the context window is a public good, and every paragraph of a rule competes with the conversation and with the work in progress<Cite n={4} repeat />. Only information the model does not already have belongs there. A rule explaining what a parameterised query is takes up space without contributing anything; one stating which client this repository uses contributes a fact the model cannot infer.
+
+The difference between the two ways of organising can be measured. Vercel's public skills repository publishes each guide in two formats: an index, and the concatenation of all its rules. In `react-best-practices`, checked on 7 September 2026, the index takes 7,251 bytes and the concatenation 108,261, spread across 72 rule files averaging 1,535 bytes each<Cite n={6} />. Reading the index plus the two rules a change touches costs around 10,000 bytes. Reading the concatenation costs ten times that to bring in seventy rules nobody needed.
+
+<Callout kind="riesgo" title="Rules are attack surface too">
+	A rule installed from a third party runs with the same reach as the assistant. Anthropic's documentation warns that a malicious rule can direct it to invoke tools or execute code in ways that do not match its stated purpose. It recommends auditing everything a rule bundles before installing it<Cite n={3} repeat />. This applies especially to rules that fetch content from a URL, because that content can change after the audit.
+</Callout>
+
+**How to check it.** Concatenate what the assistant always loads — the base instruction file plus the descriptions of every rule — and count the characters. That number is the fixed cost of every session. Then, for each rule, name the moment it should fire; if the answer is "always", it belongs in the base instructions and has to be short.
+
+## 2. Every rule carries the failure that produced it and the command that detects it
+
+A rule stated as a preference admits argument. "Prefer parameterised queries" admits exceptions the model will justify reasonably, and whoever reviews the change has nothing to contradict it with. A rule that brings the concrete failure and the command that finds it does not allow that conversation.
+
+The shape that works has five fixed parts:
+
+- **The mechanism of the defect.** What the incorrect code does, not what it is called.
+- **The case that cost something.** A real, locatable example, so the rule does not read as an opinion.
+- **The rule**, in one sentence.
+- **A bad and good pair**, with no comments saying which is which. The code has to be distinguishable on its own.
+- **The command that detects it again**: a `grep`, a lint rule or a test.
+
+The fifth part is what separates a useful rule from a recommendation. Without it there is no way to check whether the tree already breaks the rule elsewhere.
+
+It also helps to write the check before the rule. Anthropic's authoring guide recommends this as a method: first measure what fails without the rule, and only then write the minimal instruction that fixes it<Cite n={4} repeat />. Writing it the other way round produces rules for problems that never happened.
+
+**How to check it.** Run the detection command against the bad example and the good one. It has to find the first and not the second. If it does not distinguish between them, the rule has no detector and another one has to be written.
+
+## 3. Review happens per change, with an instruction to knock things down
+
+Google's engineering guides set the order of magnitude: 100 lines is a reasonable size for a change and 1,000 is usually too large. The reasons given are not about style. A small change is reviewed sooner, because finding five minutes several times a day is easier than setting aside half an hour. And it is reviewed better: in a large change the volume of comments makes the important ones get lost. The document goes as far as saying a reviewer may reject a change for the sole reason of being too large<Cite n={7} />.
+
+With an assistant that limit stops being natural. An 800-line change costs the same to ask for as an 80-line one, so the size has to be set deliberately and before starting.
+
+The second part is what the reviewer is asked to do. The outcome of a review depends on that instruction: asking for an approval produces reports that approve. The instruction that produces findings is the opposite one, to look for what does not hold up. An empty report requires checking the coverage of the review before it is accepted.
+
+That instruction needs a counterweight written next to it, because without one the review becomes harmful. A false positive costs an unnecessary change to code that worked. Mechanical tools that detect dead or duplicated code serve as hints and never as sources: they do not see re-exports or scripts invoked from the command line, so they mark as dead what is in fact used. Every claim of the form "this is not used" is verified in the file before being written down.
+
+**How to check it.** Every review is tied to the hash of the commit it reviewed. A review with no hash cannot be repeated or contrasted, so in practice it did not happen.
+
+## 4. A test is accepted once it has been seen to fail
+
+An assistant asked for tests produces them, and they generally pass. The problem is that it writes them after the code, so they tend to describe what that code does rather than check what it should do. A test that passes with the defect present and also with the defect fixed does not distinguish between the two states.
+
+The discipline that solves this has its own name and vocabulary. In mutation testing a defect is introduced into the production code and the tests are run: if one fails, the mutant is *killed*; if they all pass, the mutant *survives*, and a surviving mutant marks a gap in the tests. Stryker's documentation contrasts this with coverage, which measures which lines run and not whether the tests validate behaviour<Cite n={8} />.
+
+The manual version, which needs no tool, is measured in two directions before a test is accepted.
+
+- **Red direction.** Reintroduce the exact defect the test claims to cover, without renaming anything, and the test has to go red. If it stays green, it defends nothing.
+- **Green direction.** Rename something without changing the semantics — a local variable, a parameter, a type — and the test has to stay green. If it goes red, it bites names and not behaviour.
+
+The mutation is always made in the production code and never in the test file. If the test has to be edited to make it fail, it was not checking anything.
+
+```js
+// orders.mjs
+export function getOrder(orders, id, userId) {
+	const order = orders.find((o) => o.id === id);
+	if (!order) return null;
+	if (order.userId !== userId) return null;
+	return order;
+}
+```
+
+```js
+// orders.test.mjs
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { getOrder } from './orders.mjs';
+
+const orders = [{ id: 'a1', userId: 'ana' }];
+
+test('returns the order to its owner', () => {
+	assert.equal(getOrder(orders, 'a1', 'ana')?.id, 'a1');
+});
+
+test('does not return the order to another user', () => {
+	assert.equal(getOrder(orders, 'a1', 'beto'), null);
+});
+```
+
+With the ownership check in place, `node --test` reports `pass 2` and exits 0<Cite n={9} />. Removing the line that compares `userId` makes the second test fail:
+
+```text
+✔ returns the order to its owner
+✖ does not return the order to another user
+ℹ pass 1
+ℹ fail 1
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
++ { id: 'a1', userId: 'ana' }
+- null
+```
+
+**How to check it.** Revert the fix, run the tests, confirm the new one fails. Then apply the fix again.
+
+## 5. What the code can enforce is not written as a rule
+
+A prompt rule and a compiler check do not compete: they do different things. The rule influences and the check decides. When breaking something can be detected in the syntax tree or in the output, writing it as a rule occupies context with something already settled.
+
+Two examples, each with the full pattern.
+
+**Validate at the boundary.** "Validate inputs" is a rule. The version that decides is that the domain function only accepts validated data.
+
+```ts
+import { z } from 'zod';
+
+export const CreateOrder = z.object({
+	customerId: z.uuid(),
+	amount: z.number().positive()
+});
+
+export type CreateOrder = z.infer<typeof CreateOrder>;
+
+export function createOrder(data: CreateOrder): string {
+	return `${data.customerId}:${data.amount}`;
+}
+```
+
+`z.infer` derives the type from the schema, so the type and the validation are one declaration. A route that passes the request body unvalidated does not compile:
+
+```text
+route.ts(5,34): error TS2345: Argument of type 'unknown' is not assignable
+to parameter of type '{ customerId: string; amount: number; }'.
+```
+
+One way out remains, and it has to be closed. Writing `body as CreateOrder` is a type assertion: it tells the compiler to treat the value as if it were of that type and generates no check. The rule `@typescript-eslint/no-unsafe-type-assertion` reads the same type information `tsc` does and disallows assertions that narrow a type<Cite n={10} />.
+
+**Remove the unsafe path.** SQL injection happens when text sent by the user ends up forming part of the query the database parses. A client with tagged templates prevents that by design: the template hands the function the fixed text and the values as separate arguments, and the values travel apart until the query has already been parsed.
+
+```js
+import { sql } from 'slonik';
+
+const filter = "1 OR 1=1";
+const query = sql.unsafe`select * from orders where customer = ${filter}`;
+
+console.log(query.sql);    // select * from orders where customer = $slonik_1
+console.log(query.values); // [ '1 OR 1=1' ]
+```
+
+The hostile text stays in the list of values. Building dynamic SQL means calling a different function, `sql.identifier`, which also quotes what it writes, and that call can be found with a search.
+
+<Callout kind="riesgo" title="A warning about the linter">
+	`eslint-plugin-security` 4.0.1 includes fourteen rules and none of them covers SQL injection. The full list comes from reading `Object.keys(plugin.rules)`. Before counting a package as a check it is worth reviewing what it detects, because the name does not say.
+</Callout>
+
+**How to check it.** Write the incorrect case deliberately and run `tsc` and the linter. Both have to exit 1.
+
+## 6. What runs without anyone asking
+
+The practices above only act when somebody applies them. In continuous integration they apply on every change, without depending on anyone to remember. They come to five steps, counting the two that do not depend on the code just written.
+
+1. **Compilation.** `tsc --noEmit` across the project. It holds up section 5 and finds anywhere else unvalidated data reaches a function that expects validated data.
+2. **Type-aware linting.** It prevents the assertion from section 5 and locates the calls that build dynamic SQL, which are the ones to read one by one.
+3. **Tests.** The green run automates without trouble. The condition from section 4, that the test has been seen to fail, is checked when the change is reviewed, because it requires the code from before the fix.
+4. **Dependencies.** Installing runs third-party code, and the lockfile decides what gets installed. That has [an article of its own](/en/blog/npm-vs-pnpm-install-security) and is not repeated here.
+5. **Secrets.** GitHub blocks a push when it detects a credential. On public repositories the protection is on by default for user accounts; on private ones it has to be enabled and requires GitHub Secret Protection<Cite n={11} />.
+
+None of the five steps asks where the code came from. They apply the same way to a change written by hand and to one generated by a model.
+
+**How to check it.** Open a change containing one failure of each kind and confirm that CI stops it. A check that has never been seen to fail is not verified, for the same reason a test that has never failed is not.
+
+## What stays in the request
+
+Writing good requests still has an effect. The model makes decisions no check can make for it: what the person opening the issue actually wants, which part of the system needs touching, what the new thing should be called, and how much detail the answer needs. Those decisions are semantic and have no check attached, so the request is the only place they fit.
+
+Four questions decide where a new rule goes:
+
+- If breaking it can be detected in the syntax tree or in the output, the rule goes in the code.
+- If it describes an algorithm with steps, it goes in a script or a typed function.
+- If it is a decision about which, about naming, or about how something reads, it goes in the request and stays as short as possible.
+- If it contradicts an example in the same file, the example wins, because the model reads both and the example is more concrete.
+
+Setting up the six practices costs a few hours, and after that they cost minutes per change. The alternative is finding the same defects later, by reading the whole tree, which is exactly the situation Google's guides describe as the one that gets reviewed worst.
+
+<References
+	title="References"
+	back="Back to citation"
+	items={[
+		{
+			source: 'Veracode',
+			title: 'Spring 2026 GenAI Code Security Update',
+			note: '24 March 2026; more than 150 models, 80 tasks, four languages',
+			url: 'https://www.veracode.com/blog/spring-2026-genai-code-security/'
+		},
+		{
+			source: 'Pearce, Ahmad, Tan, Dolan-Gavitt and Karri',
+			title: "Asleep at the Keyboard? Assessing the Security of GitHub Copilot's Code Contributions",
+			note: 'IEEE Symposium on Security and Privacy 2022; 1,689 programs across 89 scenarios',
+			url: 'https://arxiv.org/abs/2108.09293'
+		},
+		{
+			source: 'Anthropic',
+			title: 'Agent Skills, overview',
+			note: 'loading levels, token cost and security considerations',
+			url: 'https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview'
+		},
+		{
+			source: 'Anthropic',
+			title: 'Skill authoring best practices',
+			note: 'the description, conciseness, and evaluations before documentation',
+			url: 'https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices'
+		},
+		{
+			source: 'Cursor',
+			title: 'Rules',
+			url: 'https://cursor.com/docs/context/rules'
+		},
+		{
+			source: 'Vercel',
+			title: 'agent-skills, skills/react-best-practices',
+			note: 'sizes measured on 7 September 2026 with the GitHub API',
+			url: 'https://github.com/vercel-labs/agent-skills'
+		},
+		{
+			source: 'Google',
+			title: 'Engineering Practices, Small CLs',
+			url: 'https://google.github.io/eng-practices/review/developer/small-cls.html'
+		},
+		{
+			source: 'Stryker Mutator',
+			title: 'Mutation testing',
+			url: 'https://stryker-mutator.io/docs/'
+		},
+		{
+			source: 'Node.js',
+			title: 'Test runner',
+			url: 'https://nodejs.org/api/test.html'
+		},
+		{
+			source: 'typescript-eslint',
+			title: 'no-unsafe-type-assertion',
+			url: 'https://typescript-eslint.io/rules/no-unsafe-type-assertion/'
+		},
+		{
+			source: 'GitHub Docs',
+			title: 'About push protection',
+			url: 'https://docs.github.com/en/code-security/secret-scanning/introduction/about-push-protection'
+		}
+	]}
+/>

@@ -36,7 +36,7 @@ export const en: Dict = {
 		workAll: 'See the rest of the projects',
 		articlesTitle: 'Latest articles',
 		articlesLede:
-			'I write about the security decisions that come up while building software, with the code that demonstrates them.',
+			'I write about the security decisions that come up while building software, and about what enforces them when nobody is reviewing.',
 		articlesAll: 'See every article',
 		stackLabel: 'Tools'
 	},
