@@ -1,16 +1,13 @@
 ---
 import ArticlePage from '../../../components/pages/Article.astro';
-import { articleSlugs, getArticle } from '../../../lib/articles';
+import { allArticles } from '../../../lib/articles';
 
 export async function getStaticPaths() {
-	const slugs = await articleSlugs();
-	return slugs.map((slug) => ({ params: { slug } }));
+	const articles = await allArticles('en');
+	return articles.map((article) => ({ params: { slug: article.path }, props: { article } }));
 }
 
-const { slug } = Astro.params;
-const article = await getArticle('en', slug!);
-
-if (!article) throw new Error(`unknown article: ${slug}`);
+const { article } = Astro.props;
 ---
 
 <ArticlePage lang="en" {article} />

@@ -124,7 +124,7 @@ async function articleCards(lang: Lang): Promise<CardSpec[]> {
 	};
 
 	const cards = list.map((article) => ({
-		route: routeOf(lang, 'article', article.meta.slug),
+		route: routeOf(lang, 'article', article.path),
 		lang,
 		eyebrow: strings.blog.title.toUpperCase(),
 		heading: article.meta.title,

@@ -5,11 +5,14 @@ interface Props {
 	lang: Lang;
 	routeKey: RouteKey;
 	slug?: string;
+	slugs?: Record<Lang, string>;
 }
 
-const { lang, routeKey, slug } = Astro.props;
+const { lang, routeKey, slug, slugs } = Astro.props;
 
-const href = path(other(lang), routeKey, slug);
+// El segmento del otro idioma no siempre es el mismo: un articulo lo traduce.
+const target = slugs ? slugs[other(lang)] : slug;
+const href = path(other(lang), routeKey, target);
 const strings = t(lang).a11y;
 ---
 

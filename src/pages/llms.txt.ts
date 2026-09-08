@@ -30,12 +30,12 @@ export const GET: APIRoute = async () => {
 
 	if (articles.length) {
 		sections.push('## Artículos', '');
-		for (const { meta } of articles) {
+		for (const { meta, path: segment } of articles) {
 			const areas = meta.areas.map((area) => areaLabel(area, lang)).join(', ');
 			sections.push(
 				line(
 					meta.title,
-					absolute(routePath(lang, 'article', meta.slug)),
+					absolute(routePath(lang, 'article', segment)),
 					`${meta.tagline} Publicado ${meta.updated ?? meta.published}. Área: ${areas}.`
 				)
 			);

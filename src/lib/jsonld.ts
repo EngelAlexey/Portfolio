@@ -9,7 +9,7 @@ import {
 	type OrgMark,
 	type Role
 } from './about';
-import { allArticles, getArticle, type Article } from './articles';
+import { allArticles, getArticleByPath, type Article } from './articles';
 import { areaLabel } from './areas';
 import { fichas, getProject, type ProjectMeta } from './content';
 import { LANGS, path as routePath, t, type Lang, type RouteKey } from './i18n';
@@ -242,7 +242,7 @@ async function articleListNode(input: GraphInput): Promise<Node> {
 			'@type': 'ListItem',
 			position: i + 1,
 			name: article.meta.title,
-			url: absolute(routePath(input.lang, 'article', article.meta.slug))
+			url: absolute(routePath(input.lang, 'article', article.path))
 		}))
 	};
 }
@@ -334,7 +334,7 @@ export async function buildGraph(input: GraphInput): Promise<string | null> {
 	}
 
 	if (key === 'article' && input.slug) {
-		const article = await getArticle(input.lang, input.slug);
+		const article = await getArticleByPath(input.lang, input.slug);
 		if (article) {
 			const node = articleNode(input, article);
 			page.mainEntity = ref(node['@id'] as string);

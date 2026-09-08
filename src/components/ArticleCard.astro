@@ -14,7 +14,7 @@ const { article, lang } = Astro.props;
 
 const meta = article.meta;
 const strings = t(lang);
-const href = path(lang, 'article', meta.slug);
+const href = path(lang, 'article', article.path);
 const date = formatDate(meta.published, lang);
 const minutes = strings.blog.minutes(readingMinutes(article));
 ---

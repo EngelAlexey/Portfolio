@@ -1,13 +1,13 @@
 import type { APIRoute } from 'astro';
 import { allArticles, hasArticles } from '../lib/articles';
 import { fichaSlugs } from '../lib/content';
-import { DEFAULT_LANG, LANGS, alternates, path, type RouteKey } from '../lib/i18n';
+import { DEFAULT_LANG, LANGS, alternates, path, type Lang, type RouteKey } from '../lib/i18n';
 import { absolute } from '../lib/site';
 import lastmod from '../lib/lastmod.json';
 
 const STATIC_KEYS: RouteKey[] = ['home', 'projects', 'about', 'contact'];
 
-type Entry = { key: RouteKey; slug?: string };
+type Entry = { key: RouteKey; slug?: string; slugs?: Record<Lang, string> };
 
 const dates: Record<string, string> = lastmod;
 
@@ -16,8 +16,12 @@ const dates: Record<string, string> = lastmod;
 const stampKey = ({ key, slug }: Entry): string => (slug ? `${key}:${slug}` : key);
 
 function urlEntry(entry: Entry, declared: Map<string, string>): string {
-	const { key, slug } = entry;
-	const pair = alternates(key, slug);
+	const { key, slug, slugs } = entry;
+	// Un articulo traduce su segmento, asi que el par no se puede derivar de uno.
+	const pair = slugs
+		? { es: path('es', key, slugs.es), en: path('en', key, slugs.en) }
+		: alternates(key, slug);
+	const segment = (lang: Lang) => (slugs ? slugs[lang] : slug);
 	// La fecha declarada en el front matter gana sobre la del historial de git:
 	// es la que el autor afirma, y el historial queda de reserva.
 	const date = declared.get(stampKey(entry)) ?? dates[stampKey(entry)];
@@ -29,7 +33,7 @@ function urlEntry(entry: Entry, declared: Map<string, string>): string {
 
 	return LANGS.map(
 		(lang) => `  <url>
-    <loc>${absolute(path(lang, key, slug))}</loc>${stamp}
+    <loc>${absolute(path(lang, key, segment(lang)))}</loc>${stamp}
 ${links}
     <xhtml:link rel="alternate" hreflang="x-default" href="${absolute(pair[DEFAULT_LANG])}"/>
   </url>`
@@ -50,8 +54,8 @@ export const GET: APIRoute = async () => {
 		entries.push({ key: 'blog' });
 
 		const articles = await allArticles(DEFAULT_LANG);
-		for (const { meta } of articles) {
-			entries.push({ key: 'article' as RouteKey, slug: meta.slug });
+		for (const { meta, paths } of articles) {
+			entries.push({ key: 'article' as RouteKey, slug: meta.slug, slugs: paths });
 			declared.set(`article:${meta.slug}`, meta.updated ?? meta.published);
 		}
 

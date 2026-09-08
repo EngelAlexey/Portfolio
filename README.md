@@ -33,7 +33,7 @@ Los dos árboles son espejo, cada segmento en su idioma. La tabla de `src/lib/i1
 | Proyectos | `/es/proyectos` | `/en/projects` |
 | Ficha | `/es/proyectos/<slug>` | `/en/projects/<slug>` |
 | Blog | `/es/blog` | `/en/blog` |
-| Artículo | `/es/blog/<slug>` | `/en/blog/<slug>` |
+| Artículo | `/es/blog/<path>` | `/en/blog/<path>` |
 | Feed | `/es/blog.xml` | `/en/blog.xml` |
 | Sobre mí | `/es/sobre-mi` | `/en/about` |
 | Contacto | `/es/contacto` | `/en/contact` |
@@ -142,6 +142,7 @@ areas: [seguridad]                     # 1 a 3 de la misma taxonomía que las fi
 published: '2026-09-07'                # YYYY-MM-DD
 updated: null                          # YYYY-MM-DD o null
 draft: true                            # true = solo se ve en `astro dev`
+path: null                             # segmento de URL de ESTE idioma; null = usa el slug
 repo: null                             # repositorio de demostración, o null
 related: [kaizen-ai]                   # slugs de fichas existentes, o []
 cover: null                            # ruta bajo /img/ o null
@@ -153,6 +154,9 @@ Reglas que el build hace cumplir:
 - `slug` en minúsculas y guiones, y debe coincidir con la carpeta.
 - Si existe `es.mdx` debe existir `en.mdx`, con el mismo `draft`, el mismo `published` y el mismo `related`.
 - `updated` no puede ser anterior a `published`.
+- `path` en minúsculas y guiones, y no puede repetirse entre dos artículos del mismo idioma.
+
+**`path` es la dirección del artículo en ese idioma y se declara por archivo.** El `slug` sigue siendo la carpeta y la identidad interna; `path` es solo lo que se ve en la barra de direcciones. Cuando es `null`, la ruta usa el `slug`, así que un artículo sin traducir la URL no cambia. Declararlo en `en.mdx` es lo que evita que un lector anglófono llegue a `/en/blog/revisar-codigo-generado-por-ia`, una dirección sin una sola palabra en su idioma. Cambiar un `path` ya publicado obliga a redirigir el anterior desde `vercel.json`: la URL vieja está indexada y compartida.
 
 **`updated` es la fecha de la última edición y hay que ponerla a mano** cuando se corrige o se amplía un artículo ya publicado. Mientras es `null`, el artículo se describe solo con `published`. En cuanto tiene fecha aparece en cinco sitios: la línea de datos de la ficha del artículo, `dateModified` en los datos estructurados, `article:modified_time` en Open Graph, `<lastmod>` en el sitemap y `atom:updated` en el feed. La fecha declarada **gana sobre la del historial de git**: es la que el autor afirma, y el historial queda de reserva para los artículos que no la declaran.
 - `related` solo admite slugs de fichas que existan. Un enlace roto es un fallo de build, no un 404 en producción.

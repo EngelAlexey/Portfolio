@@ -114,6 +114,12 @@ const articleSchema = z
 		updated: z.string().regex(DATE, 'use YYYY-MM-DD').nullable().default(null),
 		draft: z.boolean().default(false),
 
+		path: z
+			.string()
+			.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'path must be lower-case kebab-case')
+			.nullable()
+			.default(null),
+
 		repo: url.nullable().default(null),
 		related: z.array(z.string().min(1)).max(4).default([]),
 		cover: z.string().startsWith('/img/').nullable().default(null)

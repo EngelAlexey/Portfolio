@@ -37,7 +37,8 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 <Layout
 	{lang}
 	key="article"
-	slug={meta.slug}
+	slug={article.path}
+	slugs={article.paths}
 	title={meta.title}
 	description={meta.tagline}
 	image={meta.cover}
@@ -134,14 +135,14 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 				(around.prev || around.next) && (
 					<nav class="pager" aria-label={strings.blog.title}>
 						{around.prev && (
-							<a class="prev" href={path(lang, 'article', around.prev.meta.slug)}>
+							<a class="prev" href={path(lang, 'article', around.prev.path)}>
 								<span>← {strings.article.previous}</span>
 								<strong>{around.prev.meta.title}</strong>
 							</a>
 						)}
 
 						{around.next && (
-							<a class="next" href={path(lang, 'article', around.next.meta.slug)}>
+							<a class="next" href={path(lang, 'article', around.next.path)}>
 								<span>{strings.article.next} →</span>
 								<strong>{around.next.meta.title}</strong>
 							</a>

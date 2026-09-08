@@ -10,6 +10,10 @@ export type Article = {
 	meta: ArticleMeta;
 	lang: Lang;
 	entry: ArticleEntry;
+	// Segmento de URL de este idioma, y el de los dos, para hreflang y para el
+	// conmutador. El slug de la carpeta sigue siendo la identidad interna.
+	path: string;
+	paths: Record<Lang, string>;
 };
 
 export const HOME_ARTICLES = 2;
@@ -43,7 +47,14 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Article>>>> {
 		}
 
 		const bucket = bySlug.get(meta.slug) ?? {};
-		bucket[parsed.lang] = { meta, lang: parsed.lang, entry };
+		const segment = meta.path ?? meta.slug;
+		bucket[parsed.lang] = {
+			meta,
+			lang: parsed.lang,
+			entry,
+			path: segment,
+			paths: { es: segment, en: segment }
+		};
 		bySlug.set(meta.slug, bucket);
 	}
 
@@ -74,6 +85,26 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Article>>>> {
 			if (!known.has(target)) {
 				fail(`src/content/articles/${slug}`, `\`related\` names an unknown project: "${target}"`);
 			}
+		}
+
+		const paths = { es: bucket.es!.path, en: bucket.en!.path };
+		for (const lang of LANGS) bucket[lang]!.paths = paths;
+	}
+
+	// Dos articulos con el mismo segmento en un idioma se pisarian la ruta, y
+	// el segundo ganaria en silencio.
+	for (const lang of LANGS) {
+		const seen = new Map<string, string>();
+		for (const [slug, bucket] of bySlug) {
+			const segment = bucket[lang]!.path;
+			const owner = seen.get(segment);
+			if (owner) {
+				fail(
+					`src/content/articles/${slug}`,
+					`\`path\` "${segment}" in ${lang} is already used by "${owner}"`
+				);
+			}
+			seen.set(segment, slug);
 		}
 	}
 
@@ -109,8 +140,12 @@ export async function getArticle(lang: Lang, slug: string): Promise<Article | un
 
 export const renderArticle = (article: Article) => render(article.entry);
 
-export const articleSlugs = async (): Promise<string[]> =>
-	(await allArticles('es')).map((a) => a.meta.slug);
+export const articlePaths = async (lang: Lang): Promise<string[]> =>
+	(await allArticles(lang)).map((a) => a.path);
+
+export async function getArticleByPath(lang: Lang, path: string): Promise<Article | undefined> {
+	return (await allArticles(lang)).find((article) => article.path === path);
+}
 
 // La compuerta de lanzamiento. Mientras no haya nada publicado, el blog no se
 // enlaza, no entra en el sitemap y no se indexa: un blog vacio resta.

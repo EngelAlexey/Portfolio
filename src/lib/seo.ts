@@ -14,6 +14,9 @@ export type SeoInput = {
 	lang: Lang;
 	key: RouteKey | null;
 	slug?: string;
+	// Cuando el segmento de URL cambia con el idioma, `alternates` no lo puede
+	// derivar de uno solo.
+	slugs?: Record<Lang, string>;
 	title: string;
 	description: string;
 	image?: string | null;
@@ -32,9 +35,11 @@ export type SeoTags = {
 
 const OG_LOCALE: Record<Lang, string> = { es: 'es_CR', en: 'en_US' };
 
-export function seo({ lang, key, slug, image, noindex = false }: SeoInput): SeoTags {
+export function seo({ lang, key, slug, slugs, image, noindex = false }: SeoInput): SeoTags {
 	const route = key ?? 'home';
-	const paths = alternates(route, slug);
+	const paths = slugs
+		? { es: routePath('es', route, slugs.es), en: routePath('en', route, slugs.en) }
+		: alternates(route, slug);
 	const card = image ?? ogCardPath(lang, route, slug);
 
 	return {

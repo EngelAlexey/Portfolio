@@ -9,6 +9,7 @@ const {
 	lang,
 	key,
 	slug,
+	slugs,
 	title,
 	description,
 	image = null,
@@ -17,7 +18,7 @@ const {
 	updated = null
 } = Astro.props;
 
-const tags = seo({ lang, key, slug, title, description, image, noindex });
+const tags = seo({ lang, key, slug, slugs, title, description, image, noindex });
 const siteName = t(lang).meta.siteName;
 
 const graph = await buildGraph({

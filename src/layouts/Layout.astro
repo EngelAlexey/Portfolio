@@ -18,6 +18,7 @@ interface Props {
 	lang: Lang;
 	key: RouteKey | null;
 	slug?: string;
+	slugs?: Record<Lang, string>;
 	title: string;
 	description: string;
 	image?: string | null;
@@ -30,6 +31,7 @@ const {
 	lang,
 	key,
 	slug,
+	slugs,
 	title,
 	description,
 	image = null,
@@ -129,7 +131,7 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 				/>
 			)
 		}
-		<Seo {lang} {key} {slug} {title} {description} {image} {noindex} {published} {updated} />
+		<Seo {lang} {key} {slug} {slugs} {title} {description} {image} {noindex} {published} {updated} />
 	</head>
 
 	<body>
@@ -184,7 +186,7 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 					</nav>
 
 					<div class="tools">
-						<LangSwitch {lang} routeKey={key ?? 'home'} {slug} />
+						<LangSwitch {lang} routeKey={key ?? 'home'} {slug} {slugs} />
 						<ThemeToggle {lang} />
 					</div>
 				</div>
