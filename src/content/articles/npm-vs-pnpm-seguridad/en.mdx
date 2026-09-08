@@ -8,7 +8,7 @@ updated: null
 draft: false
 path: npm-vs-pnpm-install-security
 repo: null
-related: [kaizen-ai]
+related: [deteccion-por-umbral]
 cover: null
 ---
 
@@ -80,6 +80,8 @@ That last case stopped being hypothetical in September 2025. The Shai-Hulud worm
 <Callout kind="nota" title="Blocking scripts does not cover every case">
 The malicious payload that hit `chalk`, `debug` and seventeen other packages on 8 September 2025 did not depend on any install script: it sat inside the package code and triggered when it ran in the browser<Cite n={4} />. A package manager that blocks scripts would have changed nothing in that case. It closes one entry route, not the whole category.
 </Callout>
+
+Blocking by default answers a problem that recognition does not solve. When the hostile package is one nobody has seen yet, there is nothing to recognise, and all that is left is restricting what any package may do while it installs.
 
 In npm the same block comes from one line in the project configuration file, because the `ignore-scripts` setting already exists and the only thing that happens is that it defaults to `false`<Cite n={5} />.
 

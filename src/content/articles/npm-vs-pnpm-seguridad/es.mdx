@@ -7,7 +7,7 @@ published: '2026-09-07'
 updated: null
 draft: false
 repo: null
-related: [kaizen-ai]
+related: [deteccion-por-umbral]
 cover: null
 ---
 
@@ -79,6 +79,8 @@ Ese último caso dejó de ser hipotético en septiembre de 2025. El gusano Shai-
 <Callout kind="nota" title="Bloquear los scripts no cubre todos los casos">
 La carga maliciosa que afectó a `chalk`, `debug` y otros diecisiete paquetes el 8 de septiembre de 2025 no dependía de ningún script de instalación: estaba dentro del código del paquete y se activaba al ejecutarse en el navegador<Cite n={4} />. Un gestor que bloquea los scripts no habría cambiado nada en ese caso. Cierra una vía de entrada, no la categoría entera.
 </Callout>
+
+Bloquear por defecto responde a un problema que no se resuelve reconociendo. Cuando el paquete hostil es uno que nadie ha visto todavía, no hay nada que reconocer, y lo único que queda es restringir lo que cualquier paquete puede hacer mientras se instala.
 
 En npm el mismo bloqueo se consigue con una línea en el archivo de configuración del proyecto. El ajuste `ignore-scripts` ya existe; lo único que ocurre es que viene en `false`<Cite n={5} />.
 
