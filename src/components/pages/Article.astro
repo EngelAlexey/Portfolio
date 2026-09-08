@@ -77,7 +77,10 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 					<dd><time datetime={meta.published}>{formatDate(meta.published, lang)}</time></dd>
 				</div>
 				{
-					meta.updated && (
+					// Una fecha de edicion igual a la de publicacion no dice nada:
+					// el articulo se corrigio el mismo dia que salio.
+					meta.updated &&
+						meta.updated !== meta.published && (
 						<div>
 							<dt class="meta-label">{strings.article.updated}</dt>
 							<dd><time datetime={meta.updated}>{formatDate(meta.updated, lang)}</time></dd>

@@ -1,0 +1,346 @@
+---
+slug: npm-vs-pnpm-seguridad
+title: 'npm vs pnpm: qué cambia en la seguridad al instalar dependencias'
+tagline: Cuatro comportamientos medidos en los dos gestores, con el comando que los reproduce y la configuración que los iguala.
+areas: [seguridad, infra]
+published: '2026-09-07'
+updated: null
+draft: false
+repo: null
+related: [kaizen-ai]
+cover: null
+---
+
+import Callout from '../../../components/Callout.astro';
+import Cite from '../../../components/Cite.astro';
+import References from '../../../components/References.astro';
+
+Instalar una dependencia ejecuta código. No el código que se importará después, sino código que corre durante la instalación, antes de que nadie haya leído una línea del paquete. Y corre con el mismo acceso al sistema que tiene quien lanzó el comando.
+
+Durante años los dos gestores hacían lo mismo con ese código, que era ejecutarlo sin preguntar. En enero de 2025 pnpm 10 dejó de hacerlo, y lo anunció como un cambio incompatible hecho para aumentar la seguridad<Cite n={1} />. La versión 11 fue más lejos: convirtió el aviso en un error y añadió una segunda defensa. npm conserva el comportamiento de siempre y ofrece, en su lugar, un ajuste para desactivarlo.
+
+Eso no vuelve seguro a uno y descuidado al otro, porque al mismo resultado se llega por caminos distintos. Lo que sigue compara npm 11.8.0 con pnpm 10.0.0 y con pnpm 11.26.0 en cuatro comportamientos, midiendo qué hace cada uno sin configurar nada. El punto 7 reúne la configuración con la que npm alcanza lo mismo. Cada celda sale de ejecutar el comando, salvo el valor de la última fila, que es el que declara la documentación de pnpm. Los proyectos de prueba caben en dos archivos escritos completos más abajo.
+
+| Comportamiento | npm 11.8.0 | pnpm 10.0.0 | pnpm 11.26.0 |
+|---|---|---|---|
+| `postinstall` de una dependencia | se ejecuta | bloqueado, aviso, salida 0 | bloqueado, salida 1 |
+| `require` de un paquete no declarado | resuelve | `MODULE_NOT_FOUND` | `MODULE_NOT_FOUND` |
+| Instalación en CI con el bloqueo desfasado | instala otra versión, salida 0 | salida 1 | salida 1 |
+| Espera antes de resolver una versión recién publicada | ninguna | ninguna | 1440 minutos |
+
+Conviene leerla por lo que es. Mide valores por defecto, no capacidades, y tres de las cuatro filas se igualan en npm escribiendo dos archivos.
+
+## 1. La instalación ejecuta código de terceros
+
+Un paquete puede declarar un script que corre al instalarse, y basta un proyecto de dos archivos para verlo sin descargar nada de la red.
+
+```json
+// package.json
+{
+  "name": "prueba-instalacion",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": { "evil-postinstall": "file:./evil-postinstall" }
+}
+```
+
+```json
+// evil-postinstall/package.json
+{
+  "name": "evil-postinstall",
+  "version": "1.0.0",
+  "scripts": { "postinstall": "node -e \"require('fs').writeFileSync('EJECUTADO.txt','')\"" }
+}
+```
+
+El nombre `evil-postinstall` está inventado para este artículo y no existe en el registro público, comprobado el 7 de septiembre de 2026 con `npm view evil-postinstall`, que devuelve `E404`.
+
+Con npm la instalación termina bien y el archivo aparece, sin que nada en la salida lo mencione.
+
+```bash
+npm install
+# salida 0
+ls evil-postinstall/EJECUTADO.txt
+```
+
+Con pnpm 11 la instalación se detiene antes de llegar ahí.
+
+```bash
+pnpm install
+# Error: ERR_PNPM_IGNORED_BUILDS
+#   ╰─▶ Ignored build scripts: evil-postinstall@file:evil-postinstall
+# salida 1
+```
+
+Escribir un archivo vacío es inofensivo. El permiso que lo hace posible, en cambio, no distingue entre eso y leer variables de entorno, buscar credenciales en el disco o publicar paquetes con las credenciales de quien instala.
+
+Ese último caso dejó de ser hipotético en septiembre de 2025. El gusano Shai-Hulud se propagó por npm mediante un script de post-instalación, colocado en paquetes cuyos mantenedores habían sido comprometidos<Cite n={2} />, y CISA llegó a emitir una alerta<Cite n={3} />.
+
+<Callout kind="nota" title="Bloquear los scripts no cubre todos los casos">
+La carga maliciosa que afectó a `chalk`, `debug` y otros diecisiete paquetes el 8 de septiembre de 2025 no dependía de ningún script de instalación: estaba dentro del código del paquete y se activaba al ejecutarse en el navegador<Cite n={4} />. Un gestor que bloquea los scripts no habría cambiado nada en ese caso. Cierra una vía de entrada, no la categoría entera.
+</Callout>
+
+En npm el mismo bloqueo se consigue con una línea en el archivo de configuración del proyecto. El ajuste `ignore-scripts` ya existe; lo único que ocurre es que viene en `false`<Cite n={5} />.
+
+```ini
+# .npmrc
+ignore-scripts=true
+```
+
+Con ese archivo presente, la instalación anterior termina sin crear `EJECUTADO.txt`.
+
+Conviene decir el coste antes de que sorprenda: paquetes como `esbuild`, `puppeteer` o `sqlite3` descargan o compilan su binario en ese mismo momento y sin eso no funcionan. Recuperarlos es cuestión de nombrarlos uno por uno, levantando el bloqueo solo para ese comando.
+
+```bash
+npm rebuild esbuild --ignore-scripts=false
+```
+
+La opción es obligatoria, porque con `ignore-scripts=true` en la configuración un `npm rebuild` a secas tampoco ejecuta nada.
+
+## 2. Qué introdujo pnpm 10 y qué cambió en la 11
+
+El cambio de pnpm 10, publicado el 7 de enero de 2025, fue dejar de ejecutar los scripts de las dependencias durante la instalación<Cite n={1} />. La versión 10 avisa y continúa, y ese detalle decide bastante más de lo que parece, porque un aviso con salida 0 no detiene la integración continua.
+
+```
+The following dependencies have build scripts that were ignored: esbuild
+```
+
+En esa versión el permiso se concede desde `package.json`, en el campo `pnpm.onlyBuiltDependencies`.
+
+pnpm 11.0.0, del 28 de abril de 2026, cambió las dos cosas<Cite n={6} />. El aviso pasó a ser el error `ERR_PNPM_IGNORED_BUILDS` con salida 1, así que la instalación falla hasta que alguien decide. Y el permiso cambió de sitio: `onlyBuiltDependencies`, junto con `onlyBuiltDependenciesFile`, `neverBuiltDependencies`, `ignoredBuiltDependencies` e `ignoreDepScripts`, desapareció en favor de `allowBuilds` en `pnpm-workspace.yaml`<Cite n={7} />.
+
+```yaml
+# pnpm-workspace.yaml
+allowBuilds:
+  esbuild: true
+```
+
+Con esa entrada la instalación vuelve a terminar en 0 y el script de `esbuild` corre.
+
+Hay además un efecto que conviene conocer antes de encontrárselo. Cuando pnpm 11 bloquea algo, escribe él mismo en `pnpm-workspace.yaml` y deja la entrada a medias:
+
+```yaml
+allowBuilds:
+  esbuild: set this to true or false
+```
+
+Que un archivo cambie durante un `pnpm install` sorprende la primera vez. El resultado, sin embargo, es que la decisión queda en el historial del repositorio en lugar de vivir en la máquina de quien instaló. El comando `pnpm approve-builds` recorre la lista de forma interactiva y escribe las respuestas en ese mismo sitio<Cite n={7} />.
+
+<Callout kind="riesgo" title="dangerouslyAllowAllBuilds anula la defensa completa">
+El ajuste `dangerouslyAllowAllBuilds` hace que todos los scripts de instalación se ejecuten sin aprobación<Cite n={7} />, y aplica también a las dependencias que entren después. No es una excepción puntual sino la desactivación permanente del bloqueo. Un `allowBuilds` con tres nombres se revisa en diez segundos; este ajuste no deja nada que revisar.
+</Callout>
+
+## 3. El código importa paquetes que nadie declaró
+
+Los scripts son el riesgo visible. El siguiente es más silencioso y no tiene nada que ver con código hostil.
+
+Un proyecto que solo declara `debug` recibe también `ms`, porque `debug` la necesita para funcionar. La pregunta es si el código del propio proyecto puede importarla.
+
+```json
+{
+  "name": "fantasma",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": { "debug": "4.3.4" }
+}
+```
+
+```bash
+node -e "require('ms')"
+```
+
+Con npm la línea funciona. Con pnpm falla con `MODULE_NOT_FOUND` en las dos versiones de la tabla, porque pnpm no deja las dependencias indirectas al alcance de la raíz del proyecto.
+
+Que un `require` funcione sin estar declarado significa que la versión de ese paquete la está eligiendo otro. Nadie la fijó, nadie la revisa cuando se actualiza, y desaparece el día que `debug` cambie su propia dependencia o la sustituya. Lo que termina ejecutándose es lo que resolvió el árbol de un tercero, que es una decisión que nadie tomó.
+
+La comprobación es directa: instalar el proyecto con pnpm y arrancar la aplicación. Cada `MODULE_NOT_FOUND` que aparezca es un paquete que faltaba por declarar.
+
+## 4. El archivo de bloqueo solo obliga si se le pide
+
+Un archivo de bloqueo fija la versión exacta de cada dependencia, y deja de servir en cuanto el comando que corre en el servidor tiene permiso para reescribirlo.
+
+La prueba parte de un proyecto instalado con `debug` en `4.3.4`. Después se cambia `package.json` a `4.4.0` sin tocar el bloqueo, que es exactamente lo que produce una rama mal fusionada.
+
+```bash
+CI=true npm install
+# salida 0
+node -p "require('./node_modules/debug/package.json').version"
+# 4.4.0
+```
+
+npm instala una versión que el archivo de bloqueo no nombra, actualiza el archivo para que coincida y termina en 0, así que nada en la salida indica que se haya desviado. El mismo caso con pnpm:
+
+```bash
+CI=true pnpm install
+# ERR_PNPM_OUTDATED_LOCKFILE
+# salida 1
+```
+
+pnpm se detiene y deja `4.3.4` en su sitio, y la razón está documentada: `--frozen-lockfile` viene en `true` cuando detecta un entorno de integración continua, y en `false` fuera de él<Cite n={8} />.
+
+npm tiene el equivalente exacto, con la diferencia de que hay que escribirlo. `npm ci` sale con error si el bloqueo no coincide con `package.json`, borra `node_modules` antes de empezar y no escribe nunca en ninguno de los dos archivos<Cite n={9} />.
+
+```bash
+npm ci
+# npm error code EUSAGE
+# salida 1
+```
+
+La diferencia, entonces, no está en el formato del archivo ni en lo que cada gestor es capaz de hacer. Los dos cumplen cuando se les pide. Está en cuál de los dos comportamientos es el que sale por defecto el día que nadie se acordó de escribirlo.
+
+## 5. La edad de una versión como defensa
+
+pnpm 11 trajo un segundo cambio de valor por defecto, y es el único de los cuatro que no tiene equivalente al otro lado. Una versión recién publicada no se resuelve hasta que tenga al menos un día: el ajuste se llama `minimumReleaseAge`, se mide en minutos, y pasó de `0` a `1440`<Cite n={10} />.
+
+```yaml
+# pnpm-workspace.yaml
+minimumReleaseAge: 1440
+```
+
+El ajuste responde a la forma que tienen estos incidentes. Las versiones maliciosas de `chalk` y `debug` se publicaron en dos tandas separadas por minutos, y se descubrieron el mismo día<Cite n={4} />. Una espera de veinticuatro horas cubre justo ese intervalo: el paquete comprometido ya está publicado y todavía nadie lo ha detectado.
+
+Conviene saber dónde no se aplica. La espera gobierna la resolución, no la petición explícita: pedir una versión exacta que se publicó hace unas horas funciona, y pnpm la instala anotando el paquete en `minimumReleaseAgeExclude`. El ajuste `minimumReleaseAgeStrict` convierte esa anotación en una pregunta, y `minimumReleaseAgeExclude` sirve además para nombrar las excepciones permanentes<Cite n={10} />.
+
+npm no tiene un ajuste equivalente. Lo más cercano es `before`, que fija las resoluciones a una fecha concreta y viene sin valor:
+
+```bash
+npm config get before
+# null
+```
+
+## 6. Dónde los dos hacen lo mismo
+
+Conviene separar lo que cambia de lo que no, porque la lista de diferencias reales es más corta de lo que sugiere cualquier comparación de gestores.
+
+Los dos guardan la integridad de cada paquete en el archivo de bloqueo y los dos se niegan a continuar si el contenido descargado no coincide. Alterando a mano una entrada del bloqueo, npm falla con `EINTEGRITY` y pnpm con `ERR_PNPM_TARBALL_INTEGRITY`. Los dos tienen, como ya se vio, un comando que obliga a respetar ese archivo. Y ninguno de los dos inspecciona lo que hace el código del paquete una vez instalado, que es precisamente el caso de `chalk` y `debug`.
+
+El registro también está cambiando por su cuenta. En septiembre de 2025 npm anunció la publicación mediante identidad verificada, que llama *trusted publishing*. Con ella llegaron la retirada de los tokens clásicos y una vida máxima de siete días para los tokens con permiso de publicación<Cite n={11} />. Son cambios sobre cómo se publica un paquete y no sobre qué ocurre al instalarlo, así que se suman a lo anterior en lugar de sustituirlo.
+
+## 7. Cómo configurar npm de forma segura
+
+Nada de lo anterior obliga a cambiar de herramienta. Tres de los cuatro comportamientos se igualan en npm con dos archivos y un comando, y vale la pena tenerlos juntos en un solo sitio.
+
+El primero es el archivo de configuración del proyecto, que se versiona con el repositorio para que valga para todo el equipo y no solo para quien lo escribió.
+
+```ini
+# .npmrc
+ignore-scripts=true
+```
+
+El segundo es el comando de instalación en el servidor. `npm ci` respeta ese archivo, de modo que las dos defensas se acumulan en la misma línea.
+
+```bash
+npm ci
+```
+
+Con esas dos cosas, el proyecto del punto 1 se instala sin crear `EJECUTADO.txt` y termina en 0, que es el mismo resultado de pnpm 11 alcanzado por otro camino. Comprobar que el ajuste está activo en la máquina donde importa es una línea más:
+
+```bash
+npm config get ignore-scripts
+# true
+```
+
+El tercero es la verificación de firmas del registro, que en un proyecto con dependencias reales confirma que lo descargado viene firmado por npm.
+
+```bash
+npm audit signatures
+# 2 packages have verified registry signatures
+```
+
+Queda una diferencia que npm no cubre hoy. No hay equivalente a `minimumReleaseAge`, y las dependencias indirectas siguen siendo importables sin declararlas, porque el árbol plano forma parte de cómo npm resuelve. Lo primero se compensa en parte fijando `before` a mano; lo segundo se detecta con una herramienta de análisis, no con un ajuste.
+
+## 8. Lo que cuesta cambiar de gestor
+
+Si aun así la decisión es migrar, hay consecuencias que aparecen el primer día y conviene esperarlas.
+
+El código que importaba paquetes no declarados deja de arrancar. Es el mismo `MODULE_NOT_FOUND` del punto 3, y el arreglo es declarar cada paquete, nunca desactivar el aislamiento para que el error se vaya.
+
+La primera instalación se detiene con la lista de paquetes bloqueados y alguien tiene que revisarla. Esa revisión es el momento útil de la defensa, porque es cuando alguien lee por qué un paquete necesita ejecutar código durante la instalación.
+
+`pnpm-workspace.yaml` pasa a ser parte del repositorio y cambia solo durante las instalaciones, así que una entrada nueva que aparezca sin que nadie haya añadido una dependencia merece una pregunta.
+
+Y la espera de un día retrasa cualquier actualización recién publicada, incluida la corrección urgente que se estaba esperando.
+
+## Lo que decide la protección
+
+Ninguno de los cuatro comportamientos depende del nombre del gestor. Dependen de la versión instalada y de lo que haya escrito en los archivos de configuración, que son dos cosas que se comprueban en un minuto.
+
+Un proyecto con pnpm 9 no bloquea nada. Uno con pnpm 10 avisa y sigue adelante. Uno con npm y un `.npmrc` con `ignore-scripts=true` bloquea tanto como pnpm 11. La primera comprobación, entonces, es cuál de esos casos es el propio:
+
+```bash
+pnpm --version
+```
+
+Declarar la versión en `package.json` documenta la intención, pero por sí solo no la impone:
+
+```json
+{ "packageManager": "pnpm@10.11.0" }
+```
+
+En un proyecto con ese campo y sin Corepack activado, `pnpm --version` sigue respondiendo la versión que hay instalada en la máquina, que puede ser una anterior a todo lo descrito aquí. Fijar la versión de verdad exige habilitar Corepack o instalarla en el propio proyecto, y hasta que eso ocurra el campo es una declaración y no un control. Esa distinción es la misma que recorre el artículo entero: lo que protege no es lo que el proyecto dice usar, sino lo que la máquina ejecuta.
+
+<References
+	title="Referencias"
+	back="Volver a la cita"
+	items={[
+	{
+		source: 'pnpm',
+		title: 'Release pnpm 10',
+		note: '7 de enero de 2025',
+		url: 'https://github.com/pnpm/pnpm/releases/tag/v10.0.0'
+	},
+	{
+		source: 'Unit 42, Palo Alto Networks',
+		title: 'Shai-Hulud Worm Compromises npm Ecosystem in Supply Chain Attack',
+		url: 'https://unit42.paloaltonetworks.com/npm-supply-chain-attack/'
+	},
+	{
+		source: 'CISA',
+		title: 'Widespread Supply Chain Compromise Impacting npm Ecosystem',
+		note: '23 de septiembre de 2025',
+		url: 'https://www.cisa.gov/news-events/alerts/2025/09/23/widespread-supply-chain-compromise-impacting-npm-ecosystem'
+	},
+	{
+		source: 'Socket',
+		title: 'npm Author Qix Compromised in Major Supply Chain Attack',
+		url: 'https://socket.dev/blog/npm-author-qix-compromised-in-major-supply-chain-attack'
+	},
+	{
+		source: 'npm',
+		title: 'config, ignore-scripts',
+		url: 'https://docs.npmjs.com/cli/v11/using-npm/config'
+	},
+	{
+		source: 'pnpm',
+		title: 'pnpm 11.0',
+		note: '28 de abril de 2026',
+		url: 'https://pnpm.io/blog/releases/11.0'
+	},
+	{
+		source: 'pnpm',
+		title: 'Settings, Build Settings',
+		url: 'https://pnpm.io/settings/build'
+	},
+	{
+		source: 'pnpm',
+		title: 'pnpm install, --frozen-lockfile',
+		url: 'https://pnpm.io/cli/install'
+	},
+	{
+		source: 'npm',
+		title: 'npm-ci',
+		url: 'https://docs.npmjs.com/cli/v11/commands/npm-ci'
+	},
+	{
+		source: 'pnpm',
+		title: 'Settings, minimumReleaseAge',
+		url: 'https://pnpm.io/settings/dependency-resolution'
+	},
+	{
+		source: 'GitHub',
+		title: 'Our plan for a more secure npm supply chain',
+		note: '22 de septiembre de 2025',
+		url: 'https://github.blog/security/supply-chain-security/our-plan-for-a-more-secure-npm-supply-chain/'
+	}
+]}
+/>

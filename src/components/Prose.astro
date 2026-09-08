@@ -130,6 +130,18 @@
 		font-size: 0.9375rem;
 	}
 
+	/* Una tabla de comparacion no cabe en un telefono y su ancho minimo lo fija
+	   la celda mas larga, asi que sin esto se sale de la columna. Desplaza dentro
+	   de su propia caja en lugar de empujar la pagina. */
+	@media (max-width: 46rem) {
+		.prose :global(table) {
+			display: block;
+			width: max-content;
+			max-width: 100%;
+			overflow-x: auto;
+		}
+	}
+
 	.prose :global(th),
 	.prose :global(td) {
 		padding: 0.5rem 0.75rem;

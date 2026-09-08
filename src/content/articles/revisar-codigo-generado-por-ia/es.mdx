@@ -4,7 +4,7 @@ title: Siete cosas que revisar en el código que genera tu IA
 tagline: Siete fallos de seguridad que se repiten en el código generado, con el código que falla, la corrección y la comprobación de cada uno.
 areas: [seguridad]
 published: '2026-09-07'
-updated: null
+updated: '2026-09-07'
 draft: false
 repo: null
 related: [intercargo-plataforma, kaizen-ai]
@@ -37,7 +37,7 @@ export async function DELETE(req: Request, { params }: Ctx) {
 }
 ```
 
-Esconder el botón es una decisión de pintado, no un permiso. El endpoint sigue aceptando la petición de cualquiera que conozca la dirección, y la dirección está en el código que el navegador ya descargó. El OWASP API Security Top 10 lo cataloga como control de acceso a nivel de función roto. Recuerda además que la autorización se resuelve en configuración o en código<Cite n={2} />.
+Esconder el botón es una decisión de presentación, no un permiso. El endpoint sigue aceptando la petición de cualquiera que conozca la dirección, y la dirección está en el código que el navegador ya descargó. El OWASP API Security Top 10 lo cataloga como control de acceso a nivel de función roto. Recuerda además que la autorización se resuelve en configuración o en código<Cite n={2} />.
 
 La corrección es repetir la comprobación en el servidor, que es el único sitio donde el usuario no puede editarla.
 
@@ -147,7 +147,7 @@ export async function POST(req: Request) {
 }
 ```
 
-Recordar el prefijo no es una defensa, porque depende de que alguien se acuerde cada vez. La defensa es estructural: un escáner de secretos en el gancho de pre-commit y otra vez en integración continua, y las claves en un gestor de secretos en lugar del repositorio.
+Recordar el prefijo no es una defensa, porque depende de que alguien se acuerde cada vez. La defensa es estructural: un escáner de secretos en el *hook* de pre-commit y otra vez en integración continua, y las claves en un gestor de secretos en lugar del repositorio.
 
 Se comprueba sobre el resultado de la compilación, no sobre el código. El paquete que descarga el navegador queda en `.next/static`. Ahí se busca el valor de la clave y no el nombre de la variable, porque la compilación ya sustituyó uno por otro.
 
@@ -214,7 +214,7 @@ Este fallo no está en el código sino en el `package.json`. El modelo propone u
 
 El tamaño del problema está medido. Un estudio publicado en USENIX Security 2025 generó 576.000 muestras de código con 16 modelos y encontró 205.474 nombres de paquete alucinados distintos. Al menos un 5,2 % de los paquetes citados por los modelos comerciales no existía, y un 21,7 % en los modelos abiertos<Cite n={7} />.
 
-El nombre inventado es predecible, y quien lo registra en el registro público consigue que se instale código suyo en cualquier proyecto que siga la sugerencia. npm y yarn ejecutan los scripts de instalación de las dependencias, así que el daño no espera a que alguien importe el paquete. pnpm los bloquea desde su versión 10 y obliga a declarar qué paquetes pueden ejecutarlos.
+El nombre inventado es predecible, y quien lo registra en el registro público consigue que se instale código suyo en cualquier proyecto que siga la sugerencia. npm y yarn ejecutan los scripts de instalación de las dependencias, así que el daño no espera a que alguien importe el paquete. pnpm los bloquea desde su versión 10, y solo los ejecuta para los paquetes que se declaren.
 
 La comprobación va antes de instalar, no después:
 
@@ -258,7 +258,7 @@ Se comprueba provocando el fallo. Se apaga la base de datos, se lanza la petici�
 
 Los siete no cuestan lo mismo. Los puntos 1, 2 y 4 se explotan desde fuera sin necesidad de ningún otro fallo, así que van primero. Los puntos 3 y 5 necesitan que alguien envíe una petición hecha a mano, que es barato pero deliberado. El punto 6 se revisa en el momento de instalar, y el 7 se corrige de una vez en el manejador de errores común.
 
-Hay una regla que cubre a los siete cuando la comprobación no puede decidir: fallar cerrado. Si la sesión no se resuelve, si la validación lanza, si el permiso no aparece, la respuesta correcta es negar. El código generado tiende a lo contrario. Un `?? 0`, un `catch` vacío o un `if (!user) return next()` mantienen la ruta feliz en marcha y hacen que el fallo no se note.
+Hay una regla que cubre a los siete cuando la comprobación no puede decidir: fallar cerrado. Si la sesión no se resuelve, si la validación lanza, si el permiso no aparece, la respuesta correcta es negar. El código generado tiende a lo contrario. Un `?? 0`, un `catch` vacío o un `if (!user) return next()` dejan que la petición siga su curso normal y hacen que el fallo no se note.
 
 La lista deja fuera el HTML sin escapar, la configuración de CORS abierta y la ausencia de límite de peticiones. Son fallos frecuentes, pero no aparecen con la misma insistencia en el código generado.
 
