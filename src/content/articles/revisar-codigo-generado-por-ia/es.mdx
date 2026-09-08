@@ -5,7 +5,7 @@ tagline: Siete fallos de seguridad que se repiten en el código generado, con el
 areas: [seguridad]
 published: '2026-09-07'
 updated: null
-draft: true
+draft: false
 repo: null
 related: [intercargo-plataforma, kaizen-ai]
 cover: null
@@ -17,13 +17,13 @@ import References from '../../../components/References.astro';
 
 Un asistente de IA escribe código que compila, pasa las pruebas y hace lo que se le pidió. El modelo de seguridad no estaba en el enunciado, así que tampoco está en la respuesta.
 
-La medición existe. Veracode probó más de cien modelos sobre tareas de programación en cuatro lenguajes, y el 45 % de las muestras generadas falló las pruebas de seguridad. Los modelos más nuevos y más grandes no salieron mejor parados que los pequeños<Cite n={1} />. No es el defecto de un modelo concreto: es una propiedad del método.
+El fallo está medido. Veracode probó más de cien modelos sobre tareas de programación en cuatro lenguajes, y el 45 % de las muestras generadas falló las pruebas de seguridad. Los modelos más nuevos y más grandes no salieron mejor parados que los pequeños<Cite n={1} />. No es el defecto de un modelo concreto: es una propiedad del método.
 
 Estos siete fallos son los que más se repiten. Cada punto trae tres cosas: el código tal como sale del asistente, la corrección, y el comando que demuestra cuál de los dos resiste. Los ejemplos están reconstruidos para el artículo y no salen de ningún sistema en producción.
 
 ## 1. El permiso se comprueba en la interfaz
 
-Así sale. El componente esconde el botón según el rol y el endpoint borra sin preguntar nada.
+El componente esconde el botón según el rol y el endpoint borra sin comprobar nada.
 
 ```tsx
 {user.role === 'admin' && <button onClick={borrar}>Borrar factura</button>}
@@ -64,7 +64,7 @@ Antes devuelve `200 OK` y la factura desaparece. Después devuelve `403` y sigue
 
 ## 2. El recurso se carga por id y nadie comprueba de quién es
 
-Así sale. La consulta usa el id de la URL y nada más.
+La consulta busca por el identificador que viene en la URL y por nada más.
 
 ```ts
 export async function GET(req: Request, { params }: Ctx) {
@@ -93,7 +93,7 @@ Se comprueba con dos sesiones. Entra como empresa A, pide un id que pertenece a 
 
 ## 3. La consulta se arma concatenando
 
-Así sale, sobre todo cuando el filtro llega desde un formulario de búsqueda.
+El filtro llega desde un formulario de búsqueda y entra en la sentencia como texto.
 
 ```ts
 const rows = await db.$queryRawUnsafe(
@@ -101,7 +101,7 @@ const rows = await db.$queryRawUnsafe(
 );
 ```
 
-El valor entra dentro de las comillas y puede cerrarlas. Con `x' OR '1'='1` la consulta devuelve la tabla entera, y con un punto y coma devuelve lo que el atacante quiera. La recomendación de OWASP es no llegar al intérprete: una interfaz con parámetros, o un ORM<Cite n={4} />.
+El valor entra dentro de las comillas y puede cerrarlas. Con `x' OR '1'='1` la condición se vuelve siempre cierta y la consulta devuelve la tabla entera. La recomendación de OWASP es no llegar al intérprete: una interfaz con parámetros, o un ORM<Cite n={4} />.
 
 ```ts
 const client = req.nextUrl.searchParams.get('client') ?? '';
@@ -127,7 +127,7 @@ Antes devuelve todas las facturas. Después devuelve una lista vacía, que es la
 
 ## 4. Un secreto termina en el paquete que descarga el navegador
 
-Así sale. El asistente necesita que la variable esté disponible en el componente y le pone el prefijo que la hace pública.
+La variable tiene que estar disponible dentro del componente, así que el asistente le pone el prefijo que la hace pública.
 
 ```ts
 const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!);
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
 
 Recordar el prefijo no es una defensa, porque depende de que alguien se acuerde cada vez. La defensa es estructural: un escáner de secretos en el gancho de pre-commit y otra vez en integración continua, y las claves en un gestor de secretos en lugar del repositorio.
 
-Se comprueba sobre el resultado de la compilación, no sobre el código:
+Se comprueba sobre el resultado de la compilación, no sobre el código. El paquete que descarga el navegador queda en `.next/static`. Ahí se busca el valor de la clave y no el nombre de la variable, porque la compilación ya sustituyó uno por otro.
 
 ```bash
 pnpm build && grep -r "sk_live" .next/static | head
@@ -163,7 +163,7 @@ Quitar el prefijo no la recupera. El valor estuvo publicado y pudo quedar en la 
 
 ## 5. La validación existe en el formulario y no en el endpoint
 
-Así sale. El formulario limita el campo y el endpoint confía en que llegó limitado.
+El formulario limita el campo y el endpoint confía en que el valor llegó limitado.
 
 ```tsx
 <input type="number" name="cantidad" min={1} max={5} required />
@@ -176,7 +176,7 @@ export async function POST(req: Request) {
 }
 ```
 
-Los atributos `min`, `max` y `required` son ayudas para la persona que rellena el formulario. La petición no pasa por ellos. Con una cantidad negativa el total sale negativo y el pedido se convierte en un abono. El catálogo CWE le da número propio: CWE-602, aplicar en el cliente una protección que le corresponde al servidor<Cite n={6} />.
+Los atributos `min`, `max` y `required` son ayudas para la persona que rellena el formulario. La petición no pasa por ellos. Con una cantidad negativa el total que se guarda sale negativo. El catálogo CWE le da número propio: CWE-602, aplicar en el cliente una protección que le corresponde al servidor<Cite n={6} />.
 
 La regla que lo cubre entero es validar en los límites de confianza, donde el dato cruza desde algo que el usuario controla hacia algo que no. Un endpoint es uno de esos límites. Una cola de mensajes y un webhook también.
 
@@ -204,25 +204,25 @@ Antes devuelve `200` y crea el pedido. Después devuelve `400` y no crea nada.
 
 ## 6. Las dependencias citan paquetes que no existen
 
-Este fallo no está en el código sino en el `package.json`. El modelo propone un paquete con un nombre verosímil que nunca se publicó.
+Este fallo no está en el código sino en el `package.json`. El modelo propone un paquete con un nombre verosímil que nunca se publicó. El nombre de este ejemplo está inventado para el artículo y no existía en el registro público el 7 de septiembre de 2026.
 
 ```json
 "dependencies": {
-  "react-secure-input": "^2.1.0"
+  "react-input-sanitizer-pro": "^2.1.0"
 }
 ```
 
-El tamaño del problema está medido. Un equipo de la Universidad de Texas en San Antonio generó 576.000 muestras de código con 16 modelos y encontró 205.474 nombres de paquete alucinados distintos. Al menos un 5,2 % de los paquetes citados por los modelos comerciales no existía, y un 21,7 % en los modelos abiertos<Cite n={7} />.
+El tamaño del problema está medido. Un estudio publicado en USENIX Security 2025 generó 576.000 muestras de código con 16 modelos y encontró 205.474 nombres de paquete alucinados distintos. Al menos un 5,2 % de los paquetes citados por los modelos comerciales no existía, y un 21,7 % en los modelos abiertos<Cite n={7} />.
 
-El nombre inventado es predecible, y quien lo registra en el registro público consigue que se instale código suyo en cualquier proyecto que siga la sugerencia. La instalación ejecuta scripts, así que el daño no espera a que alguien importe el paquete.
+El nombre inventado es predecible, y quien lo registra en el registro público consigue que se instale código suyo en cualquier proyecto que siga la sugerencia. npm y yarn ejecutan los scripts de instalación de las dependencias, así que el daño no espera a que alguien importe el paquete. pnpm los bloquea desde su versión 10 y obliga a declarar qué paquetes pueden ejecutarlos.
 
 La comprobación va antes de instalar, no después:
 
 ```bash
-npm view react-secure-input time.created maintainers repository.url
+npm view react-input-sanitizer-pro time.created maintainers repository.url
 ```
 
-Hay tres respuestas malas. Un `404` significa que el paquete no existe. Una fecha de creación de hace pocos días significa que puede haberse registrado para esta campaña. Un repositorio ausente o que no corresponde al nombre significa que no hay nada que auditar.
+Hay tres respuestas malas. Un `E404` significa que el paquete no existe. Una fecha de creación de hace pocos días significa que puede haberse registrado para esta campaña. Un repositorio ausente o que no corresponde al nombre significa que no hay nada que auditar.
 
 <Callout kind="nota" title="Fija la versión y publica el archivo de bloqueo">
 Un rango como `^2.1.0` acepta versiones que aún no existen cuando se escribe. `npm ci` instala lo que dice el archivo de bloqueo y falla si no coincide con el `package.json`, en lugar de actualizarlo<Cite n={8} />. Con ese archivo versionado, una versión nueva no entra sin que alguien la mire.
@@ -230,7 +230,7 @@ Un rango como `^2.1.0` acepta versiones que aún no existen cuando se escribe. `
 
 ## 7. El error devuelve el detalle interno al cliente
 
-Así sale, y sale así porque durante el desarrollo es cómodo.
+El manejador devuelve el error entero, que durante el desarrollo es lo cómodo.
 
 ```ts
 catch (error) {

@@ -40,6 +40,13 @@ const graph = await buildGraph({
 		<meta name="robots" content="noindex, follow" />
 	) : (
 		<>
+			{/* Sin limite de fragmento ni de vista previa: es lo que permite que un
+			    resultado, un panel de IA o una tarjeta compartida citen el articulo
+			    entero en vez de las 160 primeras letras. */}
+			<meta
+				name="robots"
+				content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+			/>
 			<link rel="canonical" href={tags.canonical} />
 			{tags.alternates.map((alternate) => (
 				<link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />

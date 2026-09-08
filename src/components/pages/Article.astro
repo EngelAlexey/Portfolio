@@ -1,8 +1,8 @@
 ---
 import AreaChip from '../AreaChip.astro';
-import Container from '../Container.astro';
 import Layout from '../../layouts/Layout.astro';
 import Prose from '../Prose.astro';
+import Toc from '../Toc.astro';
 import { accentStyle } from '../../lib/areas';
 import { neighbours, readingMinutes, renderArticle, type Article } from '../../lib/articles';
 import { getProject } from '../../lib/content';
@@ -20,7 +20,7 @@ const { lang, article } = Astro.props;
 const strings = t(lang);
 const meta = article.meta;
 const around = await neighbours(lang, meta.slug);
-const { Content } = await renderArticle(article);
+const { Content, headings } = await renderArticle(article);
 
 const related = (
 	await Promise.all(meta.related.map((slug) => getProject(lang, slug)))
@@ -45,7 +45,7 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 	updated={meta.updated}
 >
 	<div class="articulo" style={accentStyle(meta.areas[0])}>
-		<Container as="header" size="text">
+		<header class="head-zone">
 			<a class="back" href={path(lang, 'blog')}>← {strings.article.back}</a>
 
 			<div class="head">
@@ -69,9 +69,7 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 					}
 				</div>
 			</div>
-		</Container>
 
-		<Container size="text">
 			<dl class="facts">
 				<div>
 					<dt class="meta-label">{strings.article.published}</dt>
@@ -99,17 +97,17 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 					</aside>
 				)
 			}
-		</Container>
+		</header>
 
-		<Container size="text">
+		<Toc label={strings.article.toc} {headings} />
+
+		<div class="body-zone">
 			<Prose>
 				<Content />
 			</Prose>
-		</Container>
 
-		{
-			related.length > 0 && (
-				<Container size="text">
+			{
+				related.length > 0 && (
 					<section class="related">
 						<h2 class="meta-label">{strings.article.relatedTitle}</h2>
 						<ul>
@@ -121,11 +119,9 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 							))}
 						</ul>
 					</section>
-				</Container>
-			)
-		}
+				)
+			}
 
-		<Container size="text">
 			<aside class="follow">
 				<h2>{strings.article.followTitle}</h2>
 				<p>{strings.article.followBody}</p>
@@ -133,11 +129,9 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 					{strings.article.followCta}
 				</a>
 			</aside>
-		</Container>
 
-		{
-			(around.prev || around.next) && (
-				<Container size="text">
+			{
+				(around.prev || around.next) && (
 					<nav class="pager" aria-label={strings.blog.title}>
 						{around.prev && (
 							<a class="prev" href={path(lang, 'article', around.prev.meta.slug)}>
@@ -153,13 +147,52 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 							</a>
 						)}
 					</nav>
-				</Container>
-			)
-		}
+				)
+			}
+		</div>
 	</div>
 </Layout>
 
 <style>
+	.articulo {
+		padding-inline: clamp(1rem, 4vw, 2.5rem);
+	}
+
+	.head-zone,
+	.body-zone {
+		width: 100%;
+		max-width: 48rem;
+		margin-inline: auto;
+	}
+
+	/* El indice se queda a la izquierda del cuerpo y el par se centra como una
+	   unidad. Por debajo de este ancho no hay margen para el, y entonces cae
+	   entre los datos y el texto, que es donde sirve en un telefono. */
+	@media (min-width: 68rem) {
+		.articulo {
+			display: grid;
+			grid-template-columns: 13rem minmax(0, 48rem);
+			justify-content: center;
+			column-gap: 2rem;
+			align-items: start;
+		}
+
+		.head-zone {
+			grid-column: 2;
+			grid-row: 1;
+		}
+
+		.body-zone {
+			grid-column: 2;
+			grid-row: 2;
+		}
+
+		.articulo > :global(.toc) {
+			grid-column: 1;
+			grid-row: 2;
+		}
+	}
+
 	.back {
 		display: inline-block;
 		margin-top: 2rem;

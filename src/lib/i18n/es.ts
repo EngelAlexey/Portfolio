@@ -91,6 +91,7 @@ export const es = {
 	},
 	article: {
 		back: 'Volver al blog',
+		toc: 'En esta página',
 		published: 'Publicado',
 		updated: 'Actualizado',
 		reading: 'Lectura',

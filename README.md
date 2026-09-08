@@ -173,6 +173,8 @@ Reglas propias del blog:
 - **Voz impersonal.** Nada de «he tenido que corregir», «me pasó», «en mi experiencia». Un artículo es una recomendación general con información verificable, no una anécdota. La primera persona se queda en la interfaz del sitio, que sí es su voz.
 - **Cada punto termina en algo comprobable:** una petición, una prueba o una salida que el lector puede reproducir. Un punto que solo aconseja se borra.
 - **Cada afirmación cuantificada lleva referencia**, y la referencia se abre antes de citarla para comprobar que dice lo que se le atribuye. OWASP, CWE, la documentación oficial de la herramienta y el paper original sirven; un blog que resume a otro, no.
+- **Todo identificador de ejemplo que se resuelva contra un registro público se comprueba antes de publicar**, y en el texto se dice que está inventado y con qué fecha se comprobó. Un nombre de paquete elegido a ojo puede existir: el primer artículo usaba `react-secure-input` como ejemplo de paquete alucinado y resultó ser un paquete real y con autor. Vale para nombres de paquete, dominios, cuentas y direcciones de repositorio.
+- **Ninguna afirmación de comportamiento se escribe de memoria.** Si el texto dice que un comando devuelve algo, se corre; si dice que una herramienta hace algo, se abre su documentación. Un artículo indexado se corrige mal y se cita peor.
 - **Decisiones, no incidentes.** Lo que aportan los proyectos reales es la regla que se adoptó, enunciada como principio y sin nombrar el sistema. Un fallo concreto que tuvo un producto de un cliente no entra, aunque esté corregido y aunque se cuente en abstracto.
 - **El carrusel no es el artículo resumido.** El carrusel entrega la lista completa y utilizable; el artículo entrega el código, la captura del fallo y la comprobación.
 
@@ -294,6 +296,16 @@ Las fichas llevan `CreativeWork` y no `Article`. No hay fecha de publicación en
 Los artículos sí llevan `TechArticle`, y por el motivo contrario: `published` está en el contrato, así que `datePublished` y `dateModified` se afirman con un dato real. El índice del blog emite un `ItemList` con los artículos publicados.
 
 Solo se afirma lo que es cierto: las certificaciones en curso no entran en `hasCredential`, `ORG_LINKS` empieza vacío porque un `sameAs` sin verificar desambigua la entidad equivocada, y no hay `potentialAction: SearchAction` porque el sitio no tiene buscador.
+
+## Descubrimiento
+
+Además del sitemap, los `hreflang` y el grafo de datos estructurados, hay tres piezas pensadas para que a un artículo se llegue desde fuera.
+
+**Directivas de fragmento.** Cada página indexable emite `max-snippet:-1, max-image-preview:large, max-video-preview:-1`. Sin eso, un buscador recorta la cita a unas 160 letras y la vista previa a una miniatura, que es justo lo que decide si un panel de respuestas cita el artículo o lo ignora. Las páginas `noindex` siguen emitiendo solo `noindex, follow`.
+
+**Rastreadores de IA nombrados.** `robots.txt` ya los permitía por el comodín, pero ahora aparecen uno por uno: GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-User, Claude-SearchBot, PerplexityBot, Perplexity-User, Google-Extended, Applebot-Extended, meta-externalagent y CCBot. El comodín no dice nada sobre la intención y varios se comprueban por nombre.
+
+**`/llms.txt`.** Un índice en Markdown en la raíz, generado desde el contenido: quién es, qué hay, y una línea por artículo y por ficha con su dirección, su área y su stack. Sigue la convención de [llmstxt.org](https://llmstxt.org). Conviene decirlo sin adornos: **es una propuesta, no un estándar, y ningún proveedor garantiza que la lea**. Cuesta un archivo generado y no hay que mantenerlo a mano, así que se queda; pero el trabajo que sí paga sigue siendo el de siempre, un `<title>` y una descripción que digan la verdad, HTML semántico y el grafo de datos estructurados.
 
 ## Dominio
 

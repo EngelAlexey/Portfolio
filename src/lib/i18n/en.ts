@@ -93,6 +93,7 @@ export const en: Dict = {
 	},
 	article: {
 		back: 'Back to the blog',
+		toc: 'On this page',
 		published: 'Published',
 		updated: 'Updated',
 		reading: 'Reading time',

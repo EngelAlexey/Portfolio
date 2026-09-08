@@ -1,0 +1,155 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+	label: string;
+	headings: MarkdownHeading[];
+}
+
+const { label, headings } = Astro.props;
+
+// El titular ya lleva su numero y el indice no lo repite: en la columna
+// estrecha la cifra pesaba mas que el texto que la sigue.
+const items = headings
+	.filter((heading) => heading.depth === 2)
+	.map((heading) => ({ slug: heading.slug, text: heading.text.replace(/^\d+\.\s*/, '') }));
+---
+
+{
+	items.length > 1 && (
+		<nav class="toc" aria-labelledby="toc-title">
+			<p class="toc-title" id="toc-title">
+				{label}
+			</p>
+			<ul>
+				{items.map((item) => (
+					<li>
+						<a href={`#${item.slug}`}>{item.text}</a>
+					</li>
+				))}
+			</ul>
+		</nav>
+	)
+}
+
+<script is:inline>
+	(() => {
+		// El indice va antes del cuerpo, asi que en tiempo de parseo los titulares
+		// todavia no existen y resolverlos aqui devolveria null en todos.
+		const start = () => {
+			const nav = document.querySelector('.toc');
+			if (!nav) return;
+
+			const sections = [...nav.querySelectorAll('a')]
+				.map((link) => ({
+					link,
+					target: document.getElementById(decodeURIComponent(link.hash.slice(1)))
+				}))
+				.filter((section) => section.target !== null);
+
+			if (!sections.length) return;
+
+			let queued = false;
+
+			const mark = () => {
+				queued = false;
+				// El titular activo es el ultimo que ya paso por debajo de la cabecera
+				// pegajosa. Sin esa banda, el primero se marca antes de estar a la vista.
+				let current = sections[0];
+				for (const section of sections) {
+					const target = section.target;
+					if (target && target.getBoundingClientRect().top <= 120) current = section;
+				}
+				for (const section of sections) {
+					section.link.toggleAttribute('data-current', section === current);
+				}
+			};
+
+			const schedule = () => {
+				if (queued) return;
+				queued = true;
+				requestAnimationFrame(mark);
+			};
+
+			mark();
+			addEventListener('scroll', schedule, { passive: true });
+			addEventListener('resize', schedule, { passive: true });
+			// Un salto por ancla no siempre genera evento de scroll.
+			addEventListener('hashchange', schedule);
+		};
+
+		if (document.readyState === 'loading') {
+			addEventListener('DOMContentLoaded', start);
+		} else {
+			start();
+		}
+	})();
+</script>
+
+<style>
+	.toc {
+		margin: 0 0 2.25rem;
+		padding-top: 1.1rem;
+		border-top: 1px solid var(--line);
+	}
+
+	.toc-title {
+		margin: 0 0 0.6rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: var(--ink-faint);
+	}
+
+	ul {
+		display: grid;
+		gap: 0.35rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	a {
+		display: grid;
+		grid-template-columns: 1.15rem 1fr;
+		font-size: 0.8125rem;
+		line-height: 1.5;
+		color: var(--ink-faint);
+		text-decoration: none;
+		transition: color 140ms ease;
+	}
+
+	a::before {
+		content: '—';
+		color: var(--line-strong);
+		transition: color 140ms ease;
+	}
+
+	a:hover,
+	a:focus-visible {
+		color: var(--ink);
+	}
+
+	a:hover::before,
+	a:focus-visible::before {
+		color: var(--accent);
+	}
+
+	a[data-current] {
+		color: var(--ink-muted);
+	}
+
+	a[data-current]::before {
+		color: var(--accent);
+	}
+
+	@media (min-width: 68rem) {
+		.toc {
+			position: sticky;
+			top: 5.5rem;
+			margin: 0;
+			max-height: calc(100dvh - 8rem);
+			overflow-y: auto;
+			overscroll-behavior: contain;
+		}
+	}
+</style>
