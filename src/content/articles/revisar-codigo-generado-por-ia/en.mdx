@@ -215,7 +215,7 @@ This failure is not in the code but in `package.json`. The model suggests a pack
 
 The size of the problem has been measured. A study published at USENIX Security 2025 generated 576,000 code samples with 16 models and found 205,474 distinct hallucinated package names. At least 5.2% of the packages named by commercial models did not exist, and 21.7% of those named by open-source models<Cite n={7} />.
 
-The invented name is predictable, and whoever registers it in the public registry gets their own code installed in every project that follows the suggestion. npm and yarn run the install scripts of dependencies, so the damage does not wait for anyone to import the package. pnpm has blocked them since version 10, and runs them only for the packages that are declared.
+The invented name is predictable, and whoever registers it in the public registry gets their own code installed in every project that follows the suggestion. If the package manager runs install scripts, the damage does not wait for anyone to import the package. Which ones do depends on the version: yarn 1 runs them with no exceptions, npm ran them up to version 11, and npm 12 and pnpm 10 block them unless they appear in a list declared separately. [Another article measures the four behaviours](/en/blog/npm-vs-pnpm-install-security).
 
 The check goes before installing, not after:
 
