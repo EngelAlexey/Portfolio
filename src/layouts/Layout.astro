@@ -6,6 +6,7 @@ import monoLatinExt from '@fontsource-variable/jetbrains-mono/files/jetbrains-mo
 import '../app.css';
 
 import Analytics from '@vercel/analytics/astro';
+import SpeedInsights from '@vercel/speed-insights/astro';
 import LangSwitch from '../components/LangSwitch.astro';
 import Seo from '../components/Seo.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
@@ -133,16 +134,20 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 
 	<body>
 		<Analytics />
+		<SpeedInsights />
 		<script is:inline>
-			// build.format is 'file', so the component stamps data-pathname="/es.html",
+			// build.format is 'file', so the components stamp data-pathname="/es.html",
 			// and both the reported path and the route derived from it would name a URL
-			// the site never serves. This runs while parsing, after the element exists
-			// and before the deferred module upgrades it.
+			// the site never serves. This runs while parsing, after the elements exist
+			// and before the deferred modules upgrade them.
 			(function () {
-				var el = document.querySelector('vercel-analytics');
-				if (!el) return;
-				var seen = el.getAttribute('data-pathname');
-				if (seen) el.setAttribute('data-pathname', seen.replace(/\.html$/, ''));
+				var tags = ['vercel-analytics', 'vercel-speed-insights'];
+				for (var i = 0; i < tags.length; i++) {
+					var el = document.querySelector(tags[i]);
+					if (!el) continue;
+					var seen = el.getAttribute('data-pathname');
+					if (seen) el.setAttribute('data-pathname', seen.replace(/\.html$/, ''));
+				}
 			})();
 		</script>
 

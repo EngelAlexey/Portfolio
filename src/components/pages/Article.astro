@@ -165,14 +165,15 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 		margin-inline: auto;
 	}
 
-	/* El indice se queda a la izquierda del cuerpo y el par se centra como una
-	   unidad. Por debajo de este ancho no hay margen para el, y entonces cae
-	   entre los datos y el texto, que es donde sirve en un telefono. */
-	@media (min-width: 68rem) {
+	/* Tres columnas con los margenes iguales, para que el texto quede centrado
+	   en la pagina y no el conjunto de texto mas indice. El indice vive en el
+	   margen izquierdo, pegado al texto. Por debajo de este ancho no hay margen
+	   para el, y entonces cae entre los datos y el texto, que es donde sirve en
+	   un telefono. */
+	@media (min-width: 80rem) {
 		.articulo {
 			display: grid;
-			grid-template-columns: 13rem minmax(0, 48rem);
-			justify-content: center;
+			grid-template-columns: 1fr minmax(0, 48rem) 1fr;
 			column-gap: 2rem;
 			align-items: start;
 		}
@@ -190,6 +191,8 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 		.articulo > :global(.toc) {
 			grid-column: 1;
 			grid-row: 2;
+			justify-self: end;
+			max-width: 11rem;
 		}
 	}
 
