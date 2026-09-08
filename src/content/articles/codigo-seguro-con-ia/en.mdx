@@ -4,7 +4,7 @@ title: How to ask an AI for secure code
 tagline: Six practices set up once that act on every change, so the assistant writes correct code from the start instead of accumulating defects.
 areas: [ia, seguridad]
 published: '2026-09-07'
-updated: null
+updated: '2026-09-07'
 draft: false
 path: ask-ai-for-secure-code
 repo: null
@@ -24,7 +24,9 @@ The defects that pass that filter produce no signal. The code compiles, the appl
 
 What follows are six practices set up once that act on every change. None of them depends on the model having followed an instruction. Another article on this blog lists [seven failures to look for by hand in a diff](/en/blog/seven-things-to-check-in-ai-generated-code); this one is about not having to look for them.
 
-Every piece of code was rebuilt for this article. Measured versions: Node.js 24.19.0, TypeScript 7.0.2, Zod 4.5.4, ESLint 10.10.0 with typescript-eslint 8.70.0, Slonik 49.10.9 and eslint-plugin-security 4.0.1.
+Every piece of code was rebuilt for this article. Measured versions: Node.js 24.19.0, TypeScript 6.0.3, Zod 4.5.4, ESLint 10.10.0 with typescript-eslint 8.70.0, Slonik 49.10.9 and eslint-plugin-security 4.0.1.
+
+The TypeScript version is not the latest one, and the reason is part of point 5. typescript-eslint 8.70.0 declares `typescript: '>=4.8.4 <6.1.0'` in its peer dependencies, so installing it alongside TypeScript 7.0.2 fails with `ERESOLVE`, and forcing it makes the linter abort with `typescript-eslint does not support TS 7.0`. The rule from point 5 cannot run on the most recent version of the compiler: the range the linter supports decides the TypeScript version, not the other way round.
 
 ## 1. A rule reaches the model only if something decides to load it
 
@@ -40,6 +42,8 @@ The difference between the two ways of organising can be measured. Vercel's publ
 
 <Callout kind="riesgo" title="Rules are attack surface too">
 	A rule installed from a third party runs with the same reach as the assistant. Anthropic's documentation warns that a malicious rule can direct it to invoke tools or execute code in ways that do not match its stated purpose. It recommends auditing everything a rule bundles before installing it<Cite n={3} repeat />. This applies especially to rules that fetch content from a URL, because that content can change after the audit.
+
+	An audit on its own does not cover that case, because it checks one version and not the next. What covers it is recording every external rule in a versioned file, with its origin and a hash of its content. A later change stops being invisible and shows up as a difference in that file. It is the mechanism of `go.sum` or `pip install --require-hashes`, applied to rules instead of dependencies.
 </Callout>
 
 **How to check it.** Concatenate what the assistant always loads — the base instruction file plus the descriptions of every rule — and count the characters. That number is the fixed cost of every session. Then, for each rule, name the moment it should fire; if the answer is "always", it belongs in the base instructions and has to be short.
@@ -160,7 +164,15 @@ route.ts(5,34): error TS2345: Argument of type 'unknown' is not assignable
 to parameter of type '{ customerId: string; amount: number; }'.
 ```
 
-One way out remains, and it has to be closed. Writing `body as CreateOrder` is a type assertion: it tells the compiler to treat the value as if it were of that type and generates no check. The rule `@typescript-eslint/no-unsafe-type-assertion` reads the same type information `tsc` does and disallows assertions that narrow a type<Cite n={10} />.
+One way out remains, and it has to be closed. Writing `body as CreateOrder` is a type assertion: it tells the compiler to treat the value as if it were of that type and generates no check. With it, `tsc --noEmit` ends in 0 and the unvalidated data reaches the function. The rule `@typescript-eslint/no-unsafe-type-assertion` reads the same type information `tsc` does and disallows assertions that narrow a type<Cite n={10} />, so the line the compiler accepts is the one the linter rejects:
+
+```text
+  5:34  error  Unsafe type assertion: type '{ customerId: string; amount: number; }'
+                is more narrow than the original type
+                @typescript-eslint/no-unsafe-type-assertion
+
+✖ 1 problem (1 error, 0 warnings)
+```
 
 **Remove the unsafe path.** SQL injection happens when text sent by the user ends up forming part of the query the database parses. A client with tagged templates prevents that by design: the template hands the function the fixed text and the values as separate arguments, and the values travel apart until the query has already been parsed.
 
@@ -180,7 +192,7 @@ The hostile text stays in the list of values. Building dynamic SQL means calling
 	`eslint-plugin-security` 4.0.1 includes fourteen rules and none of them covers SQL injection. The full list comes from reading `Object.keys(plugin.rules)`. Before counting a package as a check it is worth reviewing what it detects, because the name does not say.
 </Callout>
 
-**How to check it.** Write the incorrect case deliberately and run `tsc` and the linter. Both have to exit 1.
+**How to check it.** Write both incorrect cases deliberately and run them through both tools, because each catches the one the other lets through. The unvalidated body stops `tsc` with exit 2, and the linter says nothing. The `as` assertion passes `tsc` with exit 0, and the linter stops it with exit 1. Running only one of the two leaves exactly one of the two routes open.
 
 ## 6. What runs without anyone asking
 
@@ -194,7 +206,21 @@ The practices above only act when somebody applies them. In continuous integrati
 
 None of the five steps asks where the code came from. They apply the same way to a change written by hand and to one generated by a model.
 
+The same commands allow two earlier points of execution. The first is the assistant's own loop: agent harnesses let a command be hooked after every file write, and putting the compiler there stops the model from building on code that no longer compiles. The second is the pre-commit hook, which runs before the change exists as a commit. Neither replaces continuous integration, because both live on the machine of whoever is programming and both can be skipped. What they do is shorten the interval between the defect and the warning.
+
 **How to check it.** Open a change containing one failure of each kind and confirm that CI stops it. A check that has never been seen to fail is not verified, for the same reason a test that has never failed is not.
+
+## What no control detects
+
+The six practices escalate in power. The first depends on something loading the rule, and the last runs without anyone asking. That scale has a floor, and it is worth saying where it is.
+
+Broken access control is found by none of the tools above. No signature distinguishes `getOrder(orders, id, userId)` from `getOrder(orders, id)`. Both compile, both pass the linter, and the missing check leaves no trace in the syntax tree. A static analyser finds the query that concatenates text; it does not find the correct query that is missing a filter.
+
+In that class, and in the others that depend on business rules, practices 3 and 4 carry the whole weight alone. The review tied to the change and the test seen to fail are the only controls left, which is why point 4 uses exactly that example.
+
+There is a cheap way to reduce the surface. Make ownership part of the query, inside the `where`, instead of checking it on a later line. The condition then travels with the query, and a later check can be forgotten in the next endpoint. [The other article works it through with the code](/en/blog/seven-things-to-check-in-ai-generated-code).
+
+**How to check it.** With one user's session, request an identifier that belongs to another. The correct answer is `404`. If the record arrives, none of the six practices was going to stop it.
 
 ## What stays in the request
 

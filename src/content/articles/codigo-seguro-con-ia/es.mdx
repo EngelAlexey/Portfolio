@@ -4,7 +4,7 @@ title: Cómo pedirle a la IA código seguro
 tagline: Seis prácticas que se montan una vez y actúan en cada cambio, para que el asistente escriba código correcto desde el principio en lugar de acumular defectos.
 areas: [ia, seguridad]
 published: '2026-09-07'
-updated: null
+updated: '2026-09-07'
 draft: false
 path: null
 repo: null
@@ -24,7 +24,9 @@ Los defectos que pasan ese filtro no producen ninguna señal. El código compila
 
 Lo que sigue son seis prácticas que se montan una vez y actúan en cada cambio. Ninguna depende de que el modelo haya obedecido una instrucción. Otro artículo de este blog lista [siete fallos que se buscan a mano en un diff](/es/blog/revisar-codigo-generado-por-ia); este va de no llegar a tener que buscarlos.
 
-Todo el código está reconstruido para el artículo. Versiones medidas: Node.js 24.19.0, TypeScript 7.0.2, Zod 4.5.4, ESLint 10.10.0 con typescript-eslint 8.70.0, Slonik 49.10.9 y eslint-plugin-security 4.0.1.
+Todo el código está reconstruido para el artículo. Versiones medidas: Node.js 24.19.0, TypeScript 6.0.3, Zod 4.5.4, ESLint 10.10.0 con typescript-eslint 8.70.0, Slonik 49.10.9 y eslint-plugin-security 4.0.1.
+
+La versión de TypeScript no es la última, y el motivo es parte del punto 5. typescript-eslint 8.70.0 declara `typescript: '>=4.8.4 <6.1.0'` en sus dependencias de pares, así que instalarlo junto a TypeScript 7.0.2 falla con `ERESOLVE`, y forzándolo el linter aborta con `typescript-eslint does not support TS 7.0`. La regla del punto 5 no se puede ejecutar sobre la versión más reciente del compilador: el rango que soporta el linter decide la versión de TypeScript, y no al revés.
 
 ## 1. Una regla llega al modelo solo si algo decide cargarla
 
@@ -40,6 +42,8 @@ La diferencia entre las dos formas de organizar se puede medir. El repositorio p
 
 <Callout kind="riesgo" title="Las reglas también son superficie de ataque">
 	Una regla instalada de un tercero se ejecuta con el mismo alcance que el asistente. La documentación de Anthropic advierte que una regla maliciosa puede dirigirlo a invocar herramientas o a ejecutar código de formas que no coinciden con su propósito declarado. Recomienda auditar todo lo que traiga antes de instalarla<Cite n={3} repeat />. Vale sobre todo para las que descargan contenido de una URL, porque ese contenido puede cambiar después de la auditoría.
+
+	Una auditoría sola no cubre ese caso, porque comprueba una versión y no la siguiente. Lo que la cubre es anotar cada regla externa en un archivo versionado con su origen y el hash de su contenido. Un cambio posterior deja de ser invisible y aparece como una diferencia en ese archivo. Es el mismo mecanismo de `go.sum` o de `pip install --require-hashes`, aplicado a las reglas en lugar de a las dependencias.
 </Callout>
 
 **Cómo se comprueba.** Se concatena lo que el asistente carga siempre —el archivo de instrucciones base más las descripciones de todas las reglas— y se cuentan los caracteres. Ese número es el coste fijo de cada sesión. Después, para cada regla, se nombra el momento en que debería dispararse; si la respuesta es «siempre», pertenece a las instrucciones base y tiene que ser corta.
@@ -160,7 +164,15 @@ ruta.ts(5,34): error TS2345: Argument of type 'unknown' is not assignable
 to parameter of type '{ clienteId: string; monto: number; }'.
 ```
 
-Queda una salida, y hay que cerrarla. Escribir `cuerpo as CrearPedido` es una aserción de tipo: le dice al compilador que trate el valor como si fuera de ese tipo y no genera ninguna comprobación. La regla `@typescript-eslint/no-unsafe-type-assertion` lee la misma información de tipos que `tsc` y prohíbe las aserciones que estrechan un tipo<Cite n={10} />.
+Queda una salida, y hay que cerrarla. Escribir `cuerpo as CrearPedido` es una aserción de tipo: le dice al compilador que trate el valor como si fuera de ese tipo y no genera ninguna comprobación. Con ella, `tsc --noEmit` termina en 0 y el dato sin validar llega a la función. La regla `@typescript-eslint/no-unsafe-type-assertion` lee la misma información de tipos que `tsc` y prohíbe las aserciones que estrechan un tipo<Cite n={10} />, así que la línea que el compilador acepta la rechaza el linter:
+
+```text
+  5:34  error  Unsafe type assertion: type '{ clienteId: string; monto: number; }'
+                is more narrow than the original type
+                @typescript-eslint/no-unsafe-type-assertion
+
+✖ 1 problem (1 error, 0 warnings)
+```
 
 **Quitar la ruta insegura.** La inyección SQL ocurre cuando el texto que envía el usuario acaba formando parte de la consulta que la base de datos analiza. Un cliente con plantillas etiquetadas lo impide desde el diseño: la plantilla entrega a la función el texto fijo y los valores en argumentos distintos, y los valores viajan aparte hasta que la consulta ya está analizada.
 
@@ -180,7 +192,7 @@ El texto hostil se queda en la lista de valores. Construir SQL dinámico obliga 
 	`eslint-plugin-security` 4.0.1 incluye catorce reglas y ninguna trata sobre inyección SQL. La lista completa se obtiene leyendo `Object.keys(plugin.rules)`. Antes de contar un paquete como control conviene revisar qué detecta, porque el nombre no lo indica.
 </Callout>
 
-**Cómo se comprueba.** Se escribe el caso incorrecto a propósito y se ejecutan `tsc` y el linter. Los dos tienen que terminar con salida 1.
+**Cómo se comprueba.** Los dos casos incorrectos se escriben a propósito y se pasan por las dos herramientas, porque cada una detecta el que la otra deja pasar. El cuerpo sin validar detiene a `tsc` con salida 2, y el linter no dice nada. La aserción `as` pasa `tsc` con salida 0, y la detiene el linter con salida 1. Ejecutar solo una de las dos deja abierta exactamente una de las dos vías.
 
 ## 6. Lo que se ejecuta sin que nadie lo pida
 
@@ -194,7 +206,21 @@ Las prácticas anteriores solo actúan cuando alguien las aplica. En integració
 
 Ninguno de los cinco pasos consulta el origen del código. Se aplican igual a un cambio escrito a mano y a uno generado por un modelo.
 
+Los mismos comandos admiten dos puntos de ejecución anteriores. El primero es el propio bucle del asistente: los harness de agente permiten enganchar una orden después de cada escritura de archivo, y poner ahí la compilación evita que el modelo siga construyendo sobre código que ya no compila. El segundo es el *hook* de pre-commit, que corre antes de que el cambio exista como commit. Ninguno de los dos sustituye a la integración continua, porque los dos viven en la máquina de quien programa y se pueden saltar. Lo que hacen es acortar el intervalo entre el defecto y el aviso.
+
 **Cómo se comprueba.** Se abre un cambio que contenga un fallo de cada tipo y se confirma que la integración continua lo detiene. Un control que nunca se ha visto fallar no está comprobado, por la misma razón que una prueba que nunca ha fallado.
+
+## Lo que ningún control detecta
+
+Las seis prácticas escalan en poder. La primera depende de que algo cargue la regla y la última se ejecuta sin que nadie lo pida. Esa escala tiene un suelo, y vale la pena decir dónde está.
+
+El control de acceso roto no lo encuentra ninguna de las herramientas anteriores. No hay firma que distinga `obtenerPedido(pedidos, id, usuarioId)` de `obtenerPedido(pedidos, id)`. Las dos compilan, las dos pasan el linter, y la comprobación ausente no deja rastro en el árbol de sintaxis. Un analizador estático encuentra la consulta que concatena texto; no encuentra la consulta correcta a la que le falta un filtro.
+
+En esa clase, y en las demás que dependen de las reglas del negocio, las prácticas 3 y 4 cargan solas con todo el peso. La revisión atada al cambio y la prueba vista fallar son los únicos controles que quedan, y por eso el punto 4 usa justo ese ejemplo.
+
+Hay una forma barata de reducir la superficie. Que el dueño forme parte de la consulta, dentro del `where`, en lugar de comprobarse en una línea posterior. La condición viaja entonces con la consulta, y una comprobación posterior se puede olvidar en el siguiente endpoint. [El otro artículo lo desarrolla con el código](/es/blog/revisar-codigo-generado-por-ia).
+
+**Cómo se comprueba.** Con la sesión de un usuario se pide un identificador que pertenece a otro. La respuesta correcta es `404`. Si llega el registro, ninguna de las seis prácticas lo iba a detener.
 
 ## Qué se queda en la petición
 
