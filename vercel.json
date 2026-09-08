@@ -4,11 +4,6 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/en/blog/revisar-codigo-generado-por-ia",
-      "destination": "/en/blog/seven-things-to-check-in-ai-generated-code",
-      "permanent": true
-    },
-    {
       "source": "/",
       "destination": "/en",
       "permanent": false,
