@@ -1,9 +1,13 @@
 ---
 interface Props {
 	n: number;
+	// Una misma fuente se cita varias veces en un articulo, pero el id solo
+	// puede existir una vez en la pagina: la flecha de vuelta de la referencia
+	// apunta a la primera aparicion. Las siguientes llevan repeat y salen sin id.
+	repeat?: boolean;
 }
 
-const { n } = Astro.props;
+const { n, repeat = false } = Astro.props;
 ---
 
-<sup class="cite" id={`cite-${n}`}><a href={`#ref-${n}`}>{n}</a></sup>
+<sup class="cite" id={repeat ? undefined : `cite-${n}`}><a href={`#ref-${n}`}>{n}</a></sup>

@@ -16,9 +16,9 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-An AI assistant writes code that compiles, passes the tests and does what it was asked to do. The security model was not in the prompt, so it is not in the answer either.
+The code an AI assistant produces compiles, passes the tests and satisfies the prompt it was given. The security model is rarely part of that prompt, so it is not part of the result either.
 
-The failure has been measured. Veracode tested more than a hundred models on coding tasks across four languages, and 45% of the generated samples failed the security tests. Newer and larger models did no better than small ones<Cite n={1} />. This is not one model's defect: it is a property of the method.
+The failure has been measured. Veracode tested more than a hundred models on coding tasks across four languages, and 45% of the generated samples failed the security tests. Newer and larger models did no better than small ones<Cite n={1} />. The result does not depend on the particular model, but on the method used to generate the code.
 
 These seven failures are the ones that repeat most. Each point carries three things: the code as the assistant produces it, the fix, and the command that shows which of the two holds. The examples are rebuilt for this article and none of them comes from a production system.
 
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
 }
 ```
 
-Remembering the prefix is not a defence, because it depends on somebody remembering every time. The defence is structural: a secret scanner in the pre-commit hook and again in continuous integration, with the keys in a secret manager instead of the repository.
+Remembering the prefix is not a defence, because it depends on somebody recalling it every time. The defence is structural: a secret scanner in the pre-commit hook and again in continuous integration, with the keys in a secret manager instead of the repository.
 
 You check it against the build output, not against the source. The bundle the browser downloads sits in `.next/static`. What you search for there is the value of the key, not the name of the variable, because the build already replaced one with the other.
 
@@ -158,7 +158,7 @@ pnpm build && grep -r "sk_live" .next/static | head
 
 The output has to be empty.
 
-<Callout kind="riesgo" title="A key that reached the bundle is already burned">
+<Callout kind="riesgo" title="A key that reached the bundle is already exposed">
 Removing the prefix does not bring it back. The value was published and may sit in someone's cache, in an earlier deployment or in a repository. The complete fix is to rotate it at the provider and change the code afterwards.
 </Callout>
 
@@ -223,7 +223,7 @@ The check goes before installing, not after:
 npm view react-input-sanitizer-pro time.created maintainers repository.url
 ```
 
-There are three bad answers. An `E404` means the package does not exist. A creation date a few days old means it may have been registered for this campaign. A missing repository, or one that does not match the name, means there is nothing to audit.
+There are three answers that argue against installing. An `E404` means the package does not exist. A creation date a few days old means it may have been registered for this campaign. A missing repository, or one that does not match the name, means there is nothing to audit.
 
 <Callout kind="nota" title="Pin the version and commit the lockfile">
 A range like `^2.1.0` accepts versions that do not exist yet when it is written. `npm ci` installs what the lockfile says and fails when it does not match `package.json`, instead of updating it<Cite n={8} />. With that file in the repository, a new version does not get in without someone looking at it.
@@ -231,7 +231,7 @@ A range like `^2.1.0` accepts versions that do not exist yet when it is written.
 
 ## 7. The error returns the internal detail to the client
 
-The handler returns the whole error, which is the convenient thing during development.
+The handler returns the whole error, which is convenient during development.
 
 ```ts
 catch (error) {
@@ -239,7 +239,7 @@ catch (error) {
 }
 ```
 
-The message from a database error names the table, the column and the constraint that failed. The stack names the server paths and the dependency versions. This is CWE-209, an error message that reveals information about the environment or its data<Cite n={9} />. With that, anyone looking for a vulnerability already knows where to look.
+The message from a database error names the table, the column and the constraint that failed. The stack names the server paths and the dependency versions. This is CWE-209, an error message that reveals information about the environment or its data<Cite n={9} />. That information reduces the work of anyone looking for a vulnerability.
 
 The fix is to keep the detail where only the team reads it, and return an identifier so the two can be matched.
 
@@ -251,7 +251,7 @@ catch (error) {
 }
 ```
 
-A log is not a private place either: it is exported, sent to a provider and read by people who do not need to see everything. Personal data is scrubbed before it is written, not when somebody asks for access.
+A log is not a private place either: it is exported, sent to a provider and read by people who do not need to see all of it. Personal data is scrubbed before it is written, not when somebody asks for access.
 
 You check it by causing the failure. Stop the database, send the request and read the response body. No table name and no server path can appear in it.
 

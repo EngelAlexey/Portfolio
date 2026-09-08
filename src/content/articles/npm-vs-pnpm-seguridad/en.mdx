@@ -4,7 +4,7 @@ title: 'npm vs pnpm: what changes in the security of installing dependencies'
 tagline: Four behaviours measured on both package managers, with the command that reproduces each one and the configuration that makes them match.
 areas: [seguridad, infra]
 published: '2026-09-07'
-updated: null
+updated: '2026-09-07'
 draft: false
 path: npm-vs-pnpm-install-security
 repo: null
@@ -16,11 +16,11 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-Installing a dependency runs code. Not the code that will be imported later, but code that runs during the install, before anyone has read a line of the package. And it runs with the same access to the system as whoever typed the command.
+Installing a dependency runs code. Not the code that will be imported later, but the code that runs during the install itself, before anyone has reviewed the package. That code runs with the same access to the system as whoever typed the command.
 
-For years both package managers did the same thing with that code, which was to run it without asking. In January 2025 pnpm 10 stopped, and announced it as a breaking change made to increase security<Cite n={1} />. Version 11 went further: it turned the warning into an error and added a second defence. npm keeps the behaviour it always had and offers, instead, a setting that switches it off.
+Both package managers ran that code without asking for confirmation. In January 2025 pnpm 10 stopped, and announced it as a breaking change made to increase security<Cite n={1} />. Version 11 turned the warning into an error and added a second defence. npm keeps the behaviour it always had and offers, instead, a setting that switches it off.
 
-That does not make one safe and the other careless, because both routes reach the same place with different amounts of effort. What follows compares npm 11.8.0 against pnpm 10.0.0 and pnpm 11.26.0 across four behaviours, measuring what each one does with nothing configured. Point 7 collects the configuration that gets npm to the same place. Every cell comes from running the command, except the value in the last row, which is the one pnpm's documentation declares. The test projects fit in two files written out in full below.
+That does not classify one as safe and the other as unsafe: both reach the same result through different configurations. What follows compares npm 11.8.0 against pnpm 10.0.0 and pnpm 11.26.0 across four behaviours, measuring what each one does with nothing configured. Point 7 collects the configuration that gets npm to the same place. Every cell comes from running the command, except the value in the last row, which is the one pnpm's documentation declares. The test projects fit in two files written out in full below.
 
 | Behaviour | npm 11.8.0 | pnpm 10.0.0 | pnpm 11.26.0 |
 |---|---|---|---|
@@ -29,7 +29,7 @@ That does not make one safe and the other careless, because both routes reach th
 | CI install with a stale lockfile | installs another version, exit 0 | exit 1 | exit 1 |
 | Wait before resolving a freshly published version | none | none | 1440 minutes |
 
-It is worth reading for what it is. It measures defaults, not capabilities, and three of the four rows can be matched in npm by writing two files.
+The table measures defaults and not capabilities. Three of the four rows can be matched in npm by writing two files.
 
 ## 1. The install runs third-party code
 
@@ -75,7 +75,7 @@ pnpm install
 
 Writing an empty file is harmless. The opening that allows it, however, draws no line between that and reading environment variables, searching the disk for credentials, or publishing packages with the credentials of whoever is installing.
 
-That last case stopped being hypothetical in September 2025. The Shai-Hulud worm spread through npm by way of a post-install script, placed in packages whose maintainers had been compromised<Cite n={2} />, and CISA went as far as issuing an alert<Cite n={3} />.
+That last case is documented. In September 2025 the Shai-Hulud worm spread through npm by way of a post-install script, placed in packages whose maintainers had been compromised<Cite n={2} />, and CISA went as far as issuing an alert<Cite n={3} />.
 
 <Callout kind="nota" title="Blocking scripts does not cover every case">
 The malicious payload that hit `chalk`, `debug` and seventeen other packages on 8 September 2025 did not depend on any install script: it sat inside the package code and triggered when it ran in the browser<Cite n={4} />. A package manager that blocks scripts would have changed nothing in that case. It closes one entry route, not the whole category.
@@ -83,7 +83,7 @@ The malicious payload that hit `chalk`, `debug` and seventeen other packages on 
 
 Blocking by default answers a problem that recognition does not solve. When the hostile package is one nobody has seen yet, there is nothing to recognise, and all that is left is restricting what any package may do while it installs.
 
-In npm the same block comes from one line in the project configuration file, because the `ignore-scripts` setting already exists and the only thing that happens is that it defaults to `false`<Cite n={5} />.
+In npm the same block comes from one line in the project configuration file, because the `ignore-scripts` setting already exists and defaults to `false`<Cite n={5} />.
 
 ```ini
 # .npmrc
@@ -92,7 +92,7 @@ ignore-scripts=true
 
 With that file present, the install above finishes without creating `IT-RAN.txt`.
 
-The cost is worth stating before it surprises anyone: packages such as `esbuild`, `puppeteer` or `sqlite3` download or compile their binary at that same moment, and without it they do not work. Getting them back is a matter of naming them one at a time, lifting the block for that command only.
+The block has a concrete cost. Packages such as `esbuild`, `puppeteer` or `sqlite3` download or compile their binary at that same moment, and without it they do not work. Getting them back is a matter of naming them one at a time, lifting the block for that command only.
 
 ```bash
 npm rebuild esbuild --ignore-scripts=false
@@ -102,7 +102,7 @@ The flag is mandatory, because with `ignore-scripts=true` in the configuration a
 
 ## 2. What pnpm 10 introduced and what changed in 11
 
-The pnpm 10 change, released on 7 January 2025, was to stop running dependency scripts during the install<Cite n={1} />. Version 10 warns and carries on, and that detail decides far more than it seems, because a warning with exit 0 stops no continuous integration pipeline.
+The pnpm 10 change, released on 7 January 2025, was to stop running dependency scripts during the install<Cite n={1} repeat />. Version 10 warns and carries on, and that difference matters, because a warning with exit 0 stops no continuous integration pipeline.
 
 ```
 The following dependencies have build scripts that were ignored: esbuild
@@ -120,22 +120,22 @@ allowBuilds:
 
 With that entry the install ends in 0 again and the `esbuild` script runs.
 
-There is also an effect worth knowing before running into it. When pnpm 11 blocks something, it writes to `pnpm-workspace.yaml` itself and leaves the entry half finished:
+There is also a side effect worth knowing about. When pnpm 11 blocks something, it writes to `pnpm-workspace.yaml` itself and leaves the entry half finished:
 
 ```yaml
 allowBuilds:
   esbuild: set this to true or false
 ```
 
-A file changing during a `pnpm install` is surprising the first time, but the result is that the decision lands in the repository history instead of living on the machine of whoever installed. The `pnpm approve-builds` command walks the list interactively and writes the answers into that same place<Cite n={7} />.
+A versioned file changing during a `pnpm install` is not the usual behaviour. The result, though, is that the decision lands in the repository history instead of on the machine of whoever installed. The `pnpm approve-builds` command walks the list interactively and writes the answers into that same place<Cite n={7} repeat />.
 
 <Callout kind="riesgo" title="dangerouslyAllowAllBuilds cancels the defence entirely">
-The `dangerouslyAllowAllBuilds` setting makes every install script run without approval<Cite n={7} />, and it applies to dependencies added later too. It is not a one-off exception but the permanent removal of the block. An `allowBuilds` list with three names is reviewed in ten seconds; this setting leaves nothing to review.
+The `dangerouslyAllowAllBuilds` setting makes every install script run without approval<Cite n={7} repeat />, and it applies to dependencies added later too. It is not a one-off exception but the permanent removal of the block. An `allowBuilds` list with three names is reviewed entry by entry; this setting leaves no entry to review.
 </Callout>
 
 ## 3. The code imports packages nobody declared
 
-Scripts are the visible risk. The next one is quieter, and it has nothing to do with hostile code.
+Scripts are the visible risk. The next one needs no hostile code and produces no error.
 
 A project that only declares `debug` also receives `ms`, because `debug` needs it to work. The question is whether the project's own code can import it.
 
@@ -189,7 +189,7 @@ npm ci
 # exit 1
 ```
 
-The difference, then, is not in the file format nor in what either manager is capable of. Both hold when asked. It is in which of the two behaviours is the one that comes out by default on the day nobody remembered to type it.
+The difference, then, is not in the file format nor in what either manager is capable of. Both hold when asked. It is in which of the two behaviours applies when the command was not typed explicitly.
 
 ## 5. The age of a version as a defence
 
@@ -200,9 +200,9 @@ pnpm 11 brought a second change of default, and it is the only one of the four w
 minimumReleaseAge: 1440
 ```
 
-The setting answers the shape these incidents have. The malicious versions of `chalk` and `debug` were published in two bursts minutes apart, and were detected the same day<Cite n={4} />. A twenty-four hour wait covers exactly that window: the compromised package is already published and not yet flagged.
+The setting answers the shape these incidents have. The malicious versions of `chalk` and `debug` were published in two bursts minutes apart, and were detected the same day<Cite n={4} repeat />. A twenty-four hour wait covers exactly that window: the compromised package is already published and not yet flagged.
 
-It is worth knowing where it does not apply. The wait governs resolution, not an explicit request: asking for an exact version published a few hours ago works, and pnpm installs it while recording the package in `minimumReleaseAgeExclude`. The `minimumReleaseAgeStrict` setting turns that note into a prompt, and `minimumReleaseAgeExclude` also serves to name permanent exceptions<Cite n={10} />.
+It is worth knowing where it does not apply. The wait governs resolution, not an explicit request: asking for an exact version published a few hours ago works, and pnpm installs it while recording the package in `minimumReleaseAgeExclude`. The `minimumReleaseAgeStrict` setting turns that note into a prompt, and `minimumReleaseAgeExclude` also serves to name permanent exceptions<Cite n={10} repeat />.
 
 npm has no equivalent setting. The closest is `before`, which pins resolutions to a fixed date and comes with no value:
 
@@ -254,21 +254,21 @@ One difference remains that npm does not cover today. There is no equivalent to 
 
 ## 8. What switching costs
 
-If the decision is to migrate anyway, there are consequences that show up on the first day and are worth expecting.
+If the decision is to migrate, there are consequences that show up on the first day.
 
 Code that imported undeclared packages stops starting. It is the same `MODULE_NOT_FOUND` from point 3, and the fix is to declare each package, never to disable the isolation so that the error goes away.
 
 The first install stops with the list of blocked packages and somebody has to review it. That review is the useful moment of the defence, because it is when somebody reads why a package needs to run code during the install.
 
-`pnpm-workspace.yaml` becomes part of the repository and changes on its own during installs, so a new entry that appears without anyone having added a dependency deserves a question.
+`pnpm-workspace.yaml` becomes part of the repository and changes on its own during installs, so a new entry that appears without anyone having added a dependency requires checking where it came from.
 
-And the one-day wait delays any freshly published update, including the urgent fix that was being waited on.
+The one-day wait delays any freshly published update, including the urgent fix that was being waited on.
 
 ## What actually decides the protection
 
-None of the four behaviours depends on the name of the package manager. They depend on the installed version and on what has been written in the configuration files, and both of those are checked in a minute.
+None of the four behaviours depends on the name of the package manager. They depend on the installed version and on what has been written in the configuration files, and both of those are checked with a couple of commands.
 
-A project on pnpm 9 blocks nothing. One on pnpm 10 warns and carries on. One on npm with an `.npmrc` holding `ignore-scripts=true` blocks as much as pnpm 11 does. So the first check is which of those cases is the one at hand:
+A project on pnpm 9 blocks nothing. One on pnpm 10 warns and carries on. One on npm with an `.npmrc` holding `ignore-scripts=true` blocks as much as pnpm 11 does. The first check is to determine which of those cases applies:
 
 ```bash
 pnpm --version
@@ -280,7 +280,7 @@ Declaring the version in `package.json` documents the intent, but on its own it 
 { "packageManager": "pnpm@10.11.0" }
 ```
 
-In a project carrying that field without Corepack enabled, `pnpm --version` still answers with whatever version is installed on the machine, which may be older than everything described here. Pinning the version for real means enabling Corepack or installing it inside the project, and until that happens the field is a declaration rather than a control. That distinction is the same one running through the whole article: what protects is not what the project says it uses, but what the machine actually runs.
+In a project carrying that field without Corepack enabled, `pnpm --version` still answers with whatever version is installed on the machine, which may be older than everything described here. Pinning the version for real means enabling Corepack or installing it inside the project, and until that happens the field is a declaration rather than a control. The protection does not depend on what the project declares it uses, but on what the machine actually runs.
 
 <References
 	title="References"

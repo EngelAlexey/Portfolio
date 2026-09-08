@@ -15,9 +15,9 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-Un asistente de IA escribe código que compila, pasa las pruebas y hace lo que se le pidió. El modelo de seguridad no estaba en el enunciado, así que tampoco está en la respuesta.
+El código que produce un asistente de IA compila, pasa las pruebas y cumple el enunciado que recibió. El modelo de seguridad no suele formar parte de ese enunciado, así que tampoco forma parte del resultado.
 
-El fallo está medido. Veracode probó más de cien modelos sobre tareas de programación en cuatro lenguajes, y el 45 % de las muestras generadas falló las pruebas de seguridad. Los modelos más nuevos y más grandes no salieron mejor parados que los pequeños<Cite n={1} />. No es el defecto de un modelo concreto: es una propiedad del método.
+El fallo está medido. Veracode probó más de cien modelos sobre tareas de programación en cuatro lenguajes, y el 45 % de las muestras generadas falló las pruebas de seguridad. Los modelos más nuevos y más grandes no salieron mejor parados que los pequeños<Cite n={1} />. El resultado no depende del modelo concreto, sino del método con el que se genera el código.
 
 Estos siete fallos son los que más se repiten. Cada punto trae tres cosas: el código tal como sale del asistente, la corrección, y el comando que demuestra cuál de los dos resiste. Los ejemplos están reconstruidos para el artículo y no salen de ningún sistema en producción.
 
@@ -147,7 +147,7 @@ export async function POST(req: Request) {
 }
 ```
 
-Recordar el prefijo no es una defensa, porque depende de que alguien se acuerde cada vez. La defensa es estructural: un escáner de secretos en el *hook* de pre-commit y otra vez en integración continua, y las claves en un gestor de secretos en lugar del repositorio.
+Recordar el prefijo no es una defensa, porque depende de que alguien lo recuerde cada vez. La defensa es estructural: un escáner de secretos en el *hook* de pre-commit y otra vez en integración continua, y las claves en un gestor de secretos en lugar del repositorio.
 
 Se comprueba sobre el resultado de la compilación, no sobre el código. El paquete que descarga el navegador queda en `.next/static`. Ahí se busca el valor de la clave y no el nombre de la variable, porque la compilación ya sustituyó uno por otro.
 
@@ -157,7 +157,7 @@ pnpm build && grep -r "sk_live" .next/static | head
 
 La salida tiene que estar vacía.
 
-<Callout kind="riesgo" title="Una clave que llegó al paquete ya está quemada">
+<Callout kind="riesgo" title="Una clave que llegó al paquete ya está expuesta">
 Quitar el prefijo no la recupera. El valor estuvo publicado y pudo quedar en la caché de alguien, en un despliegue anterior o en un repositorio. La corrección completa es rotarla en el proveedor y después cambiar el código.
 </Callout>
 
@@ -222,7 +222,7 @@ La comprobación va antes de instalar, no después:
 npm view react-input-sanitizer-pro time.created maintainers repository.url
 ```
 
-Hay tres respuestas malas. Un `E404` significa que el paquete no existe. Una fecha de creación de hace pocos días significa que puede haberse registrado para esta campaña. Un repositorio ausente o que no corresponde al nombre significa que no hay nada que auditar.
+Hay tres respuestas que desaconsejan instalar. Un `E404` significa que el paquete no existe. Una fecha de creación de hace pocos días significa que puede haberse registrado para esta campaña. Un repositorio ausente o que no corresponde al nombre significa que no hay nada que auditar.
 
 <Callout kind="nota" title="Fija la versión y publica el archivo de bloqueo">
 Un rango como `^2.1.0` acepta versiones que aún no existen cuando se escribe. `npm ci` instala lo que dice el archivo de bloqueo y falla si no coincide con el `package.json`, en lugar de actualizarlo<Cite n={8} />. Con ese archivo versionado, una versión nueva no entra sin que alguien la mire.
@@ -230,7 +230,7 @@ Un rango como `^2.1.0` acepta versiones que aún no existen cuando se escribe. `
 
 ## 7. El error devuelve el detalle interno al cliente
 
-El manejador devuelve el error entero, que durante el desarrollo es lo cómodo.
+El manejador devuelve el error entero, que durante el desarrollo resulta conveniente.
 
 ```ts
 catch (error) {
@@ -238,7 +238,7 @@ catch (error) {
 }
 ```
 
-El mensaje de un error de base de datos nombra la tabla, la columna y la restricción que falló. La traza nombra las rutas del servidor y las versiones de las dependencias. Es CWE-209, un mensaje de error que revela información del entorno o de sus datos<Cite n={9} />. Con eso, quien busca una vulnerabilidad ya sabe qué buscar.
+El mensaje de un error de base de datos nombra la tabla, la columna y la restricción que falló. La traza nombra las rutas del servidor y las versiones de las dependencias. Es CWE-209, un mensaje de error que revela información del entorno o de sus datos<Cite n={9} />. Esa información reduce el trabajo de quien busca una vulnerabilidad.
 
 La corrección es guardar el detalle donde solo lo lee el equipo, y devolver un identificador para poder cruzarlo.
 
@@ -250,7 +250,7 @@ catch (error) {
 }
 ```
 
-Un log tampoco es un sitio privado: se exporta, se envía a un proveedor y lo lee gente que no necesita verlo todo. Los datos personales se depuran antes de escribirlos, no cuando alguien pide acceso.
+Un log tampoco es un sitio privado: se exporta, se envía a un proveedor y lo leen personas que no necesitan verlo todo. Los datos personales se depuran antes de escribirlos, no cuando alguien pide acceso.
 
 Se comprueba provocando el fallo. Se apaga la base de datos, se lanza la petición y se lee el cuerpo de la respuesta. No puede aparecer ningún nombre de tabla ni ninguna ruta del servidor.
 

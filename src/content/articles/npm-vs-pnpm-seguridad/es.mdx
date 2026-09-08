@@ -4,7 +4,7 @@ title: 'npm vs pnpm: qué cambia en la seguridad al instalar dependencias'
 tagline: Cuatro comportamientos medidos en los dos gestores, con el comando que los reproduce y la configuración que los iguala.
 areas: [seguridad, infra]
 published: '2026-09-07'
-updated: null
+updated: '2026-09-07'
 draft: false
 repo: null
 related: [deteccion-por-umbral]
@@ -15,11 +15,11 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-Instalar una dependencia ejecuta código. No el código que se importará después, sino código que corre durante la instalación, antes de que nadie haya leído una línea del paquete. Y corre con el mismo acceso al sistema que tiene quien lanzó el comando.
+Instalar una dependencia ejecuta código. No el código que se importará después, sino el que se ejecuta durante la propia instalación, sin que nadie haya revisado el paquete. Ese código corre con el mismo acceso al sistema que tiene quien lanzó el comando.
 
-Durante años los dos gestores hacían lo mismo con ese código, que era ejecutarlo sin preguntar. En enero de 2025 pnpm 10 dejó de hacerlo, y lo anunció como un cambio incompatible hecho para aumentar la seguridad<Cite n={1} />. La versión 11 fue más lejos: convirtió el aviso en un error y añadió una segunda defensa. npm conserva el comportamiento de siempre y ofrece, en su lugar, un ajuste para desactivarlo.
+Los dos gestores ejecutaban ese código sin pedir confirmación. En enero de 2025 pnpm 10 dejó de hacerlo, y lo anunció como un cambio incompatible hecho para aumentar la seguridad<Cite n={1} />. La versión 11 convirtió el aviso en un error y añadió una segunda defensa. npm conserva el comportamiento de siempre y ofrece, en su lugar, un ajuste para desactivarlo.
 
-Eso no vuelve seguro a uno y descuidado al otro, porque al mismo resultado se llega por caminos distintos. Lo que sigue compara npm 11.8.0 con pnpm 10.0.0 y con pnpm 11.26.0 en cuatro comportamientos, midiendo qué hace cada uno sin configurar nada. El punto 7 reúne la configuración con la que npm alcanza lo mismo. Cada celda sale de ejecutar el comando, salvo el valor de la última fila, que es el que declara la documentación de pnpm. Los proyectos de prueba caben en dos archivos escritos completos más abajo.
+Eso no clasifica a uno como seguro y al otro como inseguro: los dos alcanzan el mismo resultado por configuraciones distintas. Lo que sigue compara npm 11.8.0 con pnpm 10.0.0 y con pnpm 11.26.0 en cuatro comportamientos, midiendo qué hace cada uno sin configurar nada. El punto 7 reúne la configuración con la que npm alcanza lo mismo. Cada celda sale de ejecutar el comando, salvo el valor de la última fila, que es el que declara la documentación de pnpm. Los proyectos de prueba caben en dos archivos escritos completos más abajo.
 
 | Comportamiento | npm 11.8.0 | pnpm 10.0.0 | pnpm 11.26.0 |
 |---|---|---|---|
@@ -28,7 +28,7 @@ Eso no vuelve seguro a uno y descuidado al otro, porque al mismo resultado se ll
 | Instalación en CI con el bloqueo desfasado | instala otra versión, salida 0 | salida 1 | salida 1 |
 | Espera antes de resolver una versión recién publicada | ninguna | ninguna | 1440 minutos |
 
-Conviene leerla por lo que es. Mide valores por defecto, no capacidades, y tres de las cuatro filas se igualan en npm escribiendo dos archivos.
+La tabla mide valores por defecto y no capacidades. Tres de las cuatro filas se igualan en npm escribiendo dos archivos.
 
 ## 1. La instalación ejecuta código de terceros
 
@@ -74,7 +74,7 @@ pnpm install
 
 Escribir un archivo vacío es inofensivo. El permiso que lo hace posible, en cambio, no distingue entre eso y leer variables de entorno, buscar credenciales en el disco o publicar paquetes con las credenciales de quien instala.
 
-Ese último caso dejó de ser hipotético en septiembre de 2025. El gusano Shai-Hulud se propagó por npm mediante un script de post-instalación, colocado en paquetes cuyos mantenedores habían sido comprometidos<Cite n={2} />, y CISA llegó a emitir una alerta<Cite n={3} />.
+Ese último caso está documentado. En septiembre de 2025 el gusano Shai-Hulud se propagó por npm mediante un script de post-instalación, colocado en paquetes cuyos mantenedores habían sido comprometidos<Cite n={2} />, y CISA llegó a emitir una alerta<Cite n={3} />.
 
 <Callout kind="nota" title="Bloquear los scripts no cubre todos los casos">
 La carga maliciosa que afectó a `chalk`, `debug` y otros diecisiete paquetes el 8 de septiembre de 2025 no dependía de ningún script de instalación: estaba dentro del código del paquete y se activaba al ejecutarse en el navegador<Cite n={4} />. Un gestor que bloquea los scripts no habría cambiado nada en ese caso. Cierra una vía de entrada, no la categoría entera.
@@ -82,7 +82,7 @@ La carga maliciosa que afectó a `chalk`, `debug` y otros diecisiete paquetes el
 
 Bloquear por defecto responde a un problema que no se resuelve reconociendo. Cuando el paquete hostil es uno que nadie ha visto todavía, no hay nada que reconocer, y lo único que queda es restringir lo que cualquier paquete puede hacer mientras se instala.
 
-En npm el mismo bloqueo se consigue con una línea en el archivo de configuración del proyecto. El ajuste `ignore-scripts` ya existe; lo único que ocurre es que viene en `false`<Cite n={5} />.
+En npm el mismo bloqueo se consigue con una línea en el archivo de configuración del proyecto. El ajuste `ignore-scripts` ya existe y viene en `false`<Cite n={5} />.
 
 ```ini
 # .npmrc
@@ -91,7 +91,7 @@ ignore-scripts=true
 
 Con ese archivo presente, la instalación anterior termina sin crear `EJECUTADO.txt`.
 
-Conviene decir el coste antes de que sorprenda: paquetes como `esbuild`, `puppeteer` o `sqlite3` descargan o compilan su binario en ese mismo momento y sin eso no funcionan. Recuperarlos es cuestión de nombrarlos uno por uno, levantando el bloqueo solo para ese comando.
+El bloqueo tiene un coste concreto. Paquetes como `esbuild`, `puppeteer` o `sqlite3` descargan o compilan su binario en ese mismo momento y sin eso no funcionan. Recuperarlos es cuestión de nombrarlos uno por uno, levantando el bloqueo solo para ese comando.
 
 ```bash
 npm rebuild esbuild --ignore-scripts=false
@@ -101,7 +101,7 @@ La opción es obligatoria, porque con `ignore-scripts=true` en la configuración
 
 ## 2. Qué introdujo pnpm 10 y qué cambió en la 11
 
-El cambio de pnpm 10, publicado el 7 de enero de 2025, fue dejar de ejecutar los scripts de las dependencias durante la instalación<Cite n={1} />. La versión 10 avisa y continúa, y ese detalle decide bastante más de lo que parece, porque un aviso con salida 0 no detiene la integración continua.
+El cambio de pnpm 10, publicado el 7 de enero de 2025, fue dejar de ejecutar los scripts de las dependencias durante la instalación<Cite n={1} repeat />. La versión 10 avisa y continúa, y esa diferencia importa, porque un aviso con salida 0 no detiene la integración continua.
 
 ```
 The following dependencies have build scripts that were ignored: esbuild
@@ -119,22 +119,22 @@ allowBuilds:
 
 Con esa entrada la instalación vuelve a terminar en 0 y el script de `esbuild` corre.
 
-Hay además un efecto que conviene conocer antes de encontrárselo. Cuando pnpm 11 bloquea algo, escribe él mismo en `pnpm-workspace.yaml` y deja la entrada a medias:
+Hay además un efecto secundario que conviene conocer. Cuando pnpm 11 bloquea algo, escribe él mismo en `pnpm-workspace.yaml` y deja la entrada a medias:
 
 ```yaml
 allowBuilds:
   esbuild: set this to true or false
 ```
 
-Que un archivo cambie durante un `pnpm install` sorprende la primera vez. El resultado, sin embargo, es que la decisión queda en el historial del repositorio en lugar de vivir en la máquina de quien instaló. El comando `pnpm approve-builds` recorre la lista de forma interactiva y escribe las respuestas en ese mismo sitio<Cite n={7} />.
+Que un archivo versionado cambie durante un `pnpm install` no es lo habitual. El resultado, sin embargo, es que la decisión queda en el historial del repositorio en lugar de vivir en la máquina de quien instaló. El comando `pnpm approve-builds` recorre la lista de forma interactiva y escribe las respuestas en ese mismo sitio<Cite n={7} repeat />.
 
 <Callout kind="riesgo" title="dangerouslyAllowAllBuilds anula la defensa completa">
-El ajuste `dangerouslyAllowAllBuilds` hace que todos los scripts de instalación se ejecuten sin aprobación<Cite n={7} />, y aplica también a las dependencias que entren después. No es una excepción puntual sino la desactivación permanente del bloqueo. Un `allowBuilds` con tres nombres se revisa en diez segundos; este ajuste no deja nada que revisar.
+El ajuste `dangerouslyAllowAllBuilds` hace que todos los scripts de instalación se ejecuten sin aprobación<Cite n={7} repeat />, y aplica también a las dependencias que entren después. No es una excepción puntual sino la desactivación permanente del bloqueo. Un `allowBuilds` con tres nombres se revisa entrada por entrada; este ajuste no deja ninguna entrada que revisar.
 </Callout>
 
 ## 3. El código importa paquetes que nadie declaró
 
-Los scripts son el riesgo visible. El siguiente es más silencioso y no tiene nada que ver con código hostil.
+Los scripts son el riesgo visible. El siguiente no necesita código hostil y no produce ningún error.
 
 Un proyecto que solo declara `debug` recibe también `ms`, porque `debug` la necesita para funcionar. La pregunta es si el código del propio proyecto puede importarla.
 
@@ -188,7 +188,7 @@ npm ci
 # salida 1
 ```
 
-La diferencia, entonces, no está en el formato del archivo ni en lo que cada gestor es capaz de hacer. Los dos cumplen cuando se les pide. Está en cuál de los dos comportamientos es el que sale por defecto el día que nadie se acordó de escribirlo.
+La diferencia, entonces, no está en el formato del archivo ni en lo que cada gestor es capaz de hacer. Los dos cumplen cuando se les pide. Está en cuál de los dos comportamientos se aplica cuando el comando no se escribió de forma explícita.
 
 ## 5. La edad de una versión como defensa
 
@@ -199,9 +199,9 @@ pnpm 11 trajo un segundo cambio de valor por defecto, y es el único de los cuat
 minimumReleaseAge: 1440
 ```
 
-El ajuste responde a la forma que tienen estos incidentes. Las versiones maliciosas de `chalk` y `debug` se publicaron en dos tandas separadas por minutos, y se descubrieron el mismo día<Cite n={4} />. Una espera de veinticuatro horas cubre justo ese intervalo: el paquete comprometido ya está publicado y todavía nadie lo ha detectado.
+El ajuste responde a la forma que tienen estos incidentes. Las versiones maliciosas de `chalk` y `debug` se publicaron en dos tandas separadas por minutos, y se descubrieron el mismo día<Cite n={4} repeat />. Una espera de veinticuatro horas cubre justo ese intervalo: el paquete comprometido ya está publicado y todavía nadie lo ha detectado.
 
-Conviene saber dónde no se aplica. La espera gobierna la resolución, no la petición explícita: pedir una versión exacta que se publicó hace unas horas funciona, y pnpm la instala anotando el paquete en `minimumReleaseAgeExclude`. El ajuste `minimumReleaseAgeStrict` convierte esa anotación en una pregunta, y `minimumReleaseAgeExclude` sirve además para nombrar las excepciones permanentes<Cite n={10} />.
+Conviene saber dónde no se aplica. La espera gobierna la resolución, no la petición explícita: pedir una versión exacta que se publicó hace unas horas funciona, y pnpm la instala anotando el paquete en `minimumReleaseAgeExclude`. El ajuste `minimumReleaseAgeStrict` convierte esa anotación en una pregunta, y `minimumReleaseAgeExclude` sirve además para nombrar las excepciones permanentes<Cite n={10} repeat />.
 
 npm no tiene un ajuste equivalente. Lo más cercano es `before`, que fija las resoluciones a una fecha concreta y viene sin valor:
 
@@ -253,21 +253,21 @@ Queda una diferencia que npm no cubre hoy. No hay equivalente a `minimumReleaseA
 
 ## 8. Lo que cuesta cambiar de gestor
 
-Si aun así la decisión es migrar, hay consecuencias que aparecen el primer día y conviene esperarlas.
+Si la decisión es migrar, hay consecuencias que aparecen el primer día.
 
 El código que importaba paquetes no declarados deja de arrancar. Es el mismo `MODULE_NOT_FOUND` del punto 3, y el arreglo es declarar cada paquete, nunca desactivar el aislamiento para que el error se vaya.
 
 La primera instalación se detiene con la lista de paquetes bloqueados y alguien tiene que revisarla. Esa revisión es el momento útil de la defensa, porque es cuando alguien lee por qué un paquete necesita ejecutar código durante la instalación.
 
-`pnpm-workspace.yaml` pasa a ser parte del repositorio y cambia solo durante las instalaciones, así que una entrada nueva que aparezca sin que nadie haya añadido una dependencia merece una pregunta.
+`pnpm-workspace.yaml` pasa a ser parte del repositorio y cambia solo durante las instalaciones. Una entrada nueva que aparezca sin que nadie haya añadido una dependencia obliga a comprobar de dónde salió.
 
-Y la espera de un día retrasa cualquier actualización recién publicada, incluida la corrección urgente que se estaba esperando.
+La espera de un día retrasa cualquier actualización recién publicada, incluida la corrección urgente que se estaba esperando.
 
 ## Lo que decide la protección
 
-Ninguno de los cuatro comportamientos depende del nombre del gestor. Dependen de la versión instalada y de lo que haya escrito en los archivos de configuración, que son dos cosas que se comprueban en un minuto.
+Ninguno de los cuatro comportamientos depende del nombre del gestor. Dependen de la versión instalada y de lo que haya escrito en los archivos de configuración, y las dos se comprueban con un par de comandos.
 
-Un proyecto con pnpm 9 no bloquea nada. Uno con pnpm 10 avisa y sigue adelante. Uno con npm y un `.npmrc` con `ignore-scripts=true` bloquea tanto como pnpm 11. La primera comprobación, entonces, es cuál de esos casos es el propio:
+Un proyecto con pnpm 9 no bloquea nada. Uno con pnpm 10 avisa y sigue adelante. Uno con npm y un `.npmrc` con `ignore-scripts=true` bloquea tanto como pnpm 11. La primera comprobación es determinar cuál de esos casos aplica:
 
 ```bash
 pnpm --version
@@ -279,7 +279,7 @@ Declarar la versión en `package.json` documenta la intención, pero por sí sol
 { "packageManager": "pnpm@10.11.0" }
 ```
 
-En un proyecto con ese campo y sin Corepack activado, `pnpm --version` sigue respondiendo la versión que hay instalada en la máquina, que puede ser una anterior a todo lo descrito aquí. Fijar la versión de verdad exige habilitar Corepack o instalarla en el propio proyecto, y hasta que eso ocurra el campo es una declaración y no un control. Esa distinción es la misma que recorre el artículo entero: lo que protege no es lo que el proyecto dice usar, sino lo que la máquina ejecuta.
+En un proyecto con ese campo y sin Corepack activado, `pnpm --version` sigue respondiendo la versión que hay instalada en la máquina, que puede ser una anterior a todo lo descrito aquí. Fijar la versión de verdad exige habilitar Corepack o instalarla en el propio proyecto, y hasta que eso ocurra el campo es una declaración y no un control. La protección no depende de lo que el proyecto declare usar, sino de lo que la máquina ejecuta.
 
 <References
 	title="Referencias"
