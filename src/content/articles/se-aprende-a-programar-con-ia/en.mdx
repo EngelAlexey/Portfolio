@@ -1,0 +1,292 @@
+---
+slug: se-aprende-a-programar-con-ia
+title: 'Do you learn to code if the AI writes the code?'
+tagline: What the experiments that took the tool away before the exam measured, why the feeling of having learned misses what was learned, and which ways of asking preserve it.
+areas: [ia]
+published: '2026-09-08'
+updated: null
+draft: false
+path: do-you-learn-to-code-if-ai-writes-it
+repo: null
+related: []
+cover: null
+---
+
+import Callout from '../../../components/Callout.astro';
+import Cite from '../../../components/Cite.astro';
+import References from '../../../components/References.astro';
+
+When the code arrives already written, the work of producing it does not get done. The question that admits a measurement is whether the person who receives it keeps the ability to write it when the tool is not in front of them.
+
+Experiments answer that, because they did exactly this: grant access during practice, take it away, and examine afterwards. With nearly a thousand high school students, those who practised with a ChatGPT-style interface scored 17% lower on the unassisted exam than those who never had it<Cite n={1} />. That same experiment included a second version of the tool, configured to give hints instead of the solution. With it the loss was essentially eliminated, and no gain appeared either<Cite n={1} repeat />. In programming, an experiment with 69 novices found no loss: half of them used a code generator during training and did not perform worse afterwards without it<Cite n={2} />.
+
+The short answer is that receiving written code neither teaches on its own nor prevents learning on its own. What decides the outcome is what happens after receiving it, and that part is configurable.
+
+This article collects what has been measured, explains why the two results do not contradict each other, and turns each experimental design into a way of asking and a check. None of the studies it cites measured a professional programmer on a production repository, so every point states which population was measured. What transfers is the mechanism, not the size of the effect. Three of the ways of asking already appear summarised in [first steps with AI coding](/en/blog/first-steps-with-ai-coding). Here are the reasons they work and the checks that close them.
+
+Measured versions: Claude Code 2.1.263 and git 2.49.0. The Cursor documentation was consulted on 8 September 2026. Every piece of code was rebuilt for this article.
+
+## 1. What happened when the tool was taken away before the exam
+
+The experiment ran in a high school in Turkey during the autumn semester of the 2023-2024 academic year, on 9th, 10th and 11th grade mathematics<Cite n={1} repeat />. It was four 90-minute sessions across about fifty classes, with nearly a thousand students in total, and covered around 15% of that semester's curriculum<Cite n={3} />.
+
+Each session had two parts that matter here. In the first, students solved practice problems with their notes and the textbook, plus whichever resource they had been randomly assigned. In the second they sat an exam on their own, with no resources at all.
+
+The randomly assigned resources were three. A chat interface over GPT-4 that imitated ChatGPT, called GPT Base. A second interface over the same model, called GPT Tutor. Its system prompt contained the solution to each problem, the instruction not to hand it over, and the hints two mathematics teachers wrote. And the control group, with access to neither.
+
+During practice both tools helped. The GPT Tutor group solved 127% better than the control, and the GPT Base group 48% better<Cite n={1} repeat />. On the unassisted exam the order reversed. The GPT Base group scored 17% worse than the control, a statistically significant difference. The GPT Tutor group ended level with the control, with no loss and no gain<Cite n={1} repeat />.
+
+The analysis of the messages explains where that loss came from. The question "what is the answer" accounted for 31% of first messages in the GPT Base group<Cite n={3} repeat />. The authors also measured how often the tool got those same 57 practice problems right, asking it ten times each: it gave the correct answer 51% of the time, with reasoning errors 42% of the time and arithmetic errors 8%<Cite n={3} repeat />.
+
+That figure is not a current error rate and does not transfer to code. It serves one purpose, which is to establish whether students were checking. Arithmetic errors are the ones a high school student would be expected to catch most easily. They damaged performance as much as reasoning errors did, and the authors read that coincidence as evidence that students were copying without reviewing<Cite n={3} repeat />.
+
+## 2. The equivalent experiment in programming found no loss
+
+The second study has the same design and a different result. It ran with 69 novices aged 10 to 17, averaging 12.5. They were recruited through coding camps in two North American cities, and none had prior experience with a text-based language<Cite n={2} repeat />. The study lasted three weeks: one introductory session on Scratch with a pre-test, seven training sessions on Python, and two evaluation sessions.
+
+Training consisted of 45 code-authoring tasks, and **each one was followed by a code-modification task**<Cite n={2} repeat />. Half the participants had access to Codex for the authoring part. In the evaluation nobody had access to the generator or to the Python documentation.
+
+With the generator in front of them, the group that had it performed better on the authoring tasks: 1.15 times the progress, 1.8 times the correctness, 0.59 times the errors and 0.57 times the time<Cite n={2} repeat />. On the modification tasks that came immediately after, which were manual, the two groups performed the same. On the immediate post-test without tools they also performed the same.
+
+On the retention test a week later, the group that had used Codex scored 59.1% against 49.8% on the authoring tasks. On the modification tasks it was 47.5% against 34.8%. Neither difference reached statistical significance<Cite n={2} repeat />. The authors point out two further figures from the same table: the Codex group made significantly more errors on the authoring tasks of that test. The control group, in turn, skipped significantly more tasks without attempting them, 33% against 14%<Cite n={2} repeat />.
+
+There is one more result, and it is the one that marks the floor of the effect. Splitting participants by their score on the Scratch pre-test, the differences concentrate in the upper half: those who already knew more performed significantly better with Codex on several measures of the retention test, while in the lower half the two groups came out almost equal<Cite n={2} repeat />.
+
+The authors state the limit of their own design. Training restricted the generator to the authoring tasks, and participants may have learned the Python concepts while working through the modification tasks<Cite n={2} repeat />.
+
+## 3. Why the two results do not contradict each other
+
+The two experiments differ in more than one respect. The subject matter does not match, nor the age of the participants, nor the duration, nor the quality of the tool.
+
+That last difference is the first candidate to explain the result. Codex correctly solved 41 of the 45 tasks with no change to the task description<Cite n={2} repeat />, while GPT Base gave the correct answer 51% of the time<Cite n={3} repeat />. Copying from a tool that is almost always right is not the same as copying from one that is wrong half the time.
+
+The authors of the mathematics study tested that explanation and did not find it. If students had been misled by the tool's errors, those errors should have hurt their score on the equivalent exam problems. The reasoning-error rate did damage performance during practice, and had no statistically significant effect on the exam<Cite n={3} repeat />. What did the damage was copying, not copying something incorrect.
+
+That leaves the difference the authors of the programming study name themselves when they state the limit of their design: the generator was available only on the authoring tasks, and each one was followed by a modification task done by hand<Cite n={2} repeat />. That task is an attempt at the material, made after the code arrived already written.
+
+From there comes the rule both designs support at once: **the generated change is not the end of the task**.
+
+## 4. The feeling of having learned does not match what was learned
+
+At the end of each exam, the mathematics study asked participants how much they thought they had learned and how well they thought they had performed. Those in the GPT Base group, who had performed significantly worse, did not perceive having learned less or performed worse. Those in the GPT Tutor group, who did not improve, did perceive having performed significantly better<Cite n={3} repeat />.
+
+The same preference was measured in exam minutes. Both groups were willing to give up test time in exchange for access to the tool: about 2.5 minutes in the GPT Base group and about 3.7 in the GPT Tutor group<Cite n={3} repeat />.
+
+This mismatch is not specific to AI. It appears in the classic experiment on the testing effect, which is the gain in retention produced by being tested rather than by rereading. The group that reread the most was the one most confident of remembering the passage a week later, and also the one that remembered the least<Cite n={4} />.
+
+The practical consequence is direct. The internal signal of having understood something does not distinguish between having understood it and having read it. The check has to be external and has to produce a result somebody can look at.
+
+## 5. Reading a solution and producing one do not leave the same memory
+
+The experiment that separates the two was published in 2006. It used 180 undergraduates aged 18 to 24, 30 in each of its six conditions<Cite n={4} repeat />. All of them worked on a prose passage across four consecutive periods, and the conditions differ in what they did in each period.
+
+The SSSS group studied the passage in all four five-minute periods. The SSST group studied in three and, in the fourth, took a free-recall test. The STTT group studied in one and took three tests in a row. No test came with correction or the answer afterwards, so the only difference was the act of retrieving the passage from memory.
+
+Five minutes later the order followed exposure: 83% of the passage's idea units for SSSS, 78% for SSST and 71% for STTT. One week later the order reversed: 61% for STTT, 56% for SSST and 40% for SSSS<Cite n={4} repeat />.
+
+The reading counts close the argument. The SSSS group read the whole passage about 14.2 times on average, SSST about 10.3 and STTT about 3.4<Cite n={4} repeat />. Four times the exposure produced 21 points less recall a week later.
+
+The study measured recall of prose in undergraduates, not code. What transfers is what produced the retention, which was the attempt to retrieve and not the number of times the material passed in front of them. Reading the code an agent generated is exposure. Writing it again without looking at it is retrieval, and they are two distinct acts even when the material is the same.
+
+## 6. When a written solution does teach
+
+There is an equally firm result in the opposite direction. It is called the worked example effect: for somebody who knows nothing about a domain, studying a problem with its full solution explained teaches more than trying to solve it<Cite n={5} />. The review that collects the literature attributes this to the load on working memory, which is limited. The worked example eliminates the search and directs attention to the problem state and the operations applied to it<Cite n={5} repeat />.
+
+The same work describes the point where that effect switches off and reverses, and calls it the expertise reversal effect. Once the learner has the schema of the domain built, integrating a worked example with what they already know costs more than solving the problem. The example becomes redundant and the practice of solving teaches more<Cite n={5} repeat />. In the experiments it cites, with mechanical trade apprentices, the advantage of the worked example first disappeared with experience and then reversed<Cite n={5} repeat />.
+
+From there comes an interval with two ends rather than a single rule. At the bottom there is a floor, which is that the example only works if whoever reads it can follow it. The programming study measured something compatible with that floor, because the retention gain concentrated in those who already scored high before starting<Cite n={2} repeat />. At the top there is a ceiling: in a domain already mastered, reading the solution adds little and the attempt adds more.
+
+The code an agent generates is a worked example. In a language or a library that are unfamiliar, reading it is the cheap way to build the first schema. In one's own domain, reading it is exposure and little else.
+
+## 7. What the worked example does not replace
+
+The cognitive load literature does not say that difficulty teaches by itself. It says that searching blindly for a solution consumes working memory on operations that build no schema, and that this is why the worked example eliminates it<Cite n={5} repeat />.
+
+What does teach is the attempt to retrieve what was learned, which is a later and distinct act. In the 2006 experiment there was no correction after the tests, so the effect did not come from receiving new information but from having had to produce the passage<Cite n={4} repeat />.
+
+The two pieces fit in this order. The worked example is the cheap way to receive the schema for the first time, and retrieval is what decides whether that schema is still there a week later. An AI workflow delivers the first in abundance and does not include the second, unless it is added by hand.
+
+## 8. How to configure an agent to give hints instead of solutions
+
+The group that lost nothing in the mathematics study used the same tool with a different system prompt: the solution was inside it and the instruction was not to hand it over<Cite n={1} repeat />. That configuration is reproduced in a coding agent with the project's instruction file, which is the one read at the start of every session<Cite n={6} />.
+
+With a five-line `CLAUDE.md` at the root of the repository:
+
+```markdown
+# Learning rule
+
+Do not write the code for the task. Answer with the next hint instead:
+which file to touch, which concept applies, and one question that points to
+the next step. If I explicitly ask for the code, then you do write it.
+```
+
+The file held a single function and edit permissions were granted. The request "add a function to `cart.js` that applies a percentage discount to the total" returned this:
+
+```text
+**File to touch:** `cart.js` — add a second exported function alongside `total`.
+
+**Concept:** function composition on a pure function. `total(items)` already
+gives you the number to discount, so your new function shouldn't re-walk the
+items array — it should build on the result. A percentage discount of `p`
+means keeping the fraction `(100 - p) / 100` of the amount.
+
+**Question to move you forward:** what should your function take as its
+parameters — the `items` array plus a percent, or just an already-computed
+amount plus a percent? Think about which choice makes it easier to test in
+isolation and easier to reuse if later you need to apply a discount to a
+subtotal that isn't the whole cart.
+```
+
+The file was left untouched. The last line of the rule is the escape hatch, and it works: asking explicitly for the code produced the code and modified the file.
+
+In Cursor the same configuration is a file in `.cursor/rules` with the `.mdc` extension and `alwaysApply: true` in its frontmatter, whose contents are inserted at the start of the model context<Cite n={7} />.
+
+Claude Code also ships two output styles that point in this direction. According to its documentation, *Explanatory* interleaves explanations of implementation decisions while it works. *Learning* asks the person using it to write small pieces of the code, marking them with `TODO(human)` in the file<Cite n={8} />. In a single non-interactive request against the example file, the *Learning* style returned the explanations and wrote the whole function. Styles are selected with `/config`, under the output style entry, or by writing the `outputStyle` field in a settings file; the `/output-style` command was removed in version 2.1.91<Cite n={8} repeat />.
+
+<Callout kind="nota" title="What this configuration buys and what it does not">
+	In the experiment, the version with hints left the negative effect essentially eliminated and produced no gain over using nothing at all<Cite n={1} repeat />. It is a protection, not an accelerator. It makes sense to switch on for the part somebody wants to learn, not for a whole repository.
+</Callout>
+
+**How to check it.** Write the rule, ask for a small change and run `git status --short`. In the run above it returned no lines, neither before nor after the request. If a modified file appears, the rule is not being applied.
+
+## 9. The ways of asking that preserve learning
+
+Three of them are already explained with their examples in [first steps with AI coding](/en/blog/first-steps-with-ai-coding): ask for the explanation before the change, ask for direction instead of a solution, and write your own version before asking for the review. The ones that follow come out of the experimental designs in this article and are added to those.
+
+**Modify by hand what the agent wrote.** This is the programming study's protocol turned into a habit: after accepting a generated change, make a variation by hand, without the agent. Changing a filter's criterion, adding an edge case or moving a responsibility elsewhere all serve equally well.
+
+**Predict the output before running it.** Before running generated code, write in a comment what it should return for a specific input. The prediction is a claim that can be contrasted, and the run either confirms it or refutes it.
+
+**Rewrite from memory a few days later.** Delete the generated function, write it again without looking at it and compare. This is the direct translation of the 2006 experiment, including the part about immediate correction not being necessary for it to work.
+
+**Choose by domain and not by habit.** In a new language or library, letting it write and reading carefully is the efficient option. In a domain somebody wants to master, the hint rule from the previous section is what preserves the attempt.
+
+| Situation | Way of asking | Check |
+|---|---|---|
+| Unfamiliar language or library | Let it write the code and explain each decision | Modify the result by hand, without the agent |
+| Own domain, to be preserved | Hint rule, no code | `git status` with no modified files |
+| Concept just studied | Write your own version first, then ask for a review | Contrast the two versions line by line |
+| Code generated days ago | Rewrite the function from memory | `git diff` against the saved version |
+| Explanation received from the agent | Explain it without opening the file | Ask it to compare the explanation against the file |
+
+## 10. How to check what was learned
+
+A check is worth something if it produces a result somebody looks at, not an impression. The four that follow can all be run on the same day.
+
+The first is the rewrite from memory. Save the current version with a commit and delete the function. Write it again without opening the previous one and run `git diff` on the file, which shows the changes line by line<Cite n={9} />. The differences that appear are the list of what had not been learned.
+
+The second is the written prediction. The expected output goes in a comment before running, and the result of the run either contradicts it or does not. A failed prediction marks the exact point where the mental model does not match the code.
+
+The third is the contrasted explanation, and this one the agent grades itself. Write from memory what a function does, without opening the file, and then ask it to compare the two. On a four-line function and an explanation written from memory with two errors planted in it, the answer was this:
+
+```text
+**Wrong**
+
+1. **What gets summed.** The note says it "adds up the price of each item."
+   The real function accumulates `item.price * item.quantity` — quantity is
+   never mentioned in the note, so any cart line with quantity ≠ 1 gives a
+   different total than the note predicts.
+2. **Empty-array behavior.** The note says it returns `undefined`. `reduce`
+   is called *with* an initial value of `0`, so `total([])` returns `0`.
+
+**Right**
+
+3. It does use `reduce`, and the accumulator does start at `0`.
+4. It does return a number (given numeric `price`/`quantity`).
+```
+
+What it returns is a list of differences, which is a result and not a feeling. The request includes not correcting the file, because the check is invalidated if the agent fixes what it has just found.
+
+The fourth is closing the session and reconstructing what was explained without it, which already appears in the earlier guide. All four share the same shape: produce something first and contrast it afterwards.
+
+## 11. What changes when the reader already knows how to program
+
+The studies cited measured students and apprentices: high school, coding camps, undergraduates and mechanical trade apprentices. None of them measured a professional on a working repository, so the percentages do not transfer to that situation.
+
+What does transfer are two mechanisms, and from them come two consequences stated here as reasoning and not as a measured result. The first is that expertise reversal works by domain and not by person. Somebody with ten years in one language is a beginner in the next. On the same day they can be above the ceiling in one file and below the floor in another. The second is that delegating in an already-built domain costs little in learning, because there the worked example was redundant already.
+
+One case remains that none of the studies covers and that appears as soon as a project grows. A repository somebody knew stops being known once most of its recent changes were written by an agent. What is lost there is not the ability to program, but the map of one's own code. The check is the usual one, applied to the file being touched: explain what it does before opening it.
+
+## 12. What is still unmeasured
+
+The search made for this article turns up no randomised trial that takes the tools away from professional programmers after months of use. Nor a measurement of what they can do without them in that population. Anything claimed about it is an extrapolation.
+
+The closest thing that exists in a professional population measures speed, not learning, and even so it repeats the mismatch from section 4. METR randomly assigned 246 tasks between allowing and forbidding AI tools to 16 developers on mature open-source projects. Before starting they expected to finish 24% faster; on finishing they estimated they had been 20% faster; the measurement gave 19% more time<Cite n={10} />.
+
+That result describes experts on code they already knew, with the tools of the first half of 2025. The part that coincides with the learning studies is the distance between what participants believed and what was measured. In both populations, self-assessment pointed in the wrong direction.
+
+The design that would settle the question consists of taking the tool away and measuring. The checks in section 10 are the individual version of that design.
+
+## Where to go next
+
+Generated code has to be reviewed even when somebody learned from it, and that review has a list of its own. The security failures that repeat most often are in [seven things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code). Each point brings the code that fails, the fix and the command that decides which of the two holds up.
+
+When the review no longer fits by hand, it moves to running on its own on every change. That is the subject of [how to ask an AI for secure code](/en/blog/ask-ai-for-secure-code).
+
+If what is missing is the beginning, [first steps with AI coding](/en/blog/first-steps-with-ai-coding) explains what an agent is and how to write it a task. It also covers how to stop it and how to document a project.
+
+<References
+	title="References"
+	back="Back to citation"
+	items={[
+		{
+			source: 'Bastani, H., Bastani, O., Sungu, A., Ge, H., Kabakcı, Ö. and Mariman, R.',
+			title: 'Generative AI without guardrails can harm learning: Evidence from high school mathematics',
+			note: 'PNAS 122(26), e2422633122, 2025; randomised trial with nearly a thousand students',
+			url: 'https://doi.org/10.1073/pnas.2422633122'
+		},
+		{
+			source: 'Kazemitabaar, M., Chow, J., Ma, C. K. T., Ericson, B. J., Weintrop, D. and Grossman, T.',
+			title: 'Studying the effect of AI Code Generators on Supporting Novice Learners in Introductory Programming',
+			note: 'CHI 2023; 69 novices aged 10 to 17, 45 tasks and a retention test one week later',
+			url: 'https://doi.org/10.1145/3544548.3580919'
+		},
+		{
+			source: 'Bastani, H. and others',
+			title: 'Generative AI Without Guardrails Can Harm Learning (working version, PDF)',
+			note: 'GPT Base error rates, distribution of first messages and the perception survey, in the appendices',
+			url: 'https://hamsabastani.github.io/education_llm.pdf'
+		},
+		{
+			source: 'Roediger, H. L. and Karpicke, J. D.',
+			title: 'Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention',
+			note: 'Psychological Science 17(3), 249-255, 2006; experiment 2, 180 undergraduates',
+			url: 'https://doi.org/10.1111/j.1467-9280.2006.01693.x'
+		},
+		{
+			source: 'Kalyuga, S., Ayres, P., Chandler, P. and Sweller, J.',
+			title: 'The Expertise Reversal Effect',
+			note: 'Educational Psychologist 38(1), 23-31, 2003; review of the worked example effect and its reversal',
+			url: 'https://doi.org/10.1207/S15326985EP3801_4'
+		},
+		{
+			source: 'Claude Code',
+			title: 'How Claude remembers your project',
+			note: 'CLAUDE.md is read at the start of every session',
+			url: 'https://code.claude.com/docs/en/memory'
+		},
+		{
+			source: 'Cursor',
+			title: 'Rules',
+			note: 'consulted on 8 September 2026; .cursor/rules, the .mdc extension and alwaysApply',
+			url: 'https://cursor.com/docs/context/rules'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Output styles',
+			note: 'the Explanatory and Learning styles, TODO(human) markers and the removal of /output-style in 2.1.91',
+			url: 'https://code.claude.com/docs/en/output-styles'
+		},
+		{
+			source: 'Git',
+			title: 'git-diff',
+			url: 'https://git-scm.com/docs/git-diff'
+		},
+		{
+			source: 'Becker, J., Rush, N., Barnes, E. and Rein, D.',
+			title: 'Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity',
+			note: 'METR, July 2025; randomised trial, 16 developers and 246 tasks',
+			url: 'https://arxiv.org/abs/2507.09089'
+		}
+	]}
+/>

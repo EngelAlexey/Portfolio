@@ -1,0 +1,291 @@
+---
+slug: se-aprende-a-programar-con-ia
+title: '¿Se aprende a programar si la IA escribe el código?'
+tagline: Qué midieron los experimentos que retiraron la herramienta antes del examen, por qué lo que se siente aprendido no coincide con lo aprendido, y qué formas de pedir lo conservan.
+areas: [ia]
+published: '2026-09-08'
+updated: null
+draft: false
+path: null
+repo: null
+related: []
+cover: null
+---
+
+import Callout from '../../../components/Callout.astro';
+import Cite from '../../../components/Cite.astro';
+import References from '../../../components/References.astro';
+
+Cuando el código llega ya escrito, el trabajo de producirlo no se hace. La pregunta que admite una medida es si quien lo recibe conserva la capacidad de escribirlo cuando la herramienta no está delante.
+
+Hay experimentos que la responden porque hicieron exactamente eso: dar acceso durante la práctica, retirarlo y examinar después. Con casi mil estudiantes de secundaria, quienes practicaron con una interfaz de tipo ChatGPT sacaron un 17 % menos en el examen sin herramientas que quienes nunca la tuvieron<Cite n={1} />. Ese mismo experimento incluía una segunda versión de la herramienta, configurada para dar pistas en lugar de la solución. Con ella la pérdida quedó prácticamente anulada, y tampoco apareció ninguna ganancia<Cite n={1} repeat />. En programación, un experimento con 69 principiantes no encontró pérdida: la mitad usó un generador de código durante el entrenamiento y no rindió peor después sin él<Cite n={2} />.
+
+La respuesta corta es que recibir el código escrito no enseña por sí solo, y tampoco impide aprender por sí solo. Lo que decide el resultado es qué ocurre después de recibirlo, y esa parte se configura.
+
+Este artículo reúne lo que está medido, explica por qué los dos resultados no se contradicen y traduce cada diseño experimental en una forma de pedir y una comprobación. Ninguno de los estudios que cita midió a un programador profesional sobre un repositorio en producción, así que cada punto dice sobre qué población se midió. Lo que se traslada es el mecanismo, no el tamaño del efecto. Las tres formas de pedir que conservan el aprendizaje ya aparecen resumidas en [primeros pasos para programar con IA](/es/blog/primeros-pasos-programar-con-ia). Aquí están las razones por las que funcionan y las comprobaciones que las cierran.
+
+Versiones medidas: Claude Code 2.1.263 y git 2.49.0. La documentación de Cursor se consultó el 8 de septiembre de 2026. Todo el código está reconstruido para el artículo.
+
+## 1. Qué pasó cuando se retiró la herramienta antes del examen
+
+El experimento se hizo en un instituto de Turquía durante el primer semestre del curso 2023-2024, sobre matemáticas de 9.º, 10.º y 11.º curso<Cite n={1} repeat />. Fueron cuatro sesiones de noventa minutos en unas cincuenta clases, con casi mil estudiantes en total, y cubrieron alrededor del 15 % del temario del semestre<Cite n={3} />.
+
+Cada sesión tenía dos partes que importan aquí. En la primera, los estudiantes resolvían problemas de práctica con sus apuntes y el libro de texto, más el recurso que les hubiera tocado al azar. En la segunda hacían un examen solos, sin ningún recurso.
+
+Los recursos asignados al azar eran tres. Una interfaz de chat sobre GPT-4 que imitaba ChatGPT, llamada GPT Base. Una segunda interfaz sobre el mismo modelo, llamada GPT Tutor. Su aviso de sistema incluía la solución de cada problema, la instrucción de no entregarla y las pistas que escribieron dos profesores de matemáticas. Y el grupo de control, sin acceso a ninguna de las dos.
+
+Durante la práctica las dos herramientas ayudaron. El grupo de GPT Tutor resolvió un 127 % mejor que el control, y el de GPT Base un 48 % mejor<Cite n={1} repeat />. En el examen sin herramientas el orden se invirtió. El grupo de GPT Base rindió un 17 % peor que el control, con diferencia estadísticamente significativa. El grupo de GPT Tutor quedó al nivel del control, sin pérdida y sin ganancia<Cite n={1} repeat />.
+
+El análisis de los mensajes explica de dónde salió esa pérdida. La pregunta «cuál es la respuesta» fue el 31 % de los primeros mensajes en el grupo de GPT Base<Cite n={3} repeat />. Los autores midieron además con qué frecuencia acertaba la herramienta sobre esos mismos 57 problemas de práctica, preguntándole diez veces cada uno: dio la respuesta correcta el 51 % de las veces, con errores de razonamiento en el 42 % y errores de cálculo en el 8 %<Cite n={3} repeat />.
+
+Esa cifra no es una tasa de error actual ni se traslada al código. Sirve para una sola cosa, que es saber si los estudiantes comprobaban. Los errores de cálculo son los que cabría esperar que un estudiante de secundaria detectara con más facilidad. Aun así perjudicaron su rendimiento tanto como los de razonamiento, y los autores leen esa coincidencia como prueba de que copiaban sin revisar<Cite n={3} repeat />.
+
+## 2. El experimento equivalente en programación no encontró pérdida
+
+El segundo estudio tiene el mismo diseño y otro resultado. Participaron 69 principiantes de entre 10 y 17 años, con una media de 12,5. Se reclutaron en campamentos de programación de dos ciudades de Norteamérica, y ninguno tenía experiencia previa con lenguajes de texto<Cite n={2} repeat />. El estudio duró tres semanas: una sesión de introducción con Scratch y una prueba previa, siete sesiones de entrenamiento en Python, y dos sesiones de evaluación.
+
+El entrenamiento consistió en 45 tareas de escribir código, y **cada una iba seguida de una tarea de modificar código**<Cite n={2} repeat />. La mitad de los participantes tuvo acceso a Codex para la parte de escribir. En la evaluación nadie tuvo acceso ni al generador ni a la documentación.
+
+Con el generador delante, el grupo que lo tenía rindió mejor en las tareas de escribir: 1,15 veces más progreso, 1,8 veces más corrección, 0,59 veces los errores y 0,57 veces el tiempo<Cite n={2} repeat />. En las tareas de modificar que venían justo después, y que eran manuales, los dos grupos rindieron igual. En la evaluación inmediata sin herramientas también rindieron igual.
+
+En la prueba de retención, una semana más tarde, el grupo que había usado Codex puntuó 59,1 % frente a 49,8 % en las tareas de escribir. En las de modificar fue 47,5 % frente a 34,8 %. Ninguna de las dos diferencias alcanzó significación estadística<Cite n={2} repeat />. Los autores señalan además dos datos del mismo cuadro: el grupo de Codex cometió significativamente más errores en las tareas de escribir de esa prueba. El grupo de control, a su vez, abandonó significativamente más tareas sin intentarlas, un 33 % frente a un 14 %<Cite n={2} repeat />.
+
+Hay un resultado más, y es el que marca el suelo del efecto. Dividiendo a los participantes por su puntuación en la prueba previa de Scratch, las diferencias se concentran en la mitad alta: quienes ya sabían más rindieron significativamente mejor con Codex en varias medidas de la prueba de retención, mientras que en la mitad baja los dos grupos quedaron casi iguales<Cite n={2} repeat />.
+
+Los propios autores enuncian el límite de su diseño. El entrenamiento restringía el uso del generador a las tareas de escribir, y los participantes pudieron aprender los conceptos de Python mientras hacían las tareas de modificar<Cite n={2} repeat />.
+
+## 3. Por qué los dos resultados no se contradicen
+
+Los dos experimentos se diferencian en más de una cosa. No coinciden ni la materia, ni la edad de los participantes, ni la duración, ni la calidad de la herramienta.
+
+Esa última diferencia es la primera candidata a explicar el resultado. Codex resolvió correctamente 41 de las 45 tareas sin ningún cambio en el enunciado<Cite n={2} repeat />, mientras que GPT Base daba la respuesta correcta el 51 % de las veces<Cite n={3} repeat />. Copiar de una herramienta que acierta casi siempre no es lo mismo que copiar de una que falla la mitad de las veces.
+
+Los autores del estudio de matemáticas comprobaron esa explicación y no la encontraron. Si los estudiantes hubieran quedado desorientados por los errores de la herramienta, esos errores tendrían que haber empeorado su nota en los problemas de examen equivalentes. La tasa de errores de razonamiento sí perjudicó el rendimiento durante la práctica, y no tuvo efecto estadísticamente significativo sobre el examen<Cite n={3} repeat />. Lo que hizo daño fue copiar, no copiar algo incorrecto.
+
+Queda la diferencia que los propios autores del estudio de programación señalan al enunciar el límite de su diseño: el generador solo estaba disponible en las tareas de escribir, y cada una iba seguida de una tarea de modificar a mano<Cite n={2} repeat />. Esa tarea es un intento sobre el material, hecho después de que el código llegara escrito.
+
+De ahí sale la regla que los dos diseños sostienen a la vez: **el cambio generado no es el final de la tarea**.
+
+## 4. La sensación de haber aprendido no coincide con lo aprendido
+
+Al final de cada examen, el estudio de matemáticas preguntó a los participantes cuánto creían haber aprendido y cómo creían haber rendido. Los del grupo de GPT Base, que habían rendido significativamente peor, no percibieron haber aprendido menos ni haber rendido peor. Los del grupo de GPT Tutor, que no mejoraron, sí percibieron haber rendido significativamente mejor<Cite n={3} repeat />.
+
+La misma preferencia se midió en minutos de examen. Los dos grupos estaban dispuestos a ceder minutos de prueba a cambio de tener acceso a la herramienta: unos 2,5 minutos en el grupo de GPT Base y unos 3,7 en el de GPT Tutor<Cite n={3} repeat />.
+
+Este desajuste no es propio de la IA. Aparece en el experimento clásico sobre el *testing effect*, el efecto de la evaluación, que es la mejora en retención que produce examinarse frente a volver a leer. El grupo que más releyó fue el que más confiaba en recordar el texto una semana después, y también el que menos recordó<Cite n={4} />.
+
+La consecuencia práctica es directa. La señal interna de haber entendido algo no distingue entre haberlo entendido y haberlo leído. La comprobación tiene que ser externa y producir un resultado que se pueda mirar.
+
+## 5. Leer una solución y producirla no dejan el mismo recuerdo
+
+El experimento que separa las dos cosas se publicó en 2006. Usó 180 estudiantes de grado de entre 18 y 24 años, 30 en cada una de sus seis condiciones<Cite n={4} repeat />. Todos trabajaron sobre un texto en prosa durante cuatro periodos seguidos, y las condiciones se distinguen por qué hicieron en cada periodo.
+
+El grupo SSSS estudió el texto en los cuatro periodos de cinco minutos. El grupo SSST estudió en tres y en el cuarto hizo una prueba de recuerdo libre. El grupo STTT estudió en uno e hizo tres pruebas seguidas. Ninguna prueba llevaba corrección ni respuesta después, así que la única diferencia era el acto de recuperar el texto de memoria.
+
+Cinco minutos después el orden siguió a la exposición: 83 % de las unidades del texto para SSSS, 78 % para SSST y 71 % para STTT. Una semana después el orden se invirtió: 61 % para STTT, 56 % para SSST y 40 % para SSSS<Cite n={4} repeat />.
+
+La cuenta de lecturas cierra el argumento. El grupo SSSS leyó el texto entero unas 14,2 veces de media, el SSST unas 10,3 y el STTT unas 3,4<Cite n={4} repeat />. Cuatro veces más exposición dio 21 puntos menos de recuerdo a la semana.
+
+El estudio midió recuerdo de prosa en estudiantes de grado, no código. Lo que se traslada es qué produjo la retención, que fue el intento de recuperar y no la cantidad de veces que el material pasó por delante. Leer el código que generó un agente es exposición. Volver a escribirlo sin mirarlo es recuperación, y son dos actos distintos aunque el material sea el mismo.
+
+## 6. Cuándo una solución escrita sí enseña
+
+Existe un resultado igual de firme en la dirección contraria. Se llama *worked example effect*, el efecto del ejemplo resuelto: para quien no sabe nada de un dominio, estudiar un problema con toda su solución explicada enseña más que intentar resolverlo<Cite n={5} />. La revisión que recoge la literatura lo atribuye a la carga de la memoria de trabajo, que es limitada. El ejemplo resuelto evita la búsqueda y dirige la atención al estado del problema y a las operaciones que se le aplican<Cite n={5} repeat />.
+
+El mismo trabajo describe el punto en que ese efecto se apaga y se invierte, y lo llama *expertise reversal effect*, la inversión por pericia. Cuando quien aprende ya tiene construido el esquema del dominio, integrar un ejemplo resuelto con lo que ya sabe cuesta más que resolver el problema. El ejemplo pasa a ser redundante y la práctica de resolver enseña más<Cite n={5} repeat />. En los experimentos que cita, con aprendices de oficios mecánicos, la ventaja del ejemplo resuelto primero desapareció con la experiencia y después se invirtió<Cite n={5} repeat />.
+
+De ahí sale un intervalo con dos extremos y no una regla única. Por abajo hay un suelo, y es que el ejemplo solo sirve si quien lo lee puede seguirlo. El estudio de programación midió algo compatible con ese suelo, porque la ganancia en retención se concentró en quienes ya puntuaban alto antes de empezar<Cite n={2} repeat />. Por arriba hay un techo: en un dominio que ya se domina, leer la solución añade poco y el intento añade más.
+
+El código que genera un agente es un ejemplo resuelto. En un lenguaje o una biblioteca que no se conocen, leerlo es la forma barata de construir el primer esquema. En un dominio propio, leerlo es exposición y poco más.
+
+## 7. Lo que el ejemplo resuelto no sustituye
+
+La literatura de carga cognitiva no dice que la dificultad enseñe por sí misma. Dice que la búsqueda a ciegas de una solución consume memoria de trabajo en operaciones que no construyen esquema, y que por eso el ejemplo resuelto la evita<Cite n={5} repeat />.
+
+Lo que sí enseña es el intento de recuperar lo aprendido, que es un acto posterior y distinto. En el experimento de 2006 no hubo corrección después de las pruebas, así que el efecto no vino de recibir información nueva sino de haber tenido que producir el texto<Cite n={4} repeat />.
+
+Las dos piezas encajan en este orden. El ejemplo resuelto es la forma barata de recibir el esquema por primera vez, y la recuperación es lo que decide si ese esquema sigue ahí una semana después. Un flujo de trabajo con IA entrega el primero en abundancia y no incluye el segundo, salvo que se añada a mano.
+
+## 8. Cómo se configura un agente para que dé pistas y no soluciones
+
+El grupo que no perdió nada en el estudio de matemáticas usaba la misma herramienta con otro aviso de sistema: la solución estaba dentro y la instrucción era no entregarla<Cite n={1} repeat />. Esa configuración se reproduce en un agente de programación con el archivo de instrucciones del proyecto, que es el que se lee en cada sesión<Cite n={6} />.
+
+Con un `CLAUDE.md` de cinco líneas en la raíz del repositorio:
+
+```markdown
+# Regla de aprendizaje
+
+No escribas el código de la tarea. Responde con la pista siguiente:
+qué archivo tocar, qué concepto aplica y una pregunta que dirija al
+siguiente paso. Si pido explícitamente el código, entonces sí lo escribes.
+```
+
+El archivo tenía una sola función y los permisos de edición estaban concedidos. La petición «añade a `carrito.js` una función que aplique un descuento porcentual al total» devolvió esto:
+
+```text
+Regla del proyecto: pista, no código.
+
+**Archivo:** `carrito.js` — nueva función exportada junto a `total`.
+
+**Concepto:** composición de funciones puras. Ya tienes `total(items)`; el
+descuento no debe recorrer los items otra vez, debe consumir el resultado de
+`total`. Firma tipo `totalConDescuento(items, porcentaje)` o
+`aplicarDescuento(monto, porcentaje)` — la segunda es más pura y testeable.
+
+**Cuidado:** el porcentaje llega como `15` (entero) o `0.15` (fracción)?
+Decide y documenta. Y `precio * cantidad` en floats acumula error binario.
+
+**Pregunta que dirige:** si alguien llama tu función con `porcentaje = 150`
+o `-20`, ¿qué devuelve? Define ese contrato antes de escribir la primera
+línea — ¿clamp, throw, o confiar en quien llama?
+```
+
+El archivo quedó sin tocar. La última línea de la regla es la válvula de escape, y funciona: al pedir el código explícitamente lo escribió y modificó el archivo.
+
+En Cursor la misma configuración es un archivo en `.cursor/rules` con extensión `.mdc` y `alwaysApply: true` en su cabecera, cuyo contenido se inserta al principio del contexto del modelo<Cite n={7} />.
+
+Claude Code trae además dos estilos de salida que van en esta dirección. Según su documentación, *Explanatory* intercala explicaciones de las decisiones de implementación mientras trabaja, y *Learning* pide que quien lo usa escriba pequeñas partes del código, marcándolas con `TODO(human)` en el archivo<Cite n={8} />. En una sola petición no interactiva sobre el archivo de ejemplo, el estilo *Learning* devolvió las explicaciones y escribió la función entera. Se eligen con `/config`, en la entrada de estilo de salida, o escribiendo el campo `outputStyle` en un archivo de configuración; la orden `/output-style` se retiró en la versión 2.1.91<Cite n={8} repeat />.
+
+<Callout kind="nota" title="Qué compra esta configuración y qué no">
+En el experimento, la versión con pistas dejó el efecto negativo prácticamente anulado y no produjo ninguna ganancia frente a no usar nada<Cite n={1} repeat />. Es una protección, no un acelerador. Tiene sentido activarla para el trozo que se quiere aprender, no para todo el repositorio.
+</Callout>
+
+**Cómo se comprueba.** Se escribe la regla, se pide un cambio pequeño y se ejecuta `git status --short`. En la ejecución anterior no devolvió ninguna línea, ni antes ni después de la petición. Si aparece un archivo modificado, la regla no se está aplicando.
+
+## 9. Las formas de pedir que conservan el aprendizaje
+
+Tres de ellas ya están explicadas con sus ejemplos en [primeros pasos para programar con IA](/es/blog/primeros-pasos-programar-con-ia): pedir la explicación antes que el cambio, pedir orientación en lugar de solución, y escribir la propia versión antes de pedir la revisión. Las que siguen salen de los diseños experimentales de este artículo y se añaden a las anteriores.
+
+**Modificar a mano lo que el agente escribió.** Es el protocolo del estudio de programación convertido en costumbre: después de aceptar un cambio generado, se hace una variación a mano, sin el agente. Cambiar el criterio de un filtro, añadir un caso límite o mover una responsabilidad de sitio sirve igual.
+
+**Predecir la salida antes de ejecutar.** Antes de correr el código generado se escribe en un comentario qué debería devolver con una entrada concreta. La predicción es una afirmación que se puede contrastar, y la ejecución la confirma o la desmiente.
+
+**Reescribir de memoria a los pocos días.** Se borra la función generada, se escribe de nuevo sin mirarla y se compara. Esta es la traducción directa del experimento de 2006, incluida la parte de que no hace falta corrección inmediata para que sirva.
+
+**Elegir por dominio y no por costumbre.** En un lenguaje o una biblioteca nuevos, dejar que escriba y leer con atención es lo eficiente. En un dominio que se quiere dominar, la regla de pistas del punto anterior es lo que conserva el intento.
+
+| Situación | Forma de pedir | Comprobación |
+|---|---|---|
+| Lenguaje o biblioteca desconocidos | Que escriba el código y explique cada decisión | Modificar el resultado a mano sin el agente |
+| Dominio propio que se quiere conservar | Regla de pistas, sin código | `git status` sin archivos modificados |
+| Concepto que se acaba de estudiar | Escribir primero la propia versión, después pedir revisión | Contrastar las dos versiones línea a línea |
+| Código generado hace días | Reescribir la función de memoria | `git diff` contra la versión guardada |
+| Explicación recibida del agente | Explicarla sin abrir el archivo | Pedirle que compare la explicación con el archivo |
+
+## 10. Cómo se comprueba lo aprendido
+
+Una comprobación sirve si produce un resultado que se mira, no una impresión. Las cuatro que siguen se pueden ejecutar el mismo día.
+
+La primera es la reescritura de memoria. Se guarda la versión actual con un commit y se borra la función. Se escribe de nuevo sin abrir la anterior y se ejecuta `git diff` sobre el archivo, que muestra los cambios línea a línea<Cite n={9} />. Las diferencias que aparecen son la lista de lo que no se había aprendido.
+
+La segunda es la predicción escrita. La salida esperada va en un comentario antes de ejecutar, y el resultado de la ejecución la contradice o no. Una predicción que falla señala el punto exacto donde el modelo mental no coincide con el código.
+
+La tercera es la explicación contrastada, y esta la corrige el propio agente. Se escribe de memoria qué hace una función, sin abrir el archivo, y después se le pide que compare las dos cosas. Sobre una función de cuatro líneas y una explicación escrita de memoria con dos errores dentro, la respuesta fue esta:
+
+```text
+Dos diferencias:
+
+1. **Dice** "suma el precio de cada artículo". **Código** suma
+   `item.precio * item.cantidad` — ignora `cantidad` en la explicación.
+2. **Dice** "si el arreglo está vacío devuelve undefined". **Código** usa
+   `reduce` con valor inicial `0` → devuelve `0`, nunca `undefined`.
+
+Resto coincide: usa `reduce`, empieza en 0, devuelve número.
+Archivo no tocado.
+```
+
+Lo que devuelve es una lista de diferencias, que es un resultado y no una sensación. La petición incluye que no corrija el archivo, porque la comprobación se invalida si el agente arregla lo que acaba de encontrar.
+
+La cuarta es cerrar la sesión y reconstruir lo explicado sin ella, que ya aparece en la guía anterior. Las cuatro comparten la misma forma: producir algo primero y contrastarlo después.
+
+## 11. Qué cambia cuando quien lee ya sabe programar
+
+Los estudios citados midieron a estudiantes y a aprendices: secundaria, campamentos de programación, estudiantes de grado y aprendices de oficios mecánicos. Ninguno midió a un profesional sobre un repositorio de trabajo, así que los porcentajes no se trasladan a esa situación.
+
+Lo que sí se traslada son dos mecanismos, y de ellos salen dos consecuencias que aquí se enuncian como razonamiento y no como resultado medido. La primera es que la inversión por pericia funciona por dominio y no por persona. Alguien con diez años de experiencia en un lenguaje es principiante en el siguiente. El mismo día puede estar por encima del techo en un archivo y por debajo del suelo en otro. La segunda es que delegar en un dominio ya construido cuesta poco en aprendizaje, porque ahí el ejemplo resuelto ya era redundante.
+
+Queda un caso que ninguno de los estudios cubre y que aparece en cuanto el proyecto crece. Un repositorio que se conocía deja de conocerse cuando la mayor parte de sus cambios recientes los escribió un agente. Lo que se pierde ahí no es la capacidad de programar, sino el mapa del propio código. La comprobación es la misma de siempre, aplicada al archivo que se toca: explicar qué hace antes de abrirlo.
+
+## 12. Qué sigue sin medirse
+
+En la búsqueda hecha para este artículo no aparece un ensayo aleatorizado que retire las herramientas a programadores profesionales tras meses de uso. Tampoco una medición de qué saben hacer sin ellas en esa población. Todo lo que se afirme sobre eso es una extrapolación.
+
+Lo más cercano que existe en población profesional mide velocidad, no aprendizaje, y aun así repite el desajuste del punto 4. METR repartió al azar 246 tareas entre permitir y prohibir las herramientas de IA a 16 desarrolladores de proyectos maduros de código abierto. Antes de empezar preveían terminar un 24 % antes; al acabar estimaban haber terminado un 20 % antes; la medición dio un 19 % más de tiempo<Cite n={10} />.
+
+Ese resultado describe a expertos sobre código que ya conocían, con las herramientas del primer semestre de 2025. La parte que coincide con los estudios de aprendizaje es la distancia entre lo que los participantes creían y lo que se midió. En las dos poblaciones, la autoevaluación apuntó en la dirección equivocada.
+
+El diseño que resolvería la pregunta consiste en retirar la herramienta y medir. Las comprobaciones del punto 10 son la versión individual de ese diseño.
+
+## Por dónde seguir
+
+El código generado hay que revisarlo aunque se haya aprendido de él, y esa revisión tiene su propia lista. Los fallos de seguridad que más se repiten están en [siete cosas que revisar en el código que genera tu IA](/es/blog/revisar-codigo-generado-por-ia). Cada punto trae el código que falla, la corrección y la orden que decide cuál de los dos resiste.
+
+Cuando la revisión deja de caber a mano, pasa a ejecutarse sola en cada cambio. Ese es el asunto de [cómo pedirle a la IA código seguro](/es/blog/codigo-seguro-con-ia).
+
+Si lo que falta es el principio, [primeros pasos para programar con IA](/es/blog/primeros-pasos-programar-con-ia) explica qué es un agente y cómo se le escribe una tarea. También cómo se detiene y cómo se documenta el proyecto.
+
+<References
+	title="Referencias"
+	back="Volver a la cita"
+	items={[
+		{
+			source: 'Bastani, H., Bastani, O., Sungu, A., Ge, H., Kabakcı, Ö. y Mariman, R.',
+			title: 'Generative AI without guardrails can harm learning: Evidence from high school mathematics',
+			note: 'PNAS 122(26), e2422633122, 2025; ensayo aleatorizado con casi mil estudiantes',
+			url: 'https://doi.org/10.1073/pnas.2422633122'
+		},
+		{
+			source: 'Kazemitabaar, M., Chow, J., Ma, C. K. T., Ericson, B. J., Weintrop, D. y Grossman, T.',
+			title: 'Studying the effect of AI Code Generators on Supporting Novice Learners in Introductory Programming',
+			note: 'CHI 2023; 69 principiantes de 10 a 17 años, 45 tareas y prueba de retención a la semana',
+			url: 'https://doi.org/10.1145/3544548.3580919'
+		},
+		{
+			source: 'Bastani, H. y otros',
+			title: 'Generative AI Without Guardrails Can Harm Learning (versión de trabajo, PDF)',
+			note: 'tasas de error de GPT Base, reparto de los primeros mensajes y encuesta de percepción, en los apéndices',
+			url: 'https://hamsabastani.github.io/education_llm.pdf'
+		},
+		{
+			source: 'Roediger, H. L. y Karpicke, J. D.',
+			title: 'Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention',
+			note: 'Psychological Science 17(3), 249-255, 2006; experimento 2, 180 estudiantes de grado',
+			url: 'https://doi.org/10.1111/j.1467-9280.2006.01693.x'
+		},
+		{
+			source: 'Kalyuga, S., Ayres, P., Chandler, P. y Sweller, J.',
+			title: 'The Expertise Reversal Effect',
+			note: 'Educational Psychologist 38(1), 23-31, 2003; revisión del efecto del ejemplo resuelto y su inversión',
+			url: 'https://doi.org/10.1207/S15326985EP3801_4'
+		},
+		{
+			source: 'Claude Code',
+			title: 'How Claude remembers your project',
+			note: 'CLAUDE.md se lee en cada sesión',
+			url: 'https://code.claude.com/docs/en/memory'
+		},
+		{
+			source: 'Cursor',
+			title: 'Rules',
+			note: 'consultado el 8 de septiembre de 2026; .cursor/rules, extensión .mdc y alwaysApply',
+			url: 'https://cursor.com/docs/context/rules'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Output styles',
+			note: 'estilos Explanatory y Learning, marcadores TODO(human) y retirada de /output-style en la 2.1.91',
+			url: 'https://code.claude.com/docs/en/output-styles'
+		},
+		{
+			source: 'Git',
+			title: 'git-diff',
+			url: 'https://git-scm.com/docs/git-diff'
+		},
+		{
+			source: 'Becker, J., Rush, N., Barnes, E. y Rein, D.',
+			title: 'Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity',
+			note: 'METR, julio de 2025; ensayo aleatorizado, 16 desarrolladores y 246 tareas',
+			url: 'https://arxiv.org/abs/2507.09089'
+		}
+	]}
+/>
