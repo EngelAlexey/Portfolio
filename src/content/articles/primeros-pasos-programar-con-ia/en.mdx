@@ -1,0 +1,482 @@
+---
+slug: primeros-pasos-programar-con-ia
+title: 'First steps with AI coding: agents, skills and plugins'
+tagline: What an agent is, how to write it a task, how to stop and undo it, how to document a project so it understands one, and what skills and plugins are.
+areas: [ia]
+published: '2026-09-08'
+updated: null
+draft: false
+path: first-steps-with-ai-coding
+repo: null
+related: []
+cover: null
+---
+
+import Callout from '../../../components/Callout.astro';
+import Cite from '../../../components/Cite.astro';
+import References from '../../../components/References.astro';
+
+A coding agent is a language model with tools to read files, edit them and run commands. Around it sits a program that executes those tools and hands the result back. That is the difference from a chat: a chat replies with text somebody has to apply, and an agent applies the change to the repository.
+
+What changes for the person writing the code is the distribution of the work, not its volume. Typing each line stops being the main task, and three others take its place: deciding what has to be built, giving the agent a way to check whether it got there, and reviewing what it wrote.
+
+This guide assumes the reader can program and is only starting to use AI to do it. It covers what an agent is, how a task is written for it, and how to stop it when it goes the wrong way. Then how a project is taught to it through documentation, rules, skills and plugins, what permissions it gets, and how the result is checked. Every term is explained the first time it appears, and the examples use Claude Code and Cursor because those are the two tools with public documentation on every point.
+
+The examples run Claude Code in the terminal. It installs with the native installer its documentation publishes. From there it opens by entering the project directory and running `claude`, which asks for a login the first time<Cite n={1} />. The same tool exists as a VS Code and JetBrains extension, as a desktop app and in the browser, and all of them share one engine and one configuration<Cite n={1} repeat />. In Cursor the agent ships inside the editor and there is nothing separate to install.
+
+Versions measured: Claude Code 2.1.263, git 2.49.0, Node.js 24.19.0 and npm 11.8.0. The Cursor documentation was read on 8 September 2026. All the code is rebuilt for this article.
+
+## 1. What an agent does that a chat does not
+
+There are three ways to use a language model to write code, and they differ in who applies the change.
+
+**Autocomplete** proposes the end of the line being typed, inside the editor. Each suggestion is accepted or rejected by hand, so control is total and the reach is one function at most.
+
+**Chat** takes a question and returns text. The code it produces has to be copied into the project by hand, adapted to the real names and checked for compilation. The model has not seen the repository, so it invents whatever structure looks reasonable.
+
+**An agent** takes a task, decides which files to read, reads them, writes the changes and runs commands to check them. The Claude Code documentation defines that work as the one where the AI reads files, runs commands and makes changes autonomously while somebody watches, redirects or steps away. It contrasts it with chat assistants, which only respond with text you have to apply yourself<Cite n={2} />.
+
+What turns a model into an agent is the tools. A **tool** is an action the model can ask for: read a file, edit it, run a shell command, search the project. The same documentation puts it plainly: without tools, the model can only respond with text<Cite n={2} repeat />.
+
+The three ways coexist in the same working day. Autocomplete is still the fastest way to finish a line. Chat answers a question that does not touch the repository, and the agent handles tasks that cross several files.
+
+**How to check it.** An agent session shows the tool calls before the answer: which file it read, which command it ran, what came back. In Claude Code the full detail toggles with `Ctrl+O`, which opens the transcript viewer<Cite n={3} />. If the whole session was text, it did not act as an agent.
+
+## 2. The loop is the whole definition
+
+An agent does not answer once. It repeats a cycle until it considers the task finished, and the documentation describes it in four steps: gather context, take action, verify the result, and repeat. Each tool use returns information that decides the next step<Cite n={2} repeat />.
+
+An example on a simple task. The agent looks for the file to touch, reads it, writes the change, runs the tests, reads the failure they return, fixes it and runs them again. That is six tool calls for something a chat would have answered once.
+
+The model is not what runs those tools. The model only produces text, including the request to use a tool. Around it a program interprets that request, executes it against the filesystem or the terminal and returns the output. That program is called the *harness*. The documentation defines it as the tools, context management and execution environment that turn a language model into a coding agent<Cite n={2} repeat />.
+
+The same separation appears in the Cursor documentation, which describes its agent as three components: the instructions that guide its behaviour, the tools for editing, searching and running commands, and the model chosen for the task<Cite n={4} />.
+
+One practical consequence follows. Choosing a model and choosing a tool are two separate decisions. The same model behaves differently depending on which tools it has, which instructions it receives and how much context fits, and the harness decides all three.
+
+**How to check it.** Run a task and count the tool calls before the final answer. An agent that solved something without reading a single file wrote it from memory.
+
+## 3. The context window is the resource that runs out
+
+The **context window** is the session's working memory. It holds the conversation history, the contents of the files read, the output of the commands run, the project instruction file and the system instructions<Cite n={2} repeat />. Everything the agent knows at a given moment is in there, and nothing else.
+
+That memory does not start empty. A one-line question about a five-line file, measured in a session on Claude Code 2.1.263, started from 28,941 tokens already occupied before reading anything. A **token** is the unit the model counts text in: for Claude it represents roughly 3.5 English characters, and the figure varies by language<Cite n={5} />.
+
+That number is not a constant. It grows with every instruction file, every external tool server and every extension the session loads, so each installation has its own. The `/context` command inside the session shows the real breakdown.
+
+That memory is sent whole on every request. The documentation says so when it explains why a long session consumes more than it appears to: Claude Code sends the full conversation with every request, and each time it uses a tool it sends another request carrying those results<Cite n={6} />.
+
+When the window fills up, the tool summarises the conversation to keep going, and that summary is called **compaction**. The oldest tool outputs are cleared first, then the rest is summarised. The consequence is documented: the project instruction file is re-read from disk, and instructions given only in conversation can be lost<Cite n={2} repeat />.
+
+Two habits follow that save work from day one. One task per session, closing the previous one with `/clear` before starting the next, because a long session drags along files that are no longer needed. And anything that has to survive compaction goes in the instruction file, not in a message. When a long task runs out of room halfway, `/compact` summarises the conversation on purpose instead of waiting for it to happen.
+
+**How to check it.** Run `/context` at the start and again after the first task. The difference is what that task cost, and it is the figure that says when to close the session.
+
+## 4. Which tasks suit an agent
+
+A task suits an agent when a command exists that decides whether it is finished. The documentation gives that a name: the **verification loop** is what lets a session know the work is actually done rather than merely plausible. It is handed a check it can run, a test, a build or a comparison, and it iterates until the check passes. Without that check, the only thing deciding the agent is finished is the agent itself<Cite n={2} repeat />.
+
+By that criterion the split is clear.
+
+The tasks that suit it bring their own check. Fixing a bug that a test reproduces. Migrating a library call across twenty files, where the check is that the project compiles. Writing tests for code that has none. Clearing linter warnings. In all of them the command that decides the end exists before the work starts.
+
+The tasks that do not suit it have no such command. Deciding the architecture of a new module, because no output separates a good decision from a bad one. Adjusting the visual design of a screen, unless there is an image to compare against. Any task whose acceptance criterion is that somebody likes it. There the agent is useful for exploring alternatives, and the decision stays with the person.
+
+<Callout kind="nota" title="A task with no check can be split into two that have one">
+	«Improve the performance of the orders screen» has no criterion. «Write a measurement that prints the current query time» does. «Bring that time under 200 ms without changing the result» does too, and the agent can run both.
+</Callout>
+
+That condition can be declared explicitly. The `/goal` command sets a completion condition, and at the end of every turn a small fast model checks whether it holds. While it does not hold, the agent starts another turn instead of handing control back<Cite n={7} />.
+
+```text
+/goal every test in test/auth passes and the lint step is clean
+```
+
+The goal clears in four cases: when the evaluator judges the condition met, when it judges it impossible to satisfy, when a turn fails on an error somebody has to fix, or when `/goal clear` removes it.
+
+The documentation describes what makes a condition hold up over many turns: one measurable end state, a stated way to prove it, such as «`npm test` exits 0» or «`git status` is clean», and the constraints that must not break along the way<Cite n={7} repeat />.
+
+One limit is worth knowing before relying on it. The evaluator does not run commands or read files on its own: it judges from what the agent has surfaced in the conversation<Cite n={7} repeat />. A condition the agent never demonstrates in its own output cannot be evaluated. To bound how long it runs, the condition takes a stop clause, such as «or stop after 20 turns».
+
+**How to check it.** Before writing the request, name the command that will decide whether it is finished. If no command comes to mind, the task is not ready for an agent yet.
+
+## 5. How to write the first request
+
+A request with no acceptance criterion produces code that looks finished. The agent solves the statement it received, so the statement has to carry the condition that will be checked afterwards. «Add order cancellation» does not carry it.
+
+```text
+In src/orders.js, add cancelOrder(orders, id).
+Return null if the order does not exist.
+If it exists, set status to 'cancelled' and return the order.
+Do not add dependencies.
+Criterion: node --test passes with the two tests in tests/orders.test.js.
+```
+
+Four parts do the work. The specific file bounds where the writing happens and stops the agent reading half the repository to find it. The expected behaviour in each case gives something to compare the result against. The criterion names the command that decides the end. And the constraint on dependencies settles in advance a decision the agent otherwise makes on its own.
+
+To that goes whatever the model cannot infer from the code: the package manager version and the runtime version. In a first session no instruction file exists yet to carry them, so they travel in the request or they do not arrive. Section 8 covers where they go so they never have to be repeated.
+
+One mode is worth using before letting it write. In **plan mode** the agent researches and proposes the changes without editing source files: it reads, searches, runs exploration commands and presents a plan for approval before touching anything. It is entered with `/plan` or by pressing `Shift+Tab`<Cite n={2} repeat />. The first review then happens over a short piece of text. A wrong approach is corrected by replying to that text, with no file to revert.
+
+**How to check it.** The request contains a runnable command and the result that command has to return. Without it, deciding whether the change is finished means reading all of it.
+
+## 6. How to stop it, redirect it and undo it
+
+An agent works across several turns, so stopping it halfway and going back matters. There are three mechanisms and they cover different things.
+
+The first is interrupting the current turn. `Esc` stops the response or the tool call in flight, and the work done up to that point is kept, so it serves to redirect without losing everything. `Ctrl+C` also interrupts; with nothing running, the first press clears the input and the second exits the program<Cite n={3} repeat />.
+
+The second is undoing the edits. Claude Code captures the state of the code before every prompt sent, and calls each of those states a checkpoint. It keeps the file snapshots for the 100 most recent checkpoints in a session<Cite n={8} />. The menu opens with `/rewind`, or by pressing `Esc` twice with an empty input, and lists the prompts sent. On the selected point it can restore code and conversation, only the conversation, only the code, or summarise the conversation from there to free context<Cite n={8} repeat />.
+
+The third is version control, and it is needed because the first two have documented gaps.
+
+<Callout kind="riesgo" title="A checkpoint does not cover what the terminal did">
+	Tracking reaches only the edits made with the agent's file tools. Files modified by a shell command, such as `rm`, `mv` or `cp`, cannot be undone from the rewind menu. Neither, in general, can the edits of a subagent, which is a delegated agent running in its own context window. Nor changes made outside the session. The documentation states it directly: checkpoints are for session-level recovery and do not replace version control<Cite n={8} repeat />.
+</Callout>
+
+That sets the order the three are used in. `Esc` to correct course, `/rewind` to discard a batch of edits, and git for everything else. Section 12 covers the git part.
+
+**How to check it.** Ask for a change, open `/rewind`, restore the code to the previous point and run `git status --porcelain`. Whatever files remain modified are the ones the menu does not cover.
+
+## 7. How to use an agent to learn, not only to produce
+
+An agent that writes the code leaves the person using it without the part of the work where learning happens. There are three ways to ask for the same thing that keep it, and all three are ordinary requests.
+
+The first is asking for the explanation before the change. Plan mode serves this even when nothing gets written afterwards: the agent reads the repository and describes what has to be touched and why, and that text explains the real code rather than a generic example.
+
+The second is asking for orientation instead of a solution. «Where is the request body validated in this project, and which file does that path start in» returns a map that serves every task after it. Asking where something is is what an agent answers best, because it can look it up rather than guess.
+
+The third is inverting the usual order. The first version gets written by hand, then the agent is asked to review it against a specific list, such as error handling, edge cases and naming, and the two are compared. What teaches is the difference between them, and that difference does not appear when the code arrives already written.
+
+One limit is worth keeping in mind. An agent states what it knows and what it assumes with the same confidence. An explanation of a library or a standard gets checked against that library's documentation. On the project's own repository the check is cheaper: open the file it named.
+
+**How to check it.** After an explanation, close the session and rebuild what was explained without it. Whatever cannot be rebuilt is what has to be read again.
+
+## 8. The project is documented in a file the agent always reads
+
+Every session starts with an empty context window, so what the agent knows about the project is whatever gets told to it again. An instruction file solves that: it is written once and loaded at the start of every session.
+
+In Claude Code the file is called `CLAUDE.md` and lives at the project root or in `.claude/CLAUDE.md`. There is also a personal one at `~/.claude/CLAUDE.md` for preferences that apply to every project, and a local one, `CLAUDE.local.md`, for anything that must not enter the repository. All discovered files are concatenated into context rather than overriding each other<Cite n={9} />.
+
+What goes inside has a short rule: whatever would otherwise be re-explained every session. Build and test commands, conventions, where each thing lives. The documentation recommends keeping the file under 200 lines, because a longer one consumes context and reduces adherence, and asks for concrete, verifiable instructions. Its own examples are direct: «Use 2-space indentation» instead of «Format code properly», and «Run `npm test` before committing» instead of «Test your changes»<Cite n={9} repeat />.
+
+What does not belong is anything the agent can infer by reading the repository, such as the directory listing or the dependency list. It costs context and it is already on disk.
+
+The `/init` command generates a first file by analysing the project, and works as a starting point before adding what cannot be inferred. `/memory` opens the existing files for editing.
+
+If the repository already has an `AGENTS.md` because other tools use it, there is no need to duplicate it. Claude Code reads `CLAUDE.md` and not `AGENTS.md`, so the documented solution is a `CLAUDE.md` that imports it and adds anything specific underneath<Cite n={9} repeat />.
+
+```markdown
+@AGENTS.md
+
+## Claude Code
+
+Use plan mode for changes under `src/billing/`.
+```
+
+There is also a memory the agent writes for itself. It stores the corrections it receives and the context it cannot infer from the code, in plain text files under `~/.claude/projects/`. An index from that directory loads at the start of every session<Cite n={9} repeat />. It is editable text, so it is worth reading now and then: a misunderstood correction stays there and applies in every session afterwards.
+
+There is one thing an instruction file cannot do, and the documentation points it out. These instructions are context, not enforced configuration. Anything that has to run at a fixed moment every time, before each commit or after each edit, is written as a *hook*: a script the tool runs at that point in the cycle without consulting the model<Cite n={9} repeat />.
+
+**How to check it.** Run `/context` and look for the file under the list of memory files. If it is not there, the agent is not reading it, however well written it is.
+
+## 9. What is not always needed is stored as a skill
+
+An instruction file loads whole in every session, so anything added to it is paid for in every task, including the ones it has nothing to do with. For what is only needed sometimes there are two mechanisms that load conditionally.
+
+The first is path-scoped rules. They are files in `.claude/rules/` with a `paths` header declaring which files they apply to, and they only enter context when the agent reads a matching file<Cite n={9} repeat />.
+
+```markdown
+---
+paths:
+  - "src/api/**/*.ts"
+---
+
+# API rules
+
+- Every endpoint validates its input before using it.
+- Errors use the standard response format.
+```
+
+The second is **skills**. A skill is a `SKILL.md` file with instructions, knowledge or a procedure that the agent adds to what it can do. It loads automatically when the request matches its description, or it is invoked by hand by typing `/skill-name`<Cite n={10} />. It lives in `~/.claude/skills/<name>/SKILL.md` for every project on the machine, or in `.claude/skills/<name>/SKILL.md` for a single one.
+
+A minimal skill is two parts: a header with a name and a description, and the instructions below it.
+
+```markdown
+---
+name: summarise-changes
+description: Summarises uncommitted changes and flags anything risky. Use when the user asks what changed or wants a commit message.
+---
+
+Summarise the changes in two or three points, then list the risks:
+missing error handling, hardcoded values, or tests that need updating.
+If there are no uncommitted changes, say so.
+```
+
+The description is the only text the agent judges when deciding whether to load the skill, so it is the part to write carefully. Writing it well has rules of its own, developed in [another article on this blog](/en/blog/ask-ai-for-secure-code).
+
+The format does not belong to one tool. Skills follow the open Agent Skills standard, and the fields `name`, `description`, `license`, `compatibility`, `metadata` and `allowed-tools` work outside Claude Code<Cite n={10} repeat />. Cursor covers the same ground with its rules directory.
+
+**How to check it.** Type `/` in the session and the skill has to appear in the list. Then make a request that matches its description without naming it, and see whether it loaded on its own. If it did not, the problem is in the description.
+
+## 10. Plugins install what somebody else already wrote
+
+A **plugin** is an installable package bundling skills, agents, *hooks* and MCP servers<Cite n={10} repeat />. It saves writing from scratch what already exists: a commit workflow, a pull request review, the connection to GitHub or to an issue tracker.
+
+Two of those pieces are worth naming first. **MCP** stands for Model Context Protocol. It is an open protocol that standardises how an application provides context to a language model, giving one unified way to connect it to different data sources and tools<Cite n={5} repeat />. An MCP server adds new tools to the agent, for Slack, Jira, a database or a browser, and the connections are managed with `/mcp`. A **subagent** is a specialised assistant running in its own context window, with its own instructions, tools and permissions. It works on a delegated task and returns a summary to the main conversation<Cite n={2} repeat />. It keeps a long exploration out of the main session's context.
+
+Plugins are distributed through catalogues called *marketplaces*, and using them takes two steps. First the catalogue is registered, which installs nothing, then the specific plugin is installed<Cite n={11} />.
+
+```shell
+/plugin marketplace add anthropics/claude-code
+/plugin install commit-commands@claude-code-plugins
+```
+
+The `/plugin` command opens the panel showing the added catalogues, the installed plugins and the load errors. Before installing, each plugin's detail pane shows two figures worth reading: the context cost it adds every turn, and the list of what it will install, with its commands, agents, skills, hooks and servers<Cite n={11} repeat />. That cost is paid in every session, including the ones where the plugin goes unused.
+
+One of those categories changes what the agent can see. Code intelligence plugins connect a language server, the same technology that gives an editor go-to-definition and type errors. With one installed, the agent receives the compiler's errors after each edit without running anything, and can fix them in the same turn<Cite n={11} repeat />. The language server binary is installed separately.
+
+<Callout kind="riesgo" title="A plugin runs code with the privileges of whoever installs it">
+	The documentation states it without qualification: plugins and marketplaces are highly trusted components that can execute arbitrary code on the machine with the user's privileges, and should only be installed from trusted sources. Anthropic adds that it does not control what servers, files or other software a plugin includes, and cannot verify that it works as intended<Cite n={11} repeat />. Before installing a third-party plugin, open its repository and read what it ships.
+</Callout>
+
+**How to check it.** After installing, run `/context` and compare the cost with the previous figure. A plugin that adds context every turn and never gets used should be uninstalled.
+
+## 11. What permissions it gets
+
+An agent runs commands and reads files, so two configuration decisions come before the first long session.
+
+The first is what stops to ask. Claude Code handles it with **permission modes**, which set the approval behaviour for the whole session and cycle with `Shift+Tab`<Cite n={3} repeat />. The `default` mode asks the first time each tool is used and `acceptEdits` accepts file edits without asking. The `plan` mode does not edit source files, and `bypassPermissions` skips permission prompts<Cite n={12} />. The last one is what gets switched on during the first day to stop answering questions. It is also available as the `--dangerously-skip-permissions` option, and its own documentation restricts its use to isolated environments, containers or virtual machines where the agent cannot cause damage<Cite n={12} repeat />.
+
+A third decision is about cost rather than permissions: which model the session runs. It changes with `/model`, and the documentation's recommendation for starting out is direct, since Sonnet handles most coding tasks well and costs less than Opus<Cite n={6} repeat />.
+
+The second permission decision is which files it can read. The agent sends the contents of the files it reads to the provider's server to produce the answer, so a `.env` holding credentials travels in that request the same as the code. The exclusion is declared as a permission rule, and the documentation publishes the paste-ready example<Cite n={13} />.
+
+```json
+{
+	"permissions": {
+		"deny": ["Read(./.env)", "Read(./.env.*)"]
+	}
+}
+```
+
+Having the file in `.gitignore` does not protect it. Measured in a repository with `.env` ignored by git and no rule in place, the read tool returned the file with no error at all. With the rule in place it returns the block instead:
+
+```text
+File is in a directory that is denied by your permission settings.
+```
+
+Cursor starts from a different point. Its documentation says it ignores by default the files listed in `.gitignore` plus its own default list, which includes `.env*`. Anything else to exclude goes in a `.cursorignore` file, using the same pattern syntax. The same documentation says the terminal and the external tools the agent uses cannot block access to code covered by that file<Cite n={14} />.
+
+In both tools the exclusion lives in configuration and not in the instruction file. The Claude Code documentation states it without margin: permission rules are enforced by the tool and not by the model<Cite n={12} repeat />. An instruction written in `CLAUDE.md` shapes what the model tries to do, and does not change what the tool allows.
+
+**How to check it.** Ask the agent for the contents of `.env`. With the rule in place, the tool returns the block instead of the file. The model replying that it will not do it proves nothing, because that answer is not produced by the rule.
+
+## 12. How to review what it did
+
+An agent edits files directly, so what remains when it finishes is a *diff*: the list of lines that changed between the repository's previous state and its current one. That diff is the only complete description of what it did, and it only works if the starting point was clean.
+
+```bash
+git status --porcelain
+```
+
+The output has to be empty before the request. Every line that shows up is a modified or untracked file, and mixing it with whatever the agent generates means separating them by hand afterwards.
+
+Once the task is done, the list of touched files is compared with the ones the request named. The usual command for that list leaves out exactly the interesting case:
+
+```bash
+git diff --stat
+```
+
+```text
+ package.json  |  4 +++-
+ src/orders.js | 10 ++++++++++
+ 2 files changed, 13 insertions(+), 1 deletion(-)
+```
+
+The session had also created `src/util/date.js`. `git diff` with no arguments compares the working tree against the index, the area where the next commit's changes are staged<Cite n={15} />. A new file is not in the index yet, so it does not appear. Adding everything to the index before looking fixes the list, measured on git 2.49.0:
+
+```bash
+git add -A && git diff --cached --stat
+```
+
+```text
+ package.json     |  4 +++-
+ src/orders.js    | 10 ++++++++++
+ src/util/date.js |  3 +++
+ 3 files changed, 16 insertions(+), 1 deletion(-)
+```
+
+The file missing from the first list is the one importing a new dependency, declared in `package.json`. The request asked for no dependency, and a dependency is a decision with a permanent cost: it enters the lock file, it installs on every machine and every deployment, and it has to be updated when a security flaw appears.
+
+Three things get read before the rest. The files the request did not name, for the reason above. The deleted lines, because an agent rewriting a whole function can remove a check that was there for a reason nobody wrote down. And the changes to configuration, the `Dockerfile` and the continuous integration workflows, which decide what runs outside the machine writing the code.
+
+Compiling is not running, either. A change can compile, pass the linter and not do what the request asked, so the final check is running the program along the path the change touches.
+
+<Callout kind="riesgo" title="Discarding a whole session takes two commands, and both delete">
+	`git reset --hard` returns everything git already tracks to the last committed state, and `git clean -fd` deletes the files that are not in the index yet. What they remove is not in the history, so it does not come back. Running them requires having checked first that your own work is already committed.
+</Callout>
+
+**How to check it.** Run `git add -A && git diff --cached --stat` and compare that list with the request. Every file that does not belong gets read in full before continuing.
+
+## The commands used from day one
+
+These are the Claude Code commands that appear in this guide, with their documented descriptions<Cite n={16} />. They are typed inside the session, and `/help` lists the rest.
+
+| Command | What it does |
+|---|---|
+| `/init` | Initialize project with a `CLAUDE.md` guide. |
+| `/memory` | Edit `CLAUDE.md` files, enable or disable auto memory, and view auto memory entries. |
+| `/context` | Visualize current context usage as a coloured grid. |
+| `/clear` | Start a new conversation with empty context. |
+| `/compact` | Free up context by summarizing the conversation so far. |
+| `/plan` | Enter plan mode directly from the prompt. |
+| `/goal` | Set a goal: Claude keeps working across turns until the condition is met. |
+| `/rewind` | Open the menu to restore code or conversation to an earlier point. |
+| `/diff` | Review the changes in your working tree, including the edits Claude has made so far. |
+| `/permissions` | Manage allow, ask, and deny rules for tool permissions. |
+| `/plugin` | Manage Claude Code plugins and marketplaces. |
+| `/mcp` | Manage MCP server connections and OAuth authentication. |
+| `/model` | Switch the AI model and save it as your default for new sessions. |
+| `/usage` | Show token usage and the estimated cost of the session. Alias: `/cost`. |
+
+Four keyboard shortcuts are the ones that matter<Cite n={3} repeat />.
+
+| Shortcut | What it does |
+|---|---|
+| `Esc` | Interrupt Claude mid-turn, or close a dialog. |
+| `Esc` `Esc` | With the input empty, open the rewind menu. |
+| `Shift+Tab` | Cycle permission modes. |
+| `Ctrl+O` | Toggle the transcript viewer, with the detail of every tool call. |
+
+## What to expect from the results
+
+Perceived speed and measured speed do not match, and one experiment separated the two. METR randomly assigned 246 tasks to allow or disallow AI tools. The 16 participants were developers on mature open-source projects, averaging five years on those same repositories. Before starting, they forecast finishing 24% faster with the tools. After the study they estimated they had finished 20% faster. The measurement gave the opposite: 19% more time<Cite n={17} />.
+
+That result describes expert developers on code they already knew, with the tools of the first half of 2025, and it does not transfer to every other situation. What does transfer is the distance between the three figures. The participants' own estimate and the measurement pointed in opposite directions, so the impression of having moved faster is not enough to decide whether you did.
+
+The 2025 Stack Overflow survey, with 49,009 responses from 177 countries, measures the difficulty across a far wider population. The most cited frustration with AI tools, at 66%, is a solution that is «almost right, but not quite». Another 45.2% add that debugging generated code takes more time<Cite n={18} />.
+
+Both figures point the same way. An almost-correct result compiles and reads well, so the work shifts from writing to checking. The time saved writing is lost again when there is no cheap check to run.
+
+## Where to go next
+
+The order in which all of this gets set up matters little except in one respect: the check comes first, because without it there is no way to know whether the rest works. An instruction file, a skill and a plugin are investments that pay off through repetition, so they get written once something has already repeated.
+
+Two things are left to learn and both have their own article. The first is what to look for in the code that comes out. The security failures that repeat most are in [seven things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code). Each point carries the code that breaks, the fix, and the command that proves which of the two holds.
+
+The second is how to stop reviewing it by hand. Once a project generates several changes a day, the review runs on every change instead of depending on somebody remembering it. That is the subject of [how to ask AI for secure code](/en/blog/ask-ai-for-secure-code).
+
+<References
+	title="References"
+	back="Back to the citation"
+	items={[
+		{
+			source: 'Claude Code',
+			title: 'Overview',
+			note: 'installation, starting in the project directory, and the available surfaces',
+			url: 'https://code.claude.com/docs/en/overview'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Glossary',
+			note: 'definitions of agentic coding, harness, agentic loop, tool, context window, compaction, plan mode, subagent and verification loop',
+			url: 'https://code.claude.com/docs/en/glossary'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Interactive mode',
+			note: 'keyboard shortcut table: Esc, double Esc, Shift+Tab, Ctrl+O and Ctrl+C',
+			url: 'https://code.claude.com/docs/en/interactive-mode'
+		},
+		{
+			source: 'Cursor',
+			title: 'Agent, overview',
+			note: 'read on 8 September 2026',
+			url: 'https://cursor.com/docs/agent/overview'
+		},
+		{
+			source: 'Anthropic',
+			title: 'Platform glossary',
+			note: 'definitions of token and MCP',
+			url: 'https://platform.claude.com/docs/en/about-claude/glossary'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Manage costs effectively',
+			note: 'why a long session consumes more, and choosing a model',
+			url: 'https://code.claude.com/docs/en/costs'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Keep Claude working toward a goal',
+			note: 'the syntax of /goal, how the condition is evaluated and what clears it',
+			url: 'https://code.claude.com/docs/en/goal'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Checkpointing',
+			note: 'how checkpoints are created, the menu actions and the limitations',
+			url: 'https://code.claude.com/docs/en/checkpointing'
+		},
+		{
+			source: 'Claude Code',
+			title: 'How Claude remembers your project',
+			note: 'CLAUDE.md locations, recommended size, importing AGENTS.md, path-scoped rules and auto memory',
+			url: 'https://code.claude.com/docs/en/memory'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Skills',
+			note: 'the structure of SKILL.md, locations, invocation and the open Agent Skills standard',
+			url: 'https://code.claude.com/docs/en/skills'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Discover and install prebuilt plugins through marketplaces',
+			note: 'installation commands, the plugin detail pane and the security section',
+			url: 'https://code.claude.com/docs/en/discover-plugins'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Configure permissions',
+			note: 'permission modes, rule evaluation order and the bypassPermissions warning',
+			url: 'https://code.claude.com/docs/en/permissions'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Settings files and precedence',
+			note: 'the deny rule example for .env files',
+			url: 'https://code.claude.com/docs/en/settings'
+		},
+		{
+			source: 'Cursor',
+			title: 'Ignore files',
+			note: 'read on 8 September 2026',
+			url: 'https://cursor.com/docs/context/ignore-files'
+		},
+		{
+			source: 'Git',
+			title: 'git-diff',
+			url: 'https://git-scm.com/docs/git-diff'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Commands',
+			note: 'the descriptions used in the command table',
+			url: 'https://code.claude.com/docs/en/commands'
+		},
+		{
+			source: 'Becker, J., Rush, N., Barnes, E. and Rein, D.',
+			title: 'Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity',
+			note: 'METR, July 2025; randomised controlled trial, 16 developers and 246 tasks',
+			url: 'https://arxiv.org/abs/2507.09089'
+		},
+		{
+			source: 'Stack Overflow',
+			title: '2025 Developer Survey, AI section',
+			note: '49,009 responses from 177 countries, collected between 29 May and 23 June 2025',
+			url: 'https://survey.stackoverflow.co/2025/ai'
+		}
+	]}
+/>
