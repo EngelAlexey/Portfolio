@@ -102,6 +102,8 @@ export const en: Dict = {
 		followTitle: 'Follow the work',
 		followBody: 'I post the short version of every article on Instagram, with the full list in images.',
 		followCta: 'View on Instagram',
+		followPostBody: 'The short version of this article is on Instagram, in five images.',
+		followPostCta: 'View the carousel',
 		next: 'Next article',
 		previous: 'Previous article',
 		draft: 'Draft',

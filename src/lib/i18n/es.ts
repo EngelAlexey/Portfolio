@@ -101,6 +101,9 @@ export const es = {
 		followBody:
 			'Publico en Instagram la versión corta de cada artículo, con la lista completa en imágenes.',
 		followCta: 'Ver en Instagram',
+		followPostBody:
+			'La versión corta de este artículo está en Instagram, resumida en cinco imágenes.',
+		followPostCta: 'Ver el carrusel',
 		next: 'Siguiente artículo',
 		previous: 'Artículo anterior',
 		draft: 'Borrador',

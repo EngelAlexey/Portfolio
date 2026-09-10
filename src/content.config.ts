@@ -122,7 +122,15 @@ const articleSchema = z
 
 		repo: url.nullable().default(null),
 		related: z.array(z.string().min(1)).max(4).default([]),
-		cover: z.string().startsWith('/img/').nullable().default(null)
+		cover: z.string().startsWith('/img/').nullable().default(null),
+
+		// Publicacion de Instagram con la version corta del articulo, si existe.
+		instagram: url
+			.nullable()
+			.default(null)
+			.refine((value) => value === null || new URL(value).host === 'www.instagram.com', {
+				message: 'instagram must be a www.instagram.com URL'
+			})
 	})
 	.superRefine((value, ctx) => {
 		if (value.updated && value.updated < value.published) {
