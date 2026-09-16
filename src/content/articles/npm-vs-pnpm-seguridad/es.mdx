@@ -1,14 +1,16 @@
 ---
 slug: npm-vs-pnpm-seguridad
-title: 'npm vs pnpm: qué cambia en la seguridad al instalar dependencias'
+title: Diferencia entre npm y pnpm en la seguridad al instalar
 tagline: Cuatro comportamientos medidos en cuatro versiones de los dos gestores, con el comando que los reproduce y la configuración que los iguala.
+description: pnpm 11 detiene la instalación con ERR_PNPM_IGNORED_BUILDS y cambia onlyBuiltDependencies por allowBuilds. Cómo se resuelve y qué hace npm con esos scripts.
 areas: [seguridad, infra]
 published: '2026-09-07'
-updated: '2026-09-07'
+updated: '2026-09-16'
 draft: false
 repo: null
 related: [deteccion-por-umbral]
 cover: null
+instagram: https://www.instagram.com/reel/DdJplGERNrD/
 ---
 
 import Callout from '../../../components/Callout.astro';
@@ -117,7 +119,7 @@ npm rebuild esbuild --ignore-scripts=false
 
 La opción es obligatoria, porque con `ignore-scripts=true` en la configuración un `npm rebuild` a secas tampoco ejecuta nada.
 
-## 2. Qué introdujo pnpm 10 y qué cambió en la 11
+## 2. De pnpm 10 a 11: el error ERR_PNPM_IGNORED_BUILDS y allowBuilds
 
 El cambio de pnpm 10, publicado el 7 de enero de 2025, fue dejar de ejecutar los scripts de las dependencias durante la instalación<Cite n={1} repeat />. La versión 10 avisa y continúa, y esa diferencia importa, porque un aviso con salida 0 no detiene la integración continua.
 
@@ -127,7 +129,7 @@ The following dependencies have build scripts that were ignored: esbuild
 
 En esa versión el permiso se concede desde `package.json`, en el campo `pnpm.onlyBuiltDependencies`.
 
-pnpm 11.0.0, del 28 de abril de 2026, cambió las dos cosas<Cite n={6} />. El aviso pasó a ser el error `ERR_PNPM_IGNORED_BUILDS` con salida 1, así que la instalación falla hasta que alguien decide. Y el permiso cambió de sitio: `onlyBuiltDependencies`, junto con `onlyBuiltDependenciesFile`, `neverBuiltDependencies`, `ignoredBuiltDependencies` e `ignoreDepScripts`, desapareció en favor de `allowBuilds` en `pnpm-workspace.yaml`<Cite n={7} />.
+pnpm 11.0.0, del 28 de abril de 2026, cambió las dos cosas<Cite n={6} />. El aviso pasó a ser el error `ERR_PNPM_IGNORED_BUILDS` con salida 1, así que la instalación falla hasta que alguien decide. Y el permiso cambió de sitio: `onlyBuiltDependencies`, junto con `onlyBuiltDependenciesFile`, `neverBuiltDependencies`, `ignoredBuiltDependencies` e `ignoreDepScripts`, desapareció en favor de `allowBuilds` en `pnpm-workspace.yaml`<Cite n={7} />. La versión 10.26.0 ya había añadido `allowBuilds` como alternativa a esos ajustes<Cite n={7} repeat />, así que la migración puede hacerse antes de actualizar a la 11.
 
 ```yaml
 # pnpm-workspace.yaml
