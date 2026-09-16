@@ -138,6 +138,7 @@ Siempre `.mdx`, aunque el artículo no importe ningún componente: así el carga
 slug: revisar-codigo-generado-por-ia   # debe coincidir con el nombre de la carpeta
 title: Siete cosas que revisar en el código que genera tu IA
 tagline: Una línea, 10–180 caracteres.
+description: null                      # 50–160 caracteres para el buscador, o null = usa la tagline
 areas: [seguridad]                     # 1 a 3 de la misma taxonomía que las fichas
 published: '2026-09-07'                # YYYY-MM-DD
 updated: null                          # YYYY-MM-DD o null
@@ -146,6 +147,7 @@ path: null                             # segmento de URL de ESTE idioma; null = 
 repo: null                             # repositorio de demostración, o null
 related: [kaizen-ai]                   # slugs de fichas existentes, o []
 cover: null                            # ruta bajo /img/ o null
+instagram: null                        # URL de www.instagram.com de la publicación o el reel, o null
 ---
 ```
 
@@ -159,6 +161,10 @@ Reglas que el build hace cumplir:
 **`path` es la dirección del artículo en ese idioma y se declara por archivo.** El `slug` sigue siendo la carpeta y la identidad interna; `path` es solo lo que se ve en la barra de direcciones. Cuando es `null`, la ruta usa el `slug`, así que un artículo sin traducir la URL no cambia. Declararlo en `en.mdx` es lo que evita que un lector anglófono llegue a `/en/blog/revisar-codigo-generado-por-ia`, una dirección sin una sola palabra en su idioma. Cambiar un `path` que lleve tiempo publicado obliga a redirigir el anterior desde `vercel.json`, porque esa dirección ya está indexada y compartida. Si el cambio ocurre a las horas de publicar y nadie ha llegado todavía, un 404 sin enlaces entrantes no cuesta nada y la redirección sobra.
 
 **`updated` es la fecha de la última edición y hay que ponerla a mano** cuando se corrige o se amplía un artículo ya publicado. Mientras es `null`, el artículo se describe solo con `published`. En cuanto tiene fecha aparece en cinco sitios: la línea de datos de la ficha del artículo, `dateModified` en los datos estructurados, `article:modified_time` en Open Graph, `<lastmod>` en el sitemap y `atom:updated` en el feed. La fecha declarada **gana sobre la del historial de git**: es la que el autor afirma, y el historial queda de reserva para los artículos que no la declaran.
+
+**`description` es solo para el buscador.** Cuando tiene valor, sustituye a la tagline en `<meta name="description">`, en la descripción de Open Graph y en `TechArticle.description`. La tagline sigue en las tarjetas, bajo el título, en el feed y en `/llms.txt`. Existe porque las dos piezas tienen reglas opuestas: la tagline no admite jerga, y el fragmento de un resultado tiene que contener lo que la gente teclea, que a menudo es un código de error o el nombre de un ajuste (`ERR_PNPM_IGNORED_BUILDS`, `allowBuilds`). Se usa cuando Search Console enseña una consulta que la tagline no nombra.
+
+**`instagram` enlaza la versión corta del artículo.** Con valor, el enlace aparece en la cabecera, junto al del repositorio, y en el bloque «Sigue el trabajo» del final. Sin él, el bloque del final enlaza al perfil y la cabecera no muestra nada. Sirve tanto un carrusel (`/p/…`) como un reel (`/reel/…`), y los dos idiomas apuntan a la misma publicación.
 - `related` solo admite slugs de fichas que existan. Un enlace roto es un fallo de build, no un 404 en producción.
 
 ### La compuerta del blog
@@ -284,6 +290,7 @@ Vercel, salida estática. `vercel.json` fija:
 
 - `cleanUrls`, para que `/es/contacto` resuelva a `es/contacto.html` de forma determinista con `build.format: 'file'`.
 - Un **307 de `/` a `/es`**. Astro también emite una página de redirección con `meta refresh`, que es lo que hace funcionar `pnpm preview` y cualquier host que no sea Vercel; en producción gana la del borde y esa página no se sirve. Es 307 y no 308 a propósito: un 308 lo cachea el navegador para siempre, y que la raíz vaya al español es una decisión que puede cambiar.
+- Un **307 de `/ig` a `/es/blog`** con `utm_source=instagram&utm_medium=social&utm_campaign=bio`. Es el enlace de la bio de Instagram. Es 307 por el mismo motivo que la raíz: el destino puede pasar a ser el artículo más reciente sin tocar el perfil. El canonical del blog no lleva los parámetros, así que no se indexan.
 - Un año de caché inmutable para `/_astro/*`, cuyos nombres llevan hash.
 - `X-Content-Type-Options`, `Referrer-Policy` y `X-Frame-Options`.
 
@@ -291,11 +298,12 @@ Vercel, salida estática. `vercel.json` fija:
 
 ## Rendimiento
 
-Cinco cosas que es fácil volver a romper:
+Seis cosas que es fácil volver a romper:
 
 - **`<Analytics />` y `<SpeedInsights />` van en el `<body>`, no en el `<head>`.** Emite `<vercel-analytics>`, y un elemento desconocido dentro de la cabecera es donde el parser decide que la cabecera terminó: con él arriba, las hojas de estilo que Astro añade después se parseaban dentro del `<body>`. `<SpeedInsights />` emite `<vercel-speed-insights>` y tiene el mismo problema.
 - **Los dos sellan `data-pathname` con el sufijo `.html`**, porque `build.format` es `file` y `Astro.url.pathname` lo incluye. Sin corregirlo, tanto la ruta que reportan como la que derivan de ella nombran una URL que el sitio nunca sirve. El script en línea que hay justo debajo de los dos elementos lo recorta mientras se parsea, después de que existan y antes de que sus módulos diferidos los conviertan en componentes.
 - **La etiqueta de GA4 sí va en el `<head>`, y eso no contradice lo anterior.** Lo que rompía la cabecera era el elemento desconocido, no la posición: `<script>` es un elemento de cabecera legítimo. El cuerpo del `gtag` se arma en el front matter y se inyecta con `set:html`, como las `@font-face` y el JSON-LD, porque dentro de una expresión del template las llaves del script se leerían como JSX. Y va detrás de `import.meta.env.PROD`, que es verdadero en cualquier `astro build`: las previsualizaciones y `pnpm preview` también miden. Si algún día estorba ese ruido, la puerta estrecha es `process.env.VERCEL_ENV === 'production'`.
+- **`?notrack=1` excluye las visitas propias de las dos analíticas, y `?notrack=0` lo deshace.** La marca se guarda en `localStorage`, así que vale por navegador. La lee un script en línea que va en el `<head>` justo antes de gtag.js, porque `ga-disable-<ID>` solo tiene efecto si se fija antes de que la etiqueta cargue. Ese mismo script define `webAnalyticsBeforeSend`, que el componente de Vercel lee al inicializarse; devolver `null` ahí cancela el envío. Se arma en el front matter y se inyecta con `set:html`, igual que el cuerpo del `gtag`: con `define:vars`, `astro check` no reconoce la variable dentro del script.
 - **Las `@font-face` se declaran en `Layout.astro`, no se importan de Fontsource.** Sus paquetes *variable* publican una sola hoja con los once subconjuntos y aquí solo se usa el latino. Declararlas es además lo que permite precargarlas: el nombre con hash solo se conoce a través de `?url`, y usar ese mismo valor en el `preload` y en la `@font-face` es lo que garantiza que el navegador no descargue el fichero dos veces.
 - **`assetsInlineLimit` es una función.** El `0` estaba para que fuentes e imágenes no acabaran en base64, pero también apagaba el inlineado de CSS y hojas de 310 B viajaban como petición propia. La función dice solo lo que se quería decir: `false` para los assets, el umbral por defecto para el CSS.
 
