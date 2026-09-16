@@ -96,14 +96,15 @@ export const es = {
 		updated: 'Actualizado',
 		reading: 'Lectura',
 		repo: 'Código de ejemplo',
+		headInstagram: 'Versión corta en Instagram',
 		relatedTitle: 'Proyectos relacionados',
 		followTitle: 'Sigue el trabajo',
 		followBody:
-			'Publico en Instagram la versión corta de cada artículo, con la lista completa en imágenes.',
+			'Publico en Instagram la versión corta de cada artículo, en carruseles y en vídeo.',
 		followCta: 'Ver en Instagram',
 		followPostBody:
-			'La versión corta de este artículo está en Instagram, resumida en cinco imágenes.',
-		followPostCta: 'Ver el carrusel',
+			'La versión corta de este artículo está en Instagram.',
+		followPostCta: 'Verla en Instagram',
 		next: 'Siguiente artículo',
 		previous: 'Artículo anterior',
 		draft: 'Borrador',

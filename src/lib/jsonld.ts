@@ -254,7 +254,7 @@ function articleNode(input: GraphInput, article: Article): Node {
 		'@type': 'TechArticle',
 		'@id': `${input.canonical}#article`,
 		headline: meta.title,
-		description: meta.tagline,
+		description: meta.description ?? meta.tagline,
 		url: input.canonical,
 		mainEntityOfPage: ref(`${input.canonical}#webpage`),
 		inLanguage: input.lang,

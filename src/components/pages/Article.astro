@@ -40,7 +40,7 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 	slug={article.path}
 	slugs={article.paths}
 	title={meta.title}
-	description={meta.tagline}
+	description={meta.description ?? meta.tagline}
 	image={meta.cover}
 	published={meta.published}
 	updated={meta.updated}
@@ -60,11 +60,23 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 					</ul>
 
 					{
-						meta.repo && (
+						(meta.repo || meta.instagram) && (
 							<p class="links">
-								<a href={meta.repo} rel="noreferrer" target="_blank" title={address(meta.repo)}>
-									{strings.article.repo}
-								</a>
+								{meta.repo && (
+									<a href={meta.repo} rel="noreferrer" target="_blank" title={address(meta.repo)}>
+										{strings.article.repo}
+									</a>
+								)}
+								{meta.instagram && (
+									<a
+										href={meta.instagram}
+										rel="noreferrer"
+										target="_blank"
+										title={address(meta.instagram)}
+									>
+										{strings.article.headInstagram}
+									</a>
+								)}
 							</p>
 						)
 					}

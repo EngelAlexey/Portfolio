@@ -107,6 +107,7 @@ const articleSchema = z
 		slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'slug must be lower-case kebab-case'),
 		title: z.string().min(2),
 		tagline: z.string().min(10).max(180),
+		description: z.string().min(50).max(160).nullable().default(null),
 
 		areas: z.array(z.enum(AREA_IDS)).min(1).max(3),
 
