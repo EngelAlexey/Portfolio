@@ -73,6 +73,19 @@ gtag('js', new Date());
 gtag('config', '${gaId}');`
 	: '';
 
+// ?notrack=1 excluye este navegador de GA4 y de Vercel; ?notrack=0 lo deshace.
+const notrackInit = `try {
+	var notrack = new URLSearchParams(location.search).get('notrack');
+	if (notrack === '1') localStorage.setItem('notrack', '1');
+	if (notrack === '0') localStorage.removeItem('notrack');
+	if (localStorage.getItem('notrack') === '1') {
+		${gaId ? `window['ga-disable-${gaId}'] = true;` : ''}
+		window.webAnalyticsBeforeSend = function () {
+			return null;
+		};
+	}
+} catch (e) {}`;
+
 const strings = t(lang);
 const current = key;
 
@@ -119,6 +132,7 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 				if (e.viewTransition) document.documentElement.dataset.vt = '';
 			});
 		</script>
+		<script is:inline set:html={notrackInit}></script>
 		{gaId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />}
 		{gaId && <script is:inline set:html={gtagInit}></script>}
 		{

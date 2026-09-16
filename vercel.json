@@ -9,7 +9,12 @@
       "permanent": false,
       "has": [{ "type": "header", "key": "accept-language", "value": { "pre": "en" } }]
     },
-    { "source": "/", "destination": "/es", "permanent": false }
+    { "source": "/", "destination": "/es", "permanent": false },
+    {
+      "source": "/ig",
+      "destination": "/es/blog?utm_source=instagram&utm_medium=social&utm_campaign=bio",
+      "permanent": false
+    }
   ],
   "headers": [
     {
