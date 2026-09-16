@@ -20,7 +20,7 @@ export const es = {
 	home: {
 		badge: 'Disponible para práctica profesional, enero a abril de 2027',
 		role: 'Desarrollador de Software · Enfoque en Ciberseguridad',
-		headline: 'Construyo las plataformas con las que una empresa opera a diario.',
+		headline: 'Desarrollo software y comparto lo que aprendo sobre seguridad y programación con IA.',
 		pitch:
 			'Desarrollador de software en Puntarenas, Costa Rica. Trabajo en plataformas corporativas, herramientas internas y aplicaciones móviles para empresas de logística y de recursos humanos en Costa Rica y Panamá. Cada proyecto de este sitio explica por qué se hizo, qué se decidió y qué quedó funcionando.',
 		ctaProjects: 'Ver proyectos',

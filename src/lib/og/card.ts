@@ -70,6 +70,9 @@ export function cardSvg(spec: CardSpec): string {
 	}
 
 	const footY = OG_CARD.height - 66;
+	const footMax = OG_CARD.width - PAD * 2;
+	const footWidth = measure(spec.footer, 26, REGULAR);
+	const footSize = footWidth > footMax ? Math.floor((26 * footMax) / footWidth) : 26;
 
 	return `<svg xmlns="http://www.w3.org/2000/svg" width="${OG_CARD.width}" height="${OG_CARD.height}" viewBox="0 0 ${OG_CARD.width} ${OG_CARD.height}">
   <rect width="${OG_CARD.width}" height="${OG_CARD.height}" fill="${colors.paper}"/>
@@ -85,7 +88,7 @@ export function cardSvg(spec: CardSpec): string {
 	}
   ${body.join('\n  ')}
   <rect x="${PAD}" y="${footY - 34}" width="${OG_CARD.width - PAD * 2}" height="1" fill="${colors.line}"/>
-  <text x="${PAD}" y="${footY}" ${font(26, REGULAR, colors.inkMuted)}>${escape(spec.footer)}</text>
+  <text x="${PAD}" y="${footY}" ${font(footSize, REGULAR, colors.inkMuted)}>${escape(spec.footer)}</text>
 </svg>`;
 }
 

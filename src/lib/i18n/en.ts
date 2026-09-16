@@ -22,7 +22,7 @@ export const en: Dict = {
 	home: {
 		badge: 'Available for a professional internship, January to April 2027',
 		role: 'Software Developer · Cybersecurity focus',
-		headline: 'I build the platforms a company runs on every day.',
+		headline: 'I build software and share what I learn about security and coding with AI.',
 		pitch:
 			'Software developer based in Puntarenas, Costa Rica. I work on corporate platforms, internal tools and mobile apps for logistics and HR software companies in Costa Rica and Panama. Every project on this site sets out why it was built, what was decided, and what now runs.',
 		ctaProjects: 'View projects',
