@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+*.png binary
+*.mp4 binary
+*.wav binary
+
+# Láminas de terceros (Freepik, Storyset): se guardan tal como se descargaron.
+personajes/kits/*.svg -text
+personajes/referencias/*.svg -text

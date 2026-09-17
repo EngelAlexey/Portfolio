@@ -1,0 +1,6 @@
+# La CLI de Vercel no lee .gitignore: sin este archivo, `vercel --prod` desde esta máquina sube todo
+# lo que no esté en su lista por defecto, incluidos el arte de los clientes y los tokens.
+design/
+social/
+.secrets/
+.claude/

@@ -1,0 +1,47 @@
+# Dependencias
+node_modules/
+
+# Todo lo que se regenera con gen.mjs, exporta.mjs, render.mjs o kit.mjs. El repositorio guarda
+# el motor y el contenido; las salidas se vuelven a generar.
+*.html
+canvas.json
+muestras.json
+png/
+out/
+capturas*/
+*.png
+*.mp4
+*.wav
+*.log
+*.zip
+
+# Capturas de kit.mjs inspecciona. Las cajas medidas sí se conservan: el mapa del kit sale de ellas.
+**/inspeccion/*
+!**/inspeccion/cajas.json
+
+# Renders de comparación, sin publicar
+reel-*/v2/
+reel-*/v2-60/
+
+# Los dos reels publicados se renderizaron con el motor anterior, que ya no existe: son el único
+# registro de lo que salió.
+!reel-*/reel.mp4
+!reel-*/portada.png
+
+# Referencia de 15 MB del antifaz descartado; ningún script la usa
+personajes/referencias/antifaz-ilustracion.svg
+
+# Pruebas locales
+prueba-*/
+
+# Las imágenes de la documentación sí se versionan
+!docs/*.png
+
+# El repositorio del portafolio es público. Los kits y las láminas de Freepik y Storyset se pueden
+# usar pero no redistribuir, así que se quedan en disco y fuera de git. Los de Humaaans (CC0),
+# en personajes/kits/humaaans/, sí entran.
+personajes/kits/*.svg
+personajes/referencias/*.svg
+
+# El plan de la cuenta, con métricas y estrategia, se queda en local.
+docs/plan.md

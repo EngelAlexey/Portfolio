@@ -284,7 +284,16 @@ Son cuatro marcas de organización: Intercargo, Kaizen, Star Cargo y la UTN. Sta
 
 Un string de stack sin marca no rompe nada: cae a un chip de texto. `src/lib/stack.ts` mapea los strings de las fichas a las marcas, con alias para los nombres largos.
 
+## Piezas para redes
+
+`social/` es el motor que genera los carruseles, posts y reels de Instagram que llevan al blog. Es un paquete de Node aparte (npm y `ffmpeg-static`), no entra en el build y tiene su propio `README.md` con todas las reglas.
+
+No se versionan dos cosas que viven en esa carpeta:
+- los kits de personajes de Freepik y Storyset, que se pueden usar pero no redistribuir;
+- el plan de la cuenta, `social/docs/plan.md`.
+
 ## Despliegue
+
 
 Vercel, salida estática. `vercel.json` fija:
 
@@ -295,6 +304,8 @@ Vercel, salida estática. `vercel.json` fija:
 - `X-Content-Type-Options`, `Referrer-Policy` y `X-Frame-Options`.
 
 `404.html` lo sirve Vercel solo, sin configuración.
+
+`.vercelignore` deja fuera `design/`, `social/`, `.secrets/` y `.claude/`. La CLI de Vercel no lee `.gitignore`: sin ese archivo, un `vercel --prod` desde esta máquina subiría el material de trabajo, el arte de los clientes y los tokens de despliegue.
 
 ## Rendimiento
 
