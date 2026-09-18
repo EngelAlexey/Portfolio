@@ -19,9 +19,10 @@
 // Node, con un identificador cada uno, y `clip` los mueve en cada cuadro. Son función pura del
 // tiempo, igual que la pose, así que el render sigue siendo determinista.
 
-/* global montarEn, puntos, vivo, cambiaCara */
+/* global montarEn, puntos, vivo, cambiaCara, escorzo */
 
 import { mesaFrente, portatilDetras } from '../accesorios.mjs';
+import { C } from '../../sistema.mjs';
 
 const MESA = 1300;
 
@@ -40,12 +41,13 @@ const nube = (color) => `
       <rect x="-96" y="6" width="196" height="58" rx="29" fill="${color}"/>
     </g>`;
 
-/** Una llave: anilla, caña y dientes. */
-const llave = (color) => `
-    <circle cx="-62" cy="0" r="30" fill="none" stroke="${color}" stroke-width="16"/>
-    <rect x="-34" y="-8" width="104" height="16" rx="8" fill="${color}"/>
-    <rect x="34" y="-8" width="14" height="34" rx="6" fill="${color}"/>
-    <rect x="60" y="-8" width="14" height="24" rx="6" fill="${color}"/>`;
+/**
+ * Rotar la credencial: el mismo candado, con una flecha circular alrededor y en otro color. Una
+ * llave suelta no se entendía —dicho por Alex—, y el candado ya está establecido en la escena.
+ */
+const rotacion = (color) => `
+    <path d="M0 -104 A104 104 0 1 1 -104 0" fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round" opacity="0.85"/>
+    <polygon points="-104,-26 -78,16 -130,16" fill="${color}" opacity="0.85"/>`;
 
 export const acciones = [
 	{
@@ -53,8 +55,8 @@ export const acciones = [
 		grupo: 'guion',
 		nombre: 'guion del reel: subiste el .env',
 		tono: 'petrol',
-		dur: 21.0,
-		muestra: 8.2,
+		dur: 13.6,
+		muestra: 3.6,
 		vistas: ['sentado'],
 		manos: ['abierta', 'miton', 'pulgar'],
 		caras: ['sonrie', 'sorpresa', 'triste', 'rie'],
@@ -77,7 +79,11 @@ export const acciones = [
       <circle cx="0" cy="0" r="86" fill="${color}" opacity="0.5"/>
       ${candado(filo)}
     </g>
-    <g id="llave" opacity="0">${llave(filo)}</g>`
+    <g id="rota" opacity="0">
+      <g id="giro">${rotacion(filo)}</g>
+      <g id="viejo">${candado(filo)}</g>
+      <g id="nuevo" opacity="0">${candado(C.mint)}</g>
+    </g>`
 		}),
 		prep: (raiz, U, P, datos) => {
 			const inst = montarEn(P, raiz.querySelector('[data-def]'));
@@ -94,21 +100,22 @@ export const acciones = [
 			const objetos = {
 				burbuja: el('burbuja'),
 				nube: el('nube'),
-				llave: el('llave'),
+				rota: el('rota'),
+				giro: el('giro'),
+				viejo: el('viejo'),
+				nuevo: el('nuevo'),
 				historial: el('historial'),
 				puntos: [0, 1, 2, 3].map((i) => el('h' + i))
 			};
 
 			// Los cinco tiempos. `teclea` es el cabeceo de quien escribe, `susto` las manos en la
 			// cabeza, `arregla` la vuelta al teclado y `calma` el final.
-			// Sin `escorzo`: escalaba el antebrazo a la mitad y la mano se quedaba a 80 px de la sien
-			// aunque la IK apuntara bien.
-			// Las manos van a las sienes por IK y no por ángulos: así el codo lo decide la regla del
-			// rig —`ik.brazo_*.codo`— y no queda nunca del lado del cuello, que es el fallo que
-			// `comprueba.mjs` rechaza cuando la muñeca sube por encima del hombro.
+			// Las manos van a las mejillas y no a la coronilla, y por ángulos y no por IK. Dos razones,
+			// las dos medidas: la IK fija a 1 la escala de la mano y con eso borra el espejo de los
+			// gestos que están dibujados como la mano izquierda, que salían vueltas del revés o
+			// directamente no se veían; y con la muñeca por debajo del hombro no se aplica la regla
+			// del codo, que es la que rechazaba subir los brazos del todo.
 			const pts = puntos(P, inst, base);
-			const sien = (lado) => [pts.cabeza[0] + lado * 66, pts.cabeza[1] - 62];
-			// El pulgar del final va por encima de la mesa, o la mano se queda detrás del portátil.
 			const pulgarEn = [pts.cabeza[0] + 150, pts.cabeza[1] + 16];
 
 			// Cada clave repite los cuatro canales: si uno se deja fuera, la secuencia lo interpola
@@ -116,58 +123,62 @@ export const acciones = [
 			// pulgar del final empezaba a levantarse en cuanto arrancaba la corrección—.
 			const fase = P.secuencia([
 				[0, { escribe: 1, susto: 0, arregla: 0, calma: 0, mano_d: 'miton', mano_i: 'miton' }],
-				[6.0, { escribe: 1, susto: 0, arregla: 0, calma: 0 }],
-				[6.5, { mano_d: 'abierta', mano_i: 'abierta' }],
-				[6.9, { escribe: 0, susto: 1, arregla: 0, calma: 0 }, ['muelle', 2.4, 0.6]],
-				[10.2, { escribe: 0, susto: 1, arregla: 0, calma: 0 }],
-				[10.6, { mano_d: 'miton', mano_i: 'miton' }],
-				[11.0, { escribe: 0, susto: 0, arregla: 1, calma: 0 }, 'suave'],
-				[17.2, { escribe: 0, susto: 0, arregla: 1, calma: 0 }],
-				[17.4, { mano_d: 'pulgar', mano_i: 'miton' }],
-				[17.9, { escribe: 0, susto: 0, arregla: 0, calma: 1 }, ['muelle', 2.6, 0.55]],
-				[21.0, { escribe: 0, susto: 0, arregla: 0, calma: 1 }]
+				[2.9, { escribe: 1, susto: 0, arregla: 0, calma: 0 }],
+				[3.05, { mano_d: 'abierta', mano_i: 'abierta' }],
+				[3.2, { escribe: 0, susto: 1, arregla: 0, calma: 0 }, ['muelle', 3.4, 0.5]],
+				[5.4, { escribe: 0, susto: 1, arregla: 0, calma: 0 }],
+				[5.6, { mano_d: 'miton', mano_i: 'miton' }],
+				[5.8, { escribe: 0, susto: 0, arregla: 1, calma: 0 }, 'sale'],
+				[10.2, { escribe: 0, susto: 0, arregla: 1, calma: 0 }],
+				[10.4, { mano_d: 'pulgar', mano_i: 'miton' }],
+				[10.7, { escribe: 0, susto: 0, arregla: 0, calma: 1 }, ['muelle', 3.2, 0.5]],
+				[13.6, { escribe: 0, susto: 0, arregla: 0, calma: 1 }]
 			]);
 
-			// La cara: escribe tranquilo, se asusta, se concentra al arreglarlo y termina riéndose.
+			// La cara cambia en el mismo cuadro que las manos y no medio segundo después, que es lo que
+			// hacía que el susto se leyera tarde.
 			const cara = cambiaCara(P, [
 				[0, 'sonrie'],
-				[6.9, 'sorpresa', 0.12],
-				[9.6, 'triste', 0.06],
-				[11.2, 'sonrie', 0.06],
-				[17.8, 'rie', 0.08]
+				[3.2, 'sorpresa', 0.12],
+				[4.4, 'triste', 0.06],
+				[5.8, 'sonrie', 0.06],
+				[10.7, 'rie', 0.08]
 			]);
 
 			const tiembla = P.ruido(311, { 'antebrazo_d.r': [2, 6], 'antebrazo_i.r': [2, 6] });
 			const vida = vivo(P, 313);
 
 			// El cabeceo de quien teclea: la cabeza sigue el renglón y baja un poco con cada golpe.
-			const renglon = (t) => Math.sin(t * 2.1) * 3;
+			const renglon = (t) => Math.sin(t * 3.6) * 3;
 
 			raiz.clip = (t) => {
 				const { escribe, susto, arregla, calma, ...manos } = fase(t);
 
 				// --- los objetos
-				// La burbuja sale del portátil y sube a la nube entre 3,8 y 6,2 s.
-				const sube = U.cl((t - 3.8) / 2.4);
+				// La burbuja sale del portátil y sube a la nube entre 1,5 y 2,9 s.
+				const sube = U.cl((t - 1.5) / 1.4);
 				const s3 = sube * sube * (3 - 2 * sube);
 				pon(objetos.burbuja, {
-					opacity: (U.cl((t - 3.8) * 3) * (1 - U.cl((t - 15.4) * 1.2))).toFixed(3),
-					transform: `translate(${(540 + 8 * Math.sin(t * 3)).toFixed(1)}px, ${(1240 - 900 * s3).toFixed(1)}px) scale(${(0.6 + 0.4 * s3).toFixed(3)})`
+					opacity: (U.cl((t - 1.5) * 4) * (1 - U.cl((t - 9.6) * 1.6))).toFixed(3),
+					transform: `translate(${(540 + 8 * Math.sin(t * 4)).toFixed(1)}px, ${(1240 - 900 * s3).toFixed(1)}px) scale(${(0.6 + 0.4 * s3).toFixed(3)})`
 				});
 				pon(objetos.nube, {
-					opacity: (U.cl((t - 3.2) * 1.6) * (1 - U.cl((t - 18.6) * 1.2)) * (0.75 + 0.25 * Math.sin(t * 1.6))).toFixed(3)
+					opacity: (U.cl((t - 1.2) * 2.2) * (1 - U.cl((t - 10.4) * 1.6)) * (0.78 + 0.22 * Math.sin(t * 2.2))).toFixed(3)
 				});
 
-				// La llave gira media vuelta entre 11,4 y 13,6: es rotar la credencial.
-				const giro = U.cl((t - 11.4) / 2.2);
-				pon(objetos.llave, {
-					opacity: (U.cl((t - 11.2) * 2) * (1 - U.cl((t - 14.6) * 1.4))).toFixed(3),
-					transform: `translate(820px, 760px) rotate(${(giro * 180).toFixed(1)}deg) scale(${(0.9 + 0.1 * Math.sin(t * 2)).toFixed(3)})`
+				// Rotar la credencial: la flecha da una vuelta y el candado viejo deja sitio al nuevo.
+				const giro = U.cl((t - 6.3) / 1.2);
+				pon(objetos.rota, {
+					opacity: (U.cl((t - 6.1) * 3) * (1 - U.cl((t - 8.2) * 2.2))).toFixed(3),
+					transform: `translate(830px, 690px) scale(${(0.86 + 0.06 * Math.sin(t * 3)).toFixed(3)})`
 				});
+				pon(objetos.giro, { transform: `rotate(${(giro * 360).toFixed(1)}deg)` });
+				pon(objetos.viejo, { opacity: (1 - U.cl((t - 6.9) * 3)).toFixed(3) });
+				pon(objetos.nuevo, { opacity: U.cl((t - 6.9) * 3).toFixed(3) });
 
-				// La tira del historial se apaga de izquierda a derecha entre 14,8 y 17,2.
-				pon(objetos.historial, { opacity: (U.cl((t - 14.4) * 2) * (1 - U.cl((t - 18.2) * 1.4))).toFixed(3) });
-				objetos.puntos.forEach((p, i) => pon(p, { opacity: (0.9 * (1 - U.cl((t - (14.9 + i * 0.5)) * 3))).toFixed(3) }));
+				// Reescribir el historial: los cuatro puntos se apagan de izquierda a derecha.
+				pon(objetos.historial, { opacity: (U.cl((t - 8.0) * 2.4) * (1 - U.cl((t - 10.8) * 1.8))).toFixed(3) });
+				objetos.puntos.forEach((p, i) => pon(p, { opacity: (0.9 * (1 - U.cl((t - (8.4 + i * 0.36)) * 4))).toFixed(3) }));
 
 				// --- la pose
 				const s = Math.max(0, Math.min(1, susto));
@@ -176,33 +187,35 @@ export const acciones = [
 					'torso.r': 2 * s,
 					'torso.sy': 1 + 0.02 * s,
 					'cabeza.x': escribe * renglon(t),
-					'cabeza.y': 4 + 6 * escribe - 10 * s + 4 * calma,
+					'cabeza.y': 4 + 6 * escribe - 6 * s + 4 * calma,
 					'cabeza.r': -3 * s + 2 * calma,
 					'cabeza.sx': 1 + 0.03 * s,
 					'cabeza.sy': 1 + 0.03 * s,
-					// Al arreglarlo, los brazos vuelven al teclado; el pulgar del final lo coloca la IK.
-					'brazo_d.r': 8 * arregla,
-					'antebrazo_d.r': -10 * arregla,
-					'brazo_i.r': -8 * arregla,
-					'antebrazo_i.r': 10 * arregla
+					// Los brazos del susto son los de la acción 24, que es la única postura de esta vista
+					// en la que las manos del kit se dibujan bien: suben delante del pecho con la palma
+					// hacia quien mira. Las manos en la cabeza se probaron de tres formas —IK a la sien,
+					// ángulos a la mejilla y mano plana— y en las tres el dibujo se rompe: los gestos
+					// sueltos están dibujados para el brazo colgando, y la IK además borra su espejo.
+					'brazo_d.r': 24 * s + 8 * arregla,
+					'antebrazo_d.r': -150 * s - 10 * arregla,
+					'brazo_i.r': -24 * s - 8 * arregla,
+					'antebrazo_i.r': 150 * s + 10 * arregla
 				};
 				const v = vida(t);
-				if (t > 6.9 && t < 10.6) v.ojos = 1;
-				// Las manos a las sienes, con el codo forzado hacia fuera en cada lado.
-				const ikD = s > 0 ? { 'ik.brazo_d': sien(-1), 'ik.brazo_d.peso': s, 'ik.brazo_d.codo': 1, 'ik.brazo_d.ang': 96, 'ik.brazo_d.angPeso': s } : null;
-				const ikI = s > 0 ? { 'ik.brazo_i': sien(1), 'ik.brazo_i.peso': s, 'ik.brazo_i.codo': -1, 'ik.brazo_i.ang': -96, 'ik.brazo_i.angPeso': s } : null;
+				if (t > 3.2 && t < 5.6) v.ojos = 1;
+				const k = 1 - 0.5 * s; // escorzo: el antebrazo apunta a quien mira, como en la 24
 				const c = Math.max(0, Math.min(1, calma));
 				const ikP = c > 0 ? { 'ik.brazo_d': pulgarEn, 'ik.brazo_d.peso': c, 'ik.brazo_d.codo': -1, 'ik.brazo_d.ang': 178, 'ik.brazo_d.angPeso': c } : null;
 				return P.sumar(
 					base,
 					manos,
 					pose,
-					ikD,
-					ikI,
 					ikP,
+					escorzo('d', k),
+					escorzo('i', k),
 					cara(t),
 					v,
-					t > 7.1 && t < 10.2 ? tiembla(t) : null
+					t > 3.3 && t < 5.4 ? tiembla(t) : null
 				);
 			};
 		}
