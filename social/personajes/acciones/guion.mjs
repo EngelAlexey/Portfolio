@@ -108,19 +108,24 @@ export const acciones = [
 			// `comprueba.mjs` rechaza cuando la muñeca sube por encima del hombro.
 			const pts = puntos(P, inst, base);
 			const sien = (lado) => [pts.cabeza[0] + lado * 66, pts.cabeza[1] - 62];
+			// El pulgar del final va por encima de la mesa, o la mano se queda detrás del portátil.
+			const pulgarEn = [pts.cabeza[0] + 150, pts.cabeza[1] + 16];
 
+			// Cada clave repite los cuatro canales: si uno se deja fuera, la secuencia lo interpola
+			// desde la clave anterior que lo traía y la fase siguiente se cuela en la actual —el
+			// pulgar del final empezaba a levantarse en cuanto arrancaba la corrección—.
 			const fase = P.secuencia([
 				[0, { escribe: 1, susto: 0, arregla: 0, calma: 0, mano_d: 'miton', mano_i: 'miton' }],
-				[6.0, { escribe: 1, susto: 0 }],
+				[6.0, { escribe: 1, susto: 0, arregla: 0, calma: 0 }],
 				[6.5, { mano_d: 'abierta', mano_i: 'abierta' }],
-				[6.9, { escribe: 0, susto: 1 }, ['muelle', 2.4, 0.6]],
-				[10.2, { susto: 1 }],
+				[6.9, { escribe: 0, susto: 1, arregla: 0, calma: 0 }, ['muelle', 2.4, 0.6]],
+				[10.2, { escribe: 0, susto: 1, arregla: 0, calma: 0 }],
 				[10.6, { mano_d: 'miton', mano_i: 'miton' }],
-				[11.0, { susto: 0, arregla: 1 }, 'suave'],
-				[17.0, { arregla: 1 }],
+				[11.0, { escribe: 0, susto: 0, arregla: 1, calma: 0 }, 'suave'],
+				[17.2, { escribe: 0, susto: 0, arregla: 1, calma: 0 }],
 				[17.4, { mano_d: 'pulgar', mano_i: 'miton' }],
-				[17.8, { arregla: 0, calma: 1 }, 'suave'],
-				[21.0, { calma: 1 }]
+				[17.9, { escribe: 0, susto: 0, arregla: 0, calma: 1 }, ['muelle', 2.6, 0.55]],
+				[21.0, { escribe: 0, susto: 0, arregla: 0, calma: 1 }]
 			]);
 
 			// La cara: escribe tranquilo, se asusta, se concentra al arreglarlo y termina riéndose.
@@ -175,9 +180,9 @@ export const acciones = [
 					'cabeza.r': -3 * s + 2 * calma,
 					'cabeza.sx': 1 + 0.03 * s,
 					'cabeza.sy': 1 + 0.03 * s,
-					// Al arreglarlo, los brazos vuelven al teclado; al final, el derecho sube con el pulgar.
-					'brazo_d.r': 8 * arregla + 30 * calma,
-					'antebrazo_d.r': -10 * arregla - 104 * calma,
+					// Al arreglarlo, los brazos vuelven al teclado; el pulgar del final lo coloca la IK.
+					'brazo_d.r': 8 * arregla,
+					'antebrazo_d.r': -10 * arregla,
 					'brazo_i.r': -8 * arregla,
 					'antebrazo_i.r': 10 * arregla
 				};
@@ -186,12 +191,15 @@ export const acciones = [
 				// Las manos a las sienes, con el codo forzado hacia fuera en cada lado.
 				const ikD = s > 0 ? { 'ik.brazo_d': sien(-1), 'ik.brazo_d.peso': s, 'ik.brazo_d.codo': 1, 'ik.brazo_d.ang': 96, 'ik.brazo_d.angPeso': s } : null;
 				const ikI = s > 0 ? { 'ik.brazo_i': sien(1), 'ik.brazo_i.peso': s, 'ik.brazo_i.codo': -1, 'ik.brazo_i.ang': -96, 'ik.brazo_i.angPeso': s } : null;
+				const c = Math.max(0, Math.min(1, calma));
+				const ikP = c > 0 ? { 'ik.brazo_d': pulgarEn, 'ik.brazo_d.peso': c, 'ik.brazo_d.codo': -1, 'ik.brazo_d.ang': 178, 'ik.brazo_d.angPeso': c } : null;
 				return P.sumar(
 					base,
 					manos,
 					pose,
 					ikD,
 					ikI,
+					ikP,
 					cara(t),
 					v,
 					t > 7.1 && t < 10.2 ? tiembla(t) : null
