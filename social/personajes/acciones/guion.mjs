@@ -127,13 +127,13 @@ export const acciones = [
       <rect x="0" y="1548" width="1080" height="14" fill="${mueble}" opacity="0.5"/>
     </g>
     <g id="nube" opacity="0">
-      <g style="transform:translate(${CX - 340}px, 240px) scale(0.5)" opacity="0.4">${nube(color)}</g>
-      <g style="transform:translate(${CX + 350}px, 300px) scale(0.4)" opacity="0.3">${nube(color)}</g>
-      <g style="transform:translate(${CX}px, 286px)">${nube(color, 1.3)}</g>
+      <g style="transform:translate(${CX - 350}px, 392px) scale(0.5)" opacity="0.4">${nube(color)}</g>
+      <g style="transform:translate(${CX + 360}px, 452px) scale(0.4)" opacity="0.3">${nube(color)}</g>
+      <g style="transform:translate(${CX}px, 438px)">${nube(color, 1.3)}</g>
     </g>
     <g id="historial" opacity="0">
-      <rect x="120" y="592" width="368" height="10" rx="5" fill="${filo}" opacity="0.3"/>
-      ${[0, 1, 2, 3].map((i) => `<circle id="h${i}" cx="${150 + i * 104}" cy="597" r="30" fill="${filo}" opacity="0.9"/>`).join('\n      ')}
+      <rect x="352" y="447" width="376" height="10" rx="5" fill="${filo}" opacity="0.3"/>
+      ${[0, 1, 2, 3].map((i) => `<circle id="h${i}" cx="${384 + i * 104}" cy="452" r="30" fill="${filo}" opacity="0.9"/>`).join('\n      ')}
     </g>
     <defs>
       <linearGradient id="luzgrad" x1="0" y1="1" x2="0" y2="0">
@@ -250,8 +250,18 @@ export const acciones = [
 				[10.7, 'rie', 0.03]
 			]);
 
+			// El final no se queda quieto: asiente al llegar y la mano del pulgar baja y vuelve.
+			const remate = P.secuencia([
+				[0, { v: 0 }],
+				[11.2, { v: 0 }],
+				[11.7, { v: 1 }, 'suave'],
+				[12.3, { v: 0 }, 'suave'],
+				[12.9, { v: 0.6 }, 'suave'],
+				[13.6, { v: 0 }, 'suave']
+			]);
+
 			const tiembla = P.ruido(311, { 'antebrazo_d.r': [1, 5], 'antebrazo_i.r': [1, 5], 'torso.r': [0.3, 6] });
-			const vida = vivo(P, 313);
+			const vida = vivo(P, 313, { hz: 0.34, cabeza: 0.7 });
 
 			// El cabeceo de quien teclea: la cabeza sigue el renglón y baja un poco con cada golpe.
 			const renglon = (t) => Math.sin(t * 3.6) * 3;
@@ -261,17 +271,18 @@ export const acciones = [
 				const cerca = acerca(t).v;
 				const arriba = mira(t).v;
 				const tirón = golpe(t).v;
+				const asiente = remate(t).v;
 
 				// --- los objetos
 				// La burbuja sale del portátil y sube a la nube entre 1,5 y 2,9 s.
 				const sube = U.cl((t - 1.5) / 1.4);
 				const s3 = sube * sube * (3 - 2 * sube);
 				pon(objetos.burbuja, {
-					opacity: (U.cl((t - 1.5) * 4) * (1 - U.cl((t - 9.6) * 1.6))).toFixed(3),
-					transform: `translate(${(540 + 10 * Math.sin(t * 4)).toFixed(1)}px, ${(1330 - 1010 * s3).toFixed(1)}px) scale(${(0.5 + 0.5 * s3).toFixed(3)})`
+					opacity: (U.cl((t - 1.5) * 4) * (1 - U.cl((t - 7.6) * 1.8))).toFixed(3),
+					transform: `translate(${(800 - 260 * U.cl((s3 - 0.62) / 0.38) + 8 * Math.sin(t * 4)).toFixed(1)}px, ${(1330 - 892 * s3).toFixed(1)}px) scale(${(0.5 + 0.5 * s3).toFixed(3)})`
 				});
 				pon(objetos.nube, {
-					opacity: (U.cl((t - 1.2) * 2.2) * (1 - U.cl((t - 10.4) * 1.6)) * (0.8 + 0.2 * Math.sin(t * 2.2))).toFixed(3)
+					opacity: (U.cl((t - 1.2) * 2.2) * (1 - U.cl((t - 7.6) * 1.8)) * (0.8 + 0.2 * Math.sin(t * 2.2))).toFixed(3)
 				});
 
 				// La luz de la pantalla late con el tecleo y baja cuando deja de escribir.
@@ -297,15 +308,15 @@ export const acciones = [
 				const giro = U.cl((t - 6.3) / 1.2);
 				pon(objetos.rota, {
 					opacity: (U.cl((t - 6.1) * 3) * (1 - U.cl((t - 8.2) * 2.2))).toFixed(3),
-					transform: `translate(870px, 560px) scale(${(0.92 + 0.06 * Math.sin(t * 3)).toFixed(3)})`
+					transform: `translate(188px, 372px) scale(${(0.92 + 0.06 * Math.sin(t * 3)).toFixed(3)})`
 				});
 				pon(objetos.giro, { transform: `rotate(${(giro * 360).toFixed(1)}deg)` });
 				pon(objetos.viejo, { opacity: (1 - U.cl((t - 6.9) * 3)).toFixed(3) });
 				pon(objetos.nuevo, { opacity: U.cl((t - 6.9) * 3).toFixed(3) });
 
 				// Reescribir el historial: los cuatro puntos se apagan de izquierda a derecha.
-				pon(objetos.historial, { opacity: (U.cl((t - 8.0) * 2.4) * (1 - U.cl((t - 10.8) * 1.8))).toFixed(3) });
-				objetos.puntos.forEach((p, i) => pon(p, { opacity: (0.9 * (1 - U.cl((t - (8.4 + i * 0.36)) * 4))).toFixed(3) }));
+				pon(objetos.historial, { opacity: (U.cl((t - 8.2) * 2.6) * (1 - U.cl((t - 10.6) * 2))).toFixed(3) });
+				objetos.puntos.forEach((p, i) => pon(p, { opacity: (0.9 * (1 - U.cl((t - (8.7 + i * 0.3)) * 4.5))).toFixed(3) }));
 
 				// --- la pose
 				const s = Math.max(0, Math.min(1, susto));
@@ -316,8 +327,8 @@ export const acciones = [
 					'torso.y': 12 * cerca - 9 * s - 16 * tirón + 8 * c,
 					'torso.r': 1.4 * s,
 					'cabeza.x': escribe * renglon(t),
-					'cabeza.y': 4 + 6 * escribe + 8 * cerca - 4 * s - 12 * arriba + 4 * c,
-					'cabeza.r': -2 * s + 2 * c,
+					'cabeza.y': 4 + 6 * escribe + 8 * cerca - 4 * s - 34 * arriba + 4 * c,
+					'cabeza.r': -2 * s - 8 * arriba + 2 * c + 5 * asiente,
 					// Los brazos del susto son los de la acción 24; al arreglarlo vuelven al teclado.
 					// Los valores son los de la acción 24: con menos, las manos se juntan en el centro
 					// del pecho y se leen como un nudo.
@@ -327,12 +338,12 @@ export const acciones = [
 					'antebrazo_i.r': 150 * s + 10 * arregla
 				};
 				const v = vida(t);
-				if (t > 3.2 && t < 5.6) v.ojos = 1;
+				if (t > 3.2 && t < 4.5) v.ojos = 1;
 				// El pulgar del final lo coloca la IK: ahí la mano se ve pequeña y no se rompe.
 				const ikP =
 					c > 0
 						? {
-								'ik.brazo_d': [796, 1010],
+								'ik.brazo_d': [796, 1010 + 26 * asiente],
 								'ik.brazo_d.peso': c,
 								'ik.brazo_d.codo': -1,
 								'ik.brazo_d.ang': 178,
