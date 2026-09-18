@@ -39,6 +39,12 @@ export const C = {
 	// seguridad sale de aquí; es el mismo #c8102e de los sombreros de los personajes.
 	crimson: '#a50d26',
 	crimsonLift: '#c8102e',
+	// Pizarra y oliva: portadas nuevas cuando ya no quedaba ningún tono de la paleta sin portada
+	// en la cuadrícula salvo la ciruela.
+	slate: '#334155',
+	slateLift: '#475569',
+	olive: '#3f6212',
+	oliveLift: '#4d7c0f',
 	mint: '#5eead4',
 	sun: '#ffd166',
 	white: '#ffffff',
@@ -56,7 +62,9 @@ export const TONES = {
 	plum: { base: C.plum, lift: C.plumLift, accent: C.mint },
 	ember: { base: C.ember, lift: C.emberLift, accent: C.mint },
 	forest: { base: C.forest, lift: C.forestLift, accent: C.sun },
-	crimson: { base: C.crimson, lift: C.crimsonLift, accent: C.sun }
+	crimson: { base: C.crimson, lift: C.crimsonLift, accent: C.sun },
+	slate: { base: C.slate, lift: C.slateLift, accent: C.sun },
+	olive: { base: C.olive, lift: C.oliveLift, accent: C.sun }
 };
 
 // ------------------------------------------------------------------- contraste

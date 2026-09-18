@@ -141,6 +141,10 @@ tiene el suyo.
 | `direccion-ip/` | — (explicativo; la historia lleva al índice del blog) | versiones, privadas y públicas, especiales y cómo ver la tuya | verde azulado · violeta · magenta |
 | `puertos/` | — (explicativo; la historia lleva al índice del blog) | rangos, servicios, bases de datos y desarrollo, y cómo cerrar los que sobran | carmín · petróleo · índigo |
 | `permisos-linux/` | — (explicativo; la historia lleva a npm vs pnpm, sección 1) | letras, usuarios, números y órdenes | petróleo · bosque · ciruela |
+| `ataques-web/` | — (explicativo; la historia lleva a «Siete cosas que revisar», sección 3) | 14 ataques en el orden del OWASP Top 10:2025 y cómo se evita cada uno | magenta · violeta · índigo |
+| `api/` | — (explicativo; la historia lleva a «Siete cosas que revisar», sección 2) | piezas, métodos, petición y seguridad | ciruela · petróleo · bosque |
+| `terminal-linux/` | — (explicativo; la historia lleva al índice del blog) | moverse, archivos, leer y buscar, y redirigir | oliva · violeta · petróleo |
+| `github/` | — (explicativo; la historia lleva a «Primeros pasos», sección 12) | conceptos, órdenes en el equipo, con GitHub y para colaborar | pizarra · índigo · bosque |
 
 `codigos-http/` es el primer carrusel explicativo; ver «Carruseles explicativos», más abajo. Él y
 los cuatro siguientes del temario (`pagina-web/`, `direccion-ip/`, `puertos/` y `permisos-linux/`)
@@ -153,7 +157,21 @@ verde azulado y el azul petróleo, los más cercanos, quedan en la misma fila pe
 por el carmín. `docs/vista-perfil-serie.png` monta las cinco portadas delante de las cuatro
 publicadas. Si el orden cambia, hay que volver a mirar esa vista.
 
-Ese día la cuadrícula del perfil tenía cuatro publicaciones, y sus portadas eran azul muy
+**La segunda tanda** quedó lista el 16 de septiembre de 2026 y se programó el 17, en este
+orden: `ataques-web/` (2 de octubre), `terminal-linux/` (5), `api/` (8) y `github/` (12). Las
+fechas y las horas están en `docs/temario.md`.
+Para entonces la cuadrícula ya tiene nueve portadas, y de la paleta solo la ciruela no tenía
+ninguna. Por eso se añadieron la pizarra y la oliva (ver «Paleta»). `ataques-web/` salió
+primero en ocre, pizarra y carmín; el 17 de septiembre Alex pidió una paleta más bonita aunque
+repitiera color, y quedó en magenta, violeta e índigo. Repetir color vale si la portada no
+queda junto a otra del mismo tono: la magenta de `ataques-web/` solo toca en diagonal la de
+`pagina-web/`.
+`docs/vista-perfil-serie.png` monta ahora las trece portadas en el orden en que quedarán: las
+cuatro nuevas delante de las cinco programadas y de las cuatro publicadas. Ninguna nueva queda
+junto a una de color parecido, ni en la cuadrícula final ni en las intermedias. El par más
+cercano, la ciruela y el violeta, queda a tres filas.
+
+El 16 de septiembre la cuadrícula del perfil tenía cuatro publicaciones, y sus portadas eran azul muy
 oscuro (`reel-envenenamiento/`), naranja (`reel-revisar-codigo/`), violeta
 (`primeros-pasos/`) e índigo (`se-aprende/`). `velocidad-percibida/` y `post-npmrc/` no
 aparecían.
@@ -238,7 +256,7 @@ Limpio y minimalista. El color entra por el fondo, no por elementos encima del t
 
 ### Paleta
 
-Nueve tonos, cada uno con su tramo claro para el degradado:
+Once tonos, cada uno con su tramo claro para el degradado:
 
 | Tono | Base | Tramo claro | Acento sobre él |
 |---|---|---|---|
@@ -251,12 +269,21 @@ Nueve tonos, cada uno con su tramo claro para el degradado:
 | Naranja profundo | `#a3410a` | `#bd4f0e` | menta `#5eead4` |
 | Verde bosque | `#136b3a` | `#17864a` | ámbar `#ffd166` |
 | Carmín | `#a50d26` | `#c8102e` | ámbar `#ffd166` |
+| Pizarra | `#334155` | `#475569` | ámbar `#ffd166` |
+| Oliva | `#3f6212` | `#4d7c0f` | ámbar `#ffd166` |
 
-Cada carrusel usa tres de los nueve. Añadir uno nuevo obliga a comprobar el contraste antes
+Cada carrusel usa tres de los once. Añadir uno nuevo obliga a comprobar el contraste antes
 de usarlo: `contraste()` en `sistema.mjs`. El carmín se añadió el 16 de septiembre de 2026
 para `puertos/`, porque ninguna portada publicada era roja y el naranja profundo se lee como
 café. Da 5,88:1 con el blanco sobre su tramo claro, y es el mismo `#c8102e` de los
 sombreros de los personajes.
+
+La pizarra y la oliva se añadieron ese mismo día para las portadas de la segunda tanda de
+explicativos. Con las cinco programadas, las nueve tonalidades anteriores menos la
+ciruela ya tenían portada en la cuadrícula. Se descartaron el fucsia, que se confunde con el
+magenta, y el cobalto y el azul cielo, que se confunden con el índigo y el azul petróleo. El
+blanco da 7,58:1 sobre la pizarra y 4,99:1 sobre la oliva. Un ocre (`#7a5a00`) llegó a usarse
+en la primera versión de `ataques-web/` y se quitó al cambiar esa paleta: se leía como mostaza.
 
 Neutros: blanco `#ffffff`, tinta `#141726`, tinta suave `#5c6280`.
 
@@ -383,8 +410,10 @@ El formato se repite; el contenido y el color, no.
   familia, siempre comprobando el contraste del blanco sobre el tramo claro. Una opción
   razonable es partir del área del artículo en `src/lib/areas.ts` —IA, seguridad,
   infraestructura— y subirle la saturación.
-- **La portada no repite el color de ninguna portada publicada.** Antes de elegirlo se mira
-  la cuadrícula del perfil: es donde las portadas se ven una al lado de otra.
+- **La portada no queda junto a otra del mismo color ni de uno parecido.** Antes de elegirlo se
+  mira la cuadrícula del perfil, con lo programado incluido: es donde las portadas se ven una al
+  lado de otra. Repetir un color ya usado está permitido desde el 17 de septiembre de 2026, a
+  petición de Alex, y una paleta que se vea bien pesa más que un tono nunca usado.
 - **Qué lámina lleva el peso visual.** En este carrusel es la 3, con dos cifras. En otro
   puede ser una comparación de barras, un bloque de código o una sola cifra enorme.
 - **El gancho.** Si el título del artículo ya es una pregunta, sirve tal cual, con la parte
@@ -530,6 +559,19 @@ Lo que se aprendió con los cuatro siguientes:
   sin subtítulo, solo con `key`.
 - **El resumen repite lo que se enseñó.** Si una fila no tiene valor propio, como «de tres en
   tres» en `permisos-linux/`, el resumen la cambia por la orden que la enseña (`ls -l`).
+
+Y con la segunda tanda:
+
+- **Un `<code>` con espacios se puede partir entre renglones.** `2> errores.txt` quedó con
+  `2>` al final de uno y el nombre al principio del siguiente. Se escribe con `&nbsp;`.
+- **Los símbolos van escapados** en el valor y en el texto: `&gt;`, `&gt;&gt;` y
+  `2&gt;&amp;1`. `anchos.mjs` los mide igual, entre comillas simples en Git Bash.
+- **Un valor no debe señalar a una herramienta como el problema.** La fila del paquete
+  malicioso de `ataques-web/` lleva `install`, no `npm`.
+- **La fuente de reserva puede colarse en una sola lámina de la exportación.** Pasó en una
+  portada. Para descartarlo en toda la tanda, cada PNG se compara con una segunda captura de su
+  `.dc.html` y se monta una hoja con todas las láminas. El fallo depende del tiempo de carga,
+  así que dos capturas idénticas y una hoja en Outfit dan la tanda por buena.
 
 # Posts de una lámina
 

@@ -55,10 +55,10 @@ Van como carrusel, una lámina por concepto, y la historia del mismo día enlaza
 | ¿Qué es una dirección IP? | IPv4 e IPv6, privadas y pública, 127.0.0.1, 0.0.0.0 y 169.254, y cómo ver la tuya (17 términos) | 93 | ¿Tu router sabe qué buscas? Hasta que exista, el índice del blog | «que es una dirección ip y para que sirve» |
 | ¿Qué es un puerto de red? | Rangos, servicios, bases de datos y desarrollo, y cómo ver y cerrar los que sobran (19 términos) | 19, 28 | Cómo proteger un servidor Linux. Hasta que exista, el índice del blog | «que es un puerto de red» |
 | ¿Cómo se configuran los permisos en Linux? | Letras, usuarios, 644, 755, 600, 700 y 777, y chmod, chown y umask (18 filas) | 18 | Cómo proteger un servidor Linux. Hasta que exista, el artículo de npm, sección 1 | — |
-| Aprende a usar GitHub | Repositorio, add, commit, push y pull request | 1 a 15 | Cómo deshacer cambios en Git | «como usar github» |
-| ¿Qué es una API? | Petición y respuesta; GET, POST, PUT y DELETE | 58 | ¿Qué es CORS y para qué sirve? | «que es una api y para que sirve» |
-| ¿Cuáles son los ataques web más comunes? | XSS, CSRF e inyección SQL, uno por lámina | 49, 61 | ¿Cómo funcionan las cookies? | «ataques web mas comunes» |
-| Aprende a usar la terminal de Linux | Moverse, archivos, permisos y redirecciones (>, >> y 2>&1) | 23 | Cómo proteger un servidor Linux | «como usar la terminal» se confunde con los datáfonos, por eso lleva «de Linux» |
+| Aprende a usar GitHub | Conceptos, órdenes en el equipo, con GitHub y para colaborar (20 términos) | 1 a 15 | Cómo deshacer cambios en Git. Hasta que exista, «Primeros pasos», sección 12 | «como usar github» |
+| ¿Qué es una API? | Piezas, métodos, qué lleva una petición y qué comprueba el servidor (20 términos) | 58 | ¿Qué es CORS y para qué sirve? Hasta que exista, «Siete cosas que revisar», sección 2 | «que es una api y para que sirve» |
+| ¿Cuáles son los ataques web más comunes? | 14 ataques en cuatro familias, en el orden del OWASP Top 10:2025, y cómo se evita cada uno | 49, 61 | ¿Cómo funcionan las cookies? Hasta que exista, «Siete cosas que revisar», sección 3 | «ataques web mas comunes» |
+| Aprende a usar la terminal de Linux | Moverse, archivos, leer y buscar, y redirecciones (20 órdenes y símbolos). Los permisos ya están en su carrusel | 23 | Cómo proteger un servidor Linux. Hasta que exista, el índice del blog | «como usar la terminal» se confunde con los datáfonos, por eso lleva «de Linux» |
 
 Con dos publicaciones por semana, los 9 carruseles cubren unas cuatro semanas y media, intercalados con las piezas de los 13 artículos.
 
@@ -73,6 +73,19 @@ Con dos publicaciones por semana, los 9 carruseles cubren unas cuatro semanas y 
 | miércoles 30, 1:00 a. m. | ¿Cómo se configuran los permisos en Linux? | `permisos-linux/` | azul petróleo |
 
 Las horas son las que sugiere Meta en «Active times», que se calculan con la actividad de los seguidores en los 7 días anteriores. El 16 de septiembre sugería jueves 17 a las 2:00 p. m., viernes 18 a la 1:00 p. m. y miércoles 23 a la 1:00 a. m. Para los dos últimos no había franja, así que se repitió la hora sugerida para ese día de la semana. Alex eligió la primera. Las historias con enlace se suben a mano, sin recordatorio en el calendario: Alex pidió quitarlos. El orden de publicación es el de `docs/vista-perfil-serie.png`, así que los colores de portada siguen sin repetirse al lado.
+
+Los cuatro restantes quedaron listos el 16 de septiembre de 2026 y se programaron el 17, detrás de los cinco anteriores. El orden lo eligió Claude para que ninguna portada quede junto a otra de color parecido mientras se van publicando:
+
+| Publicación | Carrusel | Carpeta | Portada |
+|---|---|---|---|
+| viernes 2 de octubre, 1:00 p. m. | ¿Cuáles son los ataques web más comunes? | `ataques-web/` | magenta |
+| lunes 5, 7:00 p. m. | Aprende a usar la terminal de Linux | `terminal-linux/` | oliva |
+| jueves 8, 2:00 p. m. | ¿Qué es una API? | `api/` | ciruela |
+| lunes 12, 7:00 p. m. | Aprende a usar GitHub | `github/` | pizarra |
+
+El 17 de septiembre, «Active times» sugería jueves a las 2:00 p. m., viernes a la 1:00 p. m. y lunes a las 7:00 p. m. Las fechas quedaban fuera de su ventana, así que se repitió la hora sugerida para cada día de la semana. Business Suite solo deja programar unos 29 días por delante: el 17 de septiembre, el último día disponible era el 16 de octubre.
+
+Con ellos se agotan los carruseles de esta tabla. La pizarra y la oliva son tonos nuevos. `ataques-web/` salió primero en ocre y Alex pidió una paleta más bonita aunque repitiera color: quedó en magenta, como `pagina-web/`, con la que en la cuadrícula solo toca en diagonal.
 
 **Formato de los carruseles de esta tabla.** Nota de Alex a la primera versión, que llevaba dos códigos por familia: el diseño estaba bien, pero hacían falta más códigos, que cada uno explicara qué hace y un cierre que los resumiera todos. Así que cada uno lleva una lámina por familia, con tres a cinco términos, cada uno con su nombre y qué significa, y un resumen al final. Detalle en el README, «Carruseles explicativos».
 

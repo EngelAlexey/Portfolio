@@ -25,7 +25,7 @@ Después se mira cada PNG, y la portada también junto a la cuadrícula real del
 
 - **Idioma.** Todo en español, escrito primero en español. Voz impersonal, sin metáforas.
 - **Carruseles explicativos.** Seis láminas: portada, una por familia y un resumen para guardar. De tres a cinco términos por lámina, cada uno con su nombre oficial y qué significa, en dos líneas como mucho.
-- **Portadas.** Ningún color que ya tenga otra portada de la cuadrícula; se comprueba en instagram.com/alexherrera.dev, solo mirando. Todo el contenido va dentro del recorte 3:4 (`inset: COVER_INSET`).
+- **Portadas.** Primero, una paleta bonita. Un color puede repetirse, pero la portada no queda junto a otra del mismo tono ni de uno parecido, contando también lo programado; se comprueba en instagram.com/alexherrera.dev, solo mirando. Todo el contenido va dentro del recorte 3:4 (`inset: COVER_INSET`).
 - **Textos de publicación.** Con su estilo:
   - pregunta de gancho con emoji;
   - «En este carrusel te comparto…»;
