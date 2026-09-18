@@ -86,6 +86,7 @@ chrome.mjs           Chrome sin ventana, por file://: capturas, PDF y medidas
 anchos.mjs           mide el ancho de unos valores, para glossary() y summary()
 comprueba.mjs        mide las láminas de un carrusel y falla si algo no cabe
 exporta.mjs          PNG, vista de la cuadrícula, PDF y zip de un carrusel
+vista-perfil.mjs     la cuadrícula del perfil con todas las portadas, en orden de publicación
 <slug>/gen.mjs       un carrusel: sus láminas y nada más
 <slug>/publicacion.md el texto de la publicación, la historia, la programación y la auditoría
 <slug>/*.dc.html     lo que genera, más canvas.json y el canvas sembrado (no se versionan)
@@ -646,6 +647,13 @@ node ../render.mjs --desde=4 --hasta=6  sólo ese tramo, en tramo-4-6.mp4
 node ../render.mjs                      reel.mp4 + portada.png
 ```
 
+Desde la raíz de `social/`, `node vista-perfil.mjs` monta la cuadrícula del perfil con las
+portadas en el orden en que se publican y la escribe en `docs/vista-perfil-serie.png`. Recorta
+cada una a 3:4 como hace Instagram y las pone en filas de tres, con la más reciente arriba a la
+izquierda: es donde se comprueba que una portada no queda al lado de otra de color parecido. La
+serie se lleva en una lista al principio del archivo. Las portadas de los carruseles salen de
+`png/01-*.png`; si no están, las captura al vuelo.
+
 `reel.html` abierto en el navegador se reproduce en bucle y trae una barra para arrastrar el
 tiempo. Es la forma rápida de ver si el ritmo aguanta. El sonido empieza con el primer clic
 en la página, porque Chrome no reproduce audio antes de un gesto de quien la mira.
@@ -704,6 +712,24 @@ pasaba durante medio segundo por un gris sin texto: en el vídeo de envenenamien
 cuadro del segundo 4,8. Y obligaba a que el texto se fuera antes que el fondo, porque
 cruzando los dos a la vez se leían dos titulares superpuestos. Con el borde, ningún cuadro
 mezcla las dos láminas, y el texto viejo se queda hasta que el borde lo tapa.
+
+**La cortinilla lleva cuatro detalles del laboratorio** (ejercicios 14, 15, 17 y 18 de
+`ejercicios/gen.mjs`, elegidos el 13 de septiembre de 2026 y traídos al motor el 17):
+
+- **Una banda de acento va por delante del borde,** de 34 px. El borde de la lámina que entra
+  queda justo detrás, así que entre los dos no hay hueco y lo que se ve avanzar es la banda.
+- **Su color se elige por contraste** contra el fondo que va tapando, entre el acento de la
+  lámina que entra y el de la que sale. Con el de la que entra a secas, una cortinilla entre
+  dos láminas del mismo tono pintaba la banda del color del fondo que estaba tapando, y no se
+  veía: pasa en la primera cortinilla de `reel-secreto-en-git/`, naranja sobre naranja.
+- **La cara delantera de la banda se desenfoca lo que el borde avanza en un cuadro** a 60 cps.
+  Es rápido al cruzar y nítido al frenar, y se limita al ancho de la banda: con el valor sin
+  límite, el desenfoque se comía el color.
+- **El texto de la lámina que sale se aparta** 90 px a la izquierda y baja a un cuarto de
+  opacidad mientras la cortinilla lo tapa, y **el de la que entra llega 0,15 s detrás del
+  fondo**, desde 70 px a la derecha. Se mueve la columna de texto, no la lámina: el fondo, los
+  halos y la escena se quedan donde están.
+
 
 **La cabecera y el pie se parten en el borde.** Hay una copia por lámina, con su tono y su
 color de texto. Durante la cortinilla, la copia de la lámina que entra se recorta hasta el
@@ -851,12 +877,36 @@ señalaba (`EJECUTADO.txt`, `npm ci`) quedaba a 2,3:1 en petróleo y a 1,9:1 en 
 párrafo sobre blanco, y falla por debajo de 4,5:1 antes de que haga falta renderizar nada.
 
 **El panel mide lo que mide su contenido.** Con un alto fijo de 380 px, una terminal de
-cinco renglones dejaba un hueco vacío debajo.
+cinco renglones dejaba un hueco vacío debajo. **Mide 800 px de ancho y su texto 29 px**, desde
+el 17 de septiembre de 2026: con 740 y 27 px sobraba lámina por los lados y por abajo, que es
+la mitad de lo que se juzgó «demasiado simple» el 13 de septiembre (la otra mitad es el
+movimiento, y son los ejercicios).
 
 **La cámara se acerca un 4 % a lo largo de la lámina.** Es lenta a propósito: mueve la
 escena cuando el texto ya entró, sin que el movimiento se perciba como tal. No lleva
 `will-change`, para que Chrome vuelva a rasterizar el texto del panel a su tamaño en cada
-cuadro en lugar de ampliar una imagen ya hecha.
+cuadro en lugar de ampliar una imagen ya hecha. **Se acerca al renglón resaltado** y no al
+centro de la caja cuando la escena tiene uno: `escenaTerminal` pasa su posición como foco, que
+es el origen de la escala (ejercicio 23).
+
+**El panel se despliega desde su barra** (ejercicio 20). Aparece primero la barra de título, al
+92 % de ancho, y el cuerpo crece hacia abajo hasta su alto. Sólo de la segunda lámina en
+adelante: en la primera, lo que entra en el segundo 0 está entero en el primer cuadro, que es
+el que ve quien pasa por el reel. El despliegue empieza cuando la cortinilla termina, así que
+el tecleo de la escena tiene que empezar después —`desde: 1.1` en las láminas que cruzan— o se
+escribiría detrás de un panel todavía cerrado.
+
+**Los renglones de una terminal entran por abajo y empujan** a los anteriores hacia arriba
+(ejercicio 21). La pila se desplaza lo que le queda por aparecer, así que el renglón que se
+está escribiendo cae siempre en la última fila, como en una terminal de verdad. El alto de la
+pila no cambia, por lo que el panel no se mueve mientras se llena.
+
+**`escenaTerminal` es la terminal genérica.** Recibe los renglones: `{ cmd }` se escribe
+detrás del `$` y `{ out }` aparece cuando le toca, con `acento: true` para el que importa, que
+además fija el foco de la cámara. Las dos terminales anteriores, `escenaInstalacion` y
+`escenaMalware`, traen su contenido dentro porque se escribieron para el reel de
+envenenamiento; con ellas, un reel nuevo necesitaba una escena nueva para enseñar una consola.
+A 29 px caben 39 caracteres por renglón, y pasarse avisa por consola.
 
 **Variantes del panel.** `escenaChat` escribe una petición y hace aparecer la respuesta.
 `escenaDiff` tacha con una línea que barre los renglones que se quitan y escribe en acento
@@ -1032,6 +1082,11 @@ Lo que no necesita el vídeo entero:
 |---|---|---|---|---|
 | `reel-revisar-codigo/` | Siete cosas que revisar en el código que genera tu IA | tres vulnerabilidades con su código y su corrección: la clave escrita, la inyección SQL y el endpoint abierto | naranja profundo · magenta · ciruela | 30,7 s |
 | `reel-envenenamiento/` | npm vs pnpm: qué cambia en la seguridad al instalar | la cadena entera: el script que trae el paquete, la instalación que lo ejecuta, lo que ese permiso alcanza, la línea que lo cierra y el cierre | azul petróleo · ciruela · índigo | 26,8 s |
+
+`reel-secreto-en-git/` está listo y sin publicar: 27,4 s, tonos naranja profundo, ciruela e
+índigo, sobre el tema 7 del temario (una contraseña que se queda en el historial de Git). Es el
+primero con los ejercicios del laboratorio ya en el motor y el primero que usa
+`escenaTerminal`. Su texto, su auditoría y la fecha propuesta están en su `publicacion.md`.
 
 `reel.mp4` y `portada.png` de las dos carpetas son los vídeos publicados, renderizados con
 el motor anterior, que se borró el 16 de septiembre de 2026 (está en el respaldo de ese día). Los

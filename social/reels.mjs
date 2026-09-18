@@ -39,6 +39,16 @@ const PAD_X = 120;
 // que irse antes: se queda hasta que el borde lo tapa.
 const XF = 0.5;
 
+// Cuatro detalles de la cortinilla, elegidos en el laboratorio de ejercicios el 13 de
+// septiembre de 2026 (14, 15, 17 y 18) y traídos aquí: una banda del color de acento va por
+// delante del borde, el borde se desenfoca lo que avanza en un cuadro, el texto de la lámina
+// que sale se aparta y el de la que entra llega un poco después que el fondo.
+const BANDA = 34;
+const TEXTO_ENTRA = 0.15;
+const TEXTO_DUR = 0.6;
+const TEXTO_X = 70;
+const SALE_X = 90;
+
 // El titular entra palabra a palabra, y una cifra cuenta desde cero hasta su valor.
 const PALABRA_PASO = 0.07;
 const PALABRA_DUR = 0.45;
@@ -306,6 +316,25 @@ function comprobarContraste(slides) {
 	if (fallos.length) throw new Error(`contraste por debajo de 4,5:1\n  ${fallos.join('\n  ')}`);
 }
 
+/** El fondo de una lámina: la noche, el blanco o el tramo claro de su degradado. */
+const fondoDe = (s) => (s.variant === 'noche' ? NOCHE : s.variant === 'light' ? C.white : TONES[s.tone].lift);
+
+/** Su acento: el claro sobre color y sobre la noche, el tono base sobre blanco. */
+const acentoDe = (s) => (s.variant !== 'light' ? TONES[s.tone].accent : TONES[s.tone].base);
+
+/**
+ * El color de la banda que va por delante del borde de la cortinilla. La banda se ve sobre la
+ * lámina que sale, así que se mide contra su fondo y se queda el que más contrasta de los dos
+ * acentos. Con el acento de la que entra a secas, una cortinilla entre dos láminas del mismo
+ * tono pintaba la banda del color del fondo que estaba tapando, y no se veía.
+ */
+function banda(timed, i) {
+	if (i === 0) return acentoDe(timed[0]);
+	const fondo = fondoDe(timed[i - 1]);
+	const cand = [acentoDe(timed[i]), acentoDe(timed[i - 1])];
+	return contraste(cand[0], fondo) >= contraste(cand[1], fondo) ? cand[0] : cand[1];
+}
+
 const leerAtributos = (etiqueta) =>
 	Object.fromEntries([...etiqueta.matchAll(/data-([a-z0-9]+)="([^"]*)"/g)].map((m) => [m[1], m[2]]));
 const desescapar = (s) => s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
@@ -357,10 +386,14 @@ export function build(slides, baseUrl, meta = {}) {
 	const total = clock + tail; // cola final: tiempo para leer el enlace y guardar el reel
 
 	const stages = timed.map((s) => stage(s, s.blocks, false)).join('\n');
-	const tl = timed.map((s) => ({
+	const tl = timed.map((s, i) => ({
 		start: +s.start.toFixed(3),
 		dur: +s.dur.toFixed(3),
-		dark: s.variant !== 'light'
+		dark: s.variant !== 'light',
+		// El color de la banda de la cortinilla. Se elige por contraste contra el fondo que va
+		// tapando, entre el acento de la lámina que entra y el de la que sale: entre dos láminas
+		// del mismo tono, el acento de la que entra es ese mismo tono y la banda desaparecía.
+		acento: banda(timed, i)
 	}));
 
 	const html = `<!doctype html>
@@ -379,6 +412,7 @@ export function build(slides, baseUrl, meta = {}) {
 <body>
   <div class="reel" id="reel" style="width:${W}px;height:${H}px;overflow:hidden;">
 ${stages}
+    <div class="banda" style="position:absolute;top:0;bottom:0;left:0;width:${BANDA}px;z-index:99;visibility:hidden;"></div>
 ${timed
 	.map(
 		(s, i) => `    <div class="chrome" style="position:absolute;left:${PAD_X}px;right:${PAD_X}px;top:${SAFE_TOP}px;bottom:${SAFE_BOTTOM}px;z-index:${100 + i};${i ? 'visibility:hidden;' : ''}">
@@ -391,6 +425,11 @@ ${chrome(s.variant !== 'light', s.tone, timed.length, cta)}
 <script>
 const TOTAL = ${total.toFixed(3)};
 const XF = ${XF};
+const BANDA = ${BANDA};
+const TEXTO_ENTRA = ${TEXTO_ENTRA};
+const TEXTO_DUR = ${TEXTO_DUR};
+const TEXTO_X = ${TEXTO_X};
+const SALE_X = ${SALE_X};
 const TL = ${JSON.stringify(tl)};
 const CTA_IN = ${(timed[timed.length - 1].start + 0.6).toFixed(3)};
 const PALABRA_PASO = ${PALABRA_PASO};
@@ -402,6 +441,8 @@ const FUENTES = ['400 34px Outfit', '500 34px Outfit', '600 64px Outfit', '700 9
 
 const slides = [...document.querySelectorAll('.slide')];
 const chromes = [...document.querySelectorAll('.chrome')];
+const banda = document.querySelector('.banda');
+const cuerpos = slides.map((s) => s.querySelector('.cuerpo'));
 const blocks = slides.map((s) => [...s.querySelectorAll('.blk')].map((el) => ({ el, at: +el.dataset.in, palabras: null, cifras: [] })));
 const glows = slides.flatMap((s, j) => [...s.querySelectorAll('.glow')].map((el) => ({ el, d: +el.dataset.drift, j })));
 const bars = chromes.map((c) => [...c.querySelectorAll('.bar')]);
@@ -410,6 +451,11 @@ const ctas = chromes.map((c) => c.querySelector('.cta'));
 const cl = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const ease = (pr) => 1 - Math.pow(1 - pr, 3);
 const easeInOut = (pr) => (pr < 0.5 ? 4 * pr * pr * pr : 1 - Math.pow(-2 * pr + 2, 3) / 2);
+// La derivada de easeInOut, para saber cuánto avanza el borde de la cortinilla en un cuadro:
+// el desenfoque del borde mide eso y no una cantidad fija, que es el ejercicio 18.
+const velEaseInOut = (pr) => (pr < 0.5 ? 12 * pr * pr : 12 * (1 - pr) * (1 - pr));
+const easeOutExpo = (pr) => (pr >= 1 ? 1 : 1 - Math.pow(2, -10 * pr));
+const tramo = (v, desde, dur) => cl((v - desde) / dur);
 const blanco = (c) => c.charCodeAt(0) <= 32;
 
 // Parte un titular en palabras sin tocar su marcado. Cada palabra queda en un span propio; los
@@ -459,6 +505,15 @@ function preparar() {
     for (const b of bs) {
       const h = b.el.querySelector('.titular');
       if (h) b.palabras = partir(h);
+      // El panel se despliega desde su barra y sus renglones entran por abajo, que son los
+      // ejercicios 20 y 21. Las dos cosas necesitan medidas, y aquí ya están las fuentes.
+      const pan = b.el.querySelector('.panel');
+      if (pan) b.panel = { escena: b.el.querySelector('.escena'), el: pan, alto: pan.offsetHeight, barra: pan.querySelector('.barra').offsetHeight };
+      const pila = b.el.querySelector('.pila');
+      if (pila) {
+        const ls = [...pila.querySelectorAll('.l')];
+        b.pila = { el: pila, lineas: ls.map((el) => ({ at: +el.dataset.in })), alto: ls.length ? ls[0].offsetHeight : 0 };
+      }
       b.cifras = [...b.el.querySelectorAll('.cifra')].map((el) => {
         const ancho = el.getBoundingClientRect().width;
         el.style.display = 'inline-block';
@@ -476,9 +531,12 @@ function preparar() {
 function seek(t) {
   let cur = 0;
   for (let j = 1; j < TL.length; j++) if (t >= TL[j].start) cur = j;
-  const e = cur === 0 ? 1 : easeInOut(cl((t - TL[cur].start) / XF));
+  const k = cur === 0 ? 1 : cl((t - TL[cur].start) / XF);
+  const e = easeInOut(k);
   const cruzando = e < 1;
-  const borde = e * ANCHO;
+  // La banda de acento va por delante, así que el borde de la lámina que entra queda su ancho
+  // por detrás: entre los dos no hay hueco, y lo que se ve avanzar es la banda.
+  const borde = Math.max(0, e * (ANCHO + BANDA) - BANDA);
   const visible = (j) => j === cur || (cruzando && j === cur - 1);
 
   // La lámina que entra se recorta hasta el borde y tapa a la anterior, que sigue entera
@@ -520,7 +578,18 @@ function seek(t) {
       // borde lo descubre. Con fundido, una escena oscura a media opacidad sobre una lámina
       // blanca se veía como una losa gris. Los titulares no: siguen entrando por palabras.
       const descubierto = j > 0 && b.at < XF && !b.palabras;
-      if (b.palabras) {
+      // Un bloque con panel no entra con el fundido de siempre: se despliega desde su barra,
+      // que es el ejercicio 20. En la primera lámina no se despliega, porque lo que tiene at 0
+      // ahí ya está entero en el primer cuadro, que es el que decide si alguien se queda.
+      if (b.panel && j > 0) {
+        const u0 = Math.max(b.at, XF);
+        const pb = ease(tramo(local, u0, 0.32));
+        const pu = easeOutExpo(tramo(local, u0 + 0.23, 0.7));
+        b.el.style.opacity = pb.toFixed(4);
+        b.el.style.transform = 'none';
+        b.panel.escena.style.transform = 'scaleX(' + (0.92 + 0.08 * pb).toFixed(4) + ')';
+        b.panel.el.style.clipPath = 'inset(0 0 ' + ((1 - pu) * (b.panel.alto - b.panel.barra)).toFixed(2) + 'px 0 round 20px)';
+      } else if (b.palabras) {
         b.el.style.opacity = primerCuadro || bl >= 0 ? 1 : 0;
         b.el.style.transform = 'none';
         b.palabras.forEach((w, k) => {
@@ -533,11 +602,51 @@ function seek(t) {
         b.el.style.opacity = pr.toFixed(4);
         b.el.style.transform = 'translateY(' + ((1 - pr) * 30).toFixed(2) + 'px)';
       }
+      // Cada renglón de una terminal entra por abajo y empuja a los anteriores hacia arriba,
+      // que es el ejercicio 21: la pila se desplaza lo que queda por aparecer.
+      if (b.pila) {
+        let vistos = 0;
+        for (const l of b.pila.lineas) vistos += ease(tramo(local, l.at, 0.28));
+        b.pila.el.style.transform = 'translateY(' + ((b.pila.lineas.length - vistos) * b.pila.alto).toFixed(2) + 'px)';
+      }
       for (const c of b.cifras) {
         const cp = primerCuadro ? 1 : ease(cl(bl / CIFRA_DUR));
         const texto = (c.hasta * cp).toFixed(c.dec).replace('.', ',');
         if (c.el.textContent !== texto) c.el.textContent = texto;
       }
+    }
+  });
+
+  // La banda de acento va por delante del borde y su cara delantera se desenfoca lo que el
+  // borde avanza en un cuadro a 60 cps: rápido al cruzar, nítida al frenar (ejercicios 15 y
+  // 18). Se limita al ancho de la banda, o el desenfoque se comería el color.
+  if (cruzando && cur > 0) {
+    const estela = Math.min(BANDA * 0.9, (velEaseInOut(k) * ANCHO) / XF / 60);
+    const m = 'linear-gradient(90deg,#000 ' + Math.max(0, BANDA - estela).toFixed(2) + 'px, transparent ' + BANDA + 'px)';
+    banda.style.visibility = 'visible';
+    banda.style.background = TL[cur].acento;
+    banda.style.transform = 'translateX(' + borde.toFixed(2) + 'px)';
+    banda.style.webkitMaskImage = m;
+    banda.style.maskImage = m;
+  } else banda.style.visibility = 'hidden';
+
+  // El texto de la lámina que sale se aparta mientras la cortinilla lo tapa, y el de la que
+  // entra llega detrás del fondo, no con él (ejercicios 17 y 14). El fondo, los halos y la
+  // escena no se mueven: lo que se aparta es la columna de texto.
+  cuerpos.forEach((el, j) => {
+    if (!visible(j)) return;
+    const loc = t - TL[j].start;
+    if (j === cur && cur > 0 && loc < TEXTO_ENTRA + TEXTO_DUR) {
+      const pe = ease(tramo(loc, TEXTO_ENTRA, TEXTO_DUR));
+      el.style.transform = 'translateX(' + ((1 - pe) * TEXTO_X).toFixed(2) + 'px)';
+      el.style.opacity = 1;
+    } else if (j === cur - 1 && cruzando) {
+      const ps = easeInOut(tramo(t - TL[cur].start, -0.08, 0.62));
+      el.style.transform = 'translateX(' + (-ps * SALE_X).toFixed(2) + 'px)';
+      el.style.opacity = (1 - ps * 0.75).toFixed(4);
+    } else {
+      el.style.transform = 'none';
+      el.style.opacity = 1;
     }
   });
 

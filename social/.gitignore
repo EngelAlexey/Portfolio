@@ -24,9 +24,12 @@ reel-*/v2/
 reel-*/v2-60/
 
 # Los dos reels publicados se renderizaron con el motor anterior, que ya no existe: son el único
-# registro de lo que salió.
-!reel-*/reel.mp4
-!reel-*/portada.png
+# registro de lo que salió. La excepción los nombra uno por uno a propósito: un reel nuevo se
+# vuelve a renderizar desde su gen.mjs, y su MP4 son 20 MB que no hacen falta en el repositorio.
+!reel-envenenamiento/reel.mp4
+!reel-envenenamiento/portada.png
+!reel-revisar-codigo/reel.mp4
+!reel-revisar-codigo/portada.png
 
 # Referencia de 15 MB del antifaz descartado; ningún script la usa
 personajes/referencias/antifaz-ilustracion.svg

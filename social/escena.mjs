@@ -50,7 +50,11 @@ export const colores = tonos;
 // escena cuando el texto ya entró, sin que el movimiento se note como tal. No lleva
 // will-change, para que Chrome vuelva a rasterizar el texto del panel a su tamaño en cada
 // cuadro en lugar de ampliar una imagen ya hecha.
-const CAMARA = 'transform:scale(calc(1 + var(--p) * 0.04));transform-origin:50% 50%;';
+// El foco es el punto al que se acerca, en porcentaje del alto de la escena. Por defecto el
+// centro; una escena que resalta un renglón pasa el suyo, que es el ejercicio 23 del
+// laboratorio: la cámara se acerca al trozo resaltado y no al medio de la caja.
+const CAMARA = (foco = 50) =>
+	`transform:scale(calc(1 + var(--p) * 0.04));transform-origin:50% ${foco}%;`;
 
 const atributo = (s) =>
 	String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -58,7 +62,7 @@ const atributo = (s) =>
 /** Caja de la escena. Todo se dibuja contra 840 × 430 y se escala al alto que pida la lámina. */
 const lienzo = (alto, dentro, camara = true) =>
 	`      <div class="escena" style="width:${W}px;height:${alto}px;">
-        <svg viewBox="0 0 ${W} 430" width="${W}" height="${alto}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="display:block;${camara ? CAMARA : ''}">
+        <svg viewBox="0 0 ${W} 430" width="${W}" height="${alto}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="display:block;${camara ? CAMARA() : ''}">
 ${dentro}
         </svg>
       </div>`;
@@ -75,10 +79,10 @@ const puntos = (ac) =>
  * verdad. Mide lo que mide su contenido: con un alto fijo, un panel de cinco renglones dejaba
  * un hueco vacío debajo. `barra` sustituye al rótulo, para el campo de dirección del navegador.
  */
-const panel = (t, titulo, dentro, { camara = true, barra } = {}) =>
+const panel = (t, titulo, dentro, { camara = true, barra, foco = 50 } = {}) =>
 	`      <div class="escena" style="width:${W}px;display:flex;justify-content:center;">
-        <div style="width:740px;border-radius:20px;border:1px solid ${t.borde};background:${t.panel};overflow:hidden;display:flex;flex-direction:column;${camara ? CAMARA : ''}">
-          <div style="display:flex;align-items:center;gap:9px;padding:20px 26px;border-bottom:1px solid ${t.borde};flex:none;">
+        <div class="panel" style="width:800px;border-radius:20px;border:1px solid ${t.borde};background:${t.panel};overflow:hidden;display:flex;flex-direction:column;${camara ? CAMARA(foco) : ''}">
+          <div class="barra" style="display:flex;align-items:center;gap:9px;padding:20px 26px;border-bottom:1px solid ${t.borde};flex:none;">
             ${puntos(t.codigo)}
             ${barra ?? `<span style="font-family:${MONO};margin-left:14px;font-size:19px;letter-spacing:0.06em;color:rgba(255,255,255,0.45);">${titulo}</span>`}
           </div>
@@ -105,7 +109,7 @@ const aparece = (texto, desde, color, op = 1) =>
 const cursor = (color, desde = 0) =>
 	`<span style="color:${color};opacity:calc((0.1 + sin(var(--s) * 640deg) * 0.9) * clamp(0, (var(--s) - ${desde}) * 8, 1))">▌</span>`;
 
-const pre = (dentro, { color = 'rgba(255,255,255,0.92)', tam = 27 } = {}) =>
+const pre = (dentro, { color = 'rgba(255,255,255,0.92)', tam = 29 } = {}) =>
 	`          <pre style="font-family:${MONO};margin:0;padding:26px;font-size:${tam}px;line-height:1.62;color:${color};font-variant-ligatures:none;font-feature-settings:'liga' 0,'calt' 0;white-space:pre;overflow:hidden;flex:1;">${dentro}</pre>`;
 
 /** Segundos que tarda en escribirse un texto. */
@@ -416,4 +420,59 @@ export function escenaNavegador(dark, tone, { url = '', estado, cuerpo = [], des
 		reloj += 0.2;
 	}
 	return panel(t, '', pre(lineas.join('\n'), { tam: 25 }), { barra });
+}
+
+/**
+ * Una sesión de terminal con lo que se le escribe y lo que responde. Las dos terminales que ya
+ * había —`escenaInstalacion` y `escenaMalware`— traen su contenido dentro, porque se
+ * escribieron para el reel de envenenamiento: un reel nuevo necesitaba una escena nueva para
+ * enseñar una consola. Ésta recibe los renglones.
+ *
+ * Cada renglón es `{ cmd }`, que se escribe carácter a carácter detrás del `$`, o `{ out }`,
+ * que aparece cuando le toca; con `acento: true` sale en el color del tono, que es como se
+ * señala el renglón que importa. Una cadena vacía deja un renglón en blanco. El cursor se
+ * queda al final del último renglón que se ve.
+ *
+ * Los renglones van en una pila (`.pila` con `.l`, cada uno con su segundo en `data-in`): el
+ * motor la desplaza hacia arriba a medida que aparecen, así que cada renglón entra por abajo y
+ * empuja a los anteriores, como una terminal de verdad. Es el ejercicio 21 del laboratorio. El
+ * renglón con acento fija además el foco de la cámara, que es el 23.
+ *
+ * A 27 px caben 39 caracteres por renglón. Pasarse avisa por consola: el panel recorta por la
+ * derecha sin decir nada, y ese corte no se ve hasta tener el vídeo.
+ */
+export function escenaTerminal(dark, tone, { titulo = 'bash', lineas = [], desde = 0.3, vel = 17 } = {}, alto = 430) {
+	const t = tonos(dark, tone);
+	const LH = 29 * 1.62; // el alto de un renglón del panel: su tamaño por su interlineado
+	const BARRA = 65; // la barra de título, medida: 20 px de relleno por lado y el rótulo
+	const PAD = 26; // el relleno del <pre>
+	const salida = [];
+	let reloj = desde;
+	let ultimo = -1;
+	let acento = -1;
+	for (const l of lineas) {
+		const texto = l && (l.cmd ?? l.out);
+		if (!texto) {
+			salida.push({ html: '&#8203;', at: reloj });
+			continue;
+		}
+		if (texto.length > 39) console.warn(`  escenaTerminal: «${texto}» tiene ${texto.length} caracteres y el panel corta en 39`);
+		if (l.cmd !== undefined) {
+			salida.push({ html: `<span style="color:${t.codigo}">$</span> ${teclea(l.cmd, s2(reloj), vel)}`, at: reloj });
+			reloj += tarda(l.cmd, vel) + 0.25;
+		} else {
+			if (l.acento) acento = salida.length;
+			salida.push({ html: aparece(l.out, s2(reloj), l.acento ? t.codigo : 'rgba(255,255,255,0.55)'), at: reloj });
+			reloj += 0.35;
+		}
+		ultimo = salida.length - 1;
+	}
+	if (ultimo >= 0) salida[ultimo].html += cursor(t.codigo, s2(reloj - 0.1));
+
+	const n = salida.length;
+	const foco = acento < 0 ? 50 : ((BARRA + PAD + (acento + 0.5) * LH) / (BARRA + 2 * PAD + n * LH)) * 100;
+	const pila = salida
+		.map((l) => `<span class="l" data-in="${s2(l.at)}" style="display:block;">${l.html}</span>`)
+		.join('');
+	return panel(t, titulo, pre(`<span class="pila" style="display:block;">${pila}</span>`), { foco: +foco.toFixed(1) });
 }
