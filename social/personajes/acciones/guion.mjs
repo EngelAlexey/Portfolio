@@ -31,7 +31,7 @@
 
 import { mesaFrente, portatilDetras } from '../accesorios.mjs';
 import { mezclar } from '../kits/hombre.mjs';
-import { C, contraste } from '../../sistema.mjs';
+import { C, TONES, contraste } from '../../sistema.mjs';
 
 // La maqueta, en píxeles del lienzo de 1080 × 1920.
 const MESA = 1500; // el canto de la mesa
@@ -70,6 +70,25 @@ const taza = (color) => `
       <path d="M34 -18 h16 a20 20 0 0 1 0 40 h-16 v-12 h14 a8 8 0 0 0 0 -16 h-14 z"/>
     </g>`;
 
+/** Una maceta con tres hojas, para el fondo. */
+const planta = (maceta, hoja) => `
+    <g>
+      <path d="M-46 0 h92 l-12 96 h-68 z" fill="${maceta}"/>
+      <ellipse cx="-30" cy="-54" rx="26" ry="52" fill="${hoja}" style="transform:rotate(-18deg);transform-origin:-30px -54px;"/>
+      <ellipse cx="2" cy="-78" rx="24" ry="60" fill="${hoja}"/>
+      <ellipse cx="34" cy="-50" rx="26" ry="48" fill="${hoja}" style="transform:rotate(20deg);transform-origin:34px -50px;"/>
+    </g>`;
+
+/** Un ratón visto desde arriba. */
+const raton = (color) => `<ellipse cx="0" cy="0" rx="26" ry="40" fill="${color}"/>`;
+
+/** Dos hilos de vapor sobre la taza. */
+const vapor = (color) => `
+    <g fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" opacity="0.5">
+      <path d="M-14 0 c -12 -16 12 -26 0 -44"/>
+      <path d="M14 -6 c -12 -16 12 -26 0 -44"/>
+    </g>`;
+
 /** Una libreta abierta, vista de canto. */
 const libreta = (color) => `
     <g fill="${color}">
@@ -90,17 +109,23 @@ export const acciones = [
 		manos: ['abierta', 'miton', 'pulgar'],
 		caras: ['sonrie', 'sorpresa', 'triste', 'rie'],
 		escala: 2.4,
-		datos: { mesa: MESA },
+		datos: { mesa: MESA, cx: CX },
 		accesorios: (datos, { color, filo, fondo }) => {
 			// La tapa del portátil lleva tono propio: con el mismo color que la mesa, el portátil
 			// desaparecía dentro de ella. Se aclara hasta separarse y se comprueba al generar.
 			const tapa = mezclar(color, C.white, 0.34);
 			const luz = mezclar(fondo, C.mint, 0.55);
 			const mueble = mezclar(color, C.white, 0.16);
+			const suelo = mezclar(fondo, C.ink, 0.07);
+			const hoja = mezclar(TONES.forest.base, fondo, 0.15);
 			if (contraste(tapa, color) < 1.4)
 				throw new Error(`la tapa del portátil no se separa de la mesa: ${contraste(tapa, color).toFixed(2)}:1`);
 			return {
 				detras: `
+    <g id="fondo">
+      <rect x="0" y="1560" width="1080" height="360" fill="${suelo}"/>
+      <rect x="0" y="1548" width="1080" height="14" fill="${mueble}" opacity="0.5"/>
+    </g>
     <g id="nube" opacity="0">
       <g style="transform:translate(${CX - 340}px, 240px) scale(0.5)" opacity="0.4">${nube(color)}</g>
       <g style="transform:translate(${CX + 350}px, 300px) scale(0.4)" opacity="0.3">${nube(color)}</g>
@@ -119,6 +144,10 @@ export const acciones = [
     <g id="luzpantalla" opacity="0">
       <polygon points="${CX - 210},${MESA - 300} ${CX + 210},${MESA - 300} ${CX + 400},${MESA - 980} ${CX - 400},${MESA - 980}" fill="url(#luzgrad)"/>
     </g>
+    <g id="sudor" opacity="0">
+      <path d="M0 0 c 16 -22 16 -30 0 -44 c -16 14 -16 22 0 44" fill="${C.mint}" style="transform:translate(${CX + 150}px, 700px)"/>
+      <path d="M0 0 c 13 -18 13 -25 0 -36 c -13 11 -13 18 0 36" fill="${C.mint}" style="transform:translate(${CX - 152}px, 742px)"/>
+    </g>
     <g id="rota" opacity="0">
       <g id="giro">${rotacion(filo)}</g>
       <g id="viejo">${candado(filo)}</g>
@@ -128,8 +157,11 @@ export const acciones = [
 					mesaFrente({ x0: 100, x1: 980, alto: MESA, faldon: 420, color }) +
 					`
     <g style="transform:translate(${CX + 336}px, ${MESA - 30}px)">${taza(mueble)}</g>
-    <g style="transform:translate(${CX - 330}px, ${MESA - 6}px)">${libreta(mueble)}</g>` +
-					portatilDetras({ cx: CX, alto: MESA, ancho: 470, tapa: 310, color, reverso: tapa, luz }) +
+    <g style="transform:translate(${CX - 330}px, ${MESA - 6}px)">${libreta(mueble)}</g>
+    <g style="transform:translate(${CX - 415}px, ${MESA - 8}px) scale(0.62)">${planta(mueble, hoja)}</g>
+    <g style="transform:translate(${CX + 232}px, ${MESA - 36}px) scale(0.78)">${raton(mueble)}</g>
+    <g id="vapor" style="transform:translate(${CX + 336}px, ${MESA - 76}px)">${vapor(mueble)}</g>` +
+					portatilDetras({ cx: CX, alto: MESA, ancho: 470, tapa: 258, color, reverso: tapa, luz }) +
 					`
     <g id="burbuja" opacity="0">
       <circle cx="0" cy="0" r="86" fill="${color}" opacity="0.45"/>
@@ -157,6 +189,8 @@ export const acciones = [
 				nuevo: el('nuevo'),
 				historial: el('historial'),
 				luz: el('luzpantalla'),
+				sudor: el('sudor'),
+				vapor: el('vapor'),
 				puntos: [0, 1, 2, 3].map((i) => el('h' + i))
 			};
 
@@ -175,6 +209,16 @@ export const acciones = [
 				[10.4, { mano_d: 'pulgar', mano_i: 'miton' }],
 				[10.7, { escribe: 0, susto: 0, arregla: 0, calma: 1 }, ['muelle', 3.2, 0.5]],
 				[13.6, { escribe: 0, susto: 0, arregla: 0, calma: 1 }]
+			]);
+
+			// El golpe: el medio segundo en que los hombros suben de sopetón. Va aparte del canal del
+			// susto, que se mantiene mientras dura la reacción.
+			const golpe = P.secuencia([
+				[0, { v: 0 }],
+				[3.2, { v: 0 }],
+				[3.34, { v: 1 }, 'sale'],
+				[3.9, { v: 0 }, 'suave'],
+				[13.6, { v: 0 }]
 			]);
 
 			// Anticipación: antes del susto se acerca a la pantalla, y el golpe lo echa atrás. Sin
@@ -216,6 +260,7 @@ export const acciones = [
 				const { escribe, susto, arregla, calma, ...manos } = fase(t);
 				const cerca = acerca(t).v;
 				const arriba = mira(t).v;
+				const tirón = golpe(t).v;
 
 				// --- los objetos
 				// La burbuja sale del portátil y sube a la nube entre 1,5 y 2,9 s.
@@ -232,6 +277,20 @@ export const acciones = [
 				// La luz de la pantalla late con el tecleo y baja cuando deja de escribir.
 				pon(objetos.luz, {
 					opacity: ((0.5 + 0.5 * Math.sin(t * 7)) * (0.28 * escribe + 0.4 * arregla) + 0.1).toFixed(3)
+				});
+
+				// Las gotas de sudor salen con el golpe y resbalan un poco antes de irse.
+				const gota = U.cl((t - 3.35) / 1.8);
+				pon(objetos.sudor, {
+					opacity: (U.cl((t - 3.35) * 5) * (1 - U.cl((t - 5.2) * 2))).toFixed(3),
+					transform: `translateY(${(gota * 26).toFixed(1)}px)`
+				});
+
+				// El vapor de la taza sube y se desvanece, en bucle de 2,6 s.
+				const humo = (t % 2.6) / 2.6;
+				pon(objetos.vapor, {
+					opacity: (0.55 * Math.sin(humo * Math.PI)).toFixed(3),
+					transform: `translate(${datos.cx + 336}px, ${(datos.mesa - 76 - humo * 40).toFixed(1)}px)`
 				});
 
 				// Rotar la credencial: la flecha da una vuelta y el candado viejo deja sitio al nuevo.
@@ -254,7 +313,7 @@ export const acciones = [
 				const pose = {
 					// Sin escalas de torso ni de cabeza: a esta escala, estirarlos abre las costuras del
 					// dibujo del kit y las piezas se separan del cuerpo. Solo se mueven huesos enteros.
-					'torso.y': 12 * cerca - 9 * s + 8 * c,
+					'torso.y': 12 * cerca - 9 * s - 16 * tirón + 8 * c,
 					'torso.r': 1.4 * s,
 					'cabeza.x': escribe * renglon(t),
 					'cabeza.y': 4 + 6 * escribe + 8 * cerca - 4 * s - 12 * arriba + 4 * c,
@@ -262,9 +321,9 @@ export const acciones = [
 					// Los brazos del susto son los de la acción 24; al arreglarlo vuelven al teclado.
 					// Los valores son los de la acción 24: con menos, las manos se juntan en el centro
 					// del pecho y se leen como un nudo.
-					'brazo_d.r': 26 * s + 8 * arregla,
+					'brazo_d.r': 26 * s + 10 * tirón + 8 * arregla,
 					'antebrazo_d.r': -150 * s - 10 * arregla,
-					'brazo_i.r': -26 * s - 8 * arregla,
+					'brazo_i.r': -26 * s - 10 * tirón - 8 * arregla,
 					'antebrazo_i.r': 150 * s + 10 * arregla
 				};
 				const v = vida(t);
