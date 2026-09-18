@@ -1,7 +1,7 @@
 // Monta la cuadrícula del perfil con las portadas en el orden en que se publican:
 //
-//   node vista-perfil.mjs            escribe docs/vista-perfil-serie.png
-//   node vista-perfil.mjs --abre     además la deja abierta en el navegador
+//   node vista-perfil.mjs           escribe docs/vista-perfil-serie.png
+//   node vista-perfil.mjs --url      además imprime la dirección de la página, para abrirla
 //
 // Instagram enseña cada publicación recortada a 3:4 y en filas de tres, con la más reciente
 // arriba a la izquierda. La regla de las portadas se comprueba aquí y no a ojo sobre las
@@ -99,4 +99,4 @@ writeFileSync(page, html);
 const out = resolve('docs', 'vista-perfil-serie.png');
 screenshot(url(page), out, COL * CELDA + (COL - 1) * 4, filas * ALTO + (filas - 1) * 4);
 console.log(`docs/vista-perfil-serie.png · ${SERIE.length} portadas · ${filas} filas`);
-if (process.argv.includes('--abre')) console.log(url(page));
+if (process.argv.includes('--url')) console.log(url(page));
