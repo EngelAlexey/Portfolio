@@ -27,7 +27,7 @@
 // cuadro. Son función pura del tiempo, igual que la pose, así que el render sigue siendo
 // determinista.
 
-/* global montarEn, vivo, cambiaCara, escorzo */
+/* global montarEn, vivo, cambiaCara */
 
 import { mesaFrente, portatilDetras } from '../accesorios.mjs';
 import { mezclar } from '../kits/hombre.mjs';
@@ -101,10 +101,6 @@ export const acciones = [
 				throw new Error(`la tapa del portátil no se separa de la mesa: ${contraste(tapa, color).toFixed(2)}:1`);
 			return {
 				detras: `
-    <g id="silla" fill="${mueble}" opacity="0.7">
-      <rect x="${CX - 330}" y="1190" width="660" height="500" rx="80"/>
-      <rect x="${CX - 40}" y="1600" width="80" height="240" rx="20"/>
-    </g>
     <g id="nube" opacity="0">
       <g style="transform:translate(${CX - 340}px, 240px) scale(0.5)" opacity="0.4">${nube(color)}</g>
       <g style="transform:translate(${CX + 350}px, 300px) scale(0.4)" opacity="0.3">${nube(color)}</g>
@@ -171,7 +167,7 @@ export const acciones = [
 				[0, { escribe: 1, susto: 0, arregla: 0, calma: 0, mano_d: 'miton', mano_i: 'miton' }],
 				[2.9, { escribe: 1, susto: 0, arregla: 0, calma: 0 }],
 				[3.05, { mano_d: 'abierta', mano_i: 'abierta' }],
-				[3.2, { escribe: 0, susto: 1, arregla: 0, calma: 0 }, ['muelle', 3.4, 0.5]],
+				[3.2, { escribe: 0, susto: 1, arregla: 0, calma: 0 }, ['muelle', 2.8, 0.62]],
 				[5.4, { escribe: 0, susto: 1, arregla: 0, calma: 0 }],
 				[5.6, { mano_d: 'miton', mano_i: 'miton' }],
 				[5.8, { escribe: 0, susto: 0, arregla: 1, calma: 0 }, 'sale'],
@@ -204,13 +200,13 @@ export const acciones = [
 			// La cara cambia en el mismo cuadro que las manos y no medio segundo después.
 			const cara = cambiaCara(P, [
 				[0, 'sonrie'],
-				[3.2, 'sorpresa', 0.12],
-				[4.4, 'triste', 0.06],
-				[5.8, 'sonrie', 0.06],
-				[10.7, 'rie', 0.08]
+				[3.2, 'sorpresa', 0.04],
+				[4.4, 'triste', 0.02],
+				[5.8, 'sonrie', 0.02],
+				[10.7, 'rie', 0.03]
 			]);
 
-			const tiembla = P.ruido(311, { 'antebrazo_d.r': [2, 6], 'antebrazo_i.r': [2, 6], 'torso.r': [0.6, 7] });
+			const tiembla = P.ruido(311, { 'antebrazo_d.r': [1, 5], 'antebrazo_i.r': [1, 5], 'torso.r': [0.3, 6] });
 			const vida = vivo(P, 313);
 
 			// El cabeceo de quien teclea: la cabeza sigue el renglón y baja un poco con cada golpe.
@@ -254,22 +250,21 @@ export const acciones = [
 
 				// --- la pose
 				const s = Math.max(0, Math.min(1, susto));
-				const k = 1 - 0.5 * s; // escorzo: el antebrazo apunta a quien mira, como en la 24
 				const c = Math.max(0, Math.min(1, calma));
 				const pose = {
-					'torso.y': 18 * cerca - 16 * s + 10 * c,
-					'torso.r': 2 * s,
-					'torso.sx': 1 + 0.02 * cerca,
-					'torso.sy': 1 + 0.02 * cerca + 0.02 * s,
+					// Sin escalas de torso ni de cabeza: a esta escala, estirarlos abre las costuras del
+					// dibujo del kit y las piezas se separan del cuerpo. Solo se mueven huesos enteros.
+					'torso.y': 12 * cerca - 9 * s + 8 * c,
+					'torso.r': 1.4 * s,
 					'cabeza.x': escribe * renglon(t),
-					'cabeza.y': 4 + 6 * escribe + 10 * cerca - 6 * s - 14 * arriba + 4 * c,
-					'cabeza.r': -3 * s + 2 * c,
-					'cabeza.sx': 1 + 0.03 * s,
-					'cabeza.sy': 1 + 0.03 * s,
+					'cabeza.y': 4 + 6 * escribe + 8 * cerca - 4 * s - 12 * arriba + 4 * c,
+					'cabeza.r': -2 * s + 2 * c,
 					// Los brazos del susto son los de la acción 24; al arreglarlo vuelven al teclado.
-					'brazo_d.r': 24 * s + 8 * arregla,
+					// Los valores son los de la acción 24: con menos, las manos se juntan en el centro
+					// del pecho y se leen como un nudo.
+					'brazo_d.r': 26 * s + 8 * arregla,
 					'antebrazo_d.r': -150 * s - 10 * arregla,
-					'brazo_i.r': -24 * s - 8 * arregla,
+					'brazo_i.r': -26 * s - 8 * arregla,
 					'antebrazo_i.r': 150 * s + 10 * arregla
 				};
 				const v = vida(t);
@@ -285,7 +280,7 @@ export const acciones = [
 								'ik.brazo_d.angPeso': c
 							}
 						: null;
-				return P.sumar(base, manos, pose, ikP, escorzo('d', k), escorzo('i', k), cara(t), v, t > 3.3 && t < 5.4 ? tiembla(t) : null);
+				return P.sumar(base, manos, pose, ikP, cara(t), v, t > 3.3 && t < 5.4 ? tiembla(t) : null);
 			};
 		}
 	}
