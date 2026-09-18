@@ -358,11 +358,27 @@ try {
 
 	// Nadie lo ve, pero conviene saberlo: si el cuerpo de una lámina se sale de la zona
 	// segura, en el teléfono lo tapan los botones de Instagram.
+	// Se miden los bloques que coinciden en pantalla, no todos: un bloque con data-out se va
+	// antes de que entre el siguiente, y sumarlos todos daba por desbordada una lámina en la
+	// que el texto se releva. Sin data-out todos coinciden y la cuenta es la de siempre.
 	const overflow = await primera.evaluate(`(() => {
     const out = [];
+    const GAP = 36;
     document.querySelectorAll('.slide').forEach((s, i) => {
       const box = s.querySelector('.cuerpo') ?? s.children[1];
-      if (box.scrollHeight > box.clientHeight + 1) out.push(i + 1 + ': ' + box.scrollHeight + ' > ' + box.clientHeight);
+      const bs = [...box.querySelectorAll(':scope > .blk')].map((b) => ({
+        h: b.offsetHeight,
+        a: +b.dataset.in,
+        o: b.dataset.out === undefined ? Infinity : +b.dataset.out
+      }));
+      if (!bs.length) return;
+      let alto = 0;
+      for (const x of bs) {
+        const vivos = bs.filter((y) => y.a <= x.a && y.o > x.a);
+        const suma = vivos.reduce((n, y) => n + y.h, 0) + (vivos.length - 1) * GAP;
+        if (suma > alto) alto = suma;
+      }
+      if (alto > box.clientHeight + 1) out.push(i + 1 + ': ' + Math.round(alto) + ' > ' + box.clientHeight);
     });
     return out.join(' | ');
   })()`);

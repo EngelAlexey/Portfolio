@@ -218,7 +218,7 @@ export const link = (text, d, t) =>
  * recorta hasta el borde y la de la que sale, desde el borde: el dominio se lee en blanco a un
  * lado y en tinta al otro, partido justo donde cambia el fondo, y nunca hay dos encima.
  */
-function chrome(dark, tone, n, cta) {
+function chrome(dark, tone, n, cta, cromo = 'completo') {
 	const fg = dark ? C.white : C.ink;
 	const hair = dark ? 'rgba(255,255,255,0.30)' : 'rgba(20,23,38,0.16)';
 	const track = dark ? 'rgba(255,255,255,0.26)' : 'rgba(20,23,38,0.14)';
@@ -232,12 +232,21 @@ function chrome(dark, tone, n, cta) {
 
 	const avatar = `<span style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:999px;background:${dark ? C.white : t.base};flex:none;"><svg width="46" height="46" viewBox="0 0 32 32" aria-hidden="true" style="display:block;"><path d="${LOGO}" fill="${dark ? t.base : C.white}"></path></svg></span>`;
 
-	return `      <div style="display:flex;flex-direction:column;height:100%;">
-        <div style="display:flex;gap:10px;flex:none;">${bars}</div>
+	// Tres marcos. `completo` es el de siempre: barra de progreso, cabecera con la cuenta y pie.
+	// `minimo` deja sólo el pie, para que la escena mande. `ninguno` no pinta nada, y entonces el
+	// reel no dice cuánto le queda, que es justo lo que sostiene a quien duda si quedarse.
+	if (cromo === 'ninguno') return '';
+	const arriba =
+		cromo === 'completo'
+			? `        <div style="display:flex;gap:10px;flex:none;">${bars}</div>
         <header style="display:flex;align-items:center;gap:15px;flex:none;padding-top:30px;">
           ${avatar}
           <span style="font-size:26px;font-weight:500;color:${fg};">@alexherrera.dev</span>
-        </header>
+        </header>`
+			: '';
+
+	return `      <div style="display:flex;flex-direction:column;height:100%;">
+${arriba}
         <div style="flex-grow:1;"></div>
         <footer style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex:none;padding-top:28px;border-top:1px solid ${hair};">
           <span style="font-size:26px;font-weight:500;color:${fg};">alexherrera.dev</span>
@@ -264,7 +273,10 @@ ${glow(-340, 1360, 760, t.base, 0.12, -1)}`
 	// Las láminas quietas del canvas llevan todo en su estado final: --s y --b muy por encima de
 	// lo que tarda cualquier escena o bloque en completarse.
 	const body = blocks
-		.map(([at, html]) => `        <div class="blk" data-in="${at}" style="${still ? '--b:30;' : 'opacity:0;'}">${html}</div>`)
+		.map(
+			([at, html, out]) =>
+				`        <div class="blk" data-in="${at}"${out === undefined ? '' : ` data-out="${out}"`} style="${still ? '--b:30;' : 'opacity:0;'}">${html}</div>`
+		)
 		.join('\n');
 
 	return `    <div class="slide" style="position:absolute;inset:0;background:${bg};overflow:hidden;${still ? '--s:30;--p:1;' : ''}">
@@ -272,7 +284,8 @@ ${glow(-340, 1360, 760, t.base, 0.12, -1)}`
 ${glows}
       </div>
       <div class="grano"></div>
-      <div class="cuerpo" style="position:absolute;left:${PAD_X}px;right:${PAD_X}px;top:${SAFE_TOP}px;bottom:${SAFE_BOTTOM}px;z-index:2;display:flex;flex-direction:column;justify-content:center;">
+${s.escena ? `      <div class="sangre" style="position:absolute;inset:0;z-index:2;">\n${s.escena(dark, s.tone)}\n      </div>` : ''}
+      <div class="cuerpo" style="position:absolute;left:${PAD_X}px;right:${PAD_X}px;top:${SAFE_TOP}px;bottom:${SAFE_BOTTOM}px;z-index:3;display:flex;flex-direction:column;justify-content:${s.texto ?? 'center'};${s.texto === 'flex-end' ? 'padding-bottom:104px;' : ''}">
 ${body}
       </div>
     </div>`;
@@ -366,7 +379,7 @@ function sucesos(timed) {
 // ------------------------------------------------------------------- escritura
 
 export function build(slides, baseUrl, meta = {}) {
-	const { file = 'reel', tail = 3, notas = [], cta = 'Enlace en la biografía', sonido = true } = meta;
+	const { file = 'reel', tail = 3, notas = [], cta = 'Enlace en la biografía', sonido = true, cromo = 'completo' } = meta;
 
 	comprobarContraste(slides);
 
@@ -416,7 +429,7 @@ ${stages}
 ${timed
 	.map(
 		(s, i) => `    <div class="chrome" style="position:absolute;left:${PAD_X}px;right:${PAD_X}px;top:${SAFE_TOP}px;bottom:${SAFE_BOTTOM}px;z-index:${100 + i};${i ? 'visibility:hidden;' : ''}">
-${chrome(s.variant !== 'light', s.tone, timed.length, cta)}
+${chrome(s.variant !== 'light', s.tone, timed.length, cta, cromo)}
     </div>`
 	)
 	.join('\n')}
@@ -443,7 +456,7 @@ const slides = [...document.querySelectorAll('.slide')];
 const chromes = [...document.querySelectorAll('.chrome')];
 const banda = document.querySelector('.banda');
 const cuerpos = slides.map((s) => s.querySelector('.cuerpo'));
-const blocks = slides.map((s) => [...s.querySelectorAll('.blk')].map((el) => ({ el, at: +el.dataset.in, palabras: null, cifras: [] })));
+const blocks = slides.map((s) => [...s.querySelectorAll('.blk')].map((el) => ({ el, at: +el.dataset.in, out: el.dataset.out === undefined ? null : +el.dataset.out, palabras: null, cifras: [] })));
 const glows = slides.flatMap((s, j) => [...s.querySelectorAll('.glow')].map((el) => ({ el, d: +el.dataset.drift, j })));
 const bars = chromes.map((c) => [...c.querySelectorAll('.bar')]);
 const ctas = chromes.map((c) => c.querySelector('.cta'));
@@ -602,6 +615,14 @@ function seek(t) {
         b.el.style.opacity = pr.toFixed(4);
         b.el.style.transform = 'translateY(' + ((1 - pr) * 30).toFixed(2) + 'px)';
       }
+      // Un bloque con salida se va hacia arriba y deja sitio al siguiente. Es lo que permite una
+      // lámina larga en la que el texto se releva en vez de apilarse.
+      if (b.out !== null && local >= b.out) {
+        const sal = ease(tramo(local, b.out, 0.45));
+        b.el.style.opacity = ((+b.el.style.opacity || 1) * (1 - sal)).toFixed(4);
+        b.el.style.transform = 'translateY(' + (-28 * sal).toFixed(2) + 'px)';
+      }
+
       // Cada renglón de una terminal entra por abajo y empuja a los anteriores hacia arriba,
       // que es el ejercicio 21: la pila se desplaza lo que queda por aparecer.
       if (b.pila) {
