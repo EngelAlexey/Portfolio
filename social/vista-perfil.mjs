@@ -33,7 +33,8 @@ const SERIE = [
 	'terminal-linux',
 	'api',
 	'github',
-	'reel-secreto-en-git'
+	'reel-secreto-en-git',
+	'reel-prototipo'
 ];
 
 const COL = 3;
