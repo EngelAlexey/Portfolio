@@ -1,126 +1,52 @@
-// Reel: «Un secreto en el historial de Git»
+// Reel: «¿Qué hacer si subiste el .env?»
 // Tema 7 del temario, patrón A: riesgo oculto en algo que se hace a diario.
-// El sistema está en ../reels.mjs, las escenas en ../escena.mjs y las reglas en ../README.md.
 //
-// No sale de un artículo: el del tema, «¿Qué son las variables de entorno?», está sin
-// escribir. Por eso el cierre no promete un artículo, sino el blog, que es lo que la regla
-// del cierre permite: una reflexión y la dirección.
+// Segunda versión. La primera contaba lo mismo con terminales y la rechazó Alex: «se va por el
+// lado técnico en vez de simplificarlo como en los post… sigue siendo un post pero con
+// transiciones». La tercera, un diagrama de la cadena de commits, tampoco: «no se entiende nada».
+// Lo que pidió, y es lo que hay aquí, es una historia con personaje: alguien escribe en su
+// portátil, una burbuja con un candado sube a la nube, se asusta, arregla lo que hay que arreglar
+// y termina tranquilo.
 //
-// Cinco láminas encadenadas, como el reel de envenenamiento: la orden que parece borrar, la
-// que demuestra que no borró, lo que se lleva cada copia, la corrección y el cierre. Las tres
-// primeras enseñan una terminal porque la demostración es la salida de Git, no un dibujo de
-// ella. Todas las órdenes y todas las salidas se ejecutaron en un repositorio de prueba con
-// Git 2.49.0; las cifras están contrastadas en publicacion.md.
+// El personaje sale del laboratorio (`personajes/acciones/guion.mjs`, acción 42) por el puente
+// `personaje-reel.mjs`: el motor serializa el rig en la página y mueve la figura desde `seek`,
+// igual que el laboratorio. La lámina lleva el fondo de la acción, porque la paleta del personaje
+// —prenda, mesa, portátil— se elige por contraste contra él.
 //
-// Tonos: naranja profundo, ciruela e índigo. La portada —el cuadro del segundo 2,4— cae en la
-// primera lámina, y el naranja es el tono que más lejos queda de las portadas vecinas en la
-// cuadrícula: pizarra a un lado, ciruela arriba y oliva debajo.
+// La escena baja 250 px en el reel para dejar libre la banda de arriba, que es donde va el texto.
+// Sobre el personaje no se escribe: taparía la cara, que es lo que cuenta la historia.
+//
+// El texto se releva —cada frase entra y se va— en vez de apilarse, que es lo que permite una
+// lámina larga sin que el cuadro se llene.
 //
 // Ejecutar desde este directorio:  node gen.mjs
 // Después, y sólo con el texto aprobado:  node ../render.mjs > render.log 2>&1
 
-import { build, h2, p, code, note, link } from '../reels.mjs';
-import { escenaTerminal } from '../escena.mjs';
+import { build, h1, h2, p, link } from '../reels.mjs';
+import { figuraDeAccion } from '../personaje-reel.mjs';
+
+const escena = figuraDeAccion(42);
 
 const slides = [
 	{
 		file: 'Main',
-		tone: 'ember',
-		variant: 'color',
-		foot: 'La orden que parece borrar',
-		hold: 2.0,
-		body: (d, t) => [
-			[
-				0,
-				escenaTerminal(d, t, {
-					titulo: 'proyecto',
-					desde: 0.45,
-					vel: 22,
-					lineas: [
-						{ cmd: 'git rm --cached .env' },
-						{ out: "rm '.env'" },
-						{ cmd: 'git commit -m "quitar el .env"' },
-						{ out: '1 file changed, 1 deletion(-)' }
-					]
-				})
-			],
-			[0, h2('Borrar una contraseña de Git no la borra', d)],
-			[2.6, p('Dejar de rastrear el archivo lo saca del proyecto. El historial se queda igual.', d)]
-		]
-	},
-	{
-		file: 'Sg02Historial',
-		tone: 'ember',
+		tone: 'petrol',
 		variant: 'light',
-		foot: 'Lo que sigue dentro',
-		hold: 2.4,
-		body: (d, t) => [
-			[
-				0.15,
-				escenaTerminal(d, t, {
-					titulo: 'proyecto',
-					desde: 1.1,
-					vel: 22,
-					lineas: [
-						{ cmd: 'git log -p -- .env' },
-						{ out: '-DB_PASSWORD=pr0d-2024', acento: true }
-					]
-				})
-			],
-			[1.0, h2('El valor sigue escrito en un commit', d)],
-			[2.4, p('Se lee con una orden, sin permisos especiales y sin salir del repositorio.', d)]
+		fondo: escena.fondo,
+		figura: { ...escena, transform: 'translateY(400px)' },
+		texto: 'flex-start',
+		foot: 'La historia',
+		hold: 2.85, // la lámina dura lo que la acción del laboratorio: 10,75 + 2,85 = 13,6 s
+		body: (d) => [
+			[0.2, h1('¿Qué hacer si subiste el <code>.env</code>?', d), 2.9],
+			[3.25, h2('Tus claves se fueron con el push', d), 5.6],
+			[5.95, h2('1 · Cambia la credencial', d), 8.1],
+			[8.25, h2('2 · Reescribe el historial', d), 10.5],
+			[10.75, h2('Y avisa a quien tenga una copia', d)]
 		]
 	},
 	{
-		file: 'Sg03Copias',
-		tone: 'plum',
-		variant: 'color',
-		foot: 'Cada copia',
-		hold: 2.4,
-		body: (d, t) => [
-			[
-				0.15,
-				escenaTerminal(d, t, {
-					titulo: 'otro equipo',
-					desde: 1.1,
-					vel: 22,
-					lineas: [
-						{ cmd: 'git clone proyecto.git' },
-						{ cmd: 'git show HEAD~1:.env' },
-						{ out: 'DB_PASSWORD=pr0d-2024', acento: true }
-					]
-				})
-			],
-			[1.0, h2('Cada copia se lleva el historial entero', d)],
-			[
-				2.4,
-				p('En 2025 se añadieron 28,65 millones de secretos a repositorios públicos de GitHub.', d)
-			],
-			[3.3, note('GitGuardian, State of Secrets Sprawl 2026', d)]
-		]
-	},
-	{
-		file: 'Sg04Correccion',
-		tone: 'plum',
-		variant: 'light',
-		foot: 'La corrección',
-		hold: 2.4,
-		body: (d, t) => [
-			[
-				0.15,
-				code(
-					'CORRECCIÓN',
-					'# 1. cambiar la contraseña filtrada\n# 2. reescribir el historial\n<b>git filter-repo --invert-paths</b> --path .env',
-					d,
-					t
-				)
-			],
-			[1.4, h2('Primero se cambia la credencial', d)],
-			[2.8, p('Reescribir el historial no sirve si la clave sigue siendo válida: el 64 % de las filtradas en 2022 lo seguía en enero de 2026.', d)]
-		]
-	},
-	{
-		file: 'Sg05Cierre',
+		file: 'Sg02Cierre',
 		tone: 'indigo',
 		variant: 'color',
 		foot: 'Cierre',
@@ -135,10 +61,10 @@ const slides = [
 
 build(slides, import.meta.url, {
 	file: 'reel',
-	title: 'Un secreto en el historial de Git',
+	title: '¿Qué hacer si subiste el .env?',
 	tail: 2.4,
 	notas: [
-		'Estructura encadenada: la orden que parece borrar, la prueba de que no borró, lo que se lleva cada copia, la corrección y el cierre.\nLas tres primeras láminas enseñan la salida real de Git: la demostración es esa salida, no un dibujo de ella.',
-		'El texto explica la escena y no la repite. El titular dice qué significa lo que se ve; el apoyo añade lo que la terminal no puede dar: quién más lo tiene, cuánto ocurre, qué hacer primero.\nTonos: naranja profundo, ciruela e índigo. El tema no tiene artículo todavía, así que el cierre lleva al blog.'
+		'Historia con personaje, no explicación: escribe, sus claves suben a la nube, se asusta, rota la credencial, reescribe el historial y termina tranquilo.\nEl texto se releva encima, en la banda que la escena deja libre; sobre la cara no se escribe.',
+		'El orden de la corrección es rotar la clave y después reescribir el historial, no al revés: una clave que sigue siendo válida no se arregla borrando el historial.\nLa figura sale del laboratorio de personajes y la mueve el mismo rig, cuadro a cuadro.'
 	]
 });

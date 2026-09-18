@@ -18,6 +18,7 @@ import { rmSync, writeFileSync } from 'node:fs';
 import { C, TONES, contraste, sobre } from './sistema.mjs';
 import { colores } from './escena.mjs';
 import { sintetizar } from './sonido.mjs';
+import { RUNTIME } from './personaje-reel.mjs';
 
 export { C, TONES };
 
@@ -255,6 +256,13 @@ ${arriba}
       </div>`;
 }
 
+/**
+ * La capa de una figura del laboratorio de personajes: su dibujo dentro de un lienzo del tamaño
+ * del reel. `transform` la recoloca sin tocar la acción, que el laboratorio encuadra a su manera.
+ */
+const figuraSvg = (f) =>
+	`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true" style="display:block;${f.transform ? `transform:${f.transform};` : ''}">${f.dibujo}</svg>`;
+
 /** El fondo y el cuerpo de una lámina. `blocks` es su lista de [segundo, html]. */
 function stage(s, blocks, still) {
 	const dark = s.variant !== 'light';
@@ -262,7 +270,9 @@ function stage(s, blocks, still) {
 	// Tres fondos: el degradado del tono, el blanco, y la noche. En 'noche' la lámina se queda
 	// casi a oscuras y la escena se convierte en la única fuente de luz.
 	const noche = s.variant === 'noche';
-	const bg = noche ? NOCHE : dark ? `linear-gradient(158deg, ${t.base} 0%, ${t.lift} 100%)` : C.white;
+	// Una lámina con figura del laboratorio de personajes lleva el fondo de su acción: la paleta
+	// del personaje se calcula contra ese fondo y con otro dejan de valer sus comprobaciones.
+	const bg = s.fondo ?? (noche ? NOCHE : dark ? `linear-gradient(158deg, ${t.base} 0%, ${t.lift} 100%)` : C.white);
 	const glows = noche
 		? `${glow(520, -340, 820, t.base, 0.16, 1)}
 ${glow(-340, 1360, 760, t.base, 0.12, -1)}`
@@ -285,7 +295,8 @@ ${glows}
       </div>
       <div class="grano"></div>
 ${s.escena ? `      <div class="sangre" style="position:absolute;inset:0;z-index:2;">\n${s.escena(dark, s.tone)}\n      </div>` : ''}
-      <div class="cuerpo" style="position:absolute;left:${PAD_X}px;right:${PAD_X}px;top:${SAFE_TOP}px;bottom:${SAFE_BOTTOM}px;z-index:3;display:flex;flex-direction:column;justify-content:${s.texto ?? 'center'};${s.texto === 'flex-end' ? 'padding-bottom:104px;' : ''}">
+${s.figura ? `      <div class="sangre" style="position:absolute;inset:0;z-index:2;">${figuraSvg(s.figura)}</div>` : ''}
+      <div class="cuerpo" style="position:absolute;left:${PAD_X}px;right:${PAD_X}px;top:${SAFE_TOP}px;bottom:${SAFE_BOTTOM}px;z-index:3;display:flex;flex-direction:column;justify-content:${s.texto ?? 'center'};${s.texto === 'flex-end' ? 'padding-bottom:104px;' : ''}${s.texto === 'flex-start' ? 'padding-top:150px;' : ''}">
 ${body}
       </div>
     </div>`;
@@ -302,6 +313,7 @@ const BASE_CSS = `
     .blk { will-change: opacity, transform; }
     .blk + .blk { margin-top: 36px; }
     .titular .w { display: inline-block; }
+    [data-ojo] { transform-box: fill-box; transform-origin: 50% 50%; }
     .grano { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: ${GRANO_OPACIDAD}; background-image: url('${GRANO}'); background-size: 256px 256px; }`;
 
 // ------------------------------------------------------------------ comprobaciones
@@ -399,6 +411,19 @@ export function build(slides, baseUrl, meta = {}) {
 	const total = clock + tail; // cola final: tiempo para leer el enlace y guardar el reel
 
 	const stages = timed.map((s) => stage(s, s.blocks, false)).join('\n');
+	// Las figuras del laboratorio de personajes que lleva este reel. Su prep y su clip viajan
+	// serializadas, igual que en la pagina del laboratorio, y seek las mueve con el tiempo de su
+	// lamina. DEFS se lee aqui porque se llena al montar las figuras, que ya ha ocurrido.
+	const figuras = timed.map((s, j) => (s.figura ? { j, datos: s.figura.datos, prep: s.figura.prep } : null)).filter(Boolean);
+	const rig = figuras.length
+		? [
+				`const U = (${RUNTIME.curvas})();`,
+				`const P = (${RUNTIME.personaje})(U);`,
+				`const DEFS = ${JSON.stringify(RUNTIME.DEFS)};`,
+				...RUNTIME.ayudas.map((f) => `const ${f.name} = ${f};`),
+				`const FIGURAS = [${figuras.map((f) => `{ j: ${f.j}, datos: ${JSON.stringify(f.datos)}, prep: ${f.prep} }`).join(', ')}];`
+			].join(String.fromCharCode(10))
+		: 'const FIGURAS = [];';
 	const tl = timed.map((s, i) => ({
 		start: +s.start.toFixed(3),
 		dur: +s.dur.toFixed(3),
@@ -452,11 +477,15 @@ const ANCHO = ${W};
 const PAD_X = ${PAD_X};
 const FUENTES = ['400 34px Outfit', '500 34px Outfit', '600 64px Outfit', '700 96px Outfit', '400 25px "JetBrains Mono"', '500 25px "JetBrains Mono"'];
 
+${rig}
+
 const slides = [...document.querySelectorAll('.slide')];
 const chromes = [...document.querySelectorAll('.chrome')];
 const banda = document.querySelector('.banda');
 const cuerpos = slides.map((s) => s.querySelector('.cuerpo'));
 const blocks = slides.map((s) => [...s.querySelectorAll('.blk')].map((el) => ({ el, at: +el.dataset.in, out: el.dataset.out === undefined ? null : +el.dataset.out, palabras: null, cifras: [] })));
+// Qué láminas relevan texto: las que tienen algún bloque con salida.
+const releva = blocks.map((bs) => bs.some((b) => b.out !== null));
 const glows = slides.flatMap((s, j) => [...s.querySelectorAll('.glow')].map((el) => ({ el, d: +el.dataset.drift, j })));
 const bars = chromes.map((c) => [...c.querySelectorAll('.bar')]);
 const ctas = chromes.map((c) => c.querySelector('.cta'));
@@ -514,6 +543,12 @@ function partir(h) {
 // Se prepara el DOM una vez, con las fuentes ya cargadas: se parten los titulares y se fija el
 // ancho de cada cifra al de su valor final, para que la maqueta no salte mientras cuenta.
 function preparar() {
+  // Cada figura se monta sobre su lámina: prep deja en ella el personaje y la función clip, que
+  // devuelve la pose de cada segundo.
+  for (const f of FIGURAS) {
+    f.el = slides[f.j];
+    f.prep(f.el, U, P, f.datos);
+  }
   for (const bs of blocks) {
     for (const b of bs) {
       const h = b.el.querySelector('.titular');
@@ -615,6 +650,16 @@ function seek(t) {
         b.el.style.opacity = pr.toFixed(4);
         b.el.style.transform = 'translateY(' + ((1 - pr) * 30).toFixed(2) + 'px)';
       }
+      // Un bloque que todavía no ha entrado, o que ya se fue, deja de ocupar sitio: en una lámina
+      // en la que el texto se releva, si siguen en el flujo empujan al que se ve hacia abajo y la
+      // frase acaba en mitad del cuadro en vez de arriba. Solo se aplica a las láminas que relevan
+      // texto: las demás apilan sus bloques, como siempre.
+      if (releva[j]) {
+        const dentro = local >= b.at - 0.001 && (b.out === null || local <= b.out + 0.5);
+        b.el.style.display = dentro ? '' : 'none';
+        if (!dentro) continue;
+      }
+
       // Un bloque con salida se va hacia arriba y deja sitio al siguiente. Es lo que permite una
       // lámina larga en la que el texto se releva en vez de apilarse.
       if (b.out !== null && local >= b.out) {
@@ -670,6 +715,13 @@ function seek(t) {
       el.style.opacity = 1;
     }
   });
+
+  // La figura del laboratorio se mueve con el tiempo de su lámina, recortado a su duración: la
+  // pose es función pura del tiempo, así que el vídeo sale igual en cualquier máquina.
+  for (const f of FIGURAS) {
+    if (!f.el || !f.el.clip || !visible(f.j)) continue;
+    P.aplicar(f.el.p, f.el.clip(Math.min(Math.max(t - TL[f.j].start, 0), TL[f.j].dur)));
+  }
 
   // Los halos derivan muy despacio. Es lo único que se mueve cuando el texto ya entró, y
   // lo que evita que la lámina parezca una foto fija durante tres segundos. Cuentan con el
