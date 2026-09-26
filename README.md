@@ -228,7 +228,9 @@ El orden del arreglo es la numeración, así que **`n` en cada `<Cite>` tiene qu
 
 ### Componentes en el cuerpo
 
-`Callout.astro`, con las variantes `riesgo`, `correccion` y `nota`, más `Cite` y `References`. **Los estilos de los tres viven en `src/app.css`**, por la misma razón que los del diagrama: Astro no propaga el CSS con ámbito de un componente importado dentro de un `.mdx`.
+`Callout.astro`, con las variantes `riesgo`, `correccion` y `nota`, más `Cite`, `References` y `CopyPrompt`. **Los estilos de todos viven en `src/app.css`**, por la misma razón que los del diagrama: Astro no propaga el CSS con ámbito de un componente importado dentro de un `.mdx`.
+
+`CopyPrompt` recibe el texto en `prompt` y lo muestra en un desplegable; el botón copia ese mismo `<pre>`, así que lo que se ve es lo que se copia. El texto vive junto al artículo, en `prompt.es.md` y `prompt.en.md`, y se importa con `import prompt from './prompt.es.md?raw'`. El cargador solo lee `es.mdx` y `en.mdx`, así que esos archivos no cuentan como artículos.
 
 Un detalle de MDX que cuesta un build: **el enlace automático de Markdown, `<https://…>`, no existe en MDX**. Todo lo que empieza por `<` se intenta leer como JSX, así que una URL suelta va como `[url](url)` o dentro de un componente. El build falla con un error de sintaxis en la línea del enlace.
 

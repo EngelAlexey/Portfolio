@@ -1,0 +1,68 @@
+---
+interface Props {
+	prompt: string;
+	label: string;
+	copiedLabel: string;
+	errorLabel: string;
+	summary: string;
+}
+
+const { prompt, label, copiedLabel, errorLabel, summary } = Astro.props;
+---
+
+<div class="copy-prompt" data-copy-prompt>
+	<div class="copy-prompt-bar">
+		<button
+			type="button"
+			class="btn primary"
+			data-copy-button
+			data-label={label}
+			data-copied={copiedLabel}
+			data-error={errorLabel}
+		>
+			{label}
+		</button>
+		<span class="copy-prompt-status" data-copy-status aria-live="polite"></span>
+	</div>
+	<details data-copy-details>
+		<summary>{summary}</summary>
+		<pre data-copy-source set:text={prompt.trim()} />
+	</details>
+</div>
+
+<script>
+	for (const root of document.querySelectorAll<HTMLElement>('[data-copy-prompt]')) {
+		const button = root.querySelector<HTMLButtonElement>('[data-copy-button]');
+		const status = root.querySelector<HTMLElement>('[data-copy-status]');
+		const details = root.querySelector<HTMLDetailsElement>('[data-copy-details]');
+		const source = root.querySelector<HTMLPreElement>('[data-copy-source]');
+		if (!button || !status || !details || !source) continue;
+
+		let timer: number | undefined;
+
+		const show = (text: string) => {
+			status.textContent = text;
+			window.clearTimeout(timer);
+			timer = window.setTimeout(() => (status.textContent = ''), 4000);
+		};
+
+		const selectSource = () => {
+			details.open = true;
+			const range = document.createRange();
+			range.selectNodeContents(source);
+			const selection = window.getSelection();
+			selection?.removeAllRanges();
+			selection?.addRange(range);
+		};
+
+		button.addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(source.textContent ?? '');
+				show(button.dataset.copied ?? '');
+			} catch {
+				selectSource();
+				show(button.dataset.error ?? '');
+			}
+		});
+	}
+</script>
