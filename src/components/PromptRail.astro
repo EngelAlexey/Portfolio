@@ -1,0 +1,316 @@
+---
+interface Props {
+	prompt: string;
+	title: string;
+	copy: string;
+	copied: string;
+	copiedStatus: string;
+	error: string;
+	view: string;
+	close: string;
+}
+
+const { prompt, title, copy, copied, copiedStatus, error, view, close } = Astro.props;
+---
+
+<aside
+	class="prompt-rail"
+	aria-labelledby="prompt-rail-title"
+	data-prompt-rail
+	data-copied={copied}
+	data-status={copiedStatus}
+	data-error={error}
+>
+	<p class="prompt-rail-title" id="prompt-rail-title">{title}</p>
+	<button type="button" class="prompt-copy" data-copy>
+		<svg class="icon icon-copy" viewBox="0 0 16 16" aria-hidden="true">
+			<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect>
+			<path d="M10.5 3.5v-.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3v5A1.5 1.5 0 0 0 4 9.5h.5"></path>
+		</svg>
+		<svg class="icon icon-check" viewBox="0 0 16 16" aria-hidden="true">
+			<path d="M3 8.5l3 3 7-7"></path>
+		</svg>
+		<span data-label>{copy}</span>
+	</button>
+	<button type="button" class="prompt-view" data-open aria-haspopup="dialog">{view}</button>
+	<span class="sr-only" data-live aria-live="polite"></span>
+
+	<dialog class="prompt-dialog" aria-labelledby="prompt-dialog-title">
+		<div class="prompt-dialog-box">
+			<div class="prompt-dialog-head">
+				<p class="prompt-dialog-title" id="prompt-dialog-title">{title}</p>
+				<div class="prompt-dialog-actions">
+					<button type="button" class="prompt-copy" data-copy>
+						<svg class="icon icon-copy" viewBox="0 0 16 16" aria-hidden="true">
+							<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect>
+							<path d="M10.5 3.5v-.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3v5A1.5 1.5 0 0 0 4 9.5h.5"></path>
+						</svg>
+						<svg class="icon icon-check" viewBox="0 0 16 16" aria-hidden="true">
+							<path d="M3 8.5l3 3 7-7"></path>
+						</svg>
+						<span data-label>{copy}</span>
+					</button>
+					<button type="button" class="prompt-close" data-close>{close}</button>
+				</div>
+			</div>
+			<p class="prompt-dialog-status" data-dialog-status aria-live="polite"></p>
+			<pre data-source set:text={prompt} />
+		</div>
+	</dialog>
+</aside>
+
+<script>
+	const rail = document.querySelector<HTMLElement>('[data-prompt-rail]');
+	const dialog = rail?.querySelector<HTMLDialogElement>('dialog');
+	const source = dialog?.querySelector<HTMLPreElement>('[data-source]');
+	const dialogStatus = dialog?.querySelector<HTMLElement>('[data-dialog-status]');
+	const live = rail?.querySelector<HTMLElement>('[data-live]');
+
+	if (rail && dialog && source && dialogStatus && live) {
+		const announce = (text: string) => {
+			(dialog.open ? dialogStatus : live).textContent = text;
+		};
+
+		const selectSource = () => {
+			const range = document.createRange();
+			range.selectNodeContents(source);
+			const selection = window.getSelection();
+			selection?.removeAllRanges();
+			selection?.addRange(range);
+		};
+
+		for (const button of rail.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
+			const label = button.querySelector<HTMLElement>('[data-label]');
+			if (!label) continue;
+			const idle = label.textContent ?? '';
+			let timer: number | undefined;
+
+			button.addEventListener('click', async () => {
+				window.clearTimeout(timer);
+				dialogStatus.textContent = '';
+				try {
+					await navigator.clipboard.writeText(source.textContent ?? '');
+					button.dataset.state = 'copied';
+					label.textContent = rail.dataset.copied ?? idle;
+					announce(rail.dataset.status ?? '');
+					timer = window.setTimeout(() => {
+						delete button.dataset.state;
+						label.textContent = idle;
+						dialogStatus.textContent = '';
+						live.textContent = '';
+					}, 2500);
+				} catch {
+					if (!dialog.open) dialog.showModal();
+					selectSource();
+					dialogStatus.textContent = rail.dataset.error ?? '';
+				}
+			});
+		}
+
+		rail.querySelector('[data-open]')?.addEventListener('click', () => {
+			dialogStatus.textContent = '';
+			dialog.showModal();
+			source.scrollTop = 0;
+		});
+
+		dialog.querySelector('[data-close]')?.addEventListener('click', () => dialog.close());
+
+		dialog.addEventListener('click', (event) => {
+			if (event.target === dialog) dialog.close();
+		});
+	}
+</script>
+
+<style>
+	.prompt-rail {
+		margin: 0 0 2.25rem;
+		padding-top: 1.1rem;
+		border-top: 1px solid var(--line);
+	}
+
+	.prompt-rail-title {
+		margin: 0 0 0.6rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: var(--ink-faint);
+	}
+
+	.prompt-copy {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		min-height: 2.75rem;
+		padding: 0 0.85rem;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--ink-muted);
+		font: inherit;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition:
+			color 140ms ease,
+			border-color 140ms ease;
+	}
+
+	.prompt-rail > .prompt-copy {
+		width: 11rem;
+		max-width: 100%;
+	}
+
+	.prompt-copy:hover,
+	.prompt-copy:focus-visible,
+	.prompt-copy[data-state='copied'] {
+		color: var(--ink);
+		border-color: var(--ink-faint);
+	}
+
+	.icon {
+		width: 1rem;
+		height: 1rem;
+		flex: none;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.4;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.icon-check,
+	.prompt-copy[data-state='copied'] .icon-copy {
+		display: none;
+	}
+
+	.prompt-copy[data-state='copied'] .icon-check {
+		display: block;
+	}
+
+	.prompt-view {
+		display: inline-flex;
+		align-items: center;
+		min-height: 2.25rem;
+		margin-top: 0.2rem;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--ink-muted);
+		font: inherit;
+		font-size: 0.8125rem;
+		text-decoration: underline;
+		text-decoration-color: var(--line-strong);
+		text-underline-offset: 0.2em;
+		cursor: pointer;
+		transition: color 140ms ease;
+	}
+
+	.prompt-view:hover,
+	.prompt-view:focus-visible {
+		color: var(--ink);
+		text-decoration-color: currentColor;
+	}
+
+	.prompt-dialog {
+		width: min(52rem, calc(100vw - 2rem));
+		max-width: none;
+		max-height: calc(100dvh - 3rem);
+		margin: auto;
+		padding: 0;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-sm);
+		background: var(--paper);
+		color: var(--ink);
+	}
+
+	.prompt-dialog::backdrop {
+		background: oklch(0% 0 0 / 0.55);
+	}
+
+	:global(html:has(.prompt-dialog[open])) {
+		overflow: hidden;
+	}
+
+	.prompt-dialog-box {
+		display: flex;
+		flex-direction: column;
+		box-sizing: border-box;
+		max-height: calc(100dvh - 3rem);
+		padding: 1rem 1.15rem 1.15rem;
+	}
+
+	.prompt-dialog-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.prompt-dialog-title {
+		margin: 0 auto 0 0;
+		font-size: 0.9375rem;
+		font-weight: 600;
+	}
+
+	.prompt-dialog-actions {
+		display: flex;
+		gap: 0.6rem;
+	}
+
+	.prompt-close {
+		min-height: 2.75rem;
+		padding: 0 0.85rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: none;
+		color: var(--ink-muted);
+		font: inherit;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition:
+			color 140ms ease,
+			border-color 140ms ease;
+	}
+
+	.prompt-close:hover,
+	.prompt-close:focus-visible {
+		color: var(--ink);
+		border-color: var(--ink-faint);
+	}
+
+	.prompt-dialog-status {
+		margin: 0.6rem 0 0;
+		font-size: 0.8125rem;
+		line-height: 1.5;
+		color: var(--ink-muted);
+	}
+
+	.prompt-dialog-status:empty {
+		display: none;
+	}
+
+	.prompt-dialog pre {
+		flex: 1;
+		min-height: 0;
+		margin: 0.85rem 0 0;
+		padding: 0.85rem 1rem;
+		overflow: auto;
+		overscroll-behavior: contain;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--paper-sunken);
+		color: var(--ink-muted);
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		line-height: 1.6;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	@media (min-width: 80rem) {
+		.prompt-rail {
+			position: sticky;
+			top: 5.5rem;
+			margin: 0;
+		}
+	}
+</style>

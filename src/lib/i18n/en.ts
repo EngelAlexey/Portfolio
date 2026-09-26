@@ -94,6 +94,13 @@ export const en: Dict = {
 	article: {
 		back: 'Back to the blog',
 		toc: 'On this page',
+		promptTitle: 'Set up environment',
+		promptCopy: 'Copy prompt',
+		promptCopied: 'Copied',
+		promptCopiedStatus: 'Prompt copied to the clipboard.',
+		promptError: 'Could not copy. The text is selected: Ctrl+C or Cmd+C.',
+		promptView: 'Show the full prompt',
+		promptClose: 'Close',
 		published: 'Published',
 		updated: 'Updated',
 		reading: 'Reading time',

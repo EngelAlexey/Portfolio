@@ -92,6 +92,13 @@ export const es = {
 	article: {
 		back: 'Volver al blog',
 		toc: 'En esta página',
+		promptTitle: 'Configurar entorno',
+		promptCopy: 'Copiar prompt',
+		promptCopied: 'Copiado',
+		promptCopiedStatus: 'Prompt copiado al portapapeles.',
+		promptError: 'No se pudo copiar. El texto está seleccionado: Ctrl+C o Cmd+C.',
+		promptView: 'Ver el prompt completo',
+		promptClose: 'Cerrar',
 		published: 'Publicado',
 		updated: 'Actualizado',
 		reading: 'Lectura',

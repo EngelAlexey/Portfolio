@@ -15,9 +15,7 @@ instagram: https://www.instagram.com/p/DdF7ZLpkTwR/
 
 import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
-import CopyPrompt from '../../../components/CopyPrompt.astro';
 import References from '../../../components/References.astro';
-import prompt from './prompt.en.md?raw';
 
 A coding agent is a language model with tools to read files, edit them and run commands. Around it sits a program that executes those tools and hands the result back. That is the difference from a chat: a chat replies with text somebody has to apply, and an agent applies the change to the repository.
 
@@ -336,9 +334,15 @@ What each field does:
 - **`model`**: the model it uses; `inherit` takes the session's.
 - **The body**: its instructions, which replace the tool's own.
 
-A useful review splits across three subagents with one question each. The **security** one asks whether the change lets someone do or see what they should not. The **quality** one, whether it will hold up. The **tests** one, whether the tests would fail if the code they claim to defend broke. A single reviewer with all three questions splits its attention and returns a long list of minor warnings.
+A useful review splits across three subagents with one question each. The **security** one asks whether the change lets someone do or see what they should not. The **quality** one, whether the change leaves the code better or worse: duplication, imports, structure. The **tests** one is the routine: it runs the suite, types and linter, measures whether the tests would fail if the code broke, and runs whatever the security one needs checked. A single reviewer with all three questions splits its attention and returns a long list of minor warnings.
 
-What separates a useful reviewer from a noisy one is what it demands of each finding. Two public MIT-licensed repositories write it down. Cloudflare's does not accept a security finding without naming who crosses which trust boundary and what concrete result follows, and gives severity only to what is confirmed<Cite n={14} />. ECC's requires citing the exact line, naming the input that triggers the failure, reading the code's callers, and accepting that a review with no findings is valid<Cite n={15} />.
+What separates a useful reviewer from a noisy one is what it demands of each finding, and several public sources write it down. Cloudflare's audit guide does not accept a security finding without naming who crosses which trust boundary and what concrete result follows, and gives severity only to what is confirmed<Cite n={14} />. Anthropic's security reviewer only reports what it holds with more than 80% confidence, and explicitly discards categories that tend to be noise<Cite n={15} />. ECC requires citing the exact line, reading the code's callers and accepting that a review with no findings is valid<Cite n={16} />. Google's review guide asks reviewers not to accept changes that degrade the code health of the system<Cite n={17} />.
+
+Each subagent spends tokens on its own model, and the `model` field decides which. If neither the call nor the definition sets it, Claude Code uses the model in the `CLAUDE_CODE_SUBAGENT_MODEL` variable and, without it, the main conversation's model<Cite n={13} repeat />. That is usually the most expensive one. A reviewer that searches files does not need the same model as one that reasons about authorisation, so each definition sets its own.
+
+Several subagents editing the same directory at once trip over each other. Git worktrees prevent it: each subagent works in another directory on its own branch, and the main agent merges the branches one at a time. In Claude Code it is switched on with `isolation: worktree` in the subagent's definition, and by default the worktree starts from the remote's default branch, not the current one<Cite n={18} />.
+
+A workflow takes the same idea to another scale: a script that launches dozens of subagents in stages. Claude Code warns when one schedules more than 25 agents, and accepts a size guideline that aims for fewer than 5, 10 or 50<Cite n={19} />.
 
 **How to do it.**
 
@@ -350,22 +354,22 @@ What separates a useful reviewer from a noisy one is what it demands of each fin
 
 ## 11. Plugins install what someone else already wrote
 
-A **plugin** is an installable package that bundles skills, agents, *hooks* and MCP servers<Cite n={16} />. **MCP**, short for Model Context Protocol, is an open protocol for connecting a model to external data sources and tools<Cite n={5} repeat />. An MCP server adds new tools to the agent, for Slack, Jira, a database or a browser.
+A **plugin** is an installable package that bundles skills, agents, *hooks* and MCP servers<Cite n={20} />. **MCP**, short for Model Context Protocol, is an open protocol for connecting a model to external data sources and tools<Cite n={5} repeat />. An MCP server adds new tools to the agent, for Slack, Jira, a database or a browser.
 
-Plugins are distributed through catalogues called *marketplaces*. Anthropic's official one, `claude-plugins-official`, is registered the first time an interactive session opens, so installing from it takes a single command<Cite n={16} repeat />:
+Plugins are distributed through catalogues called *marketplaces*. Anthropic's official one, `claude-plugins-official`, is registered the first time an interactive session opens, so installing from it takes a single command<Cite n={20} repeat />:
 
 ```shell
 /plugin install commit-commands@claude-plugins-official
 ```
 
-`commit-commands` is the plugin's name, which adds commands for committing, pushing and opening pull requests, and what follows `@` is the catalogue it comes from. A third-party catalogue is registered first with `/plugin marketplace add <owner>/<repo>`, which installs nothing<Cite n={16} repeat />. `/plugin` with no arguments opens the panel of catalogues, installed plugins and load errors, and `/mcp` manages connections to MCP servers<Cite n={17} />.
+`commit-commands` is the plugin's name, which adds commands for committing, pushing and opening pull requests, and what follows `@` is the catalogue it comes from. A third-party catalogue is registered first with `/plugin marketplace add <owner>/<repo>`, which installs nothing<Cite n={20} repeat />. `/plugin` with no arguments opens the panel of catalogues, installed plugins and load errors, and `/mcp` manages connections to MCP servers<Cite n={21} />.
 
-Before installing, each plugin's details show two things. **Context cost** is what it adds to every message, and what its skills and agents add once loaded. **Will install** lists the commands, agents, skills, *hooks* and servers it brings<Cite n={16} repeat />. The first is paid in every session, including the ones that never use the plugin.
+Before installing, each plugin's details show two things. **Context cost** is what it adds to every message, and what its skills and agents add once loaded. **Will install** lists the commands, agents, skills, *hooks* and servers it brings<Cite n={20} repeat />. The first is paid in every session, including the ones that never use the plugin.
 
-Code intelligence plugins connect a language server, the technology that gives an editor go-to-definition. With one installed, the agent sees the type errors its own edits introduce before any build. The plugin does not include the server, which is installed separately<Cite n={18} />.
+Code intelligence plugins connect a language server, the technology that gives an editor go-to-definition. With one installed, the agent sees the type errors its own edits introduce before any build. The plugin does not include the server, which is installed separately<Cite n={22} />.
 
 <Callout kind="riesgo" title="A plugin runs code with the permissions of whoever installs it">
-	The documentation states it without qualification: an installed plugin can execute arbitrary code on the machine with the user's privileges. Anthropic adds that it does not control what servers, files or other software a plugin includes, and cannot verify that it works as intended<Cite n={19} />. Before installing a third-party plugin, open its repository and read what it brings.
+	The documentation states it without qualification: an installed plugin can execute arbitrary code on the machine with the user's privileges. Anthropic adds that it does not control what servers, files or other software a plugin includes, and cannot verify that it works as intended<Cite n={23} />. Before installing a third-party plugin, open its repository and read what it brings.
 </Callout>
 
 **How to check it.** Run `/context` before and after installing. A plugin that adds context every turn and never gets used gets uninstalled.
@@ -384,9 +388,9 @@ The first is set by **permission modes**, cycled with `Shift+Tab` and shown in t
 | `auto` | Approves tool calls with background safety checks. |
 | `bypassPermissions` | Skips permission prompts. |
 
-The last one is what gets switched on the first day to stop answering questions. Its documentation restricts it to isolated environments, containers or virtual machines where the agent cannot cause damage<Cite n={20} />.
+The last one is what gets switched on the first day to stop answering questions. Its documentation restricts it to isolated environments, containers or virtual machines where the agent cannot cause damage<Cite n={24} />.
 
-The second matters because the agent sends the content of the files it reads to the provider's server, and a `.env` with credentials goes out in that request like any code. The exclusion is declared in `.claude/settings.json`<Cite n={21} />:
+The second matters because the agent sends the content of the files it reads to the provider's server, and a `.env` with credentials goes out in that request like any code. The exclusion is declared in `.claude/settings.json`<Cite n={25} />:
 
 ```json
 {
@@ -402,11 +406,11 @@ The second matters because the agent sends the content of the files it reads to 
 File is in a directory that is denied by your permission settings.
 ```
 
-The rule also reaches shell commands that name the file, such as `cat .env` or `head .env`. It does not reach a script that opens the file itself, such as a Node or Python program<Cite n={20} repeat />.
+The rule also reaches shell commands that name the file, such as `cat .env` or `head .env`. It does not reach a script that opens the file itself, such as a Node or Python program<Cite n={24} repeat />.
 
-Cursor starts from a different place. It ignores what `.gitignore` lists plus a built-in list that includes `.env*` by default, and anything else is excluded in `.cursorignore`. The same documentation notes that the agent's terminal and external tools cannot block access to what that file covers<Cite n={22} />.
+Cursor starts from a different place. It ignores what `.gitignore` lists plus a built-in list that includes `.env*` by default, and anything else is excluded in `.cursorignore`. The same documentation notes that the agent's terminal and external tools cannot block access to what that file covers<Cite n={26} />.
 
-In both tools the exclusion lives in configuration, not in the instructions file. Permission rules are enforced by the tool, not the model<Cite n={20} repeat />, so a line in `AGENTS.md` saying "do not read `.env`" does not change what the tool allows.
+In both tools the exclusion lives in configuration, not in the instructions file. Permission rules are enforced by the tool, not the model<Cite n={24} repeat />, so a line in `AGENTS.md` saying "do not read `.env`" does not change what the tool allows.
 
 One cost decision remains: which model the session uses. It changes with `/model`, and the documentation recommends starting with Sonnet, which handles most coding tasks well and costs less than Opus<Cite n={6} repeat />.
 
@@ -428,7 +432,7 @@ git diff --stat
  2 files changed, 13 insertions(+), 1 deletion(-)
 ```
 
-The session had also created `src/util/date.js`. `git diff` with no arguments compares the working tree with the index, the area where the next commit's changes are staged<Cite n={23} />. A new file is not in the index yet, so it does not show up. Adding everything to the index before looking fixes the list:
+The session had also created `src/util/date.js`. `git diff` with no arguments compares the working tree with the index, the area where the next commit's changes are staged<Cite n={27} />. A new file is not in the index yet, so it does not show up. Adding everything to the index before looking fixes the list:
 
 ```bash
 git add -A && git diff --cached --stat
@@ -445,7 +449,7 @@ git add -A && git diff --cached --stat
 
 Three things get read before the rest. Files the request did not name. Deleted lines, because an agent rewriting a whole function can drop a check that was needed. And changes to configuration, the `Dockerfile` and continuous integration, which decide what runs outside the developer's machine.
 
-Building is not running either. A change can pass the linter and still not do what the request asked, so the last check is running the program along the path the change touches. `/diff` shows the same inside the session, including the agent's edits<Cite n={17} repeat />.
+Building is not running either. A change can pass the linter and still not do what the request asked, so the last check is running the program along the path the change touches. `/diff` shows the same inside the session, including the agent's edits<Cite n={21} repeat />.
 
 <Callout kind="riesgo" title="Discarding a whole session is two commands, and both delete">
 	`git reset --hard` returns everything git already tracks to the last committed state, and `git clean -fd` deletes the files that are not in the index yet. What they remove is not in the history, so it does not come back. Running them requires having checked first that your own work is already committed.
@@ -455,37 +459,31 @@ Building is not running either. A change can pass the linter and still not do wh
 
 ## 14. Set up the whole environment in one step
 
-Everything above can be built by hand, file by file. The prompt below has the agent do it, in whichever tool receives it. Copy it with the button, paste it into a session opened at the project root, and the agent follows seven phases:
+Everything above can be built by hand, file by file. There is a prompt that has the agent do it, in whichever tool receives it. Copy it with the **Copy prompt** button under **Set up environment**, paste it into a session opened at the project root, and the agent follows nine phases:
 
-1. **Surveys the project** without writing anything: its own tool and where it reads each file, the language, and the real test, lint, type and audit commands, which it runs once.
-2. **Proposes and waits**: presents the list of files it will create and stops until it gets confirmation.
-3. **Writes `AGENTS.md`** with the checked commands, plus its own tool's file only if one is needed to import it.
+1. **Surveys the project** without writing anything: its tool, the models it offers sorted into three tiers, the language, the real test, lint, type and audit commands, and how the project authenticates and authorises.
+2. **Proposes and waits**: presents the files it will create and the model for each subagent, and stops until it gets confirmation.
+3. **Writes `AGENTS.md`** with the checked commands, the conventions and which skill to use in each situation.
 4. **Blocks reading secrets** with its tool's permission rule, and checks it by trying to read `.env`.
-5. **Creates three reviewers** as skills in the Agent Skills format, and as subagents if its tool supports them: security, quality and tests, with a shared contract for every finding.
-6. **Creates the `review-change` skill**, which runs the first two reviewers in parallel and the tests one last.
-7. **Checks and closes**: introduces a test bug, confirms the reviewer catches it, removes it and reports what was created.
+5. **Creates three method skills**: test first, debugging down to the root cause, and orchestrating subagents with the right number and the right model.
+6. **Creates three reviewers**. The security one carries a project context and nine per-domain checklists that it loads depending on what the change touches. The quality one focuses on duplication, imports and structure. The tests one is the routine that runs and measures.
+7. **Creates the `review-change` skill**, which runs security and quality in parallel, tests last, and composes the verdict.
+8. **Proposes optional settings**: the default subagent model, the workflow size, the base branch for worktrees, and two hooks.
+9. **Checks and closes**: introduces one flaw per reviewer on a temporary branch, confirms each reviewer catches its own, and deletes the branch.
 
-The prompt installs no dependencies or plugins, switches on no permission-skipping mode, and does not touch application code.
-
-<CopyPrompt
-	prompt={prompt}
-	label="Copy prompt"
-	copiedLabel="Copied to the clipboard."
-	errorLabel="Could not copy. The text is selected below: Ctrl+C or Cmd+C."
-	summary="Show the full prompt"
-/>
+The prompt does not touch application code. If during setup the agent finds it needs to install a dependency, plugin or MCP server, it first proposes it with its source and reason, and waits for confirmation.
 
 <Callout kind="riesgo" title="A prompt that creates files is read before it is pasted">
-	This prompt asks the agent to run the project's commands and write configuration files. The full text is in the panel above, and it is exactly what the button copies. Phase 2 makes the agent stop before writing: if it carries on without asking, interrupt it with `Esc`.
+	This prompt asks the agent to run the project's commands and write configuration files. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Phase 2 makes the agent stop before writing: if it carries on without asking, interrupt it with `Esc`.
 </Callout>
 
-The three reviewers adapt ideas from two public MIT-licensed repositories: `cloudflare/security-audit-skill`<Cite n={14} repeat /> and `affaan-m/ECC`<Cite n={15} repeat />. The credits travel inside the prompt and are copied into every reviewer file it generates.
+The reviewers and method skills adapt ideas from seven public sources. For security, Cloudflare's audit guide<Cite n={14} repeat />, Anthropic's reviewer<Cite n={15} repeat /> and Trail of Bits' skills<Cite n={28} />. For quality, tests and method, Anthropic's official review plugins<Cite n={29} />, ECC<Cite n={16} repeat />, Google's review guide<Cite n={17} repeat /> and Superpowers<Cite n={30} />. From the CC BY-SA sources, ideas are taken, not text.
 
 **How to check it.** New skills and subagents register when a session opens, so close it and open it again. Then `/review-change` appears on typing `/` and reading `.env` returns the block. `git status --porcelain` shows only the files the agent proposed in phase 2.
 
 ## The commands used from day one
 
-They are typed inside the session, and `/help` lists the rest<Cite n={17} repeat />.
+They are typed inside the session, and `/help` lists the rest<Cite n={21} repeat />.
 
 | Command | What it does | When to use it |
 |---|---|---|
@@ -515,11 +513,11 @@ Four keyboard shortcuts are the ones that matter<Cite n={3} repeat />.
 
 ## What to expect from the results
 
-Perceived speed and measured speed do not match, and one experiment separated the two. METR randomly assigned 246 tasks to allow or disallow AI tools. The 16 participants were developers on mature open-source projects, averaging five years on those same repositories. Before starting, they forecast finishing 24% faster with the tools. After the study they estimated they had finished 20% faster. The measurement gave the opposite: 19% more time<Cite n={24} />.
+Perceived speed and measured speed do not match, and one experiment separated the two. METR randomly assigned 246 tasks to allow or disallow AI tools. The 16 participants were developers on mature open-source projects, averaging five years on those same repositories. Before starting, they forecast finishing 24% faster with the tools. After the study they estimated they had finished 20% faster. The measurement gave the opposite: 19% more time<Cite n={31} />.
 
 That result describes expert developers on code they already knew, with the tools of the first half of 2025, and it does not transfer to every other situation. What does transfer is the distance between the three figures: the impression of having moved faster is not enough to decide whether you did.
 
-The 2025 Stack Overflow survey, with 49,009 responses from 177 countries, measures the difficulty across a far wider population. The most cited frustration with AI tools, at 66%, is a solution that is «almost right, but not quite». Another 45.2% add that debugging generated code takes more time<Cite n={25} />.
+The 2025 Stack Overflow survey, with 49,009 responses from 177 countries, measures the difficulty across a far wider population. The most cited frustration with AI tools, at 66%, is a solution that is «almost right, but not quite». Another 45.2% add that debugging generated code takes more time<Cite n={32} />.
 
 Both figures point the same way. An almost-correct result compiles and reads well, so the work shifts from writing to checking. The time saved writing is lost again when there is no cheap check to run.
 
@@ -610,7 +608,7 @@ The second is how to get the review to run on every change by itself instead of 
 		{
 			source: 'Claude Code',
 			title: 'Subagents',
-			note: 'locations, header fields, isolated context and invocation with @agent',
+			note: 'locations, header fields, the order in which the model is chosen, isolated context and invocation with @agent',
 			url: 'https://code.claude.com/docs/en/sub-agents'
 		},
 		{
@@ -620,10 +618,34 @@ The second is how to get the review to run on every change by itself instead of 
 			url: 'https://github.com/cloudflare/security-audit-skill'
 		},
 		{
+			source: 'Anthropic',
+			title: 'claude-code-security-review',
+			note: 'MIT licence; per-change security review, confidence threshold and rules for discarding false positives',
+			url: 'https://github.com/anthropics/claude-code-security-review'
+		},
+		{
 			source: 'Affaan Mustafa',
 			title: 'ECC',
 			note: 'MIT licence; code-reviewer, security-reviewer, silent-failure-hunter and tdd-guide agents',
 			url: 'https://github.com/affaan-m/ECC'
+		},
+		{
+			source: 'Google',
+			title: 'Engineering Practices: What to look for in a code review',
+			note: 'CC BY 3.0 licence; design, complexity, tests, naming, comments, consistency and code health',
+			url: 'https://google.github.io/eng-practices/review/reviewer/looking-for.html'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Run parallel sessions with worktrees',
+			note: 'subagent isolation with isolation: worktree and the default base branch',
+			url: 'https://code.claude.com/docs/en/worktrees'
+		},
+		{
+			source: 'Claude Code',
+			title: 'Orchestrate subagents at scale with dynamic workflows',
+			note: 'warning above 25 agents and the workflow size guideline',
+			url: 'https://code.claude.com/docs/en/workflows'
 		},
 		{
 			source: 'Claude Code',
@@ -671,6 +693,24 @@ The second is how to get the review to run on every change by itself instead of 
 			source: 'Git',
 			title: 'git-diff',
 			url: 'https://git-scm.com/docs/git-diff'
+		},
+		{
+			source: 'Trail of Bits',
+			title: 'skills',
+			note: 'CC BY-SA 4.0 licence; ideas taken, not text, from differential-review, fp-check and mutation-testing',
+			url: 'https://github.com/trailofbits/skills'
+		},
+		{
+			source: 'Anthropic',
+			title: 'claude-plugins-official, pr-review-toolkit plugin',
+			note: 'Apache 2.0 licence; code review, silent failures, type design, comments and test coverage',
+			url: 'https://github.com/anthropics/claude-plugins-official/tree/main/plugins/pr-review-toolkit'
+		},
+		{
+			source: 'Jesse Vincent',
+			title: 'Superpowers',
+			note: 'MIT licence; test first, systematic debugging, verification before completion and receiving a review',
+			url: 'https://github.com/obra/superpowers'
 		},
 		{
 			source: 'Becker, J., Rush, N., Barnes, E. and Rein, D.',

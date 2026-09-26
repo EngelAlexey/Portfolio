@@ -1,6 +1,7 @@
 ---
 import AreaChip from '../AreaChip.astro';
 import Layout from '../../layouts/Layout.astro';
+import PromptRail from '../PromptRail.astro';
 import Prose from '../Prose.astro';
 import Toc from '../Toc.astro';
 import { accentStyle } from '../../lib/areas';
@@ -32,6 +33,14 @@ const address = (url: string): string => {
 };
 
 const minutes = strings.blog.minutes(readingMinutes(article));
+
+// Un articulo con prompt.<idioma>.md en su carpeta lleva el boton que lo copia.
+const prompts = import.meta.glob<string>('/src/content/articles/*/prompt.*.md', {
+	query: '?raw',
+	import: 'default',
+	eager: true
+});
+const prompt = prompts[`/src/content/articles/${meta.slug}/prompt.${lang}.md`]?.trim();
 ---
 
 <Layout
@@ -117,6 +126,21 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 
 		<Toc label={strings.article.toc} {headings} />
 
+		{
+			prompt && (
+				<PromptRail
+					{prompt}
+					title={strings.article.promptTitle}
+					copy={strings.article.promptCopy}
+					copied={strings.article.promptCopied}
+					copiedStatus={strings.article.promptCopiedStatus}
+					error={strings.article.promptError}
+					view={strings.article.promptView}
+					close={strings.article.promptClose}
+				/>
+			)
+		}
+
 		<div class="body-zone">
 			<Prose>
 				<Content />
@@ -186,6 +210,16 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 		margin-inline: auto;
 	}
 
+	/* Sin margenes laterales, el indice y el boton del prompt caen en la columna
+	   del texto y se alinean con ella, no con el borde de la pagina. */
+	@media (max-width: 79.99rem) {
+		.articulo > :global(.toc),
+		.articulo > :global(.prompt-rail) {
+			max-width: 48rem;
+			margin-inline: auto;
+		}
+	}
+
 	/* Tres columnas con los margenes iguales, para que el texto quede centrado
 	   en la pagina y no el conjunto de texto mas indice. El indice vive en el
 	   margen izquierdo, pegado al texto. Por debajo de este ancho no hay margen
@@ -214,6 +248,13 @@ const minutes = strings.blog.minutes(readingMinutes(article));
 			grid-row: 2;
 			justify-self: end;
 			max-width: 11rem;
+		}
+
+		.articulo > :global(.prompt-rail) {
+			grid-column: 3;
+			grid-row: 2;
+			justify-self: start;
+			width: 11rem;
 		}
 	}
 
