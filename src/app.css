@@ -516,38 +516,96 @@ body {
    importado desde un .mdx no recibe su CSS con ambito. */
 .cors-sim {
 	margin: 1.75rem 0;
-	padding: 1.1rem 1.15rem 0.9rem;
+	padding: 1.1rem 1.15rem 1rem;
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
 	background: var(--paper-sunken);
 }
 
+.cors-sim p {
+	margin: 0;
+}
+
 .cors-sim .cors-sim-titulo {
-	margin: 0 0 0.3rem;
-	font-size: 0.9375rem;
+	font-size: 1rem;
 	font-weight: 600;
 	color: var(--ink);
 }
 
-.cors-sim .cors-sim-intro,
-.cors-sim .cors-sim-pie {
-	margin: 0 0 0.9rem;
-	font-size: 0.875rem;
-	line-height: 1.55;
+.cors-sim .cors-sim-intro {
+	margin: 0.3rem 0 1rem;
+	font-size: 0.9375rem;
+	line-height: 1.6;
 	color: var(--ink-muted);
 }
 
-.cors-sim .cors-sim-pie {
-	margin: 0.9rem 0 0;
+.cors-sim .cors-sim-etiqueta {
+	margin: 0 0 0.45rem;
 	font-size: 0.8125rem;
-	color: var(--ink-faint);
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.cors-sim-casos {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.cors-sim-caso {
+	padding: 0.35rem 0.7rem;
+	border: 1px solid var(--line-strong);
+	border-radius: 999px;
+	background: var(--surface);
+	color: var(--ink);
+	font: inherit;
+	font-size: 0.8125rem;
+	cursor: pointer;
+}
+
+.cors-sim-caso:hover {
+	border-color: var(--ink-faint);
+}
+
+.cors-sim-caso[aria-pressed='true'] {
+	border-color: var(--action);
+	background: var(--action);
+	color: var(--action-ink);
+}
+
+.cors-sim-caso:focus-visible,
+.cors-sim-opciones summary:focus-visible,
+.cors-sim-campo select:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+.cors-sim .cors-sim-mirar {
+	margin: 0.7rem 0 0.8rem;
+	font-size: 0.9375rem;
+	line-height: 1.6;
+	color: var(--ink);
+}
+
+.cors-sim-opciones {
+	margin-bottom: 1rem;
+	border-top: 1px solid var(--line);
+	padding-top: 0.6rem;
+}
+
+.cors-sim-opciones summary {
+	width: fit-content;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--ink-muted);
+	cursor: pointer;
 }
 
 .cors-sim-campos {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 	gap: 0.65rem 0.9rem;
-	margin-bottom: 1rem;
+	margin-top: 0.7rem;
 }
 
 .cors-sim-campo {
@@ -571,35 +629,62 @@ body {
 	font-size: 0.875rem;
 }
 
-.cors-sim-campo select:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
 .cors-sim-campo select:disabled {
 	opacity: 0.5;
 }
 
-.cors-sim-paso {
-	margin-top: 0.85rem;
+.cors-sim-veredicto {
+	margin-bottom: 1.1rem;
+	padding: 0.75rem 0.9rem;
+	border: 1px solid var(--line);
+	border-left: 3px solid var(--line-strong);
+	border-radius: var(--radius-sm);
+	background: var(--paper);
+}
+
+.cors-sim-veredicto[data-tipo='riesgo'] {
+	border-left-color: var(--area-seguridad-fg);
+}
+
+.cors-sim-veredicto[data-tipo='correccion'] {
+	border-left-color: var(--area-infra-fg);
+}
+
+.cors-sim .cors-sim-pregunta {
+	font-size: 0.8125rem;
+	color: var(--ink-faint);
+}
+
+.cors-sim .cors-sim-respuesta {
+	margin: 0.2rem 0 0;
+	font-size: 0.9375rem;
+	font-weight: 500;
+	line-height: 1.55;
+	color: var(--ink);
+}
+
+.cors-sim-veredicto[data-tipo='riesgo'] .cors-sim-respuesta {
+	color: var(--area-seguridad-fg);
+}
+
+.cors-sim-veredicto .cors-sim-sub {
+	margin-top: 0.6rem;
 }
 
 .cors-sim .cors-sim-paso-titulo {
-	margin: 0 0 0.35rem;
+	margin: 0.9rem 0 0.35rem;
 	font-size: 0.8125rem;
 	font-weight: 600;
 	color: var(--ink);
 }
 
-.cors-sim .cors-sim-paso p,
-.cors-sim .cors-sim-sub {
-	margin: 0 0 0.35rem;
+.cors-sim .cors-sim-texto {
 	font-size: 0.875rem;
-	line-height: 1.55;
 	color: var(--ink-muted);
 }
 
 .cors-sim .cors-sim-sub {
+	margin-bottom: 0.3rem;
 	font-size: 0.75rem;
 	color: var(--ink-faint);
 }
@@ -624,23 +709,8 @@ body {
 	color: var(--ink);
 }
 
-.cors-sim .cors-sim-nota {
-	margin: 1rem 0 0;
-	padding: 0.55rem 0.8rem;
-	border-left: 2px solid var(--line-strong);
-	font-size: 0.875rem;
-	line-height: 1.55;
-	color: var(--ink);
-}
-
-.cors-sim .cors-sim-nota[data-tipo='riesgo'] {
-	border-left-color: var(--area-seguridad-fg);
-	color: var(--area-seguridad-fg);
-}
-
-.cors-sim .cors-sim-nota[data-tipo='correccion'] {
-	border-left-color: var(--area-infra-fg);
-	color: var(--area-infra-fg);
+.cors-sim-salida > .cors-sim-pre {
+	margin-bottom: 0.2rem;
 }
 
 

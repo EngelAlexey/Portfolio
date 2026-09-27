@@ -295,21 +295,11 @@ En la API de ejemplo con el origen reflejado, las tres primeras peticiones devol
 
 ## 9. Cómo probar cada configuración desde esta página
 
-El simulador reproduce la API de las mediciones con las seis configuraciones de los puntos anteriores. No envía peticiones: muestra lo que hizo Chrome 153 en cada caso. Cada una de las 720 combinaciones se comparó con una ejecución real antes de publicarlo.
+El simulador reúne los casos de los puntos 2 a 7. Pulse un caso y lea primero la respuesta a «¿Puede la página leer la respuesta?». Debajo aparece lo que envía el navegador y lo que responde el servidor en cada petición.
 
-Para cada combinación muestra tres pasos:
-
-1. la petición previa, si hace falta;
-2. la petición real, con las cabeceras que envía el navegador y las que devuelve el servidor;
-3. lo que decide el navegador, con el mensaje literal de la consola.
+En «Opciones» puede cambiar cada parte por separado, como la web que hace la petición o cómo responde el servidor.
 
 <CorsSimulator lang="es" />
-
-**Cómo hacerlo.** Pruebe estas tres combinaciones, que resumen el artículo:
-
-1. Con «Refleja el Origin con credenciales», la página `http://127.0.0.1:8080` y la cookie `SameSite=Lax`, la API responde `401`. Cambie la cookie a `SameSite=None; Secure`: la página lee el perfil de la víctima.
-2. Con «Lista con Allow-Credentials», la página `http://localhost:8080` y un `POST` con texto plano, el navegador bloquea la respuesta, pero el pedido queda guardado.
-3. Con «Lista de orígenes permitidos», la página `http://localhost:5173`, un `PUT` con JSON y sin cookies, la petición previa no autoriza el método. El `PUT` no llega a enviarse.
 
 ## 10. Cómo configurar CORS en su proyecto con un prompt
 

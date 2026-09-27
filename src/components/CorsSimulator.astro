@@ -1,197 +1,307 @@
 ---
 // Simulador de CORS para el articulo que-es-cors. La logica vive en src/lib/cors-simulador.ts
-// y se contrasto con Chrome 153 caso por caso. Los estilos estan en src/app.css (.cors-sim),
-// porque un componente importado desde un .mdx no recibe su CSS con ambito.
+// y se contrasto con Chrome 153 caso por caso (fuera del articulo: scratchpad de la sesion).
+// Los estilos estan en src/app.css (.cors-sim), porque un componente importado desde un .mdx
+// no recibe su CSS con ambito.
 interface Props {
 	lang: 'es' | 'en';
 }
 
 const { lang } = Astro.props;
 
+type Caso = {
+	id: string;
+	nombre: string;
+	mirar: string;
+	valores: Record<string, string>;
+};
+
 const T = {
 	es: {
-		titulo: 'Pruebe una petición',
+		titulo: 'Simulador de CORS',
 		intro:
-			'La API de ejemplo está en http://localhost:3000. Devuelve el perfil o guarda el pedido si recibe la cookie de sesión, y responde 401 si no la recibe.',
-		pagina: 'Página que hace la petición',
-		paginas: {
-			'http://localhost:5173': 'http://localhost:5173 (origen permitido)',
-			'http://localhost:8080': 'http://localhost:8080 (otro origen, mismo sitio)',
-			'http://127.0.0.1:8080': 'http://127.0.0.1:8080 (otro origen y otro sitio)'
+			'Su frontend está en http://localhost:5173 y su API en http://localhost:3000. La API devuelve el perfil o guarda un pedido solo si recibe la cookie de sesión.',
+		casosTitulo: 'Elija un caso',
+		propio: 'Combinación propia: cambie las opciones y mire el resultado.',
+		opcionesTitulo: 'Opciones',
+		campos: {
+			pagina: 'Desde qué web se hace la petición',
+			peticion: 'Qué pide la página',
+			credenciales: '¿Envía la cookie de sesión?',
+			modo: 'Modo de fetch',
+			config: 'Cómo responde el servidor',
+			cookie: 'Atributo SameSite de la cookie'
 		},
-		peticion: 'Petición',
-		peticiones: {
-			get: 'GET /perfil',
-			'post-texto': 'POST /pedido con texto plano',
-			'post-json': 'POST /pedido con JSON',
-			'put-json': 'PUT /pedido con JSON',
-			'get-auth': 'GET /perfil con Authorization'
+		opciones: {
+			pagina: {
+				'http://localhost:5173': 'Su frontend (http://localhost:5173)',
+				'http://localhost:8080': 'Otra web del mismo sitio (http://localhost:8080)',
+				'http://127.0.0.1:8080': 'Una web de otro sitio (http://127.0.0.1:8080)'
+			},
+			peticion: {
+				get: 'Leer el perfil (GET)',
+				'post-texto': 'Crear un pedido con texto (POST)',
+				'post-json': 'Crear un pedido con JSON (POST)',
+				'put-json': 'Cambiar un pedido con JSON (PUT)',
+				'get-auth': 'Leer el perfil con un token (GET + Authorization)'
+			},
+			credenciales: {
+				'same-origin': 'No (valor por defecto de fetch)',
+				include: "Sí: credentials: 'include'"
+			},
+			modo: { cors: 'Normal', 'no-cors': "mode: 'no-cors'" },
+			config: {
+				sin: 'Sin cabeceras CORS',
+				lista: 'Solo permite su frontend (punto 4)',
+				'lista-cred': 'Solo permite su frontend, con cookies (punto 6)',
+				comodin: 'Permite cualquier web: *',
+				reflejo: 'Devuelve el Origin que recibe, con cookies',
+				doble: 'Envía la cabecera dos veces'
+			},
+			cookie: { none: 'SameSite=None; Secure', lax: 'SameSite=Lax' }
 		},
-		credenciales: 'Cookies',
-		credencialesOpc: {
-			'same-origin': 'Sin cookies (valor por defecto)',
-			include: "credentials: 'include'"
-		},
-		modo: 'Modo',
-		modos: { cors: 'cors (valor por defecto)', 'no-cors': "mode: 'no-cors'" },
-		config: 'Configuración del servidor',
-		configs: {
-			sin: 'Sin cabeceras CORS',
-			lista: 'Lista de orígenes permitidos (punto 4)',
-			'lista-cred': 'Lista con Allow-Credentials (punto 6)',
-			comodin: 'Access-Control-Allow-Origin: *',
-			reflejo: 'Refleja el Origin con credenciales',
-			doble: 'Dos cabeceras Access-Control-Allow-Origin'
-		},
-		cookie: 'Cookie de sesión',
-		cookies: { none: 'SameSite=None; Secure', lax: 'SameSite=Lax' },
+		pregunta: '¿Puede la página leer la respuesta?',
+		si: 'Sí.',
+		no: 'No.',
+		opacaRes: 'No. Recibe una respuesta opaca: sin estado ni cuerpo.',
+		detalle: 'Qué viaja entre el navegador y el servidor',
 		codigo: 'Código de la página',
-		previa: 'Petición previa',
-		previaNo: 'No se envía: es una petición simple.',
-		real: 'Petición',
+		previa: '1. Petición previa (OPTIONS)',
+		previaNo: 'No hace falta: es una petición simple (punto 3).',
+		real: '2. Petición',
 		realNo: 'No se envía.',
-		enviada: 'Lo que envía el navegador',
-		recibida: 'Lo que responde el servidor',
-		sinCors: '(sin cabeceras CORS)',
-		conCookie: 'Cookie: sesión',
-		sinCookie: 'sin cookie',
-		sinOrigin: 'sin cabecera Origin',
-		navegador: 'Navegador',
-		leida: 'La página lee la respuesta.',
-		opaca: 'Respuesta opaca: la página no puede leer ni el estado ni el cuerpo.',
-		bloqueada: 'La página no puede leer la respuesta. La promesa se rechaza con',
-		consola: 'Consola de Chrome',
+		enviada: 'El navegador envía',
+		recibida: 'El servidor responde',
+		sinCors: '(ninguna cabecera CORS)',
+		conCookie: 'Cookie: sesion=…',
+		sinCookie: '(sin cookie)',
+		sinOrigin: '(sin cabecera Origin)',
+		consola: 'Error en la consola de Chrome',
 		estados: {
-			perfilOk: '200 con los datos del perfil',
-			pedidoOk: '200: pedido guardado',
-			sinSesion: '401: sin sesión',
+			perfilOk: '200: devuelve el perfil',
+			pedidoOk: '200: guarda el pedido',
+			sinSesion: '401: no hay sesión',
 			previa: '204'
 		},
 		notas: {
-			robo: 'Otro origen ha leído datos con la sesión de la víctima. Es el fallo del punto 6.',
-			csrf: 'El pedido se guardó con la sesión de la víctima aunque la página no pueda leer la respuesta. Es la base de CSRF (punto 7).',
-			llego: 'La petición llegó al servidor. El bloqueo ocurrió en el navegador.',
-			propioSinLeer: 'El pedido se guardó, pero la página no puede leer la respuesta.',
-			opaca: 'La petición llegó al servidor, pero la página solo recibe una respuesta opaca.',
-			noLlego: 'La petición real no llegó al servidor: la detuvo la petición previa.',
-			typeError: 'fetch falla antes de enviar nada.',
-			correcta: 'El origen permitido lee la respuesta.',
-			ajenoSinSesion: 'Otro origen lee la respuesta, pero sin la cookie de sesión la API solo devuelve 401.',
-			publica: 'Cualquier origen lee la respuesta. Solo es adecuado para datos públicos.'
+			robo: 'Otra web ha leído los datos del usuario con su sesión. Es el fallo del punto 6.',
+			csrf: 'El pedido se guardó con la sesión del usuario, aunque la otra web no pueda leer la respuesta. CORS no evita CSRF (punto 7).',
+			propioSinLeer: 'El pedido se guardó, pero su frontend no puede leer la respuesta.',
+			llego: 'La petición llegó al servidor. Fue el navegador el que no dejó leer la respuesta.',
+			noLlego: 'La petición previa falló, así que la petición real no llegó a enviarse.',
+			opaca: 'La petición llegó al servidor, pero la página no puede usar la respuesta.',
+			typeError: "fetch falla antes de enviar nada: ese método no está permitido en mode: 'no-cors'.",
+			correcta: 'Su frontend lee la respuesta.',
+			ajenoSinSesion: 'La otra web lee la respuesta, pero sin la cookie de sesión la API solo devuelve 401.',
+			publica: 'Cualquier web lee la respuesta. Solo es adecuado para datos públicos.'
 		},
-		pie: 'Simulación comprobada contra Chrome 153, en las 720 combinaciones posibles.'
+		casos: [
+			{
+				id: 'error',
+				nombre: 'El error de CORS',
+				mirar: 'El servidor recibe la petición y responde 200, pero no envía cabeceras CORS. El navegador no deja leer la respuesta.',
+				valores: { pagina: 'http://localhost:5173', peticion: 'get', credenciales: 'same-origin', modo: 'cors', config: 'sin', cookie: 'none' }
+			},
+			{
+				id: 'previa',
+				nombre: 'La petición previa',
+				mirar: 'Con JSON, el navegador pregunta antes con OPTIONS. Como el servidor no la contesta bien, el POST no llega a enviarse.',
+				valores: { pagina: 'http://localhost:5173', peticion: 'post-json', credenciales: 'same-origin', modo: 'cors', config: 'sin', cookie: 'none' }
+			},
+			{
+				id: 'correcta',
+				nombre: 'La configuración correcta',
+				mirar: 'El servidor solo permite su frontend y acepta cookies. La petición previa pasa y la página lee la respuesta.',
+				valores: { pagina: 'http://localhost:5173', peticion: 'post-json', credenciales: 'include', modo: 'cors', config: 'lista-cred', cookie: 'none' }
+			},
+			{
+				id: 'robo',
+				nombre: 'Otra web lee sus datos',
+				mirar: 'El servidor devuelve cualquier Origin con cookies. Una web ajena lee el perfil del usuario con su sesión.',
+				valores: { pagina: 'http://127.0.0.1:8080', peticion: 'get', credenciales: 'include', modo: 'cors', config: 'reflejo', cookie: 'none' }
+			},
+			{
+				id: 'lax',
+				nombre: 'SameSite=Lax lo frena',
+				mirar: 'El mismo servidor inseguro, pero la cookie es SameSite=Lax. Desde otro sitio la cookie no viaja y la API responde 401.',
+				valores: { pagina: 'http://127.0.0.1:8080', peticion: 'get', credenciales: 'include', modo: 'cors', config: 'reflejo', cookie: 'lax' }
+			},
+			{
+				id: 'csrf',
+				nombre: 'CORS no frena CSRF',
+				mirar: 'El servidor está bien configurado y la otra web no puede leer la respuesta. Aun así, el pedido se guarda con la sesión del usuario.',
+				valores: { pagina: 'http://localhost:8080', peticion: 'post-texto', credenciales: 'include', modo: 'cors', config: 'lista-cred', cookie: 'none' }
+			}
+		] as Caso[]
 	},
 	en: {
-		titulo: 'Try a request',
+		titulo: 'CORS simulator',
 		intro:
-			'The sample API is at http://localhost:3000. It returns the profile or saves the order if it receives the session cookie, and answers 401 if it does not.',
-		pagina: 'Page making the request',
-		paginas: {
-			'http://localhost:5173': 'http://localhost:5173 (allowed origin)',
-			'http://localhost:8080': 'http://localhost:8080 (other origin, same site)',
-			'http://127.0.0.1:8080': 'http://127.0.0.1:8080 (other origin and other site)'
+			'Your frontend is at http://localhost:5173 and your API at http://localhost:3000. The API returns the profile or saves an order only if it receives the session cookie.',
+		casosTitulo: 'Pick a case',
+		propio: 'Your own combination: change the options and look at the result.',
+		opcionesTitulo: 'Options',
+		campos: {
+			pagina: 'Which site makes the request',
+			peticion: 'What the page asks for',
+			credenciales: 'Does it send the session cookie?',
+			modo: 'fetch mode',
+			config: 'How the server answers',
+			cookie: 'Cookie SameSite attribute'
 		},
-		peticion: 'Request',
-		peticiones: {
-			get: 'GET /perfil',
-			'post-texto': 'POST /pedido with plain text',
-			'post-json': 'POST /pedido with JSON',
-			'put-json': 'PUT /pedido with JSON',
-			'get-auth': 'GET /perfil with Authorization'
+		opciones: {
+			pagina: {
+				'http://localhost:5173': 'Your frontend (http://localhost:5173)',
+				'http://localhost:8080': 'Another page on the same site (http://localhost:8080)',
+				'http://127.0.0.1:8080': 'A page on another site (http://127.0.0.1:8080)'
+			},
+			peticion: {
+				get: 'Read the profile (GET)',
+				'post-texto': 'Create an order with text (POST)',
+				'post-json': 'Create an order with JSON (POST)',
+				'put-json': 'Change an order with JSON (PUT)',
+				'get-auth': 'Read the profile with a token (GET + Authorization)'
+			},
+			credenciales: {
+				'same-origin': 'No (fetch default)',
+				include: "Yes: credentials: 'include'"
+			},
+			modo: { cors: 'Normal', 'no-cors': "mode: 'no-cors'" },
+			config: {
+				sin: 'No CORS headers',
+				lista: 'Only allows your frontend (section 4)',
+				'lista-cred': 'Only allows your frontend, with cookies (section 6)',
+				comodin: 'Allows any site: *',
+				reflejo: 'Returns the Origin it receives, with cookies',
+				doble: 'Sends the header twice'
+			},
+			cookie: { none: 'SameSite=None; Secure', lax: 'SameSite=Lax' }
 		},
-		credenciales: 'Cookies',
-		credencialesOpc: {
-			'same-origin': 'No cookies (default)',
-			include: "credentials: 'include'"
-		},
-		modo: 'Mode',
-		modos: { cors: 'cors (default)', 'no-cors': "mode: 'no-cors'" },
-		config: 'Server configuration',
-		configs: {
-			sin: 'No CORS headers',
-			lista: 'Allowlist of origins (section 4)',
-			'lista-cred': 'Allowlist with Allow-Credentials (section 6)',
-			comodin: 'Access-Control-Allow-Origin: *',
-			reflejo: 'Reflects the Origin with credentials',
-			doble: 'Two Access-Control-Allow-Origin headers'
-		},
-		cookie: 'Session cookie',
-		cookies: { none: 'SameSite=None; Secure', lax: 'SameSite=Lax' },
+		pregunta: 'Can the page read the response?',
+		si: 'Yes.',
+		no: 'No.',
+		opacaRes: 'No. It gets an opaque response: no status and no body.',
+		detalle: 'What travels between the browser and the server',
 		codigo: 'Page code',
-		previa: 'Preflight request',
-		previaNo: 'Not sent: it is a simple request.',
-		real: 'Request',
+		previa: '1. Preflight request (OPTIONS)',
+		previaNo: 'Not needed: it is a simple request (section 3).',
+		real: '2. Request',
 		realNo: 'Not sent.',
-		enviada: 'What the browser sends',
-		recibida: 'What the server answers',
+		enviada: 'The browser sends',
+		recibida: 'The server answers',
 		sinCors: '(no CORS headers)',
-		conCookie: 'Cookie: session',
-		sinCookie: 'no cookie',
-		sinOrigin: 'no Origin header',
-		navegador: 'Browser',
-		leida: 'The page reads the response.',
-		opaca: 'Opaque response: the page can read neither the status nor the body.',
-		bloqueada: 'The page cannot read the response. The promise rejects with',
-		consola: 'Chrome console',
+		conCookie: 'Cookie: sesion=…',
+		sinCookie: '(no cookie)',
+		sinOrigin: '(no Origin header)',
+		consola: 'Error in the Chrome console',
 		estados: {
-			perfilOk: '200 with the profile data',
-			pedidoOk: '200: order saved',
+			perfilOk: '200: returns the profile',
+			pedidoOk: '200: saves the order',
 			sinSesion: '401: no session',
 			previa: '204'
 		},
 		notas: {
-			robo: "Another origin has read data with the victim's session. This is the failure from section 6.",
-			csrf: "The order was saved with the victim's session even though the page cannot read the response. This is the basis of CSRF (section 7).",
-			llego: 'The request reached the server. The block happened in the browser.',
-			propioSinLeer: 'The order was saved, but the page cannot read the response.',
-			opaca: 'The request reached the server, but the page only gets an opaque response.',
-			noLlego: 'The real request never reached the server: the preflight request stopped it.',
-			typeError: 'fetch fails before sending anything.',
-			correcta: 'The allowed origin reads the response.',
-			ajenoSinSesion: 'Another origin reads the response, but without the session cookie the API only returns 401.',
-			publica: 'Any origin reads the response. This is only suitable for public data.'
+			robo: "Another site has read the user's data with their session. This is the failure from section 6.",
+			csrf: "The order was saved with the user's session, even though the other site cannot read the response. CORS does not prevent CSRF (section 7).",
+			propioSinLeer: 'The order was saved, but your frontend cannot read the response.',
+			llego: 'The request reached the server. It was the browser that did not let the page read the response.',
+			noLlego: 'The preflight request failed, so the real request was never sent.',
+			opaca: 'The request reached the server, but the page cannot use the response.',
+			typeError: "fetch fails before sending anything: that method is not allowed in mode: 'no-cors'.",
+			correcta: 'Your frontend reads the response.',
+			ajenoSinSesion: 'The other site reads the response, but without the session cookie the API only returns 401.',
+			publica: 'Any site reads the response. This is only suitable for public data.'
 		},
-		pie: 'Simulation checked against Chrome 153 in all 720 possible combinations.'
+		casos: [
+			{
+				id: 'error',
+				nombre: 'The CORS error',
+				mirar: 'The server receives the request and answers 200, but sends no CORS headers. The browser does not let the page read the response.',
+				valores: { pagina: 'http://localhost:5173', peticion: 'get', credenciales: 'same-origin', modo: 'cors', config: 'sin', cookie: 'none' }
+			},
+			{
+				id: 'previa',
+				nombre: 'The preflight request',
+				mirar: 'With JSON, the browser asks first with OPTIONS. Since the server does not answer it properly, the POST is never sent.',
+				valores: { pagina: 'http://localhost:5173', peticion: 'post-json', credenciales: 'same-origin', modo: 'cors', config: 'sin', cookie: 'none' }
+			},
+			{
+				id: 'correcta',
+				nombre: 'The correct configuration',
+				mirar: 'The server only allows your frontend and accepts cookies. The preflight request passes and the page reads the response.',
+				valores: { pagina: 'http://localhost:5173', peticion: 'post-json', credenciales: 'include', modo: 'cors', config: 'lista-cred', cookie: 'none' }
+			},
+			{
+				id: 'robo',
+				nombre: 'Another site reads your data',
+				mirar: "The server returns any Origin with cookies. A foreign site reads the user's profile with their session.",
+				valores: { pagina: 'http://127.0.0.1:8080', peticion: 'get', credenciales: 'include', modo: 'cors', config: 'reflejo', cookie: 'none' }
+			},
+			{
+				id: 'lax',
+				nombre: 'SameSite=Lax stops it',
+				mirar: 'The same insecure server, but the cookie is SameSite=Lax. From another site the cookie is not sent and the API answers 401.',
+				valores: { pagina: 'http://127.0.0.1:8080', peticion: 'get', credenciales: 'include', modo: 'cors', config: 'reflejo', cookie: 'lax' }
+			},
+			{
+				id: 'csrf',
+				nombre: 'CORS does not stop CSRF',
+				mirar: "The server is configured correctly and the other site cannot read the response. Even so, the order is saved with the user's session.",
+				valores: { pagina: 'http://localhost:8080', peticion: 'post-texto', credenciales: 'include', modo: 'cors', config: 'lista-cred', cookie: 'none' }
+			}
+		] as Caso[]
 	}
 }[lang];
 
-const campos = [
-	{ id: 'pagina', label: T.pagina, opciones: T.paginas, valor: 'http://localhost:8080' },
-	{ id: 'peticion', label: T.peticion, opciones: T.peticiones, valor: 'get' },
-	{ id: 'credenciales', label: T.credenciales, opciones: T.credencialesOpc, valor: 'include' },
-	{ id: 'modo', label: T.modo, opciones: T.modos, valor: 'cors' },
-	{ id: 'config', label: T.config, opciones: T.configs, valor: 'reflejo' },
-	{ id: 'cookie', label: T.cookie, opciones: T.cookies, valor: 'none' }
-] as const;
+const nombresCampos = ['pagina', 'peticion', 'credenciales', 'modo', 'config', 'cookie'] as const;
+const inicial = T.casos[0];
 ---
 
 <section class="cors-sim" data-textos={JSON.stringify(T)} aria-labelledby={`cors-sim-titulo-${lang}`}>
 	<p class="cors-sim-titulo" id={`cors-sim-titulo-${lang}`}>{T.titulo}</p>
 	<p class="cors-sim-intro">{T.intro}</p>
-	<form class="cors-sim-campos" onsubmit="return false">
+
+	<p class="cors-sim-etiqueta">{T.casosTitulo}</p>
+	<div class="cors-sim-casos" role="group" aria-label={T.casosTitulo}>
 		{
-			campos.map((c) => (
-				<label class="cors-sim-campo">
-					<span>{c.label}</span>
-					<select name={c.id}>
-						{Object.entries(c.opciones).map(([valor, texto]) => (
-							<option value={valor} selected={valor === c.valor}>
-								{texto}
-							</option>
-						))}
-					</select>
-				</label>
+			T.casos.map((c, i) => (
+				<button type="button" class="cors-sim-caso" data-caso={c.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+					{c.nombre}
+				</button>
 			))
 		}
-	</form>
+	</div>
+	<p class="cors-sim-mirar">{inicial.mirar}</p>
+
+	<details class="cors-sim-opciones">
+		<summary>{T.opcionesTitulo}</summary>
+		<form class="cors-sim-campos" onsubmit="return false">
+			{
+				nombresCampos.map((n) => (
+					<label class="cors-sim-campo">
+						<span>{T.campos[n]}</span>
+						<select name={n}>
+							{Object.entries(T.opciones[n]).map(([valor, texto]) => (
+								<option value={valor} selected={valor === inicial.valores[n]}>
+									{texto}
+								</option>
+							))}
+						</select>
+					</label>
+				))
+			}
+		</form>
+	</details>
+
 	<div class="cors-sim-salida" aria-live="polite"></div>
-	<p class="cors-sim-pie">{T.pie}</p>
 </section>
 
 <script>
 	import { simular, type Entrada, type Resultado, type Envio } from '../lib/cors-simulador';
 
+	const CAMPOS = ['pagina', 'peticion', 'credenciales', 'modo', 'config', 'cookie'] as const;
 	const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	const pre = (s: string) => `<pre class="cors-sim-pre">${esc(s)}</pre>`;
 
 	function cabeceras(h: Record<string, string>, vacio: string): string {
 		const filas = Object.entries(h).map(([k, v]) => `${k}: ${v}`);
@@ -200,24 +310,24 @@ const campos = [
 
 	function codigo(e: Entrada): string {
 		const ruta = e.peticion.startsWith('get') ? '/perfil' : '/pedido';
-		const opciones: string[] = [];
-		const metodo = e.peticion === 'put-json' ? 'PUT' : e.peticion.startsWith('post') ? 'POST' : null;
-		if (metodo) opciones.push(`method: '${metodo}'`);
-		if (e.peticion === 'post-texto') opciones.push(`headers: { 'Content-Type': 'text/plain' }`, `body: 'hola'`);
+		const o: string[] = [];
+		if (e.peticion === 'put-json') o.push(`method: 'PUT'`);
+		if (e.peticion.startsWith('post')) o.push(`method: 'POST'`);
+		if (e.peticion === 'post-texto') o.push(`headers: { 'Content-Type': 'text/plain' }`, `body: 'hola'`);
 		if (e.peticion === 'post-json' || e.peticion === 'put-json')
-			opciones.push(`headers: { 'Content-Type': 'application/json' }`, `body: '{"a":1}'`);
-		if (e.peticion === 'get-auth') opciones.push(`headers: { Authorization: 'Bearer …' }`);
-		if (e.credenciales === 'include') opciones.push(`credentials: 'include'`);
-		if (e.modo === 'no-cors') opciones.push(`mode: 'no-cors'`);
-		const args = opciones.length ? `, {\n  ${opciones.join(',\n  ')}\n}` : '';
+			o.push(`headers: { 'Content-Type': 'application/json' }`, `body: '{"a":1}'`);
+		if (e.peticion === 'get-auth') o.push(`headers: { Authorization: 'Bearer …' }`);
+		if (e.credenciales === 'include') o.push(`credentials: 'include'`);
+		if (e.modo === 'no-cors') o.push(`mode: 'no-cors'`);
+		const args = o.length ? `, {\n  ${o.join(',\n  ')}\n}` : '';
 		return `// ${e.pagina}\nawait fetch('http://localhost:3000${ruta}'${args});`;
 	}
 
 	function envio(v: Envio, T: any): string {
-		const lineas = [`${v.metodo} ${v.ruta}`, v.origin ? `Origin: ${v.origin}` : `(${T.sinOrigin})`];
-		for (const [k, val] of Object.entries(v.cabeceras)) lineas.push(`${k}: ${val}`);
-		if (v.metodo !== 'OPTIONS') lineas.push(v.cookie ? T.conCookie : `(${T.sinCookie})`);
-		return lineas.join('\n');
+		const l = [`${v.metodo} ${v.ruta}`, v.origin ? `Origin: ${v.origin}` : T.sinOrigin];
+		for (const [k, val] of Object.entries(v.cabeceras)) l.push(`${k}: ${val}`);
+		if (v.metodo !== 'OPTIONS') l.push(v.cookie ? T.conCookie : T.sinCookie);
+		return l.join('\n');
 	}
 
 	function estado(e: Entrada, r: NonNullable<Resultado['real']>, T: any): string {
@@ -242,58 +352,65 @@ const campos = [
 		return { tipo: 'correccion', texto: T.notas.correcta };
 	}
 
-	function bloque(titulo: string, cuerpo: string): string {
-		return `<div class="cors-sim-paso"><p class="cors-sim-paso-titulo">${esc(titulo)}</p>${cuerpo}</div>`;
+	function par(v: Envio, respuesta: string, T: any): string {
+		return `<div class="cors-sim-par"><div><p class="cors-sim-sub">${T.enviada}</p>${pre(envio(v, T))}</div><div><p class="cors-sim-sub">${T.recibida}</p>${pre(respuesta)}</div></div>`;
 	}
 
-	const pre = (s: string) => `<pre class="cors-sim-pre">${esc(s)}</pre>`;
-
-	function pintar(raiz: HTMLElement) {
-		const T = JSON.parse(raiz.dataset.textos!);
+	function pintar(raiz: HTMLElement, T: any) {
 		const form = raiz.querySelector('form')!;
-		// Se lee cada select a mano: FormData omite un select deshabilitado.
-		const valor = (n: string) => (form.elements.namedItem(n) as HTMLSelectElement).value;
-		const datos = Object.fromEntries(
-			['pagina', 'peticion', 'credenciales', 'modo', 'config', 'cookie'].map((n) => [n, valor(n)])
-		) as unknown as Entrada;
-		(form.elements.namedItem('cookie') as HTMLSelectElement).disabled = datos.credenciales !== 'include';
-		const r = simular(datos);
-		const partes: string[] = [];
-		partes.push(bloque(T.codigo, pre(codigo(datos))));
+		const campo = (n: string) => form.elements.namedItem(n) as HTMLSelectElement;
+		const e = Object.fromEntries(CAMPOS.map((n) => [n, campo(n).value])) as unknown as Entrada;
+		campo('cookie').disabled = e.credenciales !== 'include';
+		const r = simular(e);
+		const n = nota(e, r, T);
+		const sinEnvio = !!r.error && !r.previa && !r.real;
 
-		if (!(r.error && !r.previa && !r.real)) {
-			partes.push(
-				bloque(
-					`1. ${T.previa}`,
-					r.previa
-						? `<div class="cors-sim-par"><div><p class="cors-sim-sub">${T.enviada}</p>${pre(envio(r.previa.envio, T))}</div><div><p class="cors-sim-sub">${T.recibida}</p>${pre(`${T.estados.previa}\n${cabeceras(r.previa.respuesta, T.sinCors)}`)}</div></div>`
-						: `<p>${T.previaNo}</p>`
-				)
-			);
-			partes.push(
-				bloque(
-					`2. ${T.real}`,
-					r.real
-						? `<div class="cors-sim-par"><div><p class="cors-sim-sub">${T.enviada}</p>${pre(envio(r.real.envio, T))}</div><div><p class="cors-sim-sub">${T.recibida}</p>${pre(`${estado(datos, r.real, T)}\n${cabeceras(r.real.respuesta, T.sinCors)}`)}</div></div>`
-						: `<p>${T.realNo}</p>`
-				)
-			);
+		const respuesta = r.leida ? T.si : r.opaca ? T.opacaRes : T.no;
+		let html = `<div class="cors-sim-veredicto" data-tipo="${n.tipo}">
+			<p class="cors-sim-pregunta">${T.pregunta}</p>
+			<p class="cors-sim-respuesta">${esc(respuesta)} ${esc(n.texto)}</p>
+			${r.consola ? `<p class="cors-sim-sub">${T.consola}</p>${pre(r.consola)}` : ''}
+			${sinEnvio ? pre(r.error!) : ''}
+		</div>`;
+
+		html += `<p class="cors-sim-etiqueta">${T.detalle}</p>`;
+		html += `<p class="cors-sim-sub">${T.codigo}</p>${pre(codigo(e))}`;
+		if (!sinEnvio) {
+			html += `<p class="cors-sim-paso-titulo">${T.previa}</p>`;
+			html += r.previa
+				? par(r.previa.envio, `${T.estados.previa}\n${cabeceras(r.previa.respuesta, T.sinCors)}`, T)
+				: `<p class="cors-sim-texto">${T.previaNo}</p>`;
+			html += `<p class="cors-sim-paso-titulo">${T.real}</p>`;
+			html += r.real
+				? par(r.real.envio, `${estado(e, r.real, T)}\n${cabeceras(r.real.respuesta, T.sinCors)}`, T)
+				: `<p class="cors-sim-texto">${T.realNo}</p>`;
 		}
-
-		let navegador = '';
-		if (r.leida) navegador = `<p>${T.leida}</p>`;
-		else if (r.opaca) navegador = `<p>${T.opaca}</p>`;
-		else navegador = `<p>${T.bloqueada} <code>${esc(r.error ?? '')}</code></p>`;
-		if (r.consola) navegador += `<p class="cors-sim-sub">${T.consola}</p>${pre(r.consola)}`;
-		partes.push(bloque(r.error && !r.previa && !r.real ? T.navegador : `3. ${T.navegador}`, navegador));
-
-		const n = nota(datos, r, T);
-		partes.push(`<p class="cors-sim-nota" data-tipo="${n.tipo}">${esc(n.texto)}</p>`);
-		raiz.querySelector('.cors-sim-salida')!.innerHTML = partes.join('');
+		raiz.querySelector('.cors-sim-salida')!.innerHTML = html;
 	}
 
 	for (const raiz of document.querySelectorAll<HTMLElement>('.cors-sim')) {
-		raiz.querySelector('form')!.addEventListener('change', () => pintar(raiz));
-		pintar(raiz);
+		const T = JSON.parse(raiz.dataset.textos!);
+		const form = raiz.querySelector('form')!;
+		const mirar = raiz.querySelector('.cors-sim-mirar')!;
+		const botones = [...raiz.querySelectorAll<HTMLButtonElement>('.cors-sim-caso')];
+
+		const marcar = (id: string | null) => {
+			for (const b of botones) b.setAttribute('aria-pressed', String(b.dataset.caso === id));
+			mirar.textContent = id ? T.casos.find((c: any) => c.id === id).mirar : T.propio;
+		};
+
+		for (const b of botones) {
+			b.addEventListener('click', () => {
+				const caso = T.casos.find((c: any) => c.id === b.dataset.caso);
+				for (const n of CAMPOS) (form.elements.namedItem(n) as HTMLSelectElement).value = caso.valores[n];
+				marcar(caso.id);
+				pintar(raiz, T);
+			});
+		}
+		form.addEventListener('change', () => {
+			marcar(null);
+			pintar(raiz, T);
+		});
+		pintar(raiz, T);
 	}
 </script>
