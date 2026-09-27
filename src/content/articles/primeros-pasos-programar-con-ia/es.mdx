@@ -1,7 +1,7 @@
 ---
 slug: primeros-pasos-programar-con-ia
 title: 'Primeros pasos para programar con IA: agentes, skills y plugins'
-tagline: Qué es un agente, qué hace cada orden, cómo se documenta el proyecto, qué son las skills, los subagentes y los plugins, y un prompt que configura el entorno entero.
+tagline: Qué es un agente de programación, cómo preparar el proyecto para trabajar con él y cómo revisar lo que hace.
 areas: [ia]
 published: '2026-09-08'
 updated: '2026-09-26'
@@ -18,49 +18,49 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-Un agente de programación es un modelo de lenguaje con herramientas para leer archivos, editarlos y ejecutar órdenes. Alrededor hay un programa que ejecuta esas herramientas y le devuelve el resultado. Esa es la diferencia con un chat: el chat responde con texto que alguien tiene que aplicar, y el agente aplica el cambio en el repositorio.
+Un agente de programación lee el repositorio, edita archivos y ejecuta órdenes por su cuenta. Con él, usted pasa a decidir qué se construye, a darle una comprobación que pueda ejecutar y a revisar lo que escribió.
 
-El cambio en el trabajo de quien programa es de reparto, no de cantidad. Escribir cada línea deja de ser la tarea principal, y pasan a serlo tres: decidir qué hay que construir, dar al agente una forma de comprobar si lo consiguió, y revisar lo que dejó escrito.
+Los ejemplos usan Claude Code en la terminal. Instálelo con el instalador nativo que publica su documentación. Después, abra una terminal en el directorio del proyecto y ejecute `claude`, que pide iniciar sesión la primera vez<Cite n={1} />. Claude Code también existe como extensión de VS Code y de JetBrains, como aplicación de escritorio y en el navegador. Todas esas versiones funcionan igual y leen la misma configuración<Cite n={1} repeat />. En Cursor, el agente viene integrado en el editor y no necesita una instalación aparte.
 
-Esta guía asume que quien la lee sabe programar y apenas empieza a usar IA para hacerlo. Cada sección explica un concepto con un ejemplo real, qué hace cada parte de ese ejemplo, y los pasos para aplicarlo en un proyecto propio. Al final hay un prompt que se copia con un botón y deja configurado el entorno entero: instrucciones del proyecto, permisos, skills, cuatro revisores y seis agentes de trabajo. El mismo prompt propone herramientas y colecciones de skills opcionales.
+Las mediciones se hicieron el 26 de septiembre de 2026 con Claude Code 2.1.283, git 2.49.0, Node.js 24.19.0 y npm 11.8.0. La documentación de Cursor se consultó el 8 de septiembre de 2026. Todo el código está reconstruido para el artículo.
 
-Los ejemplos usan Claude Code en la terminal. Se instala con el instalador nativo que publica su documentación. A partir de ahí se abre entrando en el directorio del proyecto y ejecutando `claude`, que pide iniciar sesión la primera vez<Cite n={1} />. La misma herramienta existe como extensión de VS Code y de JetBrains, como aplicación de escritorio y en el navegador, y todas comparten el mismo motor y la misma configuración<Cite n={1} repeat />. En Cursor el agente viene dentro del editor y no hay nada que instalar aparte.
+El punto 14 describe un prompt que configura el entorno completo en su proyecto: instrucciones, permisos, skills, cuatro revisores y seis agentes de trabajo. Cópielo con el botón «Copiar prompt» del panel «Configurar entorno».
 
-Versiones medidas: Claude Code 2.1.283, git 2.49.0, Node.js 24.19.0 y npm 11.8.0, el 26 de septiembre de 2026. La documentación de Cursor se consultó el 8 de septiembre de 2026. Todo el código está reconstruido para el artículo.
+## 1. Qué diferencia a un agente de un chat
 
-## 1. Qué hace un agente que un chat no hace
+Un modelo de lenguaje se puede usar de tres formas para programar, y se diferencian en quién aplica el cambio.
 
-Hay tres formas de usar un modelo de lenguaje para programar, y se diferencian en quién aplica el cambio.
+El **autocompletado** propone el final de la línea que usted escribe, dentro del editor. Usted acepta o rechaza cada sugerencia, así que el control es completo y el alcance no pasa de una función.
 
-El **autocompletado** propone el final de la línea que se está escribiendo, dentro del editor. Quien programa acepta o rechaza cada sugerencia, así que el control es total y el alcance llega a una función como máximo.
+El **chat** recibe una pregunta y devuelve texto. Usted copia ese código al proyecto, lo adapta a los nombres reales y comprueba que compila. Como el modelo no ha visto el repositorio, el código supone una estructura que puede no coincidir con la real.
 
-El **chat** recibe una pregunta y devuelve texto. El código que produce hay que copiarlo al proyecto a mano, adaptarlo a los nombres reales y comprobar que compila. El modelo no ha visto el repositorio, así que inventa la estructura que le parece razonable.
+El **agente** recibe una tarea, decide qué archivos leer, los lee, escribe los cambios y ejecuta órdenes para comprobarlos. La documentación de Claude Code lo define así: la IA lee archivos, ejecuta órdenes y hace cambios de forma autónoma. Mientras tanto, usted observa, la corrige o la deja trabajar sola. La documentación lo contrapone a los asistentes de chat, que solo responden con texto que hay que aplicar a mano<Cite n={2} />.
 
-El **agente** recibe una tarea, decide qué archivos leer, los lee, escribe los cambios y ejecuta órdenes para comprobarlos. La documentación de Claude Code define ese trabajo como aquel en el que la IA lee archivos, ejecuta órdenes y hace cambios de forma autónoma, mientras alguien observa, corrige o se aparta. Lo contrapone a los asistentes de chat, que solo responden con texto que hay que aplicar a mano<Cite n={2} />.
+Un modelo se convierte en agente cuando tiene herramientas. Una **herramienta** es una acción que el modelo puede pedir: leer un archivo, editarlo, ejecutar una orden en la terminal o buscar en el proyecto. Según la misma documentación, sin herramientas el modelo solo puede responder con texto<Cite n={2} repeat />.
 
-Lo que convierte un modelo en agente son las herramientas. Una **herramienta** es una acción que el modelo puede pedir: leer un archivo, editarlo, ejecutar una orden en la terminal, buscar en el proyecto. La misma documentación lo dice sin rodeos: sin herramientas, el modelo solo puede responder con texto<Cite n={2} repeat />.
+Las tres formas tienen su uso. El autocompletado sirve para terminar una línea, el chat para preguntas que no tocan el repositorio y el agente para las tareas que abarcan varios archivos.
 
-Las tres formas conviven en la misma jornada. El autocompletado sigue siendo lo más rápido para terminar una línea. El chat sirve para preguntar algo que no toca el repositorio, y el agente para las tareas que cruzan varios archivos.
+**Cómo comprobarlo.** En una sesión de agente, las llamadas a herramientas aparecen antes de la respuesta: qué archivo leyó, qué orden ejecutó y qué devolvió. En Claude Code, `Ctrl+O` abre y cierra el visor de transcripción, con el detalle de cada llamada<Cite n={3} />. Si la sesión solo produjo texto, no trabajó como agente.
 
-**Cómo se comprueba.** En una sesión de agente aparecen las llamadas a herramientas antes de la respuesta: qué archivo leyó, qué orden ejecutó y qué devolvió. En Claude Code el detalle completo se abre con `Ctrl+O`, que alterna el visor de transcripción<Cite n={3} />. Si en toda la sesión solo hubo texto, no actuó como agente.
+## 2. Cómo trabaja un agente
 
-## 2. El bucle es la definición completa
+Un agente no responde una sola vez. Repite un ciclo hasta que da la tarea por terminada. La documentación lo describe en cuatro pasos: reunir contexto, actuar, verificar el resultado y repetir. El resultado de cada herramienta decide el paso siguiente<Cite n={2} repeat />.
 
-Un agente no responde una sola vez. Repite un ciclo hasta que considera terminada la tarea, y la documentación lo describe en cuatro pasos: reunir contexto, actuar, verificar el resultado y repetir. Cada uso de una herramienta devuelve información que decide el paso siguiente<Cite n={2} repeat />.
+Un **turno** es una respuesta completa del agente. Empieza cuando usted envía un mensaje y termina cuando el agente acaba de responder, con tantas llamadas a herramientas como necesite<Cite n={2} repeat />. Por ejemplo, para corregir un fallo sencillo, el agente busca el archivo, lo lee, escribe el cambio y ejecuta las pruebas. Después lee el fallo que devuelven, lo corrige y vuelve a ejecutarlas. Son seis llamadas a herramientas en un turno, donde un chat habría dado una sola respuesta.
 
-Un ejemplo sobre una tarea sencilla. El agente busca el archivo que hay que tocar, lo lee, escribe el cambio, ejecuta las pruebas, lee el fallo que devuelven, corrige y vuelve a ejecutarlas. Son seis llamadas a herramientas para algo que en un chat habría sido una respuesta.
+El modelo no ejecuta esas herramientas. Solo produce texto, incluida la petición de usar una herramienta. Un programa aparte interpreta esa petición, la ejecuta en el sistema de archivos o en la terminal y le devuelve la salida.
 
-Quien ejecuta esas herramientas no es el modelo. El modelo solo produce texto, incluida la petición de usar una herramienta. Alrededor hay un programa que interpreta esa petición, la ejecuta contra el sistema de archivos o la terminal y le devuelve la salida. Ese programa se llama *harness*, y la documentación lo define como las herramientas, la gestión de contexto y el entorno de ejecución que convierten un modelo en un agente<Cite n={2} repeat />.
+Ese programa se llama *harness*. La documentación lo define como las herramientas, la gestión del contexto y el entorno de ejecución que convierten un modelo en un agente. Claude Code es el *harness*, y Claude es el modelo que trabaja dentro<Cite n={2} repeat />.
 
-Cursor describe su agente con las mismas tres piezas: las instrucciones que guían su comportamiento, las herramientas de edición, búsqueda y ejecución, y el modelo elegido para la tarea<Cite n={4} />. Por eso elegir modelo y elegir herramienta son dos decisiones distintas.
+Cursor describe su agente con tres piezas. Son las instrucciones que guían su comportamiento, las herramientas para editar, buscar y ejecutar órdenes, y el modelo que se elige para la tarea<Cite n={4} />. Por eso elegir el modelo y elegir el *harness* son dos decisiones distintas.
 
-**Cómo se comprueba.** Se ejecuta una tarea y se cuentan las llamadas a herramientas anteriores a la respuesta final. Un agente que resolvió algo sin leer ningún archivo lo escribió de memoria.
+**Cómo comprobarlo.** Ejecute una tarea y cuente las llamadas a herramientas anteriores a la respuesta final. Si el agente resolvió algo sin leer ningún archivo, lo escribió de memoria.
 
-## 3. La ventana de contexto y la orden `/context`
+## 3. Qué es la ventana de contexto y cómo medirla
 
-La **ventana de contexto** es la memoria de trabajo de la sesión: el historial de la conversación, los archivos leídos, la salida de las órdenes, el archivo de instrucciones del proyecto y las instrucciones del sistema<Cite n={2} repeat />. El agente no sabe nada que no esté ahí dentro. Se mide en **tokens**, la unidad en la que el modelo cuenta el texto, que para Claude equivale a unos 3,5 caracteres en inglés<Cite n={5} />.
+La **ventana de contexto** es el texto que el modelo tiene disponible durante la sesión. Incluye el historial de la conversación, los archivos leídos, la salida de las órdenes, el archivo de instrucciones del proyecto y las instrucciones del sistema<Cite n={2} repeat />. El agente no conoce nada que no esté ahí. Su tamaño se mide en **tokens**, la unidad en la que el modelo cuenta el texto. En Claude, un token equivale a unos 3,5 caracteres de texto en inglés<Cite n={5} />.
 
-`/context` enseña cómo está repartida. Esta es su salida, recortada, al abrir una sesión nueva en un repositorio con un archivo de instrucciones del proyecto de 29 tokens y uno personal de 96:
+La orden `/context` muestra cómo se reparte. Esta es su salida, recortada, al abrir una sesión nueva en un repositorio de ejemplo. El archivo de instrucciones del proyecto ocupa 29 tokens y el personal, 96:
 
 ```text
 **Tokens:** 19k / 1m (2%)
@@ -78,29 +78,29 @@ La **ventana de contexto** es la memoria de trabajo de la sesión: el historial 
 | Autocompact buffer      | 33k    | 3.3%       |
 ```
 
-Cada fila es una cosa que se paga en todas las peticiones de la sesión:
+Salvo `Free space` y `Autocompact buffer`, cada fila es texto que se envía en todas las peticiones de la sesión:
 
-- **System prompt** y **System tools**: las instrucciones fijas de la herramienta y la descripción de sus herramientas. No dependen del proyecto.
-- **MCP server instructions**: lo que añaden los servidores de herramientas externas conectados. Se explican en el punto 11.
-- **Custom agents** y **Skills**: la descripción de cada subagente y de cada skill instalada, no su contenido completo.
-- **Memory files**: los archivos de instrucciones del proyecto y del usuario, del punto 8.
-- **Messages**: la conversación. Es la fila que crece con cada archivo leído y cada orden ejecutada.
-- **Autocompact buffer**: el espacio reservado para resumir la conversación cuando la ventana se llena.
+- `System prompt` y `System tools`: las instrucciones fijas de Claude Code y la descripción de sus herramientas. No dependen del proyecto.
+- `MCP server instructions`: lo que añaden los servidores de herramientas externas conectados, que el punto 11 explica.
+- `Custom agents` y `Skills`: la descripción de cada subagente y de cada skill instalados, no su contenido completo.
+- `Memory files`: los archivos de instrucciones del proyecto y personales, que explica el punto 8.
+- `Messages`: la conversación. Es la fila que crece con cada archivo leído y cada orden ejecutada.
+- `Autocompact buffer`: el espacio reservado para resumir la conversación cuando la ventana se llena.
 
-Ese resumen automático se llama **compactación**. Descarta primero las salidas de herramientas antiguas y después resume el resto; el archivo de instrucciones se vuelve a leer del disco, y lo que solo se dijo en la conversación se puede perder<Cite n={2} repeat />. Como la conversación entera viaja en cada petición, una sesión larga también cuesta más<Cite n={6} />.
+Ese resumen automático se llama **compactación**. Primero descarta las salidas antiguas de las herramientas y después resume el resto. El archivo de instrucciones se vuelve a leer del disco, pero lo que solo se dijo en la conversación se puede perder<Cite n={2} repeat />. Además, la conversación entera se envía en cada petición, así que una sesión larga cuesta más<Cite n={6} />.
 
-**Cómo se hace.**
+**Cómo hacerlo.**
 
-1. Se ejecuta `/context` al abrir la sesión y se anota el total.
-2. Terminada una tarea, `/clear` empieza una conversación nueva con el contexto vacío antes de la siguiente.
-3. Si una tarea larga se acerca al límite, `/compact` resume la conversación en ese momento, y admite una instrucción: `/compact conserva la lista de archivos tocados`.
-4. Lo que tenga que sobrevivir a la compactación se escribe en el archivo de instrucciones, no en un mensaje.
+1. Ejecute `/context` al abrir la sesión y anote el total.
+2. Al terminar una tarea, ejecute `/clear` para empezar una conversación nueva, con el contexto vacío, antes de la siguiente.
+3. Si una tarea larga se acerca al límite, ejecute `/compact` para resumir la conversación en ese momento. Admite una instrucción: `/compact conserva la lista de archivos tocados`.
+4. Escriba en el archivo de instrucciones, y no en un mensaje, lo que tenga que conservarse tras la compactación.
 
-**Cómo se comprueba.** Se ejecuta `/context` antes y después de la primera tarea. La diferencia en **Messages** es lo que costó esa tarea, y es el dato que dice cuándo conviene cerrar la sesión.
+**Cómo comprobarlo.** Ejecute `/context` antes y después de la primera tarea. La diferencia en `Messages` es lo que ocupó esa tarea. Con ese dato puede decidir cuándo cerrar la sesión.
 
-## 4. Qué tareas le van bien a un agente
+## 4. Qué tareas encargar a un agente
 
-Una tarea encaja en un agente cuando existe una orden que decide si está terminada. La documentación llama a eso **bucle de verificación**: se le entrega una comprobación que pueda ejecutar, una prueba, una compilación o una comparación, y el agente itera hasta que pasa. Sin ella, lo único que decide que terminó es el propio agente<Cite n={2} repeat />.
+Una tarea es adecuada para un agente cuando existe una orden que decide si está terminada. La documentación llama a eso **bucle de verificación**. Usted le da al agente una comprobación que pueda ejecutar: una prueba, una compilación o una comparación. El agente repite el trabajo hasta que la comprobación pasa. Sin ella, lo único que decide si terminó es el propio agente<Cite n={2} repeat />.
 
 | Le va bien | Orden que decide el final |
 |---|---|
@@ -109,25 +109,27 @@ Una tarea encaja en un agente cuando existe una orden que decide si está termin
 | Escribir pruebas para código que no las tiene | las pruebas pasan y fallan al romper el código |
 | Resolver los avisos de un linter | el linter termina sin avisos |
 
-Le van mal las tareas sin esa orden: decidir la arquitectura de un módulo nuevo, ajustar el diseño visual sin una imagen de referencia, o cualquier cosa cuyo criterio sea que a alguien le parezca bien. Ahí el agente sirve para explorar alternativas, y la decisión sigue siendo de quien programa.
+Las tareas sin esa orden le van mal, como decidir la arquitectura de un módulo nuevo o ajustar un diseño visual sin una imagen de referencia. Tampoco le va bien una tarea cuyo único criterio es que a alguien le parezca bien. En esos casos, el agente sirve para explorar alternativas, pero la decisión es suya.
 
-<Callout kind="nota" title="Una tarea sin comprobación se puede partir en dos que sí la tienen">
-	«Mejorar el rendimiento de la pantalla de pedidos» no tiene criterio. «Escribir una medición que imprima el tiempo de la consulta actual» sí lo tiene. «Bajar ese tiempo por debajo de 200 ms sin cambiar el resultado», también, y el agente puede ejecutar las dos.
+<Callout kind="nota" title="Una tarea sin comprobación se puede dividir en dos que sí la tienen">
+	«Mejorar el rendimiento de la pantalla de pedidos» no tiene criterio. «Escribir una medición que imprima el tiempo de la consulta actual» sí lo tiene. También lo tiene «bajar ese tiempo por debajo de 200 ms sin cambiar el resultado». El agente puede ejecutar las dos.
 </Callout>
 
-La condición se puede declarar con `/goal`. Al terminar cada turno, un modelo pequeño comprueba si se cumple, y mientras no se cumpla el agente empieza otro turno en lugar de devolver el control<Cite n={7} />.
+Declare esa condición con `/goal`. Al final de cada turno, un modelo pequeño comprueba si se cumple. Mientras no se cumpla, el agente empieza otro turno en lugar de devolverle el control<Cite n={7} />.
 
 ```text
 /goal todas las pruebas de test/auth pasan y el linter termina sin avisos, o parar tras 20 turnos
 ```
 
-Cada parte de esa línea tiene un trabajo. «Todas las pruebas de test/auth pasan» es el estado final medible. «El linter termina sin avisos» es una restricción que no se puede romper por el camino. «O parar tras 20 turnos» acota cuánto dura. El evaluador no ejecuta nada por su cuenta: juzga lo que el agente haya dejado escrito en la conversación, así que la condición tiene que poder demostrarse con la salida de una orden<Cite n={7} repeat />. `/goal clear` la retira antes de tiempo.
+Cada parte de esa línea cumple una función. «Todas las pruebas de test/auth pasan» es el estado final que se puede medir. «El linter termina sin avisos» es una restricción que se tiene que cumplir durante todo el trabajo. «O parar tras 20 turnos» limita la duración.
 
-**Cómo se comprueba.** Antes de escribir la petición se nombra la orden que va a decidir si está terminada. Si no aparece ninguna, la tarea todavía no está lista para un agente.
+El evaluador no ejecuta nada: juzga lo que el agente dejó escrito en la conversación. Por eso la condición tiene que poder demostrarse con la salida de una orden<Cite n={7} repeat />. `/goal clear` retira la condición antes de tiempo.
 
-## 5. Cómo se escribe la primera petición
+**Cómo comprobarlo.** Antes de escribir la petición, nombre la orden que decidirá si la tarea está terminada. Si no encuentra ninguna, la tarea todavía no está lista para un agente.
 
-El agente resuelve el enunciado que recibe, así que el enunciado tiene que traer la condición que se va a comprobar después. «Añade la cancelación de pedidos» no la trae. Esta petición sí:
+## 5. Cómo escribir una petición
+
+El agente resuelve el enunciado que recibe, así que el enunciado tiene que incluir la condición que se va a comprobar después. «Añade la cancelación de pedidos» no la incluye. Esta petición sí:
 
 ```text
 En src/pedidos.js, añade cancelarPedido(pedidos, id).
@@ -139,76 +141,79 @@ Criterio: node --test pasa con las dos pruebas de tests/pedidos.test.js.
 
 Qué hace cada línea:
 
-- **El archivo** acota dónde se escribe y evita que el agente lea medio repositorio buscándolo.
-- **El comportamiento en cada caso** da algo contra lo que contrastar el resultado, incluido el caso de error.
-- **La restricción** cierra por adelantado una decisión que, sin decir nada, el agente toma solo.
+- **El archivo** limita dónde se escribe y evita que el agente lea medio repositorio para encontrarlo.
+- **El comportamiento en cada caso**, incluido el de error, da algo con lo que contrastar el resultado.
+- **La restricción** fija de antemano algo que, si la petición no lo dice, el agente decide por su cuenta.
 - **El criterio** nombra la orden que decide el final y el resultado que tiene que devolver.
 
-A eso se añade lo que el modelo no puede deducir del código, como la versión del gestor de paquetes. En la primera sesión va en la petición; el punto 8 explica dónde se guarda para no repetirla.
+Añada también lo que el modelo no puede deducir del código, como la versión del gestor de paquetes. En la primera sesión, inclúyalo en la petición. El punto 8 explica dónde guardarlo para no repetirlo.
 
-En **modo plan** el agente lee, busca y ejecuta órdenes de exploración, pero no edita el código: presenta un plan y espera aprobación<Cite n={2} repeat />. La primera revisión ocurre sobre un texto corto, y un enfoque equivocado se corrige sin revertir archivos.
+En **modo plan**, el agente lee, busca y ejecuta órdenes de exploración, pero no edita el código: presenta un plan y espera su aprobación<Cite n={2} repeat />. Así, la primera revisión se hace sobre un texto corto. Un enfoque equivocado se corrige en ese texto, sin revertir archivos.
 
-**Cómo se hace.**
+**Cómo hacerlo.**
 
-1. Se escribe `/plan` seguido de la petición, o se pulsa `Shift+Tab` hasta que la barra de estado indique `plan mode on`<Cite n={8} />.
-2. Se lee el plan. Si nombra archivos que la petición no pedía tocar, se responde corrigiéndolo.
-3. Con el plan aprobado, el agente sale del modo plan y aplica los cambios.
+1. Escriba `/plan` seguido de la petición, o pulse `Shift+Tab` hasta que la barra de estado muestre `plan mode on`<Cite n={8} />.
+2. Lea el plan. Si nombra archivos que la petición no pedía tocar, corríjalo en su respuesta.
+3. Apruebe el plan. El agente sale del modo plan y aplica los cambios.
 
-**Cómo se comprueba.** La petición contiene una orden ejecutable y el resultado que esa orden tiene que devolver. Si no lo contiene, decidir si el cambio está terminado obliga a leerlo entero.
+**Cómo comprobarlo.** La petición contiene una orden ejecutable y el resultado que esa orden tiene que devolver. Si no lo contiene, tendrá que leer el cambio entero para decidir si está terminado.
 
-## 6. Cómo se detiene, se redirige y se deshace
+## 6. Cómo detener, corregir y deshacer el trabajo del agente
 
-Un agente trabaja durante varios turnos, así que hace falta pararlo a mitad y volver atrás. Hay tres mecanismos y cubren cosas distintas.
+Un agente trabaja durante varios turnos, así que usted necesita poder detenerlo a mitad de una tarea y volver atrás. Hay tres mecanismos, y cada uno cubre un caso distinto:
 
 | Mecanismo | Qué hace | Cuándo se usa |
 |---|---|---|
-| `Esc` | Detiene la respuesta o la herramienta en curso y conserva lo hecho hasta ahí | el agente va por mal camino y basta con corregir el rumbo |
+| `Esc` | Detiene la respuesta o la herramienta en curso y conserva lo hecho hasta ese momento | el agente hace algo distinto de lo pedido y basta con una indicación |
 | `/rewind` o `Esc` `Esc` | Abre el menú de puntos de restauración | una tanda de ediciones sobra entera |
 | git | Devuelve el repositorio a un commit | todo lo que los dos anteriores no cubren |
 
-`Ctrl+C` también interrumpe; con nada en ejecución, la primera pulsación limpia la entrada y la segunda cierra el programa<Cite n={3} repeat />.
+`Ctrl+C` también interrumpe. Si no hay nada en ejecución, la primera pulsación borra la entrada y la segunda cierra Claude Code<Cite n={3} repeat />.
 
-Claude Code captura el estado del código antes de cada petición, y a cada captura la llama punto de restauración. Guarda las de los cien más recientes de la sesión<Cite n={9} />. `/rewind` lista las peticiones enviadas, y sobre la elegida ofrece hasta cuatro acciones; las dos que restauran código solo aparecen si hubo ediciones después de ese punto<Cite n={9} repeat />:
+Claude Code guarda el estado del código antes de cada petición que inicia un turno, y llama a cada captura **punto de restauración**. Conserva las copias de los archivos de los cien puntos de restauración más recientes de la sesión<Cite n={9} />. `/rewind` muestra la lista de peticiones enviadas y, al elegir una, ofrece cinco acciones<Cite n={9} repeat />:
 
-- **Restore code and conversation**: devuelve el código y la conversación a ese punto.
-- **Restore conversation**: vuelve a ese mensaje y deja el código como está.
-- **Restore code**: deshace los cambios de archivos y conserva la conversación.
-- **Summarize from here**: resume la conversación desde ese punto para liberar contexto.
+1. «Restore code and conversation»: devuelve el código y la conversación a ese punto.
+2. «Restore conversation»: vuelve a ese mensaje y deja el código como está.
+3. «Restore code»: deshace los cambios en los archivos y conserva la conversación.
+4. «Summarize from here»: resume la conversación desde ese punto para liberar espacio en la ventana de contexto.
+5. «Summarize up to here»: resume la conversación anterior a ese punto y conserva intactos los mensajes posteriores.
+
+Las dos acciones que restauran código solo aparecen si hubo ediciones después de ese punto. «Never mind» vuelve a la lista sin cambiar nada<Cite n={9} repeat />.
 
 <Callout kind="riesgo" title="Un punto de restauración no cubre lo que hizo la terminal">
-	El seguimiento solo alcanza a las ediciones hechas con las herramientas de archivo del agente. Los archivos que modifique una orden de terminal, como `rm`, `mv` o `cp`, no se pueden deshacer desde el menú. Tampoco se restauran, en general, las ediciones de un subagente ni los cambios hechos fuera de la sesión. La documentación lo enuncia: los puntos de restauración sirven dentro de una sesión y no sustituyen al control de versiones<Cite n={9} repeat />.
+	El seguimiento solo cubre las ediciones que el agente hace con sus herramientas de archivos. Los cambios de una orden de terminal, como `rm`, `mv` o `cp`, no se pueden deshacer desde el menú. En general, tampoco se restauran las ediciones de un subagente ni los cambios hechos fuera de la sesión. Según la documentación, los puntos de restauración sirven para recuperarse dentro de una sesión y no sustituyen al control de versiones<Cite n={9} repeat />.
 </Callout>
 
-**Cómo se hace.**
+**Cómo hacerlo.**
 
-1. Antes de la petición, `git status --porcelain` tiene que salir vacío; si no, se confirma o se guarda lo pendiente.
-2. Si el agente se desvía, `Esc` y una frase que lo corrija.
-3. Si el resultado sobra entero, `/rewind`, se elige la petición y **Restore code**.
-4. Después se ejecuta otra vez `git status --porcelain`.
+1. Antes de la petición, ejecute `git status --porcelain`. La salida tiene que estar vacía; si no lo está, confirme lo pendiente o apártelo con `git stash`.
+2. Si el agente se desvía de lo pedido, pulse `Esc` y corríjalo con una frase.
+3. Si el resultado sobra entero, ejecute `/rewind`, elija la petición y pulse «Restore code».
+4. Después, ejecute otra vez `git status --porcelain`.
 
-**Cómo se comprueba.** Si en el último paso quedan archivos modificados, son los que el menú no cubre, y se descartan con git.
+**Cómo comprobarlo.** Si en el último paso quedan archivos modificados, son los que el menú no cubre. Descártelos con git; el punto 13 explica las dos órdenes que lo hacen y su riesgo.
 
-## 7. Cómo se usa el agente para aprender y no solo para producir
+## 7. Cómo usar el agente para aprender
 
-Un agente que escribe el código deja fuera la parte del trabajo donde se aprende. Hay tres formas de pedir lo mismo que la conservan, y las tres son peticiones normales:
+Cuando el agente escribe el código, usted no pasa por la parte del trabajo en la que se aprende. Estas tres formas de pedir mantienen esa parte, y las tres son peticiones normales:
 
-| En lugar de | Se pide | Qué se obtiene |
+| En lugar de | Pida | Qué obtiene |
 |---|---|---|
 | «Arregla el fallo de validación» | «En modo plan, explica qué archivos intervienen y por qué falla» | la explicación sobre el código real, sin cambios |
-| «Añade validación al endpoint» | «Dónde se valida el cuerpo de la petición y en qué archivo empieza el camino» | un mapa que sirve para las tareas siguientes |
+| «Añade validación al endpoint» | «Dónde se valida el cuerpo de la petición y en qué archivo empieza el camino» | un mapa útil para las tareas siguientes |
 | «Escribe la función» | «Revisa esta versión mía contra manejo de errores, casos límite y nombres» | la diferencia entre las dos versiones |
 
-Preguntar dónde está algo es lo que un agente responde mejor, porque puede buscarlo en vez de suponerlo. Lo que afirma sobre una biblioteca o un estándar se contrasta con su documentación, porque lo dice con la misma seguridad cuando lo sabe y cuando lo supone.
+Un agente responde bien a las preguntas sobre dónde está algo, porque puede buscarlo en el repositorio en lugar de suponerlo. En cambio, contraste con la documentación lo que afirme sobre una biblioteca o un estándar. El tono de la respuesta es igual de seguro cuando el dato es correcto y cuando no lo es.
 
-**Cómo se comprueba.** Después de una explicación se cierra la sesión y se reconstruye lo explicado sin ella. Lo que no se pueda reconstruir es lo que hay que volver a leer.
+**Cómo comprobarlo.** Después de una explicación, cierre la sesión e intente reconstruir lo explicado sin ella. Lo que no pueda reconstruir es lo que tiene que volver a leer.
 
-## 8. El archivo de instrucciones: `AGENTS.md` y `CLAUDE.md`
+## 8. Cómo documentar el proyecto: `AGENTS.md` y `CLAUDE.md`
 
-Cada sesión empieza con la ventana de contexto vacía. El **archivo de instrucciones** resuelve eso: se escribe una vez y la herramienta lo carga al principio de cada sesión.
+Cada sesión de Claude Code empieza con una ventana de contexto nueva, sin nada de las conversaciones anteriores<Cite n={10} />. El **archivo de instrucciones** guarda lo que el agente tiene que saber del proyecto. Usted lo escribe una vez y Claude Code lo carga al principio de cada sesión.
 
-`AGENTS.md` es el nombre que leen varias herramientas. Claude Code lo lee directamente desde la versión 2.1.277, siempre que el repositorio no tenga un `CLAUDE.md`; si lo tiene, lee solo `CLAUDE.md`, que puede importar `AGENTS.md` con una línea `@AGENTS.md`<Cite n={10} />. Hay además una versión personal en `~/.claude/CLAUDE.md` para las preferencias de todos los proyectos, y todos los archivos encontrados se suman en el contexto<Cite n={10} repeat />.
+`AGENTS.md` es el nombre de archivo que leen varios agentes de programación. Claude Code lo lee directamente desde la versión 2.1.277 si el repositorio no tiene un `CLAUDE.md`. Si lo tiene, por omisión lee solo `CLAUDE.md`, que puede importar `AGENTS.md` con una línea `@AGENTS.md`<Cite n={10} repeat />. Además, un archivo personal en `~/.claude/CLAUDE.md` guarda sus preferencias para todos los proyectos. Claude Code suma en el contexto todos los archivos que encuentra, en lugar de quedarse con uno<Cite n={10} repeat />.
 
-Un archivo completo para un proyecto pequeño:
+Este es un archivo completo para un proyecto pequeño:
 
 ```markdown
 # pedidos
@@ -232,31 +237,31 @@ Un archivo completo para un proyecto pequeño:
 3. No se añadió ninguna dependencia que la tarea no pidiera.
 ```
 
-Qué hace cada bloque:
+Qué hace cada apartado:
 
-- **Órdenes**: el agente no tiene que adivinar cómo se prueba ni con qué gestor se instala. La de una sola prueba le ahorra ejecutar la suite entera en cada iteración.
+- **Órdenes**: el agente no tiene que adivinar cómo se prueba ni con qué gestor se instala. La orden de una sola prueba le evita ejecutar la suite entera en cada intento.
 - **Entorno**: lo que no se deduce con certeza leyendo el código.
-- **Convenciones**: decisiones del proyecto que el código no explica.
+- **Convenciones**: las decisiones del proyecto que el código no explica.
 - **Antes de dar una tarea por terminada**: el bucle de verificación del punto 4, escrito una vez para todas las tareas.
 
-Lo que no entra es lo que el agente puede leer del disco: el listado de directorios o la lista de dependencias. La documentación recomienda menos de 200 líneas, porque un archivo más largo consume contexto y baja la adherencia, e instrucciones verificables: «usa indentación de 2 espacios» en lugar de «formatea bien el código»<Cite n={10} repeat />.
+No incluya lo que el agente puede leer del disco, como la lista de directorios o de dependencias. La documentación recomienda menos de 200 líneas, porque un archivo largo ocupa más contexto y el modelo sigue peor sus instrucciones. También pide instrucciones que se puedan comprobar: «usa indentación de 2 espacios» en lugar de «formatea bien el código»<Cite n={10} repeat />.
 
-Estas instrucciones son contexto y no configuración obligatoria. Lo que tenga que ocurrir siempre en un momento fijo, como formatear después de cada edición, se configura como *hook*: una orden que la herramienta ejecuta en ese punto del ciclo sin consultar al modelo<Cite n={10} repeat />.
+El archivo de instrucciones es contexto: el modelo lo lee, pero nada lo obliga a cumplirlo. Configure como *hook* lo que tenga que ocurrir siempre en un momento fijo, como formatear el código después de cada edición. Un *hook* es una orden que Claude Code ejecuta en ese punto del ciclo sin consultar al modelo<Cite n={10} repeat />.
 
-**Cómo se hace.**
+**Cómo hacerlo.**
 
-1. `/init` analiza el proyecto y genera un primer `CLAUDE.md`. Si el proyecto ya usa `AGENTS.md`, se escribe ahí en su lugar.
-2. Se ejecuta cada orden que el archivo nombra y se borra la que no funcione.
-3. Se añaden las convenciones y la lista de «antes de dar una tarea por terminada».
-4. `/memory` abre los archivos de instrucciones para editarlos más adelante.
+1. Ejecute `/init`, que analiza el proyecto y genera un primer `CLAUDE.md`. Si el proyecto ya usa `AGENTS.md`, escriba en ese archivo.
+2. Ejecute cada orden que nombra el archivo y borre la que no funcione.
+3. Añada las convenciones y la lista «Antes de dar una tarea por terminada».
+4. Para editar más adelante los archivos de instrucciones, ejecute `/memory`.
 
-**Cómo se comprueba.** `/context all` lista los archivos cargados bajo **Memory Files**, con su ruta y sus tokens. Si el archivo no aparece ahí, el agente no lo está leyendo.
+**Cómo comprobarlo.** Ejecute `/context all`. La lista `Memory Files` muestra los archivos cargados, con su ruta y sus tokens. Si el archivo no aparece ahí, el agente no lo está leyendo.
 
-## 9. Lo que no hace falta siempre se guarda como skill
+## 9. Qué son las reglas por ruta y las skills
 
-El archivo de instrucciones se carga entero en cada sesión, así que todo lo que se le añade se paga en todas las tareas. Para lo que solo hace falta a veces hay dos mecanismos que cargan bajo condición.
+El archivo de instrucciones se carga entero en cada sesión, así que todo lo que usted le añade ocupa contexto en todas las tareas. Para lo que solo hace falta a veces hay dos mecanismos que se cargan bajo condición.
 
-Las **reglas por ruta** son archivos en `.claude/rules/` con una cabecera `paths`, y solo entran en contexto cuando el agente trabaja con un archivo que coincide<Cite n={10} repeat />:
+Las **reglas por ruta** son archivos de `.claude/rules/` con una cabecera `paths`. Solo entran en el contexto cuando el agente trabaja con un archivo que coincide con esas rutas<Cite n={10} repeat />:
 
 ```markdown
 ---
@@ -268,7 +273,7 @@ paths:
 - Los errores usan el formato de respuesta estándar.
 ```
 
-Una **skill** es una carpeta con un archivo `SKILL.md` que contiene instrucciones, conocimiento o un procedimiento. Al abrir la sesión solo se carga su descripción; el contenido completo entra cuando la petición encaja con esa descripción o cuando se invoca con `/nombre`<Cite n={11} />.
+Una **skill** es una carpeta con un archivo `SKILL.md` que contiene instrucciones, conocimiento o un procedimiento. Al abrir la sesión solo se carga su descripción. El contenido completo entra cuando una petición encaja con esa descripción o cuando usted la invoca con `/nombre`<Cite n={11} />.
 
 ```markdown
 ---
@@ -286,31 +291,31 @@ manejo de errores ausente, valores fijos en el código o pruebas por actualizar.
 Si no hay cambios, dilo.
 ```
 
-Qué hace cada pieza:
+Qué hace cada parte:
 
-- **`name`**: el nombre de la orden, `/resumen-de-cambios`. Minúsculas, números y guiones, igual que la carpeta<Cite n={12} />.
-- **`description`**: el único texto con el que el agente decide si la carga sola. Dice qué hace y cuándo se usa, con las palabras que alguien escribiría al pedirlo.
+- **`name`**: el nombre de la orden, `/resumen-de-cambios`. Usa minúsculas, números y guiones, igual que la carpeta<Cite n={12} />.
+- **`description`**: el único texto con el que el agente decide si carga la skill por su cuenta. Dice qué hace y cuándo se usa, con las palabras que alguien escribiría al pedirlo.
 - **`disable-model-invocation`**: con `true`, la skill solo se ejecuta cuando alguien escribe su orden, nunca por decisión del agente<Cite n={11} repeat />.
 - **`` !`orden` ``**: se ejecuta antes de enviar la skill al modelo, y su salida sustituye a la línea<Cite n={11} repeat />.
 - **El cuerpo**: las instrucciones, que entran en la conversación como un solo mensaje.
 
-Otra variable útil es `$ARGUMENTS`, que se sustituye por lo que se escriba detrás de la orden: con `/arreglar-issue 123`, el cuerpo recibe `123`<Cite n={11} repeat />.
+La skill también admite la variable `$ARGUMENTS`, que se sustituye por lo que se escriba después de la orden. Con `/arreglar-issue 123`, el cuerpo recibe `123`<Cite n={11} repeat />.
 
-El formato no es de una sola herramienta. Las skills siguen el estándar abierto Agent Skills, que fija `name` y `description` como obligatorios y `license`, `compatibility`, `metadata` y `allowed-tools` como opcionales<Cite n={12} repeat />. `disable-model-invocation` es una extensión de Claude Code.
+El formato no pertenece a un solo producto. Las skills siguen el estándar abierto Agent Skills, que fija `name` y `description` como obligatorios y `license`, `compatibility`, `metadata` y `allowed-tools` como opcionales<Cite n={12} repeat />. `disable-model-invocation` es una extensión de Claude Code.
 
-**Cómo se hace.**
+**Cómo hacerlo.**
 
-1. Se crea `.claude/skills/resumen-de-cambios/SKILL.md` para este proyecto, o en `~/.claude/skills/` para todos los de la máquina<Cite n={11} repeat />.
-2. Se pega el ejemplo y se ajusta la descripción a cómo se pediría en el equipo.
-3. Se abre una sesión nueva, porque las descripciones se leen al empezar.
+1. Cree `.claude/skills/resumen-de-cambios/SKILL.md` para este proyecto, o en `~/.claude/skills/` para todos los proyectos de la máquina<Cite n={11} repeat />.
+2. Pegue el ejemplo y ajuste la descripción a cómo lo pediría su equipo.
+3. Abra una sesión nueva, porque las descripciones se leen al empezar.
 
-**Cómo se comprueba.** Se escribe `/` en la sesión y la skill tiene que aparecer en la lista. Después se hace una petición que encaje con su descripción, sin nombrarla, y se comprueba si se cargó sola. Si no se carga, el problema está en la descripción.
+**Cómo comprobarlo.** Escriba `/` en la sesión: la skill tiene que aparecer en la lista. Después haga una petición que encaje con su descripción, sin nombrarla, y compruebe si se cargó sola. Si no se carga, el problema está en la descripción.
 
-## 10. Subagentes: revisores con su propio contexto
+## 10. Qué son los subagentes y cómo repartir la revisión
 
-Un **subagente** es un asistente especializado que corre en su propia ventana de contexto, con sus propias instrucciones y herramientas. No ve la conversación principal, y al terminar solo devuelve su resumen<Cite n={13} />. Eso lo hace útil para revisar: quien revisa no arrastra el razonamiento de quien escribió el cambio.
+Un **subagente** es un agente especializado que trabaja en su propia ventana de contexto, con sus propias instrucciones y herramientas. No ve la conversación principal, y al terminar solo devuelve un resumen<Cite n={13} />. Por eso sirve para revisar: el revisor no recibe el razonamiento de quien escribió el cambio.
 
-Se define en un archivo Markdown en `.claude/agents/` para el proyecto o en `~/.claude/agents/` para todos<Cite n={13} repeat />:
+Se define en un archivo Markdown, en `.claude/agents/` para el proyecto o en `~/.claude/agents/` para todos sus proyectos<Cite n={13} repeat />:
 
 ```markdown
 ---
@@ -330,70 +335,87 @@ Cero hallazgos es un resultado válido.
 
 Qué hace cada campo:
 
-- **`name`** y **`description`**: obligatorios. La descripción decide cuándo el agente principal le delega el trabajo<Cite n={13} repeat />.
+- **`name`** y **`description`**: son obligatorios. La descripción decide cuándo el agente principal le pasa el trabajo<Cite n={13} repeat />.
 - **`tools`**: las herramientas permitidas. Un revisor no necesita editar, así que no recibe `Edit` ni `Write`.
-- **`model`**: el modelo que usa; `inherit` toma el de la sesión.
-- **El cuerpo**: sus instrucciones, que sustituyen a las de la herramienta.
+- **`model`**: el modelo que usa; con `inherit`, toma el de la sesión.
+- **El cuerpo**: sus instrucciones, que sustituyen a las instrucciones por omisión de Claude Code.
 
-Una revisión útil se reparte en cuatro subagentes con una pregunta cada uno. El de **seguridad** pregunta si el cambio deja a alguien hacer o ver algo que no debería. El de **calidad**, si deja el código mejor o peor: duplicación, imports, estructura. El de **errores y tipos** pregunta si algún error puede pasar sin que nadie se entere, o si los tipos permiten un estado que no debería existir. El de **pruebas** es la rutina: ejecuta la suite, los tipos y el linter, mide si las pruebas fallarían al romper el código, y ejecuta lo que el de seguridad necesita comprobar. Un solo revisor con las cuatro preguntas reparte la atención y devuelve una lista larga de avisos menores.
+La documentación recomienda que cada subagente se centre en una sola tarea<Cite n={13} repeat />. Por eso una revisión útil se reparte entre cuatro subagentes, con una pregunta cada uno:
 
-Lo que separa un revisor útil de uno que genera ruido es lo que exige a cada hallazgo, y varias fuentes públicas lo dejan escrito. La guía de auditoría de Cloudflare no acepta un hallazgo de seguridad sin nombrar quién cruza qué frontera de confianza y qué resultado concreto produce, y da gravedad solo a lo confirmado<Cite n={14} />. El revisor de seguridad de Anthropic solo reporta lo que tiene más de un 80 % de confianza y descarta de forma explícita categorías que suelen ser ruido<Cite n={15} />. ECC obliga a citar la línea exacta, a leer a quien llama al código y a aceptar que una revisión sin hallazgos es válida<Cite n={16} />. La guía de revisión de Google pide no aceptar cambios que empeoren la salud del código del sistema<Cite n={17} />.
+1. El de **seguridad** pregunta si el cambio permite a alguien hacer o ver algo que no debería.
+2. El de **calidad** pregunta si el cambio deja el código mejor o peor, en duplicación, imports y estructura.
+3. El de **errores y tipos** pregunta si algún error puede pasar sin que nadie se entere, o si los tipos permiten un estado que no debería existir.
+4. El de **pruebas** no juzga el diseño. Ejecuta la suite, los tipos y el linter, mide si las pruebas fallarían al romper el código y ejecuta lo que el de seguridad necesita comprobar.
 
-Cada subagente consume tokens con su propio modelo, y el campo `model` decide cuál. Si ni la llamada ni la definición lo fijan, Claude Code usa el modelo de la variable `CLAUDE_CODE_SUBAGENT_MODEL` y, sin ella, el de la conversación principal<Cite n={13} repeat />. Ese suele ser el más caro. Un revisor que busca en archivos no necesita el mismo modelo que uno que razona sobre autorización, así que cada definición fija el suyo.
+Un revisor útil se distingue por lo que exige a cada hallazgo, y varias fuentes públicas lo especifican. La guía de auditoría de Cloudflare solo acepta un hallazgo de seguridad si nombra quién cruza qué frontera de confianza y qué resultado concreto produce. Además, solo da gravedad a lo confirmado<Cite n={14} />.
 
-Varios subagentes que editan a la vez el mismo directorio se pisan. Los árboles de trabajo de git lo evitan: cada subagente trabaja en otro directorio con su propia rama, y el agente principal integra las ramas de una en una. En Claude Code se activa con `isolation: worktree` en la definición del subagente, y por omisión el árbol parte de la rama principal del remoto, no de la rama actual<Cite n={18} />.
+El revisor de seguridad de Anthropic solo reporta lo que considera explotable con más de un 80 % de confianza. Además, descarta de forma explícita categorías que suelen ser ruido<Cite n={15} />. ECC obliga a citar la línea exacta, a leer las funciones que llaman al código revisado y a aceptar que una revisión sin hallazgos es válida<Cite n={16} />. La guía de revisión de Google pide no aceptar cambios que empeoren la salud del código del sistema<Cite n={17} />.
 
-Los agentes de trabajo se reparten igual que los revisores, cada uno con su nivel de modelo. `explorador` y `documentador` usan un modelo pequeño: el primero localiza y explica código, y el segundo pone al día la documentación. `arquitecto` usa un modelo mayor para diseñar y partir el trabajo en piezas. `implementador` resuelve una pieza en su propio árbol de trabajo, con un modelo intermedio. `resolutor-compilacion`, con el mismo nivel, devuelve la compilación, los tipos y el linter a verde con el cambio mínimo. `limpiador` completa el grupo: código muerto y duplicación, a petición, también con un modelo intermedio. Solo el agente principal los lanza, e integra sus ramas de una en una.
+Cada subagente consume tokens con su propio modelo, y el campo `model` decide cuál. Si ni la llamada ni la definición lo fijan, Claude Code usa el modelo de la variable `CLAUDE_CODE_SUBAGENT_MODEL` y, si no existe, el de la conversación principal<Cite n={13} repeat />. Así, si la conversación usa el modelo mayor, los subagentes sin modelo propio también lo usan. Un revisor que busca en archivos no necesita el mismo modelo que uno que razona sobre autorización, así que cada definición fija el suyo.
 
-Un workflow lleva lo mismo a otra escala: un guion que lanza decenas de subagentes por fases. Claude Code avisa cuando uno programa más de 25 agentes, y admite una guía de tamaño que apunta a menos de 5, de 10 o de 50<Cite n={19} />.
+Si varios subagentes editan a la vez el mismo directorio, uno puede sobrescribir los cambios de otro. Un **árbol de trabajo** (*worktree*) de git lo evita: es otro directorio del mismo repositorio, con su propia rama. Cada subagente trabaja en el suyo, y el agente principal fusiona las ramas de una en una. En Claude Code se activa con `isolation: worktree` en la definición del subagente. Por omisión, el árbol parte de la rama principal del remoto, no de la rama actual<Cite n={18} />.
 
-**Cómo se hace.**
+Los seis agentes de trabajo se reparten del mismo modo, cada uno con su nivel de modelo:
 
-1. Se crea `.claude/agents/revisor-calidad.md` con el ejemplo.
-2. Se lanza nombrándolo: `@agent-revisor-calidad revisa el diff actual`<Cite n={13} repeat />.
-3. Los cuatro revisores, los seis agentes de trabajo y la skill `revisar-cambio` que lanza la revisión los crea el prompt del punto 14.
+1. `explorador` localiza y explica código, con un modelo pequeño.
+2. `arquitecto` diseña el cambio y lo divide en piezas, con el modelo mayor.
+3. `implementador` resuelve una pieza en su propio árbol de trabajo, con un modelo intermedio.
+4. `resolutor-compilacion` deja en verde la compilación, los tipos y el linter con el cambio mínimo, con un modelo intermedio.
+5. `documentador` pone al día la documentación, con un modelo pequeño.
+6. `limpiador` quita código muerto y duplicación cuando se le pide, con un modelo intermedio.
 
-**Cómo se comprueba.** Se introducen a propósito dos fallos de calidad, una utilidad que ya existe reimplementada y un import sin usar, y se lanza el revisor. Si no los señala, sus instrucciones no bastan.
+Solo el agente principal los lanza, y fusiona sus ramas de una en una.
 
-## 11. Los plugins instalan lo que otro ya escribió
+Un *workflow* es un guion que lanza decenas de subagentes por fases. Claude Code avisa cuando un *workflow* programa más de 25 agentes. También admite una guía de tamaño que fija un objetivo de menos de 5, de 10 o de 50 agentes<Cite n={19} />.
 
-Un **plugin** es un paquete instalable que agrupa skills, agentes, *hooks* y servidores MCP<Cite n={20} />. **MCP**, siglas de Model Context Protocol, es un protocolo abierto para conectar un modelo con fuentes de datos y herramientas externas<Cite n={5} repeat />. Un servidor MCP añade herramientas nuevas al agente, para Slack, Jira, una base de datos o un navegador.
+**Cómo hacerlo.**
 
-Los plugins se distribuyen en catálogos llamados *marketplaces*. El catálogo oficial de Anthropic, `claude-plugins-official`, queda registrado la primera vez que se abre una sesión interactiva, así que instalar de él es una sola orden<Cite n={20} repeat />:
+1. Cree `.claude/agents/revisor-calidad.md` con el ejemplo.
+2. Láncelo nombrándolo: `@agent-revisor-calidad revisa el diff actual`<Cite n={13} repeat />.
+
+El prompt del punto 14 crea los cuatro revisores, los seis agentes de trabajo y la skill `revisar-cambio`, que lanza la revisión.
+
+**Cómo comprobarlo.** Introduzca a propósito dos fallos de calidad, una utilidad que ya existe reimplementada y un import sin usar, y lance el revisor. Si no los señala, sus instrucciones no bastan.
+
+## 11. Qué son los plugins y qué cuesta instalarlos
+
+Un **plugin** es un paquete instalable que agrupa skills, agentes, *hooks* y servidores MCP<Cite n={20} />. **MCP**, siglas de Model Context Protocol, es un protocolo abierto para conectar un modelo con fuentes de datos y herramientas externas<Cite n={5} repeat />. Un servidor MCP añade herramientas nuevas al agente, por ejemplo para Slack, Jira, una base de datos o un navegador.
+
+Los plugins se distribuyen en catálogos, llamados *marketplaces*. El catálogo oficial de Anthropic, `claude-plugins-official`, se registra la primera vez que usted abre una sesión interactiva, así que instalar desde él es una sola orden<Cite n={20} repeat />:
 
 ```shell
 /plugin install commit-commands@claude-plugins-official
 ```
 
-`commit-commands` es el nombre del plugin, que añade órdenes para confirmar, subir y abrir pull requests, y lo que va detrás de `@` es el catálogo del que sale. Un catálogo de terceros se registra antes con `/plugin marketplace add <usuario>/<repositorio>`, que no instala nada<Cite n={20} repeat />. `/plugin` sin argumentos abre el panel de catálogos, plugins instalados y errores de carga, y `/mcp` gestiona las conexiones con servidores MCP<Cite n={21} />.
+`commit-commands` es el nombre del plugin, que añade órdenes para confirmar, subir y abrir *pull requests*. Lo que va detrás de `@` es el catálogo del que sale. Un catálogo de terceros se registra antes con `/plugin marketplace add <usuario>/<repositorio>`, que no instala nada<Cite n={20} repeat />. `/plugin` sin argumentos abre el panel de catálogos, plugins instalados y errores de carga, y `/mcp` gestiona las conexiones con servidores MCP<Cite n={21} />.
 
-Antes de instalar, la ficha de cada plugin enseña dos datos. **Context cost** es lo que añade a cada mensaje y lo que añaden sus skills y agentes al cargarse. **Will install** lista las órdenes, agentes, skills, *hooks* y servidores que trae<Cite n={20} repeat />. El primero se paga en todas las sesiones, también en las que no se usa el plugin.
+Antes de instalar, la ficha de cada plugin muestra dos datos. «Context cost» es lo que añade a cada mensaje y lo que añaden sus skills y agentes al cargarse. «Will install» lista las órdenes, agentes, skills, *hooks* y servidores que trae<Cite n={20} repeat />. El primero ocupa contexto en todas las sesiones, también en las que no usan el plugin.
 
-Los plugins de inteligencia de código conectan un servidor de lenguaje, la tecnología que da al editor el salto a la definición. Con uno instalado, el agente ve los errores de tipos que introducen sus propias ediciones antes de compilar. El plugin no incluye el servidor, que se instala aparte<Cite n={22} />.
+Los plugins de inteligencia de código conectan un servidor de lenguaje, el componente que da al editor funciones como ir a la definición. Con uno instalado, el agente ve los errores de tipos que introducen sus propias ediciones sin esperar a compilar. El plugin no incluye el servidor, que se instala aparte<Cite n={22} />.
 
 <Callout kind="riesgo" title="Un plugin ejecuta código con los permisos de quien lo instala">
-	La documentación lo enuncia sin matices: un plugin instalado puede ejecutar código arbitrario en la máquina con los privilegios del usuario. Anthropic añade que no controla qué servidores, archivos u otro software incluye un plugin, ni puede verificar que funcione como dice<Cite n={23} />. Antes de instalar uno de un tercero se abre su repositorio y se lee qué trae.
+	Según la documentación, un plugin instalado puede ejecutar código arbitrario en la máquina con los permisos de su cuenta. Anthropic añade que no controla qué servidores, archivos u otro software incluye un plugin, y que no puede verificar que funcione como dice<Cite n={23} />. Antes de instalar un plugin de terceros, abra su repositorio y lea qué trae.
 </Callout>
 
-**Cómo se comprueba.** Se ejecuta `/context` antes y después de instalar. Un plugin que añade contexto en cada turno y no se usa nunca se desinstala.
+**Cómo comprobarlo.** Ejecute `/context` antes y después de instalar. Si un plugin añade contexto en cada turno y usted no lo usa nunca, desinstálelo.
 
-## 12. Qué permisos se le dan
+## 12. Qué permisos darle al agente
 
-Un agente ejecuta órdenes y lee archivos, así que hay dos decisiones antes de la primera sesión larga: qué se detiene a preguntar y qué archivos puede leer.
+Un agente ejecuta órdenes y lee archivos. Antes de la primera sesión larga hay que decidir dos cosas: en qué casos se detiene a preguntar y qué archivos puede leer.
 
-Lo primero lo fijan los **modos de permiso**, que se recorren con `Shift+Tab` y se ven en la barra de estado<Cite n={8} repeat />:
+Lo primero lo fija el **modo de permiso**, que se cambia con `Shift+Tab` y se ve en la barra de estado. Estos son los modos principales y lo que cada uno hace sin preguntar<Cite n={8} repeat />:
 
-| Modo | Qué hace |
+| Modo | Qué hace sin preguntar |
 |---|---|
-| `default` | Pregunta la primera vez que se usa cada herramienta. La barra lo muestra como `manual mode on`. |
-| `acceptEdits` | Acepta sin preguntar las ediciones y las órdenes básicas de archivos dentro del proyecto. |
+| `default` | Solo lee. Claude Code lo llama Manual, y la barra lo muestra como `manual mode on`. |
+| `acceptEdits` | Lee, edita archivos y ejecuta órdenes básicas de archivos, como `mkdir` o `mv`. |
 | `plan` | Lee y explora, pero no edita el código. |
-| `auto` | Aprueba las herramientas con comprobaciones de seguridad en segundo plano. |
-| `bypassPermissions` | Omite las peticiones de permiso. |
+| `auto` | Todo, con comprobaciones de seguridad en segundo plano. |
+| `bypassPermissions` | Todo, sin ninguna comprobación. |
 
-El último es el que se activa el primer día para dejar de responder preguntas. Su documentación restringe el uso a entornos aislados, contenedores o máquinas virtuales donde el agente no pueda causar daño<Cite n={24} />.
+Desde la versión 2.1.283, las sesiones de la terminal y de VS Code empiezan en `auto`<Cite n={8} repeat />. La documentación limita `bypassPermissions` a entornos aislados, como contenedores o máquinas virtuales, donde el agente no pueda causar daño<Cite n={24} />.
 
-Lo segundo importa porque el agente envía al servidor del proveedor el contenido de los archivos que lee, y un `.env` con credenciales entra en ese envío igual que el código. La exclusión se declara en `.claude/settings.json`<Cite n={25} />:
+Lo segundo importa porque el agente envía al servidor del proveedor el contenido de los archivos que lee. Un `.env` con credenciales se envía igual que el código. Para excluirlo, declare la regla en `.claude/settings.json`<Cite n={25} />:
 
 ```json
 {
@@ -403,27 +425,29 @@ Lo segundo importa porque el agente envía al servidor del proveedor el contenid
 }
 ```
 
-`deny` es la lista de acciones que la herramienta rechaza siempre. `Read(./.env)` es la herramienta de lectura sobre ese archivo exacto, y `Read(./.env.*)` cubre `.env.local`, `.env.production` y los demás. Que el archivo esté en `.gitignore` no lo protege: medido sin la regla, la herramienta de lectura devolvió el archivo sin error. Con la regla, devuelve el bloqueo:
+`deny` es la lista de acciones que Claude Code rechaza siempre. `Read(./.env)` es la herramienta de lectura sobre ese archivo exacto, y `Read(./.env.*)` cubre `.env.local`, `.env.production` y los demás.
+
+Que el archivo esté en `.gitignore` no lo protege. En la medición, sin la regla, la herramienta de lectura devolvió el archivo sin error. Con la regla, devuelve este bloqueo:
 
 ```text
 File is in a directory that is denied by your permission settings.
 ```
 
-La regla alcanza también a las órdenes de terminal que nombran el archivo, como `cat .env` o `head .env`. No alcanza a un guion que abra el archivo por su cuenta, como un programa de Node o de Python<Cite n={24} repeat />.
+La regla también cubre las órdenes de terminal que nombran el archivo, como `cat .env` o `head .env`. No cubre un guion que abra el archivo por su cuenta, como un programa de Node o de Python<Cite n={24} repeat />.
 
-Cursor parte de otro punto. Ignora por defecto lo listado en `.gitignore` y una lista propia que incluye `.env*`, y lo demás se excluye en `.cursorignore`. La misma documentación indica que la terminal y las herramientas externas del agente no pueden bloquear el acceso a lo cubierto por ese archivo<Cite n={26} />.
+Cursor funciona de otra forma. Por omisión ignora lo que lista `.gitignore` y una lista propia que incluye `.env*`, y el resto se excluye en `.cursorignore`. Su documentación advierte que la terminal y las herramientas externas del agente no pueden bloquear el acceso a lo que cubre ese archivo<Cite n={26} />.
 
-En las dos herramientas la exclusión vive en la configuración y no en el archivo de instrucciones. Las reglas de permiso las aplica la herramienta y no el modelo<Cite n={24} repeat />, así que una línea en `AGENTS.md` que diga «no leas `.env`» no cambia lo que la herramienta permite.
+En los dos productos, la exclusión se declara en la configuración y no en el archivo de instrucciones. Las reglas de permiso las aplica el *harness*, no el modelo<Cite n={24} repeat />. Por eso una línea en `AGENTS.md` que diga «no leas `.env`» no cambia lo que Claude Code permite.
 
-Queda una decisión de coste: qué modelo usa la sesión. Se cambia con `/model`, y la documentación recomienda empezar con Sonnet, que resuelve bien la mayoría de las tareas de programación y cuesta menos que Opus<Cite n={6} repeat />.
+Queda una decisión de coste: qué modelo usa la sesión. Cámbielo con `/model`. La documentación recomienda empezar con Sonnet, que resuelve bien la mayoría de las tareas de programación y cuesta menos que Opus<Cite n={6} repeat />.
 
-**Cómo se comprueba.** Se pide al agente el contenido de `.env`. Con la regla puesta, la herramienta devuelve el bloqueo en lugar del archivo. Que el modelo conteste que no piensa hacerlo no comprueba nada, porque esa respuesta no la produce la regla.
+**Cómo comprobarlo.** Pida al agente el contenido de `.env`. Con la regla puesta, la herramienta de lectura devuelve el bloqueo en lugar del archivo. Que el modelo conteste que no piensa hacerlo no comprueba nada, porque esa respuesta no la produce la regla.
 
-## 13. Cómo se revisa lo que hizo
+## 13. Cómo revisar lo que hizo el agente
 
-Un agente edita los archivos directamente, así que lo que queda al terminar es un *diff*: la lista de líneas que cambiaron entre el estado anterior del repositorio y el actual. Solo sirve si el punto de partida estaba limpio, y por eso `git status --porcelain` tiene que salir vacío antes de la petición.
+El agente edita los archivos directamente, así que al terminar queda un *diff*. Un *diff* es la lista de líneas que cambiaron entre el estado anterior del repositorio y el actual. El *diff* solo sirve si el punto de partida estaba limpio. Por eso `git status --porcelain` tiene que salir vacío antes de la petición.
 
-La orden habitual para ver qué archivos cambiaron deja fuera los nuevos:
+La orden habitual para ver qué archivos cambiaron no muestra los nuevos:
 
 ```bash
 git diff --stat
@@ -435,7 +459,7 @@ git diff --stat
  2 files changed, 13 insertions(+), 1 deletion(-)
 ```
 
-La sesión había creado además `src/util/fecha.js`. `git diff` sin argumentos compara el árbol de trabajo con el índice, el área donde se preparan los cambios del siguiente commit<Cite n={27} />. Un archivo nuevo todavía no está en el índice, así que no aparece. Añadir todo al índice antes de mirar corrige la lista:
+La sesión había creado además `src/util/fecha.js`. `git diff` sin argumentos compara los archivos del directorio de trabajo con el índice, el área donde se preparan los cambios del siguiente commit<Cite n={27} />. Un archivo nuevo todavía no está en el índice, así que no aparece. Para que la lista esté completa, añada todo al índice antes de mirar:
 
 ```bash
 git add -A && git diff --cached --stat
@@ -448,37 +472,45 @@ git add -A && git diff --cached --stat
  3 files changed, 16 insertions(+), 1 deletion(-)
 ```
 
-`git add -A` añade al índice todo lo modificado, lo borrado y lo nuevo. `--cached` compara el índice con el último commit, y `--stat` resume por archivo. El que faltaba importa una dependencia nueva declarada en `package.json`, y la petición no pedía ninguna. Una dependencia entra en el archivo de bloqueo, se instala en cada despliegue y hay que actualizarla.
+`git add -A` añade al índice todo lo modificado, lo borrado y lo nuevo. `--cached` compara el índice con el último commit, y `--stat` resume los cambios por archivo. El archivo que faltaba importa una dependencia nueva declarada en `package.json`, y la petición no pedía ninguna. Esa dependencia entra en el archivo de bloqueo, se instala en cada despliegue y hay que mantenerla actualizada.
 
-Tres cosas se leen antes que el resto. Los archivos que la petición no nombraba. Las líneas borradas, porque un agente que reescribe una función entera puede quitar una comprobación necesaria. Y los cambios en la configuración, el `Dockerfile` y la integración continua, que deciden lo que se ejecuta fuera de la máquina.
+Lea primero tres cosas:
 
-Compilar tampoco es ejecutar. Un cambio puede pasar el linter y no hacer lo que la petición pedía, así que la última comprobación es ejecutar el programa por la ruta que toca el cambio. `/diff` enseña lo mismo dentro de la sesión, incluidas las ediciones del agente<Cite n={21} repeat />.
+1. Los archivos que la petición no nombraba.
+2. Las líneas borradas, porque un agente que reescribe una función entera puede quitar una comprobación necesaria.
+3. Los cambios en la configuración, el `Dockerfile` y la integración continua, que deciden lo que se ejecuta fuera de su máquina.
+
+Que el cambio compile tampoco demuestra que haga lo pedido, porque puede pasar el linter sin cumplir la petición. La última comprobación es ejecutar el programa por la ruta que toca el cambio. Dentro de la sesión, `/diff` muestra lo mismo, incluidas las ediciones del agente<Cite n={21} repeat />.
 
 <Callout kind="riesgo" title="Descartar una sesión entera son dos órdenes, y las dos borran">
-	`git reset --hard` devuelve al último estado confirmado todo lo que git ya sigue, y `git clean -fd` borra los archivos que todavía no están en el índice. Lo que quitan no está en el historial, así que no se recupera. Ejecutarlas exige haber comprobado antes que el trabajo propio ya estaba confirmado.
+	`git reset --hard` devuelve al último commit todo lo que git ya sigue, y `git clean -fd` borra los archivos que todavía no están en el índice. Lo que quitan no está en el historial, así que no se puede recuperar. Antes de ejecutarlas, compruebe que su propio trabajo ya está confirmado.
 </Callout>
 
-**Cómo se comprueba.** Se ejecuta `git add -A && git diff --cached --stat` y se compara esa lista con la petición. Cada archivo que sobra se lee entero antes de continuar.
+**Cómo comprobarlo.** Ejecute `git add -A && git diff --cached --stat` y compare esa lista con la petición. Lea entero cada archivo que sobre antes de continuar.
 
-## 14. Configurar el entorno entero en un paso
+## 14. Cómo configurar el entorno completo con un prompt
 
-Todo lo anterior se puede montar a mano, archivo por archivo. Hay un prompt que lo hace el agente, en cualquier herramienta que lo reciba. Se copia con el botón **Copiar prompt** que aparece bajo **Configurar entorno**, se pega en una sesión abierta en la raíz del proyecto, y el agente sigue once fases:
+Todo lo anterior se puede configurar a mano, archivo por archivo. También puede hacerlo el agente con un prompt, en cualquier *harness* que lo reciba. Cópielo con el botón «Copiar prompt» del panel «Configurar entorno» y péguelo en una sesión abierta en la raíz del proyecto. El agente sigue once fases:
 
-1. **Reconoce el proyecto** sin escribir nada: su herramienta, los modelos que ofrece clasificados en tres niveles, el lenguaje, las órdenes reales de pruebas, linter, tipos y auditoría, y cómo autentica y autoriza el proyecto.
-2. **Propone y espera**: presenta los archivos que va a crear y el modelo de cada subagente, y se detiene hasta recibir confirmación. Incluye también las herramientas recomendadas, cada una con lo que envía fuera de la máquina.
-3. **Escribe `AGENTS.md`** con las órdenes comprobadas, las convenciones, una sección opcional de vocabulario del dominio y qué skill o agente usar en cada situación.
-4. **Bloquea la lectura de secretos** con la regla de permisos de su herramienta, y lo comprueba intentando leer `.env`.
-5. **Crea cuatro skills de método**. `aclarar` entrevista al usuario por rondas antes de construir, con la respuesta que recomienda el agente en cada pregunta. Lo que se averigua en el código lo busca el agente, y las decisiones son del usuario. `pruebas-primero` y `depurar` fijan el ciclo de la prueba que falla y la búsqueda de la causa raíz. `orquestar` decide cuántos subagentes lanzar, con qué nivel de modelo, y cuándo usar árboles de trabajo y workflows.
-6. **Crea cuatro revisores**. El de seguridad lleva un archivo de contexto del proyecto y nueve listas por dominio que carga según lo que toque el cambio. El de calidad se centra en duplicación, imports, estructura y en si el cambio hace lo que se pidió, con lo que falta y lo que sobra. El de errores y tipos busca fallos silenciosos, `catch` que ocultan errores, respaldos engañosos, estados imposibles y conversiones forzadas. El de pruebas es la rutina que ejecuta y mide.
-7. **Crea seis agentes de trabajo**, cada uno con su nivel de modelo. `explorador` localiza y explica código con un modelo pequeño. `arquitecto` diseña y parte el trabajo en piezas con un modelo mayor. `implementador` resuelve una pieza en su propio árbol de trabajo con un modelo intermedio. `resolutor-compilacion` devuelve la compilación, los tipos y el linter a verde con el cambio mínimo, también con un modelo intermedio. `documentador` pone al día la documentación con un modelo pequeño. `limpiador` quita código muerto y duplicación a petición, con un modelo intermedio.
-8. **Crea la skill `revisar-cambio`**, que lanza seguridad, calidad y errores en paralelo, pruebas al final, y compone el veredicto.
-9. **Propone ajustes opcionales**: el modelo por omisión de los subagentes, el tamaño de los workflows, la rama base de los árboles de trabajo y tres hooks. Los hooks formatean, protegen los archivos sensibles y bloquean órdenes destructivas como `git push --force`, `git reset --hard` o `rm -rf`.
-10. **Propone tres herramientas y dos colecciones de skills opcionales**, y pregunta antes de instalar cada una: graphify, claude-council, archify, las skills de Matt Pocock y gstack.
-11. **Comprueba y cierra**: siembra en una rama temporal un fallo para cada uno de los cuatro revisores, comprueba que cada uno lo detecta y borra la rama. Pide al arquitecto el plan de una tarea de ejemplo. Repite la comprobación de las herramientas instaladas.
+1. **Reconoce el proyecto** sin escribir nada. Averigua en qué *harness* se ejecuta, qué modelos ofrece y en qué nivel está cada uno, y el lenguaje del proyecto. También busca las órdenes reales de pruebas, linter, tipos y auditoría, y cómo autentica y autoriza el proyecto.
+2. **Propone y espera.** Presenta los archivos que va a crear y el modelo de cada subagente, y se detiene hasta que usted confirma. Incluye también las herramientas opcionales recomendadas, cada una con lo que envía fuera de la máquina.
+3. **Escribe `AGENTS.md`** con las órdenes comprobadas, las convenciones, un apartado opcional de vocabulario del dominio y qué skill o agente usar en cada situación.
+4. **Bloquea la lectura de secretos** con la regla de permisos de su *harness*, y lo comprueba intentando leer `.env`.
+5. **Crea cuatro skills de método.** `aclarar` le hace preguntas por rondas antes de construir, con la respuesta que recomienda en cada una. El agente busca en el código lo que se puede averiguar, y las decisiones son suyas. `pruebas-primero` y `depurar` fijan el ciclo de la prueba que falla y la búsqueda de la causa raíz. `orquestar` decide cuántos subagentes lanzar, con qué nivel de modelo, y cuándo usar árboles de trabajo y *workflows*.
+6. **Crea los cuatro revisores del punto 10.** El de seguridad lleva un archivo de contexto del proyecto y nueve listas por dominio, que carga según lo que toque el cambio. El de calidad comprueba además si el cambio hace lo que se pidió, con lo que falta y lo que sobra. El de errores y tipos busca fallos silenciosos, bloques `catch` que ocultan errores, valores de respaldo engañosos, estados imposibles y conversiones forzadas.
+7. **Crea los seis agentes de trabajo del punto 10**, cada uno con su nivel de modelo.
+8. **Crea la skill `revisar-cambio`**, que lanza en paralelo los revisores de seguridad, calidad y errores, deja el de pruebas para el final y compone el veredicto.
+9. **Propone ajustes opcionales**: el modelo por omisión de los subagentes, el tamaño de los *workflows*, la rama base de los árboles de trabajo y tres *hooks*. Los *hooks* formatean el código, protegen los archivos sensibles y bloquean órdenes destructivas como `git push --force`, `git reset --hard` o `rm -rf`.
+10. **Propone tres herramientas y dos colecciones de skills, todas opcionales**, y pregunta antes de instalar cada una: graphify, claude-council, archify, las skills de Matt Pocock y gstack.
+11. **Comprueba y cierra.** Siembra en una rama temporal un fallo para cada revisor, comprueba que cada uno detecta el suyo y borra la rama. Después pide al arquitecto el plan de una tarea de ejemplo y repite la comprobación de las herramientas instaladas.
 
-La configuración base, de la fase 1 a la 9, tarda de 15 a 20 minutos en un proyecto pequeño. En la prueba fueron 14: 5 para reconocer el proyecto y proponer, 2 esperando la respuesta y 7 para crear todos los archivos. Con las cinco herramientas opcionales y las pruebas de la fase 11, la ejecución completa tardó 29 minutos. La diferencia tiene dos causas. gstack compila sus binarios y descarga su navegador, unos 5 minutos. La prueba de revisores tarda unos 8, porque lanza los cuatro revisores sobre fallos sembrados y el de pruebas muta el código para ver si alguna prueba lo detecta.
+La configuración base, de la fase 1 a la 9, tarda de 15 a 20 minutos en un proyecto pequeño. En la ejecución medida tardó 14: 5 para reconocer el proyecto y proponer, 2 de espera hasta la respuesta y 7 para crear los archivos.
 
-En un proyecto de prueba en Node.js, con las cinco herramientas opcionales instaladas, el prompt dejó esta estructura. `.claude/agents` guarda los diez subagentes: los cuatro revisores y los seis agentes de trabajo. `.claude/skills` guarda dieciséis skills: las nueve del prompt, la de graphify y seis de Matt Pocock. Las herramientas que se instalan para el usuario (archify, gstack y claude-council) aparecen abajo, plegadas, con su ruta en `~/.claude`.
+Con las cinco herramientas opcionales y las comprobaciones de la fase 11, la ejecución completa tardó 29 minutos. La diferencia tiene dos causas. gstack compila sus binarios y descarga su navegador, lo que lleva unos 5 minutos. La comprobación de los revisores lleva unos 8. Lanza los cuatro revisores sobre los fallos sembrados, y el de pruebas muta el código para ver si alguna prueba lo detecta.
+
+En esa comprobación, los cuatro revisores detectaron los cuatro fallos sembrados, y el de seguridad confirmó la inyección ejecutándola. El revisor de pruebas demostró además que una prueba sembrada seguía en verde con la función rota.
+
+En un proyecto de ejemplo en Node.js, con las cinco herramientas opcionales instaladas, el prompt dejó esta estructura. `.claude/agents` guarda los diez subagentes: los cuatro revisores y los seis agentes de trabajo. `.claude/skills` guarda dieciséis skills: las nueve del prompt, la de graphify y seis de Matt Pocock. Lo que se instala en su carpeta personal (archify, gstack y claude-council) aparece abajo, plegado, con su ruta en `~/.claude`.
 
 <figure class="shot">
 	<a href="/img/blog/estructura-tras-el-prompt.webp">
@@ -488,67 +520,75 @@ En un proyecto de prueba en Node.js, con las cinco herramientas opcionales insta
 			height="1442"
 			loading="lazy"
 			decoding="async"
-			alt="Explorador de VS Code con el proyecto tienda: .claude con agents (diez subagentes), hooks (dos), skills (dieciséis carpetas), CLAUDE.md y settings.json; en la raíz, graphify-out, .graphifyignore, AGENTS.md, CLAUDE.md y skills-lock.json; abajo, plegadas, las carpetas de usuario de archify, gstack y claude-council. A la derecha, la vista previa de AGENTS.md, con sus secciones de órdenes, entorno, vocabulario, convenciones y cómo se trabaja."
+			alt="Explorador de VS Code con el proyecto tienda: .claude con agents (diez subagentes), hooks (dos), skills (dieciséis carpetas), CLAUDE.md y settings.json; en la raíz, graphify-out, .graphifyignore, AGENTS.md, CLAUDE.md y skills-lock.json; abajo, plegadas, las carpetas de usuario de archify, gstack y claude-council. A la derecha, la vista previa de AGENTS.md, con sus apartados de órdenes, entorno, vocabulario, convenciones y cómo se trabaja."
 		/>
 	</a>
-	<figcaption>Captura de VS Code del proyecto de prueba, con el tema GitHub Dark Dimmed y los iconos de vscode-icons. La ejecución se hizo con la versión inglesa del prompt; aquí los archivos llevan los nombres y el texto de la española. A la derecha, la vista previa de `AGENTS.md`.</figcaption>
+	<figcaption>Captura de VS Code del proyecto de ejemplo, con el tema GitHub Dark Dimmed y los iconos de vscode-icons. La ejecución se hizo con la versión inglesa del prompt; aquí los archivos llevan los nombres y el texto de la versión española. A la derecha, la vista previa de `AGENTS.md`.</figcaption>
 </figure>
 
-El prompt no toca el código de la aplicación. Si durante la configuración el agente ve necesario instalar una dependencia, un plugin o un servidor MCP, primero lo propone con su origen y su motivo, y espera confirmación.
+El prompt no toca el código de la aplicación. Si la configuración requiere instalar una dependencia, un plugin o un servidor MCP, el agente primero lo propone con su origen y su motivo, y espera su confirmación.
 
-<Callout kind="riesgo" title="Un prompt que crea archivos se lee antes de pegarlo">
-	Este prompt pide al agente que ejecute órdenes del proyecto y escriba archivos de configuración. El texto completo se lee con **Ver el prompt completo**, bajo el botón, y es exactamente lo que se copia. La fase 2 obliga al agente a detenerse antes de escribir: si continúa sin preguntar, se interrumpe con `Esc`.
+<Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
+	Este prompt pide al agente que ejecute órdenes del proyecto y que escriba archivos de configuración. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 2 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo con `Esc`.
 </Callout>
 
-**Cómo se comprueba.** Las skills y los subagentes nuevos se registran al abrir la sesión, así que se cierra y se vuelve a abrir. Entonces `/revisar-cambio` aparece al escribir `/` y la lectura de `.env` devuelve el bloqueo. `git status --porcelain` enseña solo los archivos que el agente propuso en la fase 2.
+**Cómo comprobarlo.** Las skills y los subagentes nuevos se registran al abrir la sesión, así que ciérrela y vuelva a abrirla. Entonces `/revisar-cambio` aparece al escribir `/`, y la lectura de `.env` devuelve el bloqueo. `git status --porcelain` muestra solo los archivos que el agente propuso en la fase 2.
 
-## 15. Para qué sirve cada pieza y de dónde sale
+## 15. Qué aporta cada pieza y de dónde sale
 
-Sin esta configuración, el agente empieza cada sesión sin conocer las órdenes del proyecto, puede leer un `.env` sin preguntar y revisa su trabajo con el mismo sesgo con que lo escribió. Además, sus subagentes heredan el modelo de la sesión, que suele ser el más caro. Cada pieza del prompt cubre uno de esos huecos:
+Sin esta configuración, el agente empieza cada sesión sin conocer las órdenes del proyecto y puede leer un `.env` sin preguntar. Además, revisa su trabajo con el mismo sesgo con el que lo escribió, y sus subagentes usan el modelo de la sesión (punto 10). Cada pieza del prompt resuelve uno de esos problemas:
 
-- **`AGENTS.md`** fija los hechos del proyecto (órdenes comprobadas, vocabulario y convenciones) para que el agente no tenga que deducirlos en cada sesión.
-- **La regla de secretos y los hooks** convierten los límites en reglas que aplica la herramienta: la lectura de `.env` y las órdenes destructivas se bloquean aunque el modelo las intente.
-- **Las skills de método** dan un procedimiento para cada tipo de tarea. Se aclara antes de construir, se ve fallar la prueba antes de escribir el código, se busca la causa antes de arreglar y se reparte con el número y el modelo justos.
+- **`AGENTS.md`** fija los hechos del proyecto (las órdenes comprobadas, el vocabulario y las convenciones) para que el agente no tenga que deducirlos en cada sesión.
+- **La regla de secretos y los *hooks*** convierten los límites en reglas que aplica el *harness*. La lectura de `.env` y las órdenes destructivas se bloquean aunque el modelo las intente.
+- **Las skills de método** dan un procedimiento para cada tipo de tarea. Con ellas, el agente aclara antes de construir, ve fallar la prueba antes de escribir el código y busca la causa antes de arreglar. También reparte el trabajo con el número de agentes y el modelo adecuados.
 - **Los revisores** reparten la revisión en cuatro preguntas, cada una en un contexto propio y sin el sesgo de quien escribió el cambio.
 - **Los agentes de trabajo** reciben piezas acotadas de una tarea grande, cada una con el nivel de modelo que necesita.
 
-En la prueba del punto 14, los cuatro revisores detectaron los cuatro fallos sembrados, y el de seguridad confirmó la inyección ejecutándola. La revisión completa tardó unos 8 minutos.
-
 Las ideas vienen de nueve fuentes públicas:
 
-- **La guía de auditoría de Cloudflare**<Cite n={14} repeat /> exige que un hallazgo de seguridad viole una frontera de confianza real, con evidencia en el código, una reproducción segura y el arreglo más pequeño. De ahí salen el método y la gravedad del `revisor-seguridad` y sus nueve listas por dominio.
-- **El revisor de seguridad de Anthropic**<Cite n={15} repeat /> solo reporta lo que es explotable con más de un 80 % de confianza. Excluye categorías que casi siempre son ruido, como la denegación de servicio, y esa lista está en lo que el `revisor-seguridad` no reporta.
-- **Las skills de Trail of Bits**<Cite n={28} /> revisan solo lo que introduce el cambio, comprueban cada sospecha para descartar falsos positivos y mutan el código para medir las pruebas. Esas tres ideas están en el contrato común de los revisores y en el `revisor-pruebas`.
-- **Los plugins oficiales `pr-review-toolkit` y `feature-dev` de Anthropic**<Cite n={29} /> traen revisores de fallos silenciosos, diseño de tipos y cobertura de pruebas, y agentes que exploran el código y diseñan antes de implementar. De ellos salen el `revisor-errores-y-tipos`, la puntuación de huecos del `revisor-pruebas`, el `explorador` y el `arquitecto`.
-- **ECC**<Cite n={16} repeat /> tiene agentes de trabajo acotados: uno arregla la compilación con el cambio mínimo, otro limpia el código muerto y otro pone al día la documentación. Son el `resolutor-compilacion`, el `limpiador` y el `documentador`.
-- **La guía de revisión de Google**<Cite n={17} repeat /> dice qué mirar en una revisión, pide leer cada línea y no aprobar un cambio que empeore la salud del código. Son la pregunta y la lista de categorías del `revisor-calidad`.
-- **Superpowers**<Cite n={30} /> aporta tres hábitos: ver fallar la prueba primero, buscar la causa raíz y parar tras tres arreglos fallidos, y no afirmar nada sin la orden que lo demuestra. También elige el modelo más barato que pueda con cada tarea, porque pesan más los turnos que el precio por token. Está en `pruebas-primero`, `depurar`, el final de `AGENTS.md` y los niveles de `orquestar`.
-- **Las skills de Matt Pocock**<Cite n={31} /> entrevistan al usuario antes de construir, comprueban si el cambio hace lo pedido y resuelven los conflictos de fusión según la intención de cada lado. De ahí salen `aclarar`, la sección «Lo pedido» del `revisor-calidad` y la regla de integración de `orquestar`.
-- **gstack**<Cite n={32} /> reutiliza antes de escribir código nuevo, avisa antes de una orden destructiva y trata el acuerdo entre dos modelos como una señal, no como una decisión. Está en el `implementador`, en el hook de órdenes destructivas y en el uso de claude-council.
+1. **La guía de auditoría de Cloudflare**<Cite n={14} repeat /> da el método del `revisor-seguridad`: evidencia en el código, una reproducción segura y el arreglo más pequeño. También da su escala de gravedad y sus nueve listas por dominio.
+2. **El revisor de seguridad de Anthropic**<Cite n={15} repeat /> aporta la lista de categorías que el `revisor-seguridad` no reporta, como la denegación de servicio, porque casi siempre son ruido.
+3. **Las skills de Trail of Bits**<Cite n={28} /> revisan solo lo que introduce el cambio y a quién afecta. Además, comprueban cada sospecha para descartar falsos positivos y mutan el código para medir las pruebas. Esas tres ideas están en el contrato común de los revisores y en el `revisor-pruebas`.
+4. **Los plugins oficiales `pr-review-toolkit` y `feature-dev` de Anthropic**<Cite n={29} /> traen revisores de fallos silenciosos, diseño de tipos y cobertura de pruebas. También traen agentes que exploran el código y diseñan antes de implementar. De ellos salen el `revisor-errores-y-tipos`, la puntuación de lo que las pruebas no cubren en el `revisor-pruebas`, el `explorador` y el `arquitecto`.
+5. **ECC**<Cite n={16} repeat /> tiene agentes de trabajo acotados: uno arregla la compilación con el cambio mínimo, otro limpia el código muerto y otro pone al día la documentación. Son el `resolutor-compilacion`, el `limpiador` y el `documentador`.
+6. **La guía de revisión de Google**<Cite n={17} repeat /> dice qué mirar en una revisión y pide leer cada línea. De ella salen la pregunta y la lista de categorías del `revisor-calidad`.
+7. **Superpowers**<Cite n={30} /> aporta tres hábitos: ver fallar la prueba primero, buscar la causa raíz y parar tras tres arreglos fallidos, y no afirmar nada sin la orden que lo demuestra. También elige el modelo más barato que pueda hacer cada tarea, porque el número de turnos influye más en el coste que el precio por token. Está en `pruebas-primero`, `depurar`, el final de `AGENTS.md` y los niveles de `orquestar`.
+8. **Las skills de Matt Pocock**<Cite n={31} /> le hacen preguntas antes de construir y comprueban si el cambio hace lo pedido. También resuelven los conflictos de fusión según la intención de cada lado. De ahí salen `aclarar`, el apartado «Lo pedido» del `revisor-calidad` y la regla de fusión de `orquestar`.
+9. **gstack**<Cite n={32} /> reutiliza lo que existe antes de escribir código nuevo y avisa antes de una orden destructiva. Además, trata el acuerdo entre dos modelos como un indicio, y la decisión sigue siendo suya. Está en el `implementador`, en el *hook* de órdenes destructivas y en el uso de claude-council.
 
-De las fuentes con licencia CC BY-SA se toman ideas, no texto.
+De las fuentes con licencia CC BY-SA solo se toman ideas; el texto es propio.
 
-## 16. Herramientas que se pueden añadir
+## 16. Qué herramientas opcionales propone el prompt
 
 Además de lo que crea, el prompt propone tres herramientas y dos colecciones de skills, todas opcionales.
 
-**graphify** convierte el repositorio en un grafo de conocimiento: qué función llama a cuál, qué módulo importa a cuál y qué archivos forman un subsistema. El agente lo consulta antes de abrir archivos uno por uno, por ejemplo para ubicar todo lo que usa una función antes de cambiar su firma. El código se analiza en local con tree-sitter, un analizador de sintaxis, sin modelo de lenguaje, y la documentación, los PDF y las imágenes sí se envían al modelo del asistente. Construir el grafo desde la terminal, con `graphify update .`, no envía nada fuera de la máquina<Cite n={33} />.
+**graphify** convierte el repositorio en un grafo de conocimiento: qué función llama a cuál, qué módulo importa a cuál y qué archivos forman un subsistema. El agente lo consulta antes de abrir archivos uno por uno, por ejemplo para encontrar todo lo que usa una función antes de cambiar su firma.
 
-**claude-council** es un plugin de terceros para Claude Code que hace la misma pregunta a varios modelos y muestra las respuestas lado a lado, con una síntesis de acuerdos y desacuerdos. Sirve para decisiones de diseño en las que el sesgo de un solo modelo puede engañar, por ejemplo elegir entre dos estructuras de datos posibles. Con proveedores por API, como OpenAI, Gemini o Grok, se envían a esos terceros la pregunta y hasta cinco archivos del proyecto que el plugin añade solo. El modo `--local`, con subagentes de Claude, y el modo `ollama` no envían nada fuera de la máquina<Cite n={34} />.
+graphify analiza el código en local con tree-sitter, un analizador de sintaxis, sin modelo de lenguaje. En cambio, la documentación, los PDF y las imágenes sí se envían al modelo del agente. Construir el grafo desde la terminal, con `graphify update .`, no envía nada fuera de la máquina<Cite n={33} />.
 
-**archify** es una skill con una herramienta de línea de órdenes en Node.js que convierte una descripción o un repositorio en un diagrama interactivo, en un único archivo HTML autónomo. Hay cinco tipos: arquitectura, flujo de trabajo, secuencia, flujo de datos y ciclo de vida. Sirve para ver cómo se conectan las piezas de un proyecto, incluido el código que escribió el agente, y valida el diagrama antes de entregarlo. No envía datos del proyecto, y cada unas 72 horas hace una comprobación opcional de versiones nuevas en la que el servidor solo ve la IP y la hora<Cite n={35} />.
+**claude-council** es un plugin de terceros para Claude Code que hace la misma pregunta a varios modelos. Muestra las respuestas una junto a otra, con una síntesis de acuerdos y desacuerdos. Sirve para decisiones de diseño en las que el sesgo de un solo modelo puede llevar a error, como elegir entre dos estructuras de datos.
 
-Las skills de **Matt Pocock**, `mattpocock-skills`<Cite n={31} repeat />, entrevistan antes de construir, aplican pruebas primero, depuran y revisan un cambio contra los estándares del repositorio y lo que pedía la tarea. Sus skills `tdd`, `diagnosing-bugs`, `code-review` y `grill-me` se solapan con las que crea este prompt, así que al instalarlas el prompt propone quedarse con una de cada par. Son instrucciones en Markdown y no envían nada por sí mismas. Aportan además lo que el prompt no tiene: convertir una conversación en una especificación o en tareas, con `to-spec` y `to-tickets`. `improve-codebase-architecture` mejora la arquitectura del código ya existente, y `handoff` pasa el trabajo a otra sesión.
+Con proveedores por API, como OpenAI, Gemini o Grok, el plugin envía a esos terceros la pregunta y hasta cinco archivos del proyecto que añade por su cuenta. El modo `--local`, con subagentes de Claude, y el modo `ollama` no envían nada fuera de la máquina<Cite n={34} />.
 
-**gstack**<Cite n={32} repeat /> es un proceso de desarrollo completo con unas cuarenta skills, para planificar, revisar, probar en un navegador, publicar y hacer retrospectivas. Se instala para todo el usuario, necesita Bun, y su instalación compila un navegador propio y registra un hook en la configuración global `~/.claude/settings.json`. En modo equipo añade otro hook que descarga y reinstala la última versión al abrir cada sesión, como mucho una vez por hora. Por eso el prompt lo propone sin modo equipo, con la telemetría apagada y sin importar las cookies del navegador, que darían al agente las sesiones iniciadas del usuario.
+**archify** es una skill con un programa de línea de órdenes en Node.js. Convierte una descripción o un repositorio en un diagrama interactivo, en un único archivo HTML autónomo. Hay cinco tipos: arquitectura, flujo de trabajo, secuencia, flujo de datos y ciclo de vida.
 
-**Cómo se hace.** La fase 10 del prompt propone las tres herramientas y las dos colecciones una a una, y solo instala cada una si el usuario confirma.
+archify sirve para ver cómo se conectan las piezas de un proyecto, incluido el código que escribió el agente, y valida el diagrama antes de entregarlo. No envía datos del proyecto. Cada unas 72 horas hace una comprobación opcional de versiones nuevas, en la que el servidor solo ve la IP y la hora<Cite n={35} />.
 
-## 17. Cómo se trabaja con el entorno: una función nueva de principio a fin
+Las skills de **Matt Pocock**, `mattpocock-skills`<Cite n={31} repeat />, le hacen preguntas antes de construir, aplican pruebas primero y depuran. También revisan un cambio contra los estándares del repositorio y contra lo que pedía la tarea. Sus skills `tdd`, `diagnosing-bugs`, `code-review` y `grill-me` se solapan con las del prompt. Al instalarlas, el prompt propone quedarse con una de cada par.
 
-Con el entorno configurado, una petición ya no llega a un agente que empieza de cero. Llega a una sesión que conoce las órdenes y las convenciones del proyecto y que tiene un procedimiento para cada paso. Este ejemplo sigue una función nueva en el proyecto de prueba, desde la petición hasta el commit.
+Son instrucciones en Markdown y no envían nada por sí mismas. Además aportan lo que el prompt no tiene. `to-spec` y `to-tickets` convierten una conversación en una especificación o en tareas. `improve-codebase-architecture` mejora la arquitectura del código existente, y `handoff` pasa el trabajo a otra sesión.
 
-**La petición.** Se escribe `/plan` seguido de lo que se quiere y de los requisitos que ya se conocen. En modo plan el agente lee, busca y ejecuta órdenes de exploración, pero no edita nada hasta que se aprueba el plan<Cite n={8} repeat />:
+**gstack**<Cite n={32} repeat /> es un proceso de desarrollo completo con unas cuarenta skills para planificar, revisar, probar en un navegador, publicar y hacer retrospectivas. Se instala en su cuenta de usuario, fuera del proyecto, y necesita Bun. Su instalación compila un navegador propio y registra un *hook* en la configuración global, `~/.claude/settings.json`.
+
+En modo equipo, gstack añade otro *hook*, que descarga y reinstala la última versión al abrir cada sesión, como mucho una vez por hora. Por eso el prompt lo propone sin modo equipo y con la telemetría apagada. Tampoco importa las cookies del navegador, que darían al agente las sesiones que usted tiene iniciadas.
+
+**Cómo hacerlo.** La fase 10 del prompt propone las tres herramientas y las dos colecciones una a una, y solo instala cada una si usted lo confirma.
+
+## 17. Cómo trabajar con el entorno: una función nueva de principio a fin
+
+Con el entorno configurado, el agente ya conoce las órdenes y las convenciones del proyecto, y tiene un procedimiento para cada paso. Este ejemplo sigue una función nueva en el proyecto de ejemplo, desde la petición hasta el commit.
+
+**La petición.** Escriba `/plan` seguido de lo que quiere y de los requisitos que ya conoce. En modo plan, el agente lee, busca y ejecuta órdenes de exploración, pero no edita nada hasta que usted aprueba el plan<Cite n={8} repeat />:
 
 ```text
 /plan Añadir descuentos a los pedidos. resumen() tiene que mostrar el importe final,
@@ -558,7 +598,7 @@ ningún total puede quedar por debajo de cero y el cambio lleva sus pruebas.
 **Qué hace el entorno con esa petición:**
 
 1. **Parte de `AGENTS.md`.** El agente ya sabe que las pruebas se lanzan con `npm test`, que los importes son céntimos enteros y que solo `formatearPrecio` los convierte en texto. No tiene que deducirlo del código.
-2. **Aclara antes de planificar.** La petición deja decisiones abiertas, así que se activa `aclarar`. Busca en el código lo que se puede averiguar y pregunta el resto por rondas, con una recomendación en cada pregunta. En la prueba, ante una petición parecida, preguntó así:
+2. **Aclara antes de planificar.** La petición deja decisiones abiertas, así que se activa `aclarar`. El agente busca en el código lo que puede averiguar y le pregunta el resto por rondas, con una recomendación en cada pregunta. En la ejecución del punto 14, ante una petición parecida, preguntó así:
 
    ```text
    1. ¿Qué tipo de descuento? a) porcentaje, b) importe fijo en céntimos, c) los dos.
@@ -567,35 +607,35 @@ ningún total puede quedar por debajo de cero y el cambio lleva sus pruebas.
       Recomiendo a, por coherencia con el TypeError de formatearPrecio.
    ```
 
-3. **Diseña y reparte.** Con las decisiones tomadas, `orquestar` decide si la tarea merece repartirse. Si la merece, el `arquitecto`, en el modelo mayor, la parte en piezas que no comparten archivos, cada una con su prueba, su orden de comprobación y su nivel de modelo. Antes de proponer código nuevo busca lo que ya existe, aquí `formatearPrecio`.
-4. **Se aprueba el plan.** El plan aparece como texto: se aprueba, se pide que siga planeando o se edita con `Ctrl+G`<Cite n={8} repeat />. Un enfoque equivocado se corrige en ese texto, sin revertir archivos.
-5. **Implementa con la prueba primero.** Cada pieza sigue `pruebas-primero`. Primero se escribe la prueba del comportamiento, por ejemplo que un descuento mayor que el total lanza un error, y se ve fallar; después, el código mínimo. Si hay piezas independientes, cada `implementador` trabaja en su propio árbol de trabajo y el agente principal las integra de una en una, con la suite después de cada integración.
-6. **Los límites siguen activos.** Si el agente intenta leer `.env`, editar `package-lock.json` o ejecutar `git reset --hard`, la regla de permisos y los hooks lo bloquean. No depende de que el modelo lo recuerde.
-7. **Revisa antes de confirmar.** `AGENTS.md` pide ejecutar `revisar-cambio` antes de cada commit, y también se lanza a mano con `/revisar-cambio`. El de calidad compara el cambio con el plan aprobado, y el de errores y tipos busca, por ejemplo, un descuento negativo que nadie valida. El de pruebas muta la lógica del descuento para ver si alguna prueba lo detecta.
-8. **Confirma.** Con el veredicto limpio, o solo con avisos, el cambio se confirma con el formato de commit del proyecto. Si algo bloquea, se arregla y se vuelve a revisar.
+3. **Diseña y reparte.** Con las decisiones tomadas, `orquestar` decide si la tarea merece repartirse. Si lo merece, el `arquitecto`, con el modelo mayor, la divide en piezas que no comparten archivos. Cada pieza lleva su prueba, su orden de comprobación y su nivel de modelo. Antes de proponer código nuevo, busca lo que ya existe; aquí, `formatearPrecio`.
+4. **Usted aprueba el plan.** El plan aparece como texto: puede aprobarlo, pedir que siga planificando o editarlo con `Ctrl+G`<Cite n={8} repeat />. Un enfoque equivocado se corrige en ese texto, sin revertir archivos.
+5. **Implementa con la prueba primero.** Cada pieza sigue `pruebas-primero`. Primero se escribe la prueba del comportamiento, por ejemplo que un descuento mayor que el total lanza un error, y se comprueba que falla; después, el código mínimo. Si hay piezas independientes, cada `implementador` trabaja en su propio árbol de trabajo. El agente principal las fusiona de una en una y ejecuta la suite después de cada fusión.
+6. **Los límites siguen activos.** Si el agente intenta leer `.env`, editar `package-lock.json` o ejecutar `git reset --hard`, la regla de permisos y los *hooks* lo bloquean. No depende de que el modelo lo recuerde.
+7. **Revisa antes de confirmar.** `AGENTS.md` pide ejecutar `revisar-cambio` antes de cada commit, y usted también puede lanzarla con `/revisar-cambio`. El revisor de calidad compara el cambio con el plan aprobado, y el de errores y tipos busca, por ejemplo, un descuento negativo que nadie valida. El de pruebas muta la lógica del descuento para ver si alguna prueba lo detecta.
+8. **Confirma.** Si el veredicto sale limpio o solo con avisos, el agente confirma el cambio con el formato de commit del proyecto. Si algo bloquea, lo arregla y vuelve a revisarlo.
 
-Las herramientas opcionales entran en los mismos pasos. El `explorador` consulta graphify antes de abrir archivos, archify dibuja el flujo si se pide, y claude-council sirve para una decisión de verdad dudosa, como porcentaje frente a importe fijo.
+Las herramientas opcionales encajan en los mismos pasos. El `explorador` consulta graphify antes de abrir archivos, y archify dibuja el flujo si usted lo pide. claude-council sirve para una decisión dudosa, como porcentaje frente a importe fijo.
 
-**Qué gana el proyecto.** Cada paso cierra una vía concreta por la que un error llega al repositorio:
+**Qué gana el proyecto.** Cada paso evita un tipo concreto de error:
 
-- Una decisión que nadie tomó, como el tipo de descuento o qué pasa con los negativos, se pregunta antes de escribir código en lugar de descubrirse en la revisión.
-- Una convención olvidada, como formatear un importe fuera de `formatearPrecio`, está escrita en `AGENTS.md` y la comprueba el revisor de calidad.
-- Una prueba que pasa por construcción no protege nada: `pruebas-primero` exige verla fallar, y el revisor de pruebas muta el código para comprobarlo.
-- Un fallo de seguridad no depende de que lo vea el mismo agente que lo escribió: lo revisa otro, en su propio contexto, y lo confirma ejecutándolo.
-- Un secreto o una orden destructiva no dependen de la atención de nadie: los bloquea la herramienta.
+- Una decisión que nadie tomó, como el tipo de descuento o qué pasa con los negativos, se pregunta antes de escribir código, en lugar de descubrirse en la revisión.
+- Una convención olvidada, como formatear un importe fuera de `formatearPrecio`, está escrita en `AGENTS.md`, y la comprueba el revisor de calidad.
+- Una prueba que pasa por construcción no protege nada, así que `pruebas-primero` exige verla fallar y el revisor de pruebas muta el código para comprobarlo.
+- Un fallo de seguridad lo revisa otro agente, en su propio contexto, que lo confirma ejecutándolo. No depende de que lo vea quien lo escribió.
+- Un secreto o una orden destructiva no dependen de la atención de nadie, porque los bloquea el *harness*.
 
-En la prueba del punto 14, esa revisión detectó los cuatro fallos sembrados y bloqueó el cambio. El revisor de pruebas demostró además que una prueba sembrada seguía en verde con la función rota.
+El punto 14 muestra el resultado de esa revisión sobre fallos sembrados.
 
-**Cómo se hace.**
+**Cómo hacerlo.**
 
-1. Se escribe `/plan` seguido de la petición, o se pulsa `Shift+Tab` hasta el modo plan y se escribe la petición.
-2. Se responden las preguntas de `aclarar` y se aprueba el plan.
-3. Durante la implementación, `/context` muestra cuánto ocupa la conversación y `/rewind` deshace un paso que salió mal.
-4. Antes de confirmar, `/revisar-cambio`, si el agente no la ha lanzado ya.
+1. Escriba `/plan` seguido de la petición, o pulse `Shift+Tab` hasta el modo plan y escriba la petición.
+2. Responda las preguntas de `aclarar` y apruebe el plan.
+3. Durante la implementación, consulte `/context` para ver cuánto ocupa la conversación, y use `/rewind` para deshacer un paso que salió mal.
+4. Antes de confirmar, ejecute `/revisar-cambio` si el agente no la ha lanzado ya.
 
-## Las órdenes que se usan desde el primer día
+## Qué órdenes usar desde el primer día
 
-Se escriben dentro de la sesión, y `/help` lista el resto<Cite n={21} repeat />.
+Escríbalas dentro de la sesión; `/help` muestra la lista completa<Cite n={21} repeat />.
 
 | Orden | Qué hace | Cuándo se usa |
 |---|---|---|
@@ -607,14 +647,14 @@ Se escriben dentro de la sesión, y `/help` lista el resto<Cite n={21} repeat />
 | `/plan` | Entra en modo plan; admite la tarea detrás. | Antes de dejar editar. |
 | `/goal` | Fija una condición y el agente sigue hasta cumplirla. | Tareas con una orden que decide el final. |
 | `/rewind` | Abre el menú de puntos de restauración. | Para descartar una tanda de ediciones. |
-| `/diff` | Enseña los cambios del árbol de trabajo. | Al terminar, antes de confirmar. |
+| `/diff` | Muestra los cambios sin confirmar. | Al terminar, antes de confirmar. |
 | `/permissions` | Gestiona las reglas `allow`, `ask` y `deny`. | Para añadir la regla de `.env`. |
 | `/plugin` | Gestiona plugins y catálogos. | Antes y después de instalar uno. |
 | `/mcp` | Gestiona las conexiones con servidores MCP. | Para ver qué herramientas externas hay. |
 | `/model` | Cambia de modelo y lo guarda como predeterminado. | Para ajustar coste y capacidad. |
 | `/usage` | Enseña el uso de la sesión. Alias: `/cost`. | Para saber cuánto costó una tarea. |
 
-Los atajos de teclado que hacen falta son cuatro<Cite n={3} repeat />.
+Hacen falta cuatro atajos de teclado<Cite n={3} repeat />:
 
 | Atajo | Qué hace |
 |---|---|
@@ -623,23 +663,13 @@ Los atajos de teclado que hacen falta son cuatro<Cite n={3} repeat />.
 | `Shift+Tab` | Recorre los modos de permiso. |
 | `Ctrl+O` | Abre el visor de transcripción, con el detalle de cada herramienta. |
 
-## Qué cabe esperar de los resultados
-
-La velocidad que se percibe y la que se mide no coinciden, y hay un experimento que separó las dos. METR repartió al azar 246 tareas entre permitir y prohibir las herramientas de IA. Los 16 participantes eran desarrolladores de proyectos maduros de código abierto, con una media de cinco años en esos mismos repositorios. Antes de empezar preveían terminar un 24 % antes con las herramientas. Al acabar el estudio estimaban haber terminado un 20 % antes. La medición dio lo contrario: un 19 % más de tiempo<Cite n={36} />.
-
-Ese resultado describe a desarrolladores expertos sobre código que ya conocían, con las herramientas del primer semestre de 2025, y no se traslada a cualquier otra situación. Lo que sí se traslada es la distancia entre las tres cifras: la impresión de haber avanzado no sirve para decidir si se avanzó.
-
-La encuesta de Stack Overflow de 2025, con 49 009 respuestas de 177 países, mide la dificultad sobre una población mucho más amplia. La frustración más citada con las herramientas de IA, con un 66 %, es que la solución está «casi bien, pero no del todo». Un 45,2 % añade que depurar el código generado lleva más tiempo<Cite n={37} />.
-
-Las dos cifras apuntan al mismo sitio. Un resultado casi correcto compila y se lee bien, así que el trabajo se desplaza de escribir a comprobar. El tiempo que se ahorra escribiendo se pierde cuando no hay una comprobación barata que ejecutar.
-
 ## Por dónde seguir
 
-La comprobación va primero, porque sin ella no hay forma de saber si lo demás funciona. Un archivo de instrucciones, una skill y un revisor se amortizan con la repetición. Se escriben cuando algo ya se ha repetido, o se generan de una vez con el prompt del punto 14 y se ajustan después.
+Empiece por la comprobación: una orden que diga si una tarea está terminada (punto 4). Después, añada el archivo de instrucciones, las skills y los revisores a medida que una tarea se repita. También puede generarlos de una vez con el prompt del punto 14 y ajustarlos después.
 
-Quedan dos cosas por aprender y las dos tienen su propio artículo. La primera es qué buscar en el código que sale. Los fallos de seguridad que más se repiten están en [siete cosas que revisar en el código que genera tu IA](/es/blog/revisar-codigo-generado-por-ia), cada uno con su corrección y la orden que la comprueba.
+Quedan dos temas, cada uno con su propio artículo. El primero es qué buscar en el código que genera el agente. [Siete cosas que revisar en el código que genera tu IA](/es/blog/revisar-codigo-generado-por-ia) recoge siete fallos de seguridad habituales, cada uno con su corrección y la orden que la comprueba.
 
-La segunda es cómo conseguir que la revisión se ejecute sola en cada cambio en lugar de depender de que alguien la recuerde. Ese es el asunto de [cómo pedirle a la IA código seguro](/es/blog/codigo-seguro-con-ia).
+El segundo es cómo conseguir que la revisión se ejecute sola en cada cambio, sin depender de que alguien la recuerde. Ese es el tema de [cómo pedirle a la IA código seguro](/es/blog/codigo-seguro-con-ia).
 
 <References
 	title="Referencias"
@@ -853,18 +883,6 @@ La segunda es cómo conseguir que la revisión se ejecute sola en cada cambio en
 			title: 'archify',
 			note: 'licencia MIT; última versión publicada v2.16.0; consultado el 26 de septiembre de 2026',
 			url: 'https://github.com/tt-a1i/archify'
-		},
-		{
-			source: 'Becker, J., Rush, N., Barnes, E. y Rein, D.',
-			title: 'Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity',
-			note: 'METR, julio de 2025; ensayo aleatorizado, 16 desarrolladores y 246 tareas',
-			url: 'https://arxiv.org/abs/2507.09089'
-		},
-		{
-			source: 'Stack Overflow',
-			title: '2025 Developer Survey, sección de IA',
-			note: '49 009 respuestas de 177 países, recogidas entre el 29 de mayo y el 23 de junio de 2025',
-			url: 'https://survey.stackoverflow.co/2025/ai'
 		}
 	]}
 />

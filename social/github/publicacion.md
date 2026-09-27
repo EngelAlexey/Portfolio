@@ -39,11 +39,11 @@ Sigue el estilo de las publicaciones anteriores de la cuenta: pregunta de gancho
 ## Historia del mismo día
 
 - **Qué se publica.** La publicación compartida en la historia, con el texto «¿Qué cambió la IA en tu proyecto? Git lo dice».
-- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta a la sección 12:
-  `https://www.alexherrera.dev/es/blog/primeros-pasos-programar-con-ia?utm_source=instagram&utm_medium=story&utm_campaign=github#12-c%C3%B3mo-se-revisa-lo-que-hizo`
+- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta al punto 13, «Cómo revisar lo que hizo el agente» (ancla comprobada el 2026-09-26):
+  `https://www.alexherrera.dev/es/blog/primeros-pasos-programar-con-ia?utm_source=instagram&utm_medium=story&utm_campaign=github#13-c%C3%B3mo-revisar-lo-que-hizo-el-agente`
 - **Después.** Guardar la historia en la destacada del artículo.
 
-El temario enlaza este carrusel con «Cómo deshacer cambios en Git», que está sin escribir. La sección 12 de «Primeros pasos para programar con IA» usa `git status`, `git add` y `git diff` para revisar lo que cambió un agente, que son órdenes de la lámina 3.
+El temario enlaza este carrusel con «Cómo deshacer cambios en Git», que está sin escribir. El punto 13 de «Primeros pasos para programar con IA» usa `git status`, `git add` y `git diff` para revisar lo que cambió un agente, que son órdenes de la lámina 3.
 
 ## Programación
 

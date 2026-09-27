@@ -1,8 +1,10 @@
 // Carrusel: «¿Programar con IA te hace ir más rápido?»
-// Artículo: src/content/articles/primeros-pasos-programar-con-ia
+// Artículo: src/content/articles/se-aprende-a-programar-con-ia
 //
-// Es un ángulo alternativo del mismo artículo: se apoya en la cifra de METR en lugar de en
-// la guía práctica. Estuvo archivado y se recuperó para la campaña.
+// Nació como ángulo alternativo de primeros-pasos-programar-con-ia: se apoya en la cifra de
+// METR en lugar de en la guía práctica. Estuvo archivado y se recuperó para la campaña. El
+// 2026-09-26 esa sección salió de primeros pasos; la cifra de METR, con su cita, sigue en
+// se-aprende-a-programar-con-ia. El carrusel enlaza al índice del blog, no a un artículo.
 //
 // Lo que estaba mal no era el gancho —la lámina 1 ya era una pregunta que se sostiene
 // sola— sino las láminas 2 y 4: prometían una medición y entregaban un tutorial de
