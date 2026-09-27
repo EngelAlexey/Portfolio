@@ -37,8 +37,8 @@ Sigue el estilo de las publicaciones anteriores de la cuenta: pregunta de gancho
 ## Historia del mismo día
 
 - **Qué se publica.** La publicación compartida en la historia, con el texto «Tus permisos no te protegen de tus propios programas».
-- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta a la sección 1. No está comprobado que el navegador de Instagram baje hasta ella; como mínimo abre el artículo:
-  `https://www.alexherrera.dev/es/blog/npm-vs-pnpm-seguridad?utm_source=instagram&utm_medium=story&utm_campaign=permisos-linux#1-la-instalaci%C3%B3n-ejecuta-c%C3%B3digo-de-terceros`
+- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta al punto 1, «Qué código de terceros ejecuta la instalación» (ancla comprobada el 2026-09-26). No está comprobado que el navegador de Instagram baje hasta ella; como mínimo abre el artículo:
+  `https://www.alexherrera.dev/es/blog/npm-vs-pnpm-seguridad?utm_source=instagram&utm_medium=story&utm_campaign=permisos-linux#1-qu%C3%A9-c%C3%B3digo-de-terceros-ejecuta-la-instalaci%C3%B3n`
 - **Después.** Guardar la historia en la destacada del artículo.
 
 El temario enlaza este carrusel con «Cómo proteger un servidor Linux», que está sin escribir. La sección 1 del artículo de npm explica qué alcanza el permiso con el que corre un script de instalación, que es el matiz del texto de la publicación.
