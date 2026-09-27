@@ -13,6 +13,7 @@ related: []
 cover: null
 instagram: null
 promptTitle: Configurar CORS
+promptMinutes: [5, 10]
 ---
 
 import Callout from '../../../components/Callout.astro';
@@ -302,6 +303,10 @@ Los puntos anteriores se pueden aplicar a mano. También puede hacerlo un agente
 5. **Añade una prueba** con un origen permitido, uno ajeno y la petición previa. Si la configuración anterior era insegura, comprueba primero que la prueba falla contra ella.
 6. **Repite las peticiones** del punto 8 y pega las cabeceras de antes y de después.
 7. **Entrega un informe** con lo que cambió, lo que no pudo comprobar y lo que CORS no cubre, como CSRF.
+
+La ejecución se midió con Claude Code 2.1.283 y la versión española del prompt. El proyecto de ejemplo era una API con Express 5.2.1 y `cors({ origin: true, credentials: true })`. Tardó 6 minutos sin contar la espera de la confirmación: 3 hasta la propuesta y 3 para aplicar, probar y comprobar.
+
+El agente encontró cuatro fallos: el origen reflejado con credenciales, el origen `null`, un origen con otro dominio detrás y una petición previa sin límites. La prueba nueva falló en 2 de sus 3 casos con la configuración anterior y pasó con el cambio. También avisó de que `npm start` no cargaba la variable de entorno, y no tocó `package.json` sin confirmación.
 
 <Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
 	Este prompt pide al agente que arranque el servidor, ejecute órdenes y cambie la configuración de CORS. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 3 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo.
