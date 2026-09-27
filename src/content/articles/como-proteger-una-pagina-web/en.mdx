@@ -13,7 +13,7 @@ related: []
 cover: null
 instagram: null
 promptTitle: Audit security
-promptMinutes: [8, 20]
+promptMinutes: [10, 20]
 ---
 
 import Callout from '../../../components/Callout.astro';
@@ -59,7 +59,7 @@ HTTPS encrypts the traffic between the browser and the server. HSTS (*HTTP Stric
 The server must only send the header over HTTPS<Cite n={2} repeat />. If it arrives over HTTP, the browser ignores it. Over HTTP, the server only redirects:
 
 ```js
-// Con SEGURA=1, el servidor HTTP solo redirige a HTTPS.
+// El servidor HTTP solo redirige a HTTPS.
 const redirigir = (req, res) => {
   res.writeHead(301, { Location: `https://localhost:3443${req.url}` }).end();
 };
@@ -142,7 +142,7 @@ Referrer-Policy: strict-origin-when-cross-origin
 
 ## 5. How to protect the session and the cookies
 
-The session cookie identifies the user on every request. Whoever gets it acts as that user. In the first draft, the cookie has no security attributes, and any script on the page reads it with `document.cookie`:
+The session cookie identifies the user on every request. Whoever gets it acts as that user. In the first draft, the cookie has no security attributes, and any script on the page reads it with `document.cookie`. The two lines come from two different logins:
 
 ```text
 Set-Cookie: sesion=8f81d9b1-ee09-471d-9134-ac51dd2b3c08; Path=/
@@ -154,6 +154,8 @@ OWASP considers `Secure` and `HttpOnly` mandatory on the session cookie. It also
 ```js
 res.cookie('__Host-sesion', id, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' });
 ```
+
+The example uses `Lax` so that a link from another site arrives with the session started. Use `Strict` if the application does not need that.
 
 - **`HttpOnly`** stops JavaScript from reading the cookie. An XSS can no longer copy it<Cite n={8} />.
 - **`Secure`** only sends it over HTTPS.
@@ -371,9 +373,9 @@ A coding agent can go through the ten layers in your project. Copy the prompt wi
 6. **It repeats the checks** from the checklist and pastes the outputs.
 7. **It delivers a report** with what changed, what it could not check and the article that goes deeper into each pending layer.
 
-The run was measured with Claude Code 2.1.283 on a sample Express shop with failures in eight of the ten layers. It took 8 minutes, not counting the wait for confirmation: 4 up to the proposal and 4 to fix and check.
+The run was measured with Claude Code 2.1.283 on a sample Express shop that was missing almost every layer. It took 10 minutes, not counting the wait for confirmation: 4 up to the proposal and 6 to fix and check.
 
-The agent found twelve failures. Among them were a payment key written in the code, another user's order readable by its id and SHA-256 passwords. Of the 14 tests it wrote, 13 failed before the fixes, and all passed afterwards. What depended on the production proxy, such as the redirect to HTTPS, it noted as pending.
+The agent found thirteen failures. Among them were a payment key written in the code, another user's order readable by its id and SHA-256 passwords. The 13 tests it wrote failed before the fixes, and afterwards they all pass, along with the one that already existed. What depended on the production proxy, such as the redirect to HTTPS, it noted as pending.
 
 <Callout kind="riesgo" title="Read the prompt before pasting it">
 	This prompt asks the agent to start the application, run commands and change its configuration. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.

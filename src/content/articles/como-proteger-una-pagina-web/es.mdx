@@ -13,7 +13,7 @@ related: []
 cover: null
 instagram: null
 promptTitle: Auditar la seguridad
-promptMinutes: [8, 20]
+promptMinutes: [10, 20]
 ---
 
 import Callout from '../../../components/Callout.astro';
@@ -59,7 +59,7 @@ HTTPS cifra el tráfico entre el navegador y el servidor. HSTS (*HTTP Strict Tra
 El servidor solo debe enviar la cabecera por HTTPS<Cite n={2} repeat />. Si llega por HTTP, el navegador la ignora. Por HTTP, el servidor solo redirige:
 
 ```js
-// Con SEGURA=1, el servidor HTTP solo redirige a HTTPS.
+// El servidor HTTP solo redirige a HTTPS.
 const redirigir = (req, res) => {
   res.writeHead(301, { Location: `https://localhost:3443${req.url}` }).end();
 };
@@ -142,7 +142,7 @@ Referrer-Policy: strict-origin-when-cross-origin
 
 ## 5. Cómo proteger la sesión y las cookies
 
-La cookie de sesión identifica al usuario en cada petición. Quien la obtiene actúa como ese usuario. En el primer borrador, la cookie no lleva atributos de seguridad, y cualquier script de la página la lee con `document.cookie`:
+La cookie de sesión identifica al usuario en cada petición. Quien la obtiene actúa como ese usuario. En el primer borrador, la cookie no lleva atributos de seguridad, y cualquier script de la página la lee con `document.cookie`. Las dos líneas salen de dos inicios de sesión distintos:
 
 ```text
 Set-Cookie: sesion=8f81d9b1-ee09-471d-9134-ac51dd2b3c08; Path=/
@@ -154,6 +154,8 @@ OWASP considera obligatorios `Secure` y `HttpOnly` en la cookie de sesión. Pide
 ```js
 res.cookie('__Host-sesion', id, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' });
 ```
+
+El ejemplo usa `Lax` para que un enlace desde otro sitio llegue con la sesión iniciada. Use `Strict` si la aplicación no lo necesita.
 
 - **`HttpOnly`** impide que JavaScript lea la cookie. Un XSS ya no puede copiarla<Cite n={8} />.
 - **`Secure`** solo la envía por HTTPS.
@@ -371,9 +373,9 @@ Un agente de programación puede recorrer las diez capas en su proyecto. Copie e
 6. **Repite las comprobaciones** de la lista y pega las salidas.
 7. **Entrega un informe** con lo que cambió, lo que no pudo comprobar y el artículo que profundiza en cada capa pendiente.
 
-La ejecución se midió con Claude Code 2.1.283 sobre una tienda de ejemplo en Express con fallos en ocho de las diez capas. Tardó 8 minutos sin contar la espera de la confirmación: 4 hasta la propuesta y 4 para corregir y comprobar.
+La ejecución se midió con Claude Code 2.1.283 sobre una tienda de ejemplo en Express a la que le faltaban casi todas las capas. Tardó 10 minutos sin contar la espera de la confirmación: 4 hasta la propuesta y 6 para corregir y comprobar.
 
-El agente encontró doce fallos. Entre ellos había una clave de pagos escrita en el código, un pedido ajeno legible por su id y contraseñas con SHA-256. De las 14 pruebas que escribió, 13 fallaban antes de las correcciones, y todas pasaban después. Lo que dependía del proxy de producción, como la redirección a HTTPS, lo dejó anotado como pendiente.
+El agente encontró trece fallos. Entre ellos había una clave de pagos escrita en el código, un pedido ajeno legible por su id y contraseñas con SHA-256. Las 13 pruebas que escribió fallaban antes de las correcciones, y después pasan todas, junto con la que ya había. Lo que dependía del proxy de producción, como la redirección a HTTPS, lo dejó anotado como pendiente.
 
 <Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
 	Este prompt pide al agente que arranque la aplicación, ejecute órdenes y cambie su configuración. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 3 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo.
