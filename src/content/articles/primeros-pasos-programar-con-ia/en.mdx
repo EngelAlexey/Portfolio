@@ -475,6 +475,22 @@ Everything above can be built by hand, file by file. There is a prompt that has 
 10. **Proposes three tools and two skill collections, all optional**, and asks before installing each one: graphify, claude-council, archify, Matt Pocock's skills and gstack.
 11. **Checks and closes**: seeds one flaw per reviewer, for all four, on a temporary branch, confirms each one catches it and deletes the branch. Asks the architect for the plan of a sample task. Repeats the check of the installed tools.
 
+On a Node.js test project, the prompt left this structure. `.claude/agents` holds the eleven subagents: the four reviewers, the six work agents and a replacement for Claude Code's own explorer. `.claude/skills` holds the nine skills, and the root holds `AGENTS.md` and the `CLAUDE.md` that imports it. This run used the Spanish prompt; the English one creates the same structure with English names.
+
+<figure class="shot">
+	<a href="/img/blog/estructura-tras-el-prompt.webp">
+		<img
+			src="/img/blog/estructura-tras-el-prompt.webp"
+			width="1000"
+			height="1030"
+			loading="lazy"
+			decoding="async"
+			alt="VS Code explorer with the .claude folder expanded: agents with eleven files, hooks with two, skills with nine folders and settings.json, and at the root AGENTS.md and CLAUDE.md. On the right, the generated AGENTS.md, in Spanish, with its commands, environment, vocabulary and conventions sections."
+		/>
+	</a>
+	<figcaption>VS Code screenshot after running the prompt with Claude Code 2.1.283, with the Material Icon Theme icon set. The editor shows the generated `AGENTS.md`.</figcaption>
+</figure>
+
 The prompt does not touch application code. If during setup the agent finds it needs to install a dependency, plugin or MCP server, it first proposes it with its source and reason, and waits for confirmation.
 
 <Callout kind="riesgo" title="A prompt that creates files is read before it is pasted">

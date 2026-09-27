@@ -441,7 +441,25 @@ body {
 	display: block;
 }
 
-.diagram figcaption {
+.shot {
+	margin: 1.75rem 0;
+}
+
+.shot a {
+	display: block;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	overflow: hidden;
+}
+
+.shot img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+.diagram figcaption,
+.shot figcaption {
 	margin-top: 0.85rem;
 	font-size: 0.8125rem;
 	line-height: 1.5;

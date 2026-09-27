@@ -475,6 +475,22 @@ Todo lo anterior se puede montar a mano, archivo por archivo. Hay un prompt que 
 10. **Propone tres herramientas y dos colecciones de skills opcionales**, y pregunta antes de instalar cada una: graphify, claude-council, archify, las skills de Matt Pocock y gstack.
 11. **Comprueba y cierra**: siembra en una rama temporal un fallo para cada uno de los cuatro revisores, comprueba que cada uno lo detecta y borra la rama. Pide al arquitecto el plan de una tarea de ejemplo. Repite la comprobación de las herramientas instaladas.
 
+En un proyecto de prueba en Node.js, el prompt dejó esta estructura. `.claude/agents` guarda los once subagentes: los cuatro revisores, los seis agentes de trabajo y un sustituto del explorador propio de Claude Code. `.claude/skills` guarda las nueve skills, y la raíz, `AGENTS.md` y el `CLAUDE.md` que lo importa.
+
+<figure class="shot">
+	<a href="/img/blog/estructura-tras-el-prompt.webp">
+		<img
+			src="/img/blog/estructura-tras-el-prompt.webp"
+			width="1000"
+			height="1030"
+			loading="lazy"
+			decoding="async"
+			alt="Explorador de VS Code con la carpeta .claude desplegada: agents con once archivos, hooks con dos, skills con nueve carpetas y settings.json, y en la raíz AGENTS.md y CLAUDE.md. A la derecha, el AGENTS.md generado, con sus secciones de órdenes, entorno, vocabulario y convenciones."
+		/>
+	</a>
+	<figcaption>Captura de VS Code tras ejecutar el prompt con Claude Code 2.1.283, con el tema de iconos Material Icon Theme. El editor muestra el `AGENTS.md` generado.</figcaption>
+</figure>
+
 El prompt no toca el código de la aplicación. Si durante la configuración el agente ve necesario instalar una dependencia, un plugin o un servidor MCP, primero lo propone con su origen y su motivo, y espera confirmación.
 
 <Callout kind="riesgo" title="Un prompt que crea archivos se lee antes de pegarlo">
