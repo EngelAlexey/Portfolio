@@ -1309,7 +1309,9 @@ if (name && !template.test(name) && protectedNames.some((pattern) => pattern.tes
 }
 ```
 
-In `.claude/settings.json`, next to the other settings:
+Test them before registering them: once they are in `.claude/settings.json`, the destructive-command hook also checks your own commands, test ones included. Write each case to a JSON file inside the system temporary folder and pass it on standard input, without running any real command. With `{"tool_input":{"command":"git push --force"}}`, `node .claude/hooks/destructive-commands.mjs < <file>` prints a response with `"permissionDecision":"deny"`, and with `git status` it prints nothing. `git reset --hard`, `git clean -fd`, `git branch -D x`, `git checkout .`, `rm -rf src` and `DROP TABLE x` must be blocked too, and `git push`, `rm file.txt` and an `rm -rf` inside the system temporary folder must pass. The protection hook blocks `{"tool_input":{"file_path":".env"}}` and `package-lock.json`, and lets `.env.example` and `README.md` through.
+
+When every case passes, register them in `.claude/settings.json`, next to the other settings:
 
 ```json
 {
@@ -1327,8 +1329,6 @@ In `.claude/settings.json`, next to the other settings:
   }
 }
 ```
-
-Test them without running any real command, by passing the input on standard input. `echo '{"tool_input":{"command":"git push --force"}}' | node .claude/hooks/destructive-commands.mjs` prints a response with `"permissionDecision":"deny"`, and with `git status` it prints nothing. `git reset --hard`, `git clean -fd`, `git branch -D x`, `git checkout .`, `rm -rf src` and `DROP TABLE x` must be blocked too, and `git push`, `rm file.txt` and an `rm -rf` inside the system temporary folder must pass. The protection hook blocks `{"tool_input":{"file_path":".env"}}` and `package-lock.json`, and lets `.env.example` and `README.md` through.
 
 ## Phase 10. Recommended tools (optional)
 

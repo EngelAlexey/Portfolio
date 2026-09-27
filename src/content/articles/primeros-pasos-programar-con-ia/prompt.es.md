@@ -1309,7 +1309,9 @@ if (nombre && !plantilla.test(nombre) && protegidos.some((patron) => patron.test
 }
 ```
 
-En `.claude/settings.json`, junto a los demás ajustes:
+Pruébalos antes de registrarlos: en cuanto están en `.claude/settings.json`, el de órdenes destructivas revisa también tus propias órdenes, incluidas las de prueba. Escribe cada caso en un archivo JSON dentro de la carpeta temporal del sistema y pásaselo por la entrada estándar, sin ejecutar ninguna orden de verdad. Con `{"tool_input":{"command":"git push --force"}}`, `node .claude/hooks/ordenes-destructivas.mjs < <archivo>` imprime una respuesta con `"permissionDecision":"deny"`, y con `git status` no imprime nada. Tienen que bloquearse también `git reset --hard`, `git clean -fd`, `git branch -D x`, `git checkout .`, `rm -rf src` y `DROP TABLE x`, y pasar `git push`, `rm archivo.txt` y un `rm -rf` dentro de la carpeta temporal del sistema. El de protección bloquea `{"tool_input":{"file_path":".env"}}` y `package-lock.json`, y deja pasar `.env.example` y `README.md`.
+
+Cuando pasen todos los casos, regístralos en `.claude/settings.json`, junto a los demás ajustes:
 
 ```json
 {
@@ -1327,8 +1329,6 @@ En `.claude/settings.json`, junto a los demás ajustes:
   }
 }
 ```
-
-Pruébalos sin ejecutar ninguna orden de verdad, pasándoles la entrada por la entrada estándar. `echo '{"tool_input":{"command":"git push --force"}}' | node .claude/hooks/ordenes-destructivas.mjs` imprime una respuesta con `"permissionDecision":"deny"`, y con `git status` no imprime nada. Tienen que bloquearse también `git reset --hard`, `git clean -fd`, `git branch -D x`, `git checkout .`, `rm -rf src` y `DROP TABLE x`, y pasar `git push`, `rm archivo.txt` y un `rm -rf` dentro de la carpeta temporal del sistema. El de protección bloquea `{"tool_input":{"file_path":".env"}}` y `package-lock.json`, y deja pasar `.env.example` y `README.md`.
 
 ## Fase 10. Herramientas recomendadas (opcionales)
 
