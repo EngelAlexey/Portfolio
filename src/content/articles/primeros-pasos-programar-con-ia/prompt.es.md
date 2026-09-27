@@ -1224,7 +1224,7 @@ Propón en la fase 2 solo los que tu herramienta admite, y aplica solo los que s
 - **Rama base de los árboles de trabajo.** Si tu herramienta crea árboles de trabajo para los subagentes, comprueba de qué commit parten. Si parten de la rama principal del remoto y no de tu rama actual, propón el ajuste para que partan de la rama actual; en Claude Code es `worktree.baseRef` con el valor `head`. Añade al `.gitignore` la carpeta donde se crean, si está dentro del repositorio (en Claude Code, `.claude/worktrees/`).
 - **Hook de formato.** Después de cada edición, ejecutar el formateador del proyecto sobre el archivo editado, si el proyecto tiene uno configurado.
 - **Hook de protección.** Antes de cada edición, bloquear la escritura directa en archivos de secretos (`.env*`, claves, credenciales) y en archivos de bloqueo, que solo modifica el gestor de paquetes.
-- **Hook de órdenes destructivas.** Antes de ejecutar una orden, bloquear o pedir confirmación para las que no se pueden deshacer: `git push --force`, `git reset --hard`, `git clean -f`, `git branch -D`, `git checkout .` o `git restore .`, un borrado recursivo (`rm -rf`, `Remove-Item -Recurse`) fuera de una carpeta temporal del sistema, y `DROP` o `TRUNCATE` contra una base de datos. El mensaje del bloqueo dice que esa orden la ejecuta el usuario.
+- **Hook de órdenes destructivas.** Antes de ejecutar una orden, bloquear o pedir confirmación para las que no se pueden deshacer: `git push --force`, `git reset --hard`, `git clean -f`, `git branch -D`, `git checkout .` o `git restore .`, un borrado recursivo (`rm -rf`, `Remove-Item -Recurse`) fuera de una carpeta temporal del sistema, y `DROP` o `TRUNCATE` contra una base de datos. El mensaje del bloqueo dice que esa orden la ejecuta el usuario. El hook entiende `$TMPDIR`, `$TEMP` y `$TMP`, pero no otras variables: para borrar una carpeta temporal, usa su ruta literal o una de esas.
 
 Un hook es una orden que la herramienta ejecuta sola en un momento del ciclo, sin depender de que el modelo lo recuerde. Cada hook se comprueba con una entrada de prueba antes de darlo por instalado: el de órdenes destructivas recibe `git push --force` como texto y tiene que bloquearla, sin que se ejecute nada. En algunas herramientas, un hook que falla por un error propio deja pasar la orden en lugar de bloquearla (en Claude Code, una salida distinta de 2 no bloquea): por eso la prueba es obligatoria y se repite después de cada cambio en el hook.
 
@@ -1244,8 +1244,9 @@ const orden = String(entrada.tool_input?.command ?? '');
 
 const temporal = resolve(tmpdir()).toLowerCase();
 const proyecto = resolve(process.env.CLAUDE_PROJECT_DIR ?? process.cwd()).toLowerCase();
+const expandir = (ruta) => ruta.replace(/^(\$\{?(TMPDIR|TEMP|TMP)\}?|\$env:(TEMP|TMP))(?=[\\/]|$)/i, tmpdir());
 const esTemporal = (ruta) => {
-  const absoluta = resolve(ruta).toLowerCase();
+  const absoluta = resolve(expandir(ruta)).toLowerCase();
   const enTemporal = ruta.startsWith('/tmp/') || absoluta.startsWith(temporal);
   return enTemporal && !absoluta.startsWith(proyecto) && !proyecto.startsWith(absoluta);
 };
@@ -1402,10 +1403,10 @@ Solo si tu herramienta es Claude Code.
    | `resolutor-compilacion` | 24 |
    | `documentador` | 21 |
    | `limpiador` | 21 |
-   | `.claude/hooks/ordenes-destructivas.mjs`, si se aplicó | 46 |
+   | `.claude/hooks/ordenes-destructivas.mjs`, si se aplicó | 47 |
    | `.claude/hooks/proteger-archivos.mjs`, si se aplicó | 21 |
 
-2. Las skills y los subagentes nuevos suelen registrarse al abrir la sesión. Si tu herramienta lo exige, díselo al usuario para que abra una sesión nueva antes del paso 4.
+2. Las skills y los subagentes nuevos suelen registrarse al abrir la sesión. En Claude Code, los subagentes de una carpeta `.claude/agents/` que no existía al empezar la sesión no se cargan hasta reiniciar. Si es tu caso, detente antes del paso 4 y pide al usuario que salga de la sesión y la retome con `claude -c`, que conserva esta conversación; al volver, sigue con el paso 4. No lances los revisores de otra forma para sortearlo.
 3. Comprueba de nuevo la regla de secretos de la fase 4.
 4. **Prueba de los revisores.** Crea en una rama temporal un cambio pequeño y descartable, en el lenguaje del proyecto, con un fallo para cada revisor:
    - una función que construye una consulta SQL concatenando un valor que llega del usuario (seguridad);

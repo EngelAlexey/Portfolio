@@ -1224,7 +1224,7 @@ Propose in phase 2 only those your tool supports, and apply only those that are 
 - **Worktree base branch.** If your tool creates worktrees for subagents, check which commit they start from. If they start from the remote's default branch rather than your current branch, propose the setting that makes them start from the current branch; in Claude Code it is `worktree.baseRef` set to `head`. Add the folder where they are created to `.gitignore`, if it is inside the repository (in Claude Code, `.claude/worktrees/`).
 - **Format hook.** After each edit, run the project's formatter on the edited file, if the project has one configured.
 - **Protection hook.** Before each edit, block direct writes to secret files (`.env*`, keys, credentials) and to lockfiles, which only the package manager modifies.
-- **Destructive-command hook.** Before running a command, block or ask for confirmation on those that cannot be undone: `git push --force`, `git reset --hard`, `git clean -f`, `git branch -D`, `git checkout .` or `git restore .`, a recursive delete (`rm -rf`, `Remove-Item -Recurse`) outside the system temporary folder, and `DROP` or `TRUNCATE` against a database. The block message says the user runs that command.
+- **Destructive-command hook.** Before running a command, block or ask for confirmation on those that cannot be undone: `git push --force`, `git reset --hard`, `git clean -f`, `git branch -D`, `git checkout .` or `git restore .`, a recursive delete (`rm -rf`, `Remove-Item -Recurse`) outside the system temporary folder, and `DROP` or `TRUNCATE` against a database. The block message says the user runs that command. The hook understands `$TMPDIR`, `$TEMP` and `$TMP`, but no other variables: to delete a temporary folder, use its literal path or one of those.
 
 A hook is a command the tool runs by itself at a point in the cycle, without depending on the model remembering it. Each hook is checked with a test input before it counts as installed: the destructive-command hook receives `git push --force` as text and has to block it, without anything being run. In some tools, a hook that fails because of its own error lets the command through instead of blocking it (in Claude Code, any exit code other than 2 does not block): that is why the test is mandatory, and it is repeated after every change to the hook.
 
@@ -1244,8 +1244,9 @@ const command = String(input.tool_input?.command ?? '');
 
 const tmp = resolve(tmpdir()).toLowerCase();
 const project = resolve(process.env.CLAUDE_PROJECT_DIR ?? process.cwd()).toLowerCase();
+const expand = (path) => path.replace(/^(\$\{?(TMPDIR|TEMP|TMP)\}?|\$env:(TEMP|TMP))(?=[\\/]|$)/i, tmpdir());
 const isTemporary = (path) => {
-  const absolute = resolve(path).toLowerCase();
+  const absolute = resolve(expand(path)).toLowerCase();
   const inTmp = path.startsWith('/tmp/') || absolute.startsWith(tmp);
   return inTmp && !absolute.startsWith(project) && !project.startsWith(absolute);
 };
@@ -1402,10 +1403,10 @@ Only if your tool is Claude Code.
    | `build-fixer` | 24 |
    | `doc-writer` | 21 |
    | `cleaner` | 21 |
-   | `.claude/hooks/destructive-commands.mjs`, if applied | 46 |
+   | `.claude/hooks/destructive-commands.mjs`, if applied | 47 |
    | `.claude/hooks/protect-files.mjs`, if applied | 21 |
 
-2. New skills and subagents usually register when a session opens. If your tool requires it, tell the user to open a new session before step 4.
+2. New skills and subagents usually register when a session opens. In Claude Code, subagents in a `.claude/agents/` folder that did not exist when the session started are not loaded until a restart. If that is your case, stop before step 4 and ask the user to leave the session and resume it with `claude -c`, which keeps this conversation; when you are back, carry on with step 4. Do not launch the reviewers some other way to get around it.
 3. Check the secrets rule from phase 4 again.
 4. **Reviewer test.** On a temporary branch, create a small, throwaway change in the project's language with one flaw per reviewer:
    - a function that builds an SQL query by concatenating a value that comes from the user (security);
