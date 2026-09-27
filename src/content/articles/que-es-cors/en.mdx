@@ -19,6 +19,7 @@ promptMinutes: [5, 10]
 import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
+import CorsSimulator from '../../../components/CorsSimulator.astro';
 
 A page served at `http://localhost:5173` requests data from an API at `http://localhost:3000`. With curl, the API answers `200` with the body. From the page, Chrome shows this error in the console:
 
@@ -292,7 +293,25 @@ curl -s -i -X OPTIONS -H "Origin: <origen permitido>" \
 
 On the sample API with the reflected origin, the first three requests got their own origin back with `Access-Control-Allow-Credentials: true`. With the list from section 4, none carried `Access-Control-Allow-Origin`.
 
-## 9. How to configure CORS in your project with a prompt
+## 9. How to test each configuration from this page
+
+The simulator reproduces the API from the measurements with the six configurations from the previous sections. It sends no requests: it shows what Chrome 153 did in each case. Each of the 720 combinations was compared with a real run before publishing it.
+
+For each combination it shows three steps:
+
+1. the preflight request, if needed;
+2. the real request, with the headers the browser sends and the ones the server returns;
+3. what the browser decides, with the literal console message.
+
+<CorsSimulator lang="en" />
+
+**How to do it.** Try these three combinations, which sum up the article:
+
+1. With "Reflects the Origin with credentials", the page `http://127.0.0.1:8080` and the `SameSite=Lax` cookie, the API answers `401`. Change the cookie to `SameSite=None; Secure`: the page reads the victim's profile.
+2. With "Allowlist with Allow-Credentials", the page `http://localhost:8080` and a `POST` with plain text, the browser blocks the response, but the order is saved.
+3. With "Allowlist of origins", the page `http://localhost:5173`, a `PUT` with JSON and no cookies, the preflight request does not allow the method. The `PUT` is never sent.
+
+## 10. How to configure CORS in your project with a prompt
 
 You can apply the previous sections by hand. A coding agent can also do it with a prompt. Copy it with the **Copy prompt** button in the **Configure CORS** panel and paste it into a session opened at the project root. The agent follows seven phases:
 

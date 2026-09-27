@@ -19,6 +19,7 @@ promptMinutes: [5, 10]
 import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
+import CorsSimulator from '../../../components/CorsSimulator.astro';
 
 Una página servida en `http://localhost:5173` pide datos a una API en `http://localhost:3000`. Con curl, la API responde `200` con el cuerpo. Desde la página, Chrome muestra este error en la consola:
 
@@ -292,7 +293,25 @@ curl -s -i -X OPTIONS -H "Origin: <origen permitido>" \
 
 En la API de ejemplo con el origen reflejado, las tres primeras peticiones devolvieron su propio origen con `Access-Control-Allow-Credentials: true`. Con la lista del punto 4, ninguna trajo `Access-Control-Allow-Origin`.
 
-## 9. Cómo configurar CORS en su proyecto con un prompt
+## 9. Cómo probar cada configuración desde esta página
+
+El simulador reproduce la API de las mediciones con las seis configuraciones de los puntos anteriores. No envía peticiones: muestra lo que hizo Chrome 153 en cada caso. Cada una de las 720 combinaciones se comparó con una ejecución real antes de publicarlo.
+
+Para cada combinación muestra tres pasos:
+
+1. la petición previa, si hace falta;
+2. la petición real, con las cabeceras que envía el navegador y las que devuelve el servidor;
+3. lo que decide el navegador, con el mensaje literal de la consola.
+
+<CorsSimulator lang="es" />
+
+**Cómo hacerlo.** Pruebe estas tres combinaciones, que resumen el artículo:
+
+1. Con «Refleja el Origin con credenciales», la página `http://127.0.0.1:8080` y la cookie `SameSite=Lax`, la API responde `401`. Cambie la cookie a `SameSite=None; Secure`: la página lee el perfil de la víctima.
+2. Con «Lista con Allow-Credentials», la página `http://localhost:8080` y un `POST` con texto plano, el navegador bloquea la respuesta, pero el pedido queda guardado.
+3. Con «Lista de orígenes permitidos», la página `http://localhost:5173`, un `PUT` con JSON y sin cookies, la petición previa no autoriza el método. El `PUT` no llega a enviarse.
+
+## 10. Cómo configurar CORS en su proyecto con un prompt
 
 Los puntos anteriores se pueden aplicar a mano. También puede hacerlo un agente de programación con un prompt. Cópielo con el botón «Copiar prompt» del panel «Configurar CORS» y péguelo en una sesión abierta en la raíz del proyecto. El agente sigue siete fases:
 

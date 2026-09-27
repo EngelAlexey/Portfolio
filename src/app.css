@@ -512,6 +512,137 @@ body {
 	background: var(--paper);
 }
 
+/* Simulador de CORS (CorsSimulator.astro). Vive aqui porque un componente
+   importado desde un .mdx no recibe su CSS con ambito. */
+.cors-sim {
+	margin: 1.75rem 0;
+	padding: 1.1rem 1.15rem 0.9rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--paper-sunken);
+}
+
+.cors-sim .cors-sim-titulo {
+	margin: 0 0 0.3rem;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.cors-sim .cors-sim-intro,
+.cors-sim .cors-sim-pie {
+	margin: 0 0 0.9rem;
+	font-size: 0.875rem;
+	line-height: 1.55;
+	color: var(--ink-muted);
+}
+
+.cors-sim .cors-sim-pie {
+	margin: 0.9rem 0 0;
+	font-size: 0.8125rem;
+	color: var(--ink-faint);
+}
+
+.cors-sim-campos {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+	gap: 0.65rem 0.9rem;
+	margin-bottom: 1rem;
+}
+
+.cors-sim-campo {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+	font-size: 0.8125rem;
+	color: var(--ink-muted);
+}
+
+.cors-sim-campo select {
+	width: 100%;
+	min-width: 0;
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--ink);
+	font: inherit;
+	font-size: 0.875rem;
+}
+
+.cors-sim-campo select:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.cors-sim-campo select:disabled {
+	opacity: 0.5;
+}
+
+.cors-sim-paso {
+	margin-top: 0.85rem;
+}
+
+.cors-sim .cors-sim-paso-titulo {
+	margin: 0 0 0.35rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.cors-sim .cors-sim-paso p,
+.cors-sim .cors-sim-sub {
+	margin: 0 0 0.35rem;
+	font-size: 0.875rem;
+	line-height: 1.55;
+	color: var(--ink-muted);
+}
+
+.cors-sim .cors-sim-sub {
+	font-size: 0.75rem;
+	color: var(--ink-faint);
+}
+
+.cors-sim-par {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+	gap: 0.6rem;
+}
+
+.cors-sim .cors-sim-pre {
+	margin: 0;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--paper);
+	font-family: var(--font-mono);
+	font-size: 0.78rem;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	color: var(--ink);
+}
+
+.cors-sim .cors-sim-nota {
+	margin: 1rem 0 0;
+	padding: 0.55rem 0.8rem;
+	border-left: 2px solid var(--line-strong);
+	font-size: 0.875rem;
+	line-height: 1.55;
+	color: var(--ink);
+}
+
+.cors-sim .cors-sim-nota[data-tipo='riesgo'] {
+	border-left-color: var(--area-seguridad-fg);
+	color: var(--area-seguridad-fg);
+}
+
+.cors-sim .cors-sim-nota[data-tipo='correccion'] {
+	border-left-color: var(--area-infra-fg);
+	color: var(--area-infra-fg);
+}
+
 
 /* Shiki emite --shiki-light y --shiki-dark con defaultColor: false. Se toma de
    ahi solo el color del texto; el fondo sigue siendo el del sitio, para que un
