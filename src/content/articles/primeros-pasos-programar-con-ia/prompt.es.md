@@ -994,9 +994,9 @@ Si tu herramienta admite subagentes, crea uno por revisor en su directorio de su
 | `revisor-errores-y-tipos` | intermedio | leer, buscar y órdenes de solo lectura |
 | `revisor-pruebas` | intermedio | leer, buscar, ejecutar órdenes y editar archivos (solo para pruebas temporales y mutaciones, que restaura) |
 
-Escribe el nombre de modelo concreto que corresponde a cada nivel en tu herramienta; no dejes que hereden el del agente principal. Por ejemplo, en Claude Code son archivos `.claude/agents/<nombre>.md` con los campos `name`, `description`, `tools`, `model` y `skills: [<nombre>]`. Un subagente trabaja en su propio contexto, así que cada revisor lee el cambio sin el sesgo de la conversación que lo escribió.
+Escribe el nombre de modelo concreto que corresponde a cada nivel en tu herramienta; no dejes que hereden el del agente principal. Por ejemplo, en Claude Code son archivos `.claude/agents/<nombre>.md` con los campos `name`, `description`, `tools`, `model` y `skills: [<nombre>]`. Un subagente trabaja en su propio contexto, así que cada revisor lee el cambio sin el sesgo de la conversación que lo escribió. En Claude Code, lanzar subagentes es la herramienta `Agent`; en la definición de un subagente no se puede limitar a qué tipos lanza (la sintaxis `Agent(<nombre>)` solo vale para el agente principal), así que esa restricción del revisor de seguridad queda en sus instrucciones.
 
-Si tu herramienta tiene un subagente de exploración propio que hereda el modelo del agente principal, y permite sustituirlo por uno del proyecto, propón en la fase 2 que el `explorador` de la fase 7 ocupe su lugar.
+Si tu herramienta tiene un subagente de exploración propio que hereda el modelo del agente principal, y permite sustituirlo por uno del proyecto, propón en la fase 2 que el `explorador` de la fase 7 ocupe su lugar. En Claude Code está documentado: un subagente del proyecto llamado `Explore` sustituye al propio y conserva su campo `model`.
 
 ## Fase 7. Seis agentes de trabajo
 
@@ -1340,7 +1340,7 @@ Propón cada una en la fase 2 con esta información y pregunta al usuario, una p
 - **Origen.** https://github.com/Graphify-Labs/graphify, con licencia Apache 2.0. El paquete oficial de PyPI es `graphifyy`, con dos «y»; otros paquetes `graphify*` no son del proyecto.
 - **Qué sale de la máquina.** El código se analiza en local, sin modelo de lenguaje: construir el grafo desde la terminal con `graphify update .` no envía nada. La skill `/graphify` además envía la documentación, los PDF y las imágenes al modelo del asistente para extraer su significado.
 - **Instalación, si el usuario la quiere.** `uv tool install graphifyy` (o `pipx install graphifyy`) en un entorno aislado; si ya está instalado, no lo reinstales, y si no hay `uv` ni `pipx`, propón instalar uno de los dos. Después, `graphify install --project` registra la skill en este proyecto (en Claude Code, en `.claude/skills/graphify/`). Registrar además la integración con tu herramienta (`graphify <herramienta> install --project`) añade una instrucción o un hook que hace que el agente consulte el grafo primero: propónlo aparte.
-- **Configuración segura.** Respeta `.gitignore`. Crea además un `.graphifyignore` con los archivos de secretos de la fase 1, por si alguno no está ignorado. La carpeta `graphify-out/` queda fuera del repositorio.
+- **Configuración segura.** Respeta `.gitignore`. Crea además un `.graphifyignore` con los archivos de secretos de la fase 1, por si alguno no está ignorado. La carpeta `graphify-out/` queda fuera del repositorio. Si la instalación añade a `.claude/settings.json` hooks con la ruta del programa en esta máquina, muévelos a `.claude/settings.local.json`, que es personal: con esa ruta no funcionarían en otra máquina.
 - **Comprobación.** `graphify update .` construye el grafo, y `graphify query "¿qué llama a <una función que exista>?"` tiene que devolver nodos y relaciones.
 
 ### claude-council: segundas opiniones de otros modelos

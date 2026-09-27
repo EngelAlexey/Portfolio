@@ -131,7 +131,13 @@ const articleSchema = z
 			.default(null)
 			.refine((value) => value === null || new URL(value).host === 'www.instagram.com', {
 				message: 'instagram must be a www.instagram.com URL'
-			})
+			}),
+
+		// Minutos que tarda en ejecutarse el prompt del articulo, como [minimo, maximo], si trae uno.
+		promptMinutes: z
+			.tuple([z.number().int().positive(), z.number().int().positive()])
+			.nullable()
+			.default(null)
 	})
 	.superRefine((value, ctx) => {
 		if (value.updated && value.updated < value.published) {
@@ -139,6 +145,13 @@ const articleSchema = z
 				code: 'custom',
 				path: ['updated'],
 				message: 'updated is earlier than published'
+			});
+		}
+		if (value.promptMinutes && value.promptMinutes[0] > value.promptMinutes[1]) {
+			ctx.addIssue({
+				code: 'custom',
+				path: ['promptMinutes'],
+				message: 'promptMinutes is [minimum, maximum]'
 			});
 		}
 	});

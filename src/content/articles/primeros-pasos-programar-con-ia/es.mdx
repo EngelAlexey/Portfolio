@@ -9,6 +9,7 @@ draft: false
 path: null
 repo: null
 related: []
+promptMinutes: [15, 20]
 cover: null
 instagram: https://www.instagram.com/p/DdF7ZLpkTwR/
 ---
@@ -474,6 +475,8 @@ Todo lo anterior se puede montar a mano, archivo por archivo. Hay un prompt que 
 9. **Propone ajustes opcionales**: el modelo por omisión de los subagentes, el tamaño de los workflows, la rama base de los árboles de trabajo y tres hooks. Los hooks formatean, protegen los archivos sensibles y bloquean órdenes destructivas como `git push --force`, `git reset --hard` o `rm -rf`.
 10. **Propone tres herramientas y dos colecciones de skills opcionales**, y pregunta antes de instalar cada una: graphify, claude-council, archify, las skills de Matt Pocock y gstack.
 11. **Comprueba y cierra**: siembra en una rama temporal un fallo para cada uno de los cuatro revisores, comprueba que cada uno lo detecta y borra la rama. Pide al arquitecto el plan de una tarea de ejemplo. Repite la comprobación de las herramientas instaladas.
+
+La configuración base, de la fase 1 a la 9, tarda de 15 a 20 minutos en un proyecto pequeño. En la prueba fueron 14: 5 para reconocer el proyecto y proponer, 2 esperando la respuesta y 7 para crear todos los archivos. Con las cinco herramientas opcionales y las pruebas de la fase 11, la ejecución completa tardó 29 minutos. La diferencia tiene dos causas. gstack compila sus binarios y descarga su navegador, unos 5 minutos. La prueba de revisores tarda unos 8, porque lanza los cuatro revisores sobre fallos sembrados y el de pruebas muta el código para ver si alguna prueba lo detecta.
 
 En un proyecto de prueba en Node.js, el prompt dejó esta estructura. `.claude/agents` guarda los once subagentes: los cuatro revisores, los seis agentes de trabajo y un sustituto del explorador propio de Claude Code. `.claude/skills` guarda las nueve skills, y la raíz, `AGENTS.md` y el `CLAUDE.md` que lo importa.
 

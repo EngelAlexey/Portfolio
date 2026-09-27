@@ -9,6 +9,7 @@ draft: false
 path: first-steps-with-ai-coding
 repo: null
 related: []
+promptMinutes: [15, 20]
 cover: null
 instagram: https://www.instagram.com/p/DdF7ZLpkTwR/
 ---
@@ -474,6 +475,8 @@ Everything above can be built by hand, file by file. There is a prompt that has 
 9. **Proposes optional settings**: the default subagent model, the workflow size, the base branch for worktrees, and three hooks. The hooks format code, protect sensitive files and block destructive commands such as `git push --force`, `git reset --hard` or `rm -rf`.
 10. **Proposes three tools and two skill collections, all optional**, and asks before installing each one: graphify, claude-council, archify, Matt Pocock's skills and gstack.
 11. **Checks and closes**: seeds one flaw per reviewer, for all four, on a temporary branch, confirms each one catches it and deletes the branch. Asks the architect for the plan of a sample task. Repeats the check of the installed tools.
+
+The base setup, phases 1 to 9, takes 15 to 20 minutes on a small project. In the test run it took 14: 5 to survey the project and propose, 2 waiting for the answer, and 7 to create every file. With the five optional tools and the phase 11 tests, the whole run took 29 minutes. Two things account for the difference. gstack compiles its binaries and downloads its browser, about 5 minutes. The reviewer test takes about 8, because it launches the four reviewers on planted flaws and the tests reviewer mutates the code to see whether any test catches it.
 
 On a Node.js test project, the prompt left this structure. `.claude/agents` holds the eleven subagents: the four reviewers, the six work agents and a replacement for Claude Code's own explorer. `.claude/skills` holds the nine skills, and the root holds `AGENTS.md` and the `CLAUDE.md` that imports it. This run used the Spanish prompt; the English one creates the same structure with English names.
 

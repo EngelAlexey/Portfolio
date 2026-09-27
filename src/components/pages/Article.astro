@@ -137,6 +137,7 @@ const prompt = prompts[`/src/content/articles/${meta.slug}/prompt.${lang}.md`]?.
 					error={strings.article.promptError}
 					view={strings.article.promptView}
 					close={strings.article.promptClose}
+					time={meta.promptMinutes ? strings.article.promptTime(...meta.promptMinutes) : null}
 				/>
 			)
 		}

@@ -76,6 +76,10 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Article>>>> {
 			}
 		}
 
+		if (String(bucket.es!.meta.promptMinutes) !== String(bucket.en!.meta.promptMinutes)) {
+			fail(`src/content/articles/${slug}`, '`promptMinutes` differs between languages');
+		}
+
 		const related = bucket.es!.meta.related;
 		if (related.join('|') !== bucket.en!.meta.related.join('|')) {
 			fail(`src/content/articles/${slug}`, '`related` differs between languages');

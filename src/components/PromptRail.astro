@@ -8,9 +8,10 @@ interface Props {
 	error: string;
 	view: string;
 	close: string;
+	time?: string | null;
 }
 
-const { prompt, title, copy, copied, copiedStatus, error, view, close } = Astro.props;
+const { prompt, title, copy, copied, copiedStatus, error, view, close, time = null } = Astro.props;
 ---
 
 <aside
@@ -22,6 +23,7 @@ const { prompt, title, copy, copied, copiedStatus, error, view, close } = Astro.
 	data-error={error}
 >
 	<p class="prompt-rail-title" id="prompt-rail-title">{title}</p>
+	{time && <p class="prompt-rail-time">{time}</p>}
 	<button type="button" class="prompt-copy" data-copy>
 		<svg class="icon icon-copy" viewBox="0 0 16 16" aria-hidden="true">
 			<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect>
@@ -132,6 +134,16 @@ const { prompt, title, copy, copied, copiedStatus, error, view, close } = Astro.
 		margin: 0 0 0.6rem;
 		font-size: 0.75rem;
 		font-weight: 500;
+		color: var(--ink-faint);
+	}
+
+	.prompt-rail-title:has(+ .prompt-rail-time) {
+		margin-bottom: 0.15rem;
+	}
+
+	.prompt-rail-time {
+		margin: 0 0 0.6rem;
+		font-size: 0.75rem;
 		color: var(--ink-faint);
 	}
 

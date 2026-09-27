@@ -994,9 +994,9 @@ If your tool supports subagents, create one per reviewer in its subagents direct
 | `errors-and-types-reviewer` | mid | read, search and read-only commands |
 | `tests-reviewer` | mid | read, search, run commands and edit files (only for temporary tests and mutations, which it restores) |
 
-Write the concrete model name that matches each tier in your tool; do not let them inherit the main agent's model. For example, in Claude Code they are `.claude/agents/<name>.md` files with the fields `name`, `description`, `tools`, `model` and `skills: [<name>]`. A subagent works in its own context, so each reviewer reads the change without the bias of the conversation that wrote it.
+Write the concrete model name that matches each tier in your tool; do not let them inherit the main agent's model. For example, in Claude Code they are `.claude/agents/<name>.md` files with the fields `name`, `description`, `tools`, `model` and `skills: [<name>]`. A subagent works in its own context, so each reviewer reads the change without the bias of the conversation that wrote it. In Claude Code, launching subagents is the `Agent` tool; a subagent's definition cannot limit which types it launches (the `Agent(<name>)` syntax only applies to the main agent), so that restriction on the security reviewer lives in its instructions.
 
-If your tool has its own exploration subagent that inherits the main agent's model, and lets a project subagent replace it, propose in phase 2 that the `explorer` from phase 7 take its place.
+If your tool has its own exploration subagent that inherits the main agent's model, and lets a project subagent replace it, propose in phase 2 that the `explorer` from phase 7 take its place. In Claude Code this is documented: a project subagent named `Explore` replaces the built-in one and keeps its own `model` field.
 
 ## Phase 7. Six work agents
 
@@ -1340,7 +1340,7 @@ Propose each one in phase 2 with this information and ask the user, one by one, 
 - **Origin.** https://github.com/Graphify-Labs/graphify, under the Apache 2.0 licence. The official PyPI package is `graphifyy`, with two "y"s; other `graphify*` packages do not belong to the project.
 - **What leaves the machine.** Code is analysed locally, without a language model: building the graph from the terminal with `graphify update .` sends nothing. The `/graphify` skill also sends documentation, PDFs and images to the assistant's model to extract their meaning.
 - **Installation, if the user wants it.** `uv tool install graphifyy` (or `pipx install graphifyy`) in an isolated environment; if it is already installed, do not reinstall it, and if there is neither `uv` nor `pipx`, propose installing one of them. Then `graphify install --project` registers the skill in this project (in Claude Code, under `.claude/skills/graphify/`). Registering the integration with your tool as well (`graphify <tool> install --project`) adds an instruction or a hook that makes the agent query the graph first: propose that separately.
-- **Safe configuration.** It respects `.gitignore`. Also create a `.graphifyignore` listing the secret files from phase 1, in case any of them is not ignored. The `graphify-out/` folder stays out of the repository.
+- **Safe configuration.** It respects `.gitignore`. Also create a `.graphifyignore` listing the secret files from phase 1, in case any of them is not ignored. The `graphify-out/` folder stays out of the repository. If the install adds hooks with the program's path on this machine to `.claude/settings.json`, move them to `.claude/settings.local.json`, which is personal: with that path they would not work on another machine.
 - **Check.** `graphify update .` builds the graph, and `graphify query "what calls <a function that exists>?"` has to return nodes and relations.
 
 ### claude-council: second opinions from other models

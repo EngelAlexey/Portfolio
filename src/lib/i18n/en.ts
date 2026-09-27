@@ -101,6 +101,7 @@ export const en: Dict = {
 		promptError: 'Could not copy. The text is selected: Ctrl+C or Cmd+C.',
 		promptView: 'Show the full prompt',
 		promptClose: 'Close',
+		promptTime: (min: number, max: number) => `${min} to ${max} minutes`,
 		published: 'Published',
 		updated: 'Updated',
 		reading: 'Reading time',

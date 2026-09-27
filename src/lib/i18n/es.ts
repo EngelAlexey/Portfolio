@@ -99,6 +99,7 @@ export const es = {
 		promptError: 'No se pudo copiar. El texto está seleccionado: Ctrl+C o Cmd+C.',
 		promptView: 'Ver el prompt completo',
 		promptClose: 'Cerrar',
+		promptTime: (min: number, max: number) => `De ${min} a ${max} minutos`,
 		published: 'Publicado',
 		updated: 'Actualizado',
 		reading: 'Lectura',
