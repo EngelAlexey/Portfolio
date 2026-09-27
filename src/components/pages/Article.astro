@@ -130,7 +130,7 @@ const prompt = prompts[`/src/content/articles/${meta.slug}/prompt.${lang}.md`]?.
 			prompt && (
 				<PromptRail
 					{prompt}
-					title={strings.article.promptTitle}
+					title={meta.promptTitle ?? strings.article.promptTitle}
 					copy={strings.article.promptCopy}
 					copied={strings.article.promptCopied}
 					copiedStatus={strings.article.promptCopiedStatus}

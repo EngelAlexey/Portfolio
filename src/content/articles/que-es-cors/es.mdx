@@ -1,0 +1,381 @@
+---
+slug: que-es-cors
+title: Qué es CORS y cómo resolver el error «blocked by CORS policy»
+tagline: Por qué el navegador bloquea una respuesta que curl sí lee, qué protege CORS y cómo configurarlo con seguridad.
+description: "Qué es CORS, por qué Chrome muestra «has been blocked by CORS policy» y cómo configurar el servidor con una lista de orígenes permitidos."
+areas: [seguridad]
+published: '2026-09-27'
+updated: null
+draft: true
+path: null
+repo: null
+related: []
+cover: null
+instagram: null
+promptTitle: Configurar CORS
+---
+
+import Callout from '../../../components/Callout.astro';
+import Cite from '../../../components/Cite.astro';
+import References from '../../../components/References.astro';
+
+Una página servida en `http://localhost:5173` pide datos a una API en `http://localhost:3000`. Con curl, la API responde `200` con el cuerpo. Desde la página, Chrome muestra este error en la consola:
+
+```text
+Access to fetch at 'http://localhost:3000/' from origin 'http://localhost:5173' has been
+blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested
+resource.
+```
+
+El log de la API registra la petición en los dos casos. El servidor respondió, y fue el navegador el que no entregó la respuesta a la página. Ese bloqueo lo impone la política de mismo origen, y CORS es el protocolo con el que el servidor la relaja.
+
+Las mediciones se hicieron el 27 de septiembre de 2026 con Chrome 153.0.8010.54 en modo *headless*, Node.js 24.19.0, curl 8.12.1 y Express 5.2.1. Todo el código está reconstruido para el artículo.
+
+## 1. Qué es el mismo origen y qué relaja CORS
+
+El origen de una URL es la combinación de su esquema, su host y su puerto. Dos URL tienen el mismo origen solo si coinciden las tres partes<Cite n={1} />. Comparadas con `http://localhost:5173`:
+
+| URL | ¿Mismo origen? | Motivo |
+|---|---|---|
+| `http://localhost:5173/api/perfil` | Sí | Solo cambia la ruta |
+| `http://localhost:3000` | No | Otro puerto |
+| `https://localhost:5173` | No | Otro esquema |
+| `http://127.0.0.1:5173` | No | Otro host, aunque apunte a la misma máquina |
+
+La política de mismo origen impide que un script lea la respuesta de otro origen<Cite n={1} repeat />. Sin ella, cualquier web abierta en el navegador podría leer los datos de otra en la que usted tiene la sesión iniciada.
+
+CORS (*Cross-Origin Resource Sharing*) permite a un servidor indicar, con cabeceras HTTP, qué otros orígenes pueden leer sus respuestas<Cite n={2} />. El navegador lee esas cabeceras y decide si entrega la respuesta al script.
+
+Quien aplica CORS es el navegador. curl, Postman y el código de un servidor no aplican la política de mismo origen. Leen la respuesta tenga o no cabeceras CORS<Cite n={3} />. Por eso la misma petición funciona en curl y falla en la página.
+
+## 2. Qué hace el navegador con una petición a otro origen
+
+La API de ejemplo usa solo el módulo `http` de Node.js y escribe una línea de log por petición. En este primer estado no envía ninguna cabecera CORS:
+
+```js
+// api.mjs
+import http from 'node:http';
+
+http.createServer((req, res) => {
+  console.log(`${req.method} ${req.url} Origin=${req.headers.origin ?? '-'} Cookie=${req.headers.cookie ?? '-'}`);
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end('{"mensaje":"hola"}');
+}).listen(3000);
+```
+
+Una página en `http://localhost:5173` envía una petición `GET` y otra `POST` con texto plano. En la medición, cada una se lanzó por separado:
+
+```js
+await fetch('http://localhost:3000/');
+await fetch('http://localhost:3000/pedido', {
+  method: 'POST',
+  headers: { 'Content-Type': 'text/plain' },
+  body: 'hola'
+});
+```
+
+Las dos promesas se rechazan con `TypeError: Failed to fetch`, y la consola muestra el error del principio con la URL de cada petición. El log de la API, en cambio, registra las dos peticiones:
+
+```text
+GET / Origin=http://localhost:5173 Cookie=-
+POST /pedido Origin=http://localhost:5173 Cookie=-
+```
+
+El navegador envió las peticiones, añadió la cabecera `Origin` con el origen de la página y esperó la respuesta. Después buscó en ella `Access-Control-Allow-Origin`, no la encontró y no se la entregó al script.
+
+Esto tiene una consecuencia directa. Si la ruta `/pedido` guardara un pedido, el pedido quedaría guardado aunque la página no pueda leer la respuesta. El punto 7 vuelve sobre ello.
+
+**Cómo comprobarlo.** Busque la petición en el log del servidor, además de en la consola del navegador. Si la línea aparece, la petición llegó y el bloqueo ocurrió en el navegador.
+
+## 3. Qué es la petición previa y cuándo se envía
+
+Una petición previa (*preflight*) es una petición `OPTIONS` que el navegador envía antes de la petición real. Pregunta al servidor si acepta el método y las cabeceras que la página quiere usar. El navegador la envía cuando la petición no es simple<Cite n={4} />. Las causas más frecuentes son tres:
+
+- usa un método distinto de `GET`, `HEAD` o `POST`;
+- añade una cabecera fuera de la lista permitida, como `Authorization`;
+- lleva un `Content-Type` distinto de `application/x-www-form-urlencoded`, `multipart/form-data` o `text/plain`.
+
+Una petición con JSON cumple la tercera:
+
+```js
+await fetch('http://localhost:3000/pedido', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: '{"a":1}'
+});
+```
+
+Contra la API anterior, el log registra solo la petición previa. El `POST` no llega a enviarse:
+
+```text
+OPTIONS /pedido Origin=http://localhost:5173 Cookie=-
+```
+
+Chrome indica en el error que falló la petición previa:
+
+```text
+Access to fetch at 'http://localhost:3000/pedido' from origin 'http://localhost:5173' has
+been blocked by CORS policy: Response to preflight request doesn't pass access control
+check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+```
+
+La petición previa lleva la cabecera `Access-Control-Request-Method` y, si la petición lleva cabeceras fuera de la lista permitida, `Access-Control-Request-Headers`. Un `Content-Type` como `application/json` cuenta como una de ellas. El servidor contesta con `Access-Control-Allow-Methods` y `Access-Control-Allow-Headers`, y puede añadir `Access-Control-Max-Age` para que el navegador guarde la respuesta durante esos segundos<Cite n={2} repeat />. Con la configuración del punto 4, el log registra las dos peticiones en orden:
+
+```text
+OPTIONS /pedido Origin=http://localhost:5173 Cookie=-
+POST /pedido Origin=http://localhost:5173 Cookie=-
+```
+
+## 4. Cómo resolver el error en el servidor
+
+El error se resuelve en el servidor que responde, no en la página que pregunta. `Access-Control-Allow-Origin` admite un solo origen, `*` o `null`, pero no una lista<Cite n={2} repeat />. Para aceptar varios orígenes, el servidor compara el `Origin` de cada petición con su propia lista y devuelve el que coincide.
+
+```js
+// api.mjs, con lista de orígenes permitidos
+import http from 'node:http';
+
+const PERMITIDOS = new Set(
+  (process.env.ORIGENES_PERMITIDOS ?? 'http://localhost:5173').split(',')
+);
+
+http.createServer((req, res) => {
+  const origen = req.headers.origin;
+  res.setHeader('Vary', 'Origin');
+  if (origen && PERMITIDOS.has(origen)) {
+    res.setHeader('Access-Control-Allow-Origin', origen);
+  }
+  if (req.method === 'OPTIONS') {
+    if (origen && PERMITIDOS.has(origen)) {
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Max-Age', '600');
+    }
+    res.writeHead(204).end();
+    return;
+  }
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end('{"mensaje":"hola"}');
+}).listen(3000);
+```
+
+**Cómo hacerlo.**
+
+1. Defina los orígenes permitidos en una variable de entorno, separados por comas, con un valor por entorno. En desarrollo, el del servidor del *frontend*; en producción, el dominio público.
+2. Compare el `Origin` recibido con la lista por igualdad exacta de la cadena completa. `Set.has` compara así; `includes` sobre un texto o una expresión regular sin anclar, no.
+3. Si el origen está en la lista, devuélvalo en `Access-Control-Allow-Origin`. Si no está, no envíe ninguna cabecera `Access-Control-*`.
+4. Añada `Vary: Origin` a todas las respuestas. Indica a las cachés intermedias que la respuesta cambia según el origen, y evita que sirvan a un origen la cabecera calculada para otro<Cite n={2} repeat />.
+5. Conteste la petición previa con los métodos y las cabeceras que el *frontend* usa de verdad.
+
+En Express, el paquete `cors` 2.8.6 hace lo mismo con su opción `origin`, que acepta una lista: `cors({ origin: ['http://localhost:5173'] })`<Cite n={3} repeat />. En la medición, con esa lista devolvió el origen permitido, no devolvió nada a los demás y añadió `Vary: Origin` por su cuenta.
+
+**Cómo comprobarlo.** Envíe la misma petición con un origen permitido y con otro que no lo esté:
+
+```bash
+curl -s -i -H "Origin: http://localhost:5173" http://localhost:3000/
+curl -s -i -H "Origin: https://atacante.example" http://localhost:3000/
+```
+
+La primera respuesta trae `Access-Control-Allow-Origin: http://localhost:5173` y `Vary: Origin`. La segunda trae solo `Vary: Origin`.
+
+<Callout kind="nota" title="Fije CORS en un solo sitio">
+	Si el código y el proxy añaden cada uno su cabecera, la respuesta lleva dos `Access-Control-Allow-Origin`. Chrome la rechaza: «The 'Access-Control-Allow-Origin' header contains multiple values…, but only one is allowed». Configure CORS en el código o en el proxy, no en los dos.
+</Callout>
+
+## 5. Qué no resuelve `mode: 'no-cors'`
+
+`mode: 'no-cors'` hace desaparecer el error, pero no da acceso a la respuesta. La petición se envía y el navegador entrega a la página una respuesta opaca<Cite n={5} />:
+
+```js
+const r = await fetch('http://localhost:3000/', { mode: 'no-cors' });
+// r.type === 'opaque', r.status === 0, await r.text() === ''
+```
+
+El tipo es `opaque`, el estado es `0` y `text()` devuelve una cadena vacía, aunque el servidor respondió `200` con JSON. El código no puede leer ni el estado ni los datos. Este modo sirve para enviar una petición cuyo resultado no importa, no para leer una API.
+
+Una extensión del navegador que desactiva CORS tampoco lo resuelve. Cambia solo el navegador de quien la instala, y los usuarios de la aplicación seguirán viendo el error.
+
+**Cómo hacerlo.** Quite `mode: 'no-cors'` del cliente y configure el servidor como en el punto 4.
+
+## 6. Cómo permitir cookies entre orígenes sin abrir la API
+
+Por defecto, `fetch` no envía cookies a otro origen. Para enviarlas, la página usa `credentials: 'include'`. Entonces el servidor tiene que responder con un origen concreto en `Access-Control-Allow-Origin` y con `Access-Control-Allow-Credentials: true`<Cite n={2} repeat />. Con `*`, Chrome rechaza la respuesta:
+
+```text
+Access to fetch at 'http://localhost:3000/perfil' from origin 'http://localhost:8080' has
+been blocked by CORS policy: The value of the 'Access-Control-Allow-Origin' header in the
+response must not be the wildcard '*' when the request's credentials mode is 'include'.
+```
+
+La corrección que se ve a menudo es devolver el `Origin` recibido, sea cual sea, junto con `Allow-Credentials`. En Express, `cors({ origin: true, credentials: true })` hace exactamente eso<Cite n={3} repeat />, y en la medición devolvió `https://atacante.example` a quien lo envió. El error desaparece, pero la API queda abierta a cualquier origen:
+
+```js
+// Refleja cualquier origen con credenciales: no lo use
+res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+res.setHeader('Access-Control-Allow-Credentials', 'true');
+```
+
+Para medirlo, la API añade dos rutas: `/login`, que fija la cookie `sesion` con `SameSite=None; Secure`, y `/perfil`, que devuelve los datos de esa sesión. La víctima inicia sesión en la API. Después abre una página de otro origen, que ejecuta esto:
+
+```js
+const r = await fetch('http://localhost:3000/perfil', { credentials: 'include' });
+return await r.text();
+// {"email":"ana@example.com","saldo":1200}
+```
+
+La página de otro origen leyó los datos de la víctima con la sesión de la víctima. PortSwigger lo describió en 2016 como la vulnerabilidad de CORS más común, y documentó en aplicaciones reales otros dos fallos parecidos<Cite n={6} />.
+
+El primero es aceptar el origen `null`. Un documento en un `iframe` con `sandbox` envía `Origin: null`. En la medición, un `iframe` con `sandbox="allow-scripts"` leyó la respuesta de la API que reflejaba el origen.
+
+El segundo es comparar el origen solo por el principio o por el final. Una comprobación con `endsWith('ejemplo.com')` acepta `https://atacante-ejemplo.com`, y una con `startsWith('https://ejemplo.com')` acepta `https://ejemplo.com.atacante.example`.
+
+Los tres encajan en CWE-942 de MITRE, una política entre dominios que incluye dominios no fiables<Cite n={7} />.
+
+El atributo `SameSite` de la cookie decide si esta llega en un `fetch` desde otro sitio<Cite n={8} />. Un sitio es el esquema más el dominio registrable, sin el puerto<Cite n={9} />. Por eso `localhost:8080` y `localhost:3000` son el mismo sitio, y `127.0.0.1:8080` es otro. Con la API que refleja el origen:
+
+| Página | ¿Mismo sitio que la API? | Cookie | Resultado |
+|---|---|---|---|
+| `http://localhost:8080` | Sí | `SameSite=None; Secure` | Lee los datos |
+| `http://localhost:8080` | Sí | `SameSite=Lax` | Lee los datos |
+| `http://127.0.0.1:8080` | No | `SameSite=Lax` | `401`: la cookie no se envía |
+| `http://127.0.0.1:8080` | No | `SameSite=None; Secure` | Lee los datos |
+
+Chrome trata como `Lax` una cookie sin `SameSite` desde la versión 80<Cite n={10} />. `SameSite=Lax` limita el ataque a páginas del mismo sitio, como otro subdominio. Una API que necesita cookies entre sitios usa `SameSite=None`, y entonces solo la lista de orígenes permitidos la protege.
+
+**Cómo hacerlo.**
+
+1. Use la lista del punto 4 y añada `Access-Control-Allow-Credentials: true` solo si la API usa cookies entre orígenes.
+2. No acepte `null` en la lista.
+3. Si necesita aceptar subdominios, use una expresión regular anclada con `^` y `$` y el punto escapado, como `^https://[a-z0-9-]+\.ejemplo\.com$`. El ejemplo del README de `cors`, `/example\.com$/`, solo está anclado al final. En la medición aceptó `https://evilexample.com`<Cite n={3} repeat />.
+
+**Cómo comprobarlo.** Envíe un origen ajeno y el origen `null`, y compruebe que ninguna de las dos respuestas trae `Access-Control-Allow-Origin`:
+
+```bash
+curl -s -i -H "Origin: https://atacante.example" http://localhost:3000/perfil
+curl -s -i -H "Origin: null" http://localhost:3000/perfil
+```
+
+## 7. Qué no protege CORS
+
+CORS decide qué orígenes pueden leer una respuesta en el navegador. No decide quién puede enviar una petición al servidor.
+
+Los clientes que no son navegadores no aplican CORS. curl, un *script* o el servidor de un atacante leen la respuesta con cualquier configuración. Por eso la autenticación y la autorización se comprueban en el servidor.
+
+Las peticiones simples, además, llegan al servidor igualmente. Con la lista del punto 4 activa, la página de `localhost:8080` no pudo leer `/perfil`. Aun así, el log registró la petición con la cookie de la víctima: `GET /perfil Origin=http://localhost:8080 Cookie=sesion=abc123`.
+
+En eso se basa CSRF (*Cross-Site Request Forgery*). Otra web envía una petición con efecto usando la sesión de la víctima, aunque no pueda leer la respuesta. CORS no la impide. La defensa es un token anti-CSRF en las rutas que cambian datos, o la protección que ya traiga el *framework*. `SameSite` en la cookie de sesión añade una capa más, pero no sustituye al token<Cite n={11} />.
+
+## 8. Cómo comprobar la configuración CORS de un proyecto
+
+La guía de pruebas de OWASP pide localizar las rutas que responden con CORS y marcar el comodín y el origen devuelto sin comprobar<Cite n={12} />. Estas cuatro peticiones cubren los fallos de los puntos 4 a 6. Envíelas contra cada ruta que devuelva datos de un usuario:
+
+```bash
+curl -s -i -H "Origin: https://atacante.example" <url>
+curl -s -i -H "Origin: null" <url>
+curl -s -i -H "Origin: https://<dominio permitido>.atacante.example" <url>
+curl -s -i -X OPTIONS -H "Origin: <origen permitido>" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: content-type" <url>
+```
+
+| Respuesta | Qué indica |
+|---|---|
+| `Access-Control-Allow-Origin` repite el origen ajeno, con `Allow-Credentials: true` | El origen se refleja: cualquier web lee la API con la sesión del usuario |
+| `Access-Control-Allow-Origin: null` | Se acepta el origen `null` |
+| La tercera petición recibe su origen de vuelta | La comparación mira el principio del origen o busca una subcadena, no el origen completo |
+| `Access-Control-Allow-Origin: *` en una ruta con datos privados | Cualquier web lee la ruta. Sin cookies, solo es seguro en datos públicos |
+| Falta `Vary: Origin` cuando la cabecera cambia según el origen | Una caché puede servir la cabecera de un origen a otro |
+| La petición previa no trae `Access-Control-Allow-Headers` con `content-type` | El navegador no enviará peticiones con JSON ni con `Authorization` |
+| La petición previa no trae `Access-Control-Allow-Methods` | El navegador no enviará `PUT`, `PATCH` ni `DELETE` |
+
+En la API de ejemplo con el origen reflejado, las tres primeras peticiones devolvieron su propio origen con `Access-Control-Allow-Credentials: true`. Con la lista del punto 4, ninguna trajo `Access-Control-Allow-Origin`.
+
+## 9. Cómo configurar CORS en su proyecto con un prompt
+
+Los puntos anteriores se pueden aplicar a mano. También puede hacerlo un agente de programación con un prompt. Cópielo con el botón «Copiar prompt» del panel «Configurar CORS» y péguelo en una sesión abierta en la raíz del proyecto. El agente sigue siete fases:
+
+1. **Reconoce el proyecto** sin escribir nada. Busca dónde se fija CORS, en el código o en el proxy, y qué orígenes llaman de verdad a la API. También averigua si autentica con cookies o con `Authorization`.
+2. **Diagnostica** con las peticiones del punto 8 y clasifica lo que encuentra, del fallo más grave al más leve.
+3. **Propone y espera.** Presenta los fallos, la lista de orígenes por entorno y el cambio exacto, y se detiene hasta que usted confirma.
+4. **Aplica el cambio** del punto 4, con la lista en una variable de entorno. No toca otra lógica de la aplicación.
+5. **Añade una prueba** con un origen permitido, uno ajeno y la petición previa. Si la configuración anterior era insegura, comprueba primero que la prueba falla contra ella.
+6. **Repite las peticiones** del punto 8 y pega las cabeceras de antes y de después.
+7. **Entrega un informe** con lo que cambió, lo que no pudo comprobar y lo que CORS no cubre, como CSRF.
+
+<Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
+	Este prompt pide al agente que arranque el servidor, ejecute órdenes y cambie la configuración de CORS. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 3 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo.
+</Callout>
+
+**Cómo comprobarlo.** `git diff` muestra solo la configuración de CORS, la prueba nueva y el archivo de ejemplo de entorno. La prueba pasa con la orden de pruebas del proyecto. Las peticiones del punto 8 con un origen ajeno no traen `Access-Control-Allow-Origin`.
+
+## Por dónde seguir
+
+CORS decide quién lee una respuesta en el navegador, y el servidor sigue teniendo que decidir quién puede hacer cada cosa. [Siete cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) recoge esas comprobaciones de permisos, con su corrección.
+
+Para que un agente aplique estas reglas en cada cambio sin depender de que alguien las recuerde, lea [cómo pedirle a la IA código seguro](/es/blog/codigo-seguro-con-ia).
+
+<References
+	title="Referencias"
+	back="Volver a la cita"
+	items={[
+	{
+		source: 'MDN',
+		title: 'Same-origin policy',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy'
+	},
+	{
+		source: 'WHATWG',
+		title: 'Fetch Standard, CORS protocol',
+		url: 'https://fetch.spec.whatwg.org/#http-cors-protocol'
+	},
+	{
+		source: 'Express',
+		title: 'cors, README',
+		url: 'https://github.com/expressjs/cors'
+	},
+	{
+		source: 'MDN',
+		title: 'Cross-Origin Resource Sharing (CORS)',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS'
+	},
+	{
+		source: 'MDN',
+		title: 'RequestInit, mode',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/API/RequestInit#mode'
+	},
+	{
+		source: 'PortSwigger Research',
+		title: 'Exploiting CORS misconfigurations for Bitcoins and bounties',
+		url: 'https://portswigger.net/research/exploiting-cors-misconfigurations-for-bitcoins-and-bounties'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-942: Permissive Cross-domain Security Policy with Untrusted Domains',
+		url: 'https://cwe.mitre.org/data/definitions/942.html'
+	},
+	{
+		source: 'MDN',
+		title: 'Set-Cookie, SameSite',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesitesamesite-value'
+	},
+	{
+		source: 'MDN',
+		title: 'Site',
+		url: 'https://developer.mozilla.org/en-US/docs/Glossary/Site'
+	},
+	{
+		source: 'The Chromium Projects',
+		title: 'SameSite Updates',
+		url: 'https://www.chromium.org/updates/same-site/'
+	},
+	{
+		source: 'OWASP',
+		title: 'Cross-Site Request Forgery Prevention Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'Web Security Testing Guide, WSTG-CLNT-07 Testing Cross Origin Resource Sharing',
+		url: 'https://wstg.owasp.org/v4.2/4-Web_Application_Security_Testing/11-Client-side_Testing/07-Testing_Cross_Origin_Resource_Sharing/'
+	}
+	]}
+/>

@@ -133,6 +133,9 @@ const articleSchema = z
 				message: 'instagram must be a www.instagram.com URL'
 			}),
 
+		// Titulo del panel del prompt en este idioma; null = el de la interfaz («Configurar entorno»).
+		promptTitle: z.string().min(3).max(40).nullable().default(null),
+
 		// Minutos que tarda en ejecutarse el prompt del articulo, como [minimo, maximo], si trae uno.
 		promptMinutes: z
 			.tuple([z.number().int().positive(), z.number().int().positive()])
