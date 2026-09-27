@@ -4,13 +4,15 @@ title: Seven things to check in the code your AI writes
 tagline: Seven common security failures in AI-generated code, each with its fix and the command that checks it.
 areas: [seguridad]
 published: '2026-09-07'
-updated: '2026-09-26'
+updated: '2026-09-27'
 draft: false
 path: seven-things-to-check-in-ai-generated-code
 repo: null
 related: [intercargo-plataforma, kaizen-ai]
 cover: null
 instagram: https://www.instagram.com/reel/DdIUA1MsPlm/
+promptTitle: Review the code
+promptMinutes: [5, 15]
 ---
 
 import Callout from '../../../components/Callout.astro';
@@ -21,7 +23,17 @@ The code a language model generates, from a chat or from an agent, compiles, pas
 
 Veracode tested more than a hundred models on coding tasks in four languages. Of the generated code samples, 45% failed the security tests. Newer and larger models did no better than small ones<Cite n={1} />. The result therefore depends on the method used to generate the code, not on the model that writes it.
 
-The seven failures that follow are the ones that repeat most in generated code. Every example was rebuilt for the article and none of them comes from a production system.
+The seven failures that follow are the ones that repeat most in generated code. Each one belongs to a layer of [How to secure a web application](/en/blog/how-to-secure-a-web-application). That guide explains how to apply each layer and how to check it. Here you see the same failure in the code, with its fix and the command that checks it.
+
+| Section | Layer in the guide |
+|---|---|
+| 1 and 2 | Permissions |
+| 3 and 5 | Input and output |
+| 4 | Secrets |
+| 6 | Dependencies |
+| 7 | Errors and logs |
+
+Every example was rebuilt for the article and none of them comes from a production system.
 
 ## 1. How to check the permission on the server
 
@@ -151,7 +163,7 @@ export async function POST(req: Request) {
 }
 ```
 
-A protection that depends on remembering the prefix fails the day someone forgets it. Set up a secret scanner in the pre-commit hook, a command git runs before it creates each commit. Run it again in continuous integration, which checks every change pushed to the repository. Keep the keys in a secret manager and not in the repository.
+A protection that depends on remembering the prefix fails the day someone forgets it. [The secrets layer in the guide](/en/blog/how-to-secure-a-web-application#10-how-to-keep-secrets-out-of-the-code-and-the-browser) explains how to detect them before the commit and where to store them.
 
 **How to check it.** Search the build output, not the source code. Next.js puts the bundle in `.next/static`. Search for the start of the key's value, `sk_live`, not for the variable name, because the build has already replaced one with the other:
 
@@ -262,9 +274,31 @@ catch (error) {
 }
 ```
 
-The log is not a private place either. It is exported, sent to a provider and read by people who do not need to see all of it. Scrub personal data before writing it to the log, not when someone asks for access.
+The log is not a private place either. It is exported, sent to a provider and read by people who do not need to see all of it. Scrub personal data before writing it to the log, not when someone asks for access. [The errors layer in the guide](/en/blog/how-to-secure-a-web-application#12-how-to-answer-errors-without-leaking-data) shows the same fix measured in Express.
 
 **How to check it.** Cause the failure: stop the database, send the request and read the response body. No table name and no server path can appear in it.
+
+## 8. How to review generated code with a prompt
+
+You can review the seven sections by hand. A coding agent can also do it with a prompt, on recent changes or on the whole repository. Copy it with the **Copy prompt** button in the **Review the code** panel and paste it into a session opened at the project root. The agent follows seven phases:
+
+1. **It asks what to review:** a range of commits, a branch or the whole repository if it is small.
+2. **It reviews the seven sections** with their checks, and confirms each failure by running the check when it can.
+3. **It proposes and waits.** It presents the failures, from most to least serious, and the fix for each one, and stops until you confirm.
+4. **It fixes** each failure with the smallest change that closes it.
+5. **It adds a test** per failure and checks that it fails before the fix.
+6. **It repeats the checks** and pastes the outputs from before and after.
+7. **It delivers a report** with what changed, what it could not check and the guide layer each failure belongs to.
+
+The run was measured with Claude Code 2.1.283 on an Express invoicing API with the seven failures. It took 6 minutes, not counting the wait for confirmation: 3 up to the proposal and 3 to fix and check.
+
+The agent found the seven failures, confirmed each one with its check and assigned it to its layer. It also found an eighth that fails open: with the token `__proto__`, the session lookup returned the object's prototype and the request went through. The nine tests it added failed before the fixes, and all pass afterwards. It also warned that the exposed key was still in the git history.
+
+<Callout kind="riesgo" title="Read the prompt before pasting it">
+	This prompt asks the agent to run the project's commands and change the code. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.
+</Callout>
+
+**How to check it.** `git status` and `git diff` show only the confirmed fixes and the new test files, and the tests pass.
 
 ## What to fix first
 
@@ -272,7 +306,7 @@ The seven failures are not equally urgent. Sections 1, 2 and 4 can be exploited 
 
 **Failing closed** means denying the request when a check cannot decide. That rule applies to all seven cases. For example, the request is refused if the session does not resolve, if validation throws an exception or if the permission is missing. Generated code tends to do the opposite. A `?? 0`, an empty `catch` or an `if (!user) return next()` let the request carry on as normal, and the failure goes unnoticed.
 
-Unescaped HTML, [an open CORS configuration](/en/blog/what-is-cors) and a missing rate limit are left out of the list. They are common failures, but they do not repeat as much in generated code.
+Unescaped HTML, [an open CORS configuration](/en/blog/what-is-cors) and a missing rate limit are left out of the list. They are common failures, but they do not repeat as much in generated code. [How to secure a web application](/en/blog/how-to-secure-a-web-application) covers them in its input and output, other origins, and passwords and attempts layers. The last one includes the login attempt limit.
 
 <References
 	title="References"

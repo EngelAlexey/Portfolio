@@ -4,12 +4,14 @@ title: Siete cosas que revisar en el código que genera la IA
 tagline: Siete fallos de seguridad frecuentes en el código generado por IA, con su corrección y la orden que la comprueba.
 areas: [seguridad]
 published: '2026-09-07'
-updated: '2026-09-26'
+updated: '2026-09-27'
 draft: false
 repo: null
 related: [intercargo-plataforma, kaizen-ai]
 cover: null
 instagram: https://www.instagram.com/reel/DdIUA1MsPlm/
+promptTitle: Revisar el código
+promptMinutes: [5, 15]
 ---
 
 import Callout from '../../../components/Callout.astro';
@@ -20,7 +22,17 @@ El código que genera un modelo de lenguaje, desde un chat o desde un agente, co
 
 Veracode probó más de cien modelos con tareas de programación en cuatro lenguajes. El 45 % de las muestras de código generadas falló las pruebas de seguridad. Los modelos más nuevos y más grandes no obtuvieron mejores resultados que los pequeños<Cite n={1} />. El resultado depende, por tanto, del método con el que se genera el código y no del modelo que lo escribe.
 
-Los siete fallos que siguen son los que más se repiten en el código generado. Todos los ejemplos están reconstruidos para el artículo y no salen de ningún sistema en producción.
+Los siete fallos que siguen son los que más se repiten en el código generado. Cada uno pertenece a una capa de [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web). Esa guía explica cómo aplicar cada capa y cómo comprobarla. Aquí aparece el mismo fallo visto en el código, con su corrección y la orden que la comprueba.
+
+| Punto | Capa de la guía |
+|---|---|
+| 1 y 2 | Permisos |
+| 3 y 5 | Entrada y salida |
+| 4 | Secretos |
+| 6 | Dependencias |
+| 7 | Errores y registros |
+
+Todos los ejemplos están reconstruidos para el artículo y no salen de ningún sistema en producción.
 
 ## 1. Cómo comprobar el permiso en el servidor
 
@@ -156,7 +168,7 @@ export async function POST(req: Request) {
 }
 ```
 
-Una protección que depende de recordar el prefijo falla el día que alguien lo olvida. Configure un escáner de secretos en el *hook* de pre-commit, que es una orden que git ejecuta antes de crear cada commit. Ejecútelo otra vez en la integración continua, que comprueba cada cambio que se sube al repositorio. Guarde las claves en un gestor de secretos y no en el repositorio.
+Una protección que depende de recordar el prefijo falla el día que alguien lo olvida. [La capa de secretos de la guía](/es/blog/como-proteger-una-pagina-web#10-cómo-mantener-los-secretos-fuera-del-código-y-del-navegador) explica cómo detectarlos antes del commit y dónde guardarlos.
 
 **Cómo comprobarlo.** Busque en el resultado de la compilación, no en el código fuente. Next.js deja el *bundle* en `.next/static`. Busque el comienzo del valor de la clave, `sk_live`, y no el nombre de la variable, porque la compilación ya sustituyó uno por otro:
 
@@ -267,9 +279,31 @@ catch (error) {
 }
 ```
 
-El log tampoco es un sitio privado: se exporta, se envía a un proveedor y lo leen personas que no necesitan verlo todo. Depure los datos personales antes de escribirlos en el log, no cuando alguien pida acceso.
+El log tampoco es un sitio privado: se exporta, se envía a un proveedor y lo leen personas que no necesitan verlo todo. Depure los datos personales antes de escribirlos en el log, no cuando alguien pida acceso. [La capa de errores de la guía](/es/blog/como-proteger-una-pagina-web#12-cómo-responder-a-los-errores-sin-filtrar-datos) enseña la misma corrección medida en Express.
 
 **Cómo comprobarlo.** Provoque el fallo: detenga la base de datos, envíe la petición y lea el cuerpo de la respuesta. No puede aparecer ningún nombre de tabla ni ninguna ruta del servidor.
+
+## 8. Cómo revisar el código generado con un prompt
+
+Los siete puntos se pueden revisar a mano. También puede hacerlo un agente de programación con un prompt, sobre los cambios recientes o sobre el repositorio entero. Cópielo con el botón «Copiar prompt» del panel «Revisar el código» y péguelo en una sesión abierta en la raíz del proyecto. El agente sigue siete fases:
+
+1. **Pregunta qué revisar:** un rango de commits, una rama o todo el repositorio si es pequeño.
+2. **Revisa los siete puntos** con su comprobación, y confirma cada fallo ejecutándola cuando puede.
+3. **Propone y espera.** Presenta los fallos, del más grave al más leve, y la corrección de cada uno, y se detiene hasta que usted confirma.
+4. **Corrige** con el cambio más pequeño que cierra cada fallo.
+5. **Añade una prueba** por fallo y comprueba que falla antes de la corrección.
+6. **Repite las comprobaciones** y pega las salidas de antes y de después.
+7. **Entrega un informe** con lo que cambió, lo que no pudo comprobar y la capa de la guía a la que pertenece cada fallo.
+
+La ejecución se midió con Claude Code 2.1.283 sobre una API de facturas en Express con los siete fallos. Tardó 6 minutos sin contar la espera de la confirmación: 3 hasta la propuesta y 3 para corregir y comprobar.
+
+El agente encontró los siete fallos, confirmó cada uno con su comprobación y los asignó a su capa. Encontró además un octavo que falla abierto: con el token `__proto__`, la búsqueda de la sesión devolvía el prototipo del objeto y la petición pasaba. Las nueve pruebas que añadió fallaban antes de las correcciones, y después pasan todas. También avisó de que la clave expuesta seguía en el historial de git.
+
+<Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
+	Este prompt pide al agente que ejecute órdenes del proyecto y que cambie el código. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 3 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo.
+</Callout>
+
+**Cómo comprobarlo.** `git status` y `git diff` muestran solo las correcciones confirmadas y los archivos de prueba nuevos, y las pruebas pasan.
 
 ## Qué corregir primero
 
@@ -277,7 +311,7 @@ Los siete fallos no tienen la misma urgencia. Los puntos 1, 2 y 4 se pueden expl
 
 **Fallar cerrado** significa negar la petición cuando una comprobación no puede decidir. Esa regla vale para los siete casos. Por ejemplo, la petición se rechaza si la sesión no se resuelve, si la validación lanza una excepción o si el permiso no aparece. El código generado suele hacer lo contrario. Un `?? 0`, un `catch` vacío o un `if (!user) return next()` dejan que la petición siga su curso normal, y el fallo no se nota.
 
-Quedan fuera de la lista el HTML sin escapar, [una configuración de CORS abierta](/es/blog/que-es-cors) y la falta de un límite de peticiones. Son fallos frecuentes, pero no se repiten tanto en el código generado.
+Quedan fuera de la lista el HTML sin escapar, [una configuración de CORS abierta](/es/blog/que-es-cors) y la falta de un límite de peticiones. Son fallos frecuentes, pero no se repiten tanto en el código generado. [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) los trata en sus capas de entrada y salida, otros orígenes, y contraseñas e intentos. Esta última incluye el límite de intentos de inicio de sesión.
 
 <References
 	title="Referencias"
