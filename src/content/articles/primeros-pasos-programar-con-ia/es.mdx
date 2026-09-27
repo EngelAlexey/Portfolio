@@ -21,7 +21,7 @@ Un agente de programación es un modelo de lenguaje con herramientas para leer a
 
 El cambio en el trabajo de quien programa es de reparto, no de cantidad. Escribir cada línea deja de ser la tarea principal, y pasan a serlo tres: decidir qué hay que construir, dar al agente una forma de comprobar si lo consiguió, y revisar lo que dejó escrito.
 
-Esta guía asume que quien la lee sabe programar y apenas empieza a usar IA para hacerlo. Cada sección explica un concepto con un ejemplo real, qué hace cada parte de ese ejemplo, y los pasos para aplicarlo en un proyecto propio. Al final hay un prompt que se copia con un botón y deja configurado el entorno entero: instrucciones del proyecto, permisos, skills y tres revisores.
+Esta guía asume que quien la lee sabe programar y apenas empieza a usar IA para hacerlo. Cada sección explica un concepto con un ejemplo real, qué hace cada parte de ese ejemplo, y los pasos para aplicarlo en un proyecto propio. Al final hay un prompt que se copia con un botón y deja configurado el entorno entero: instrucciones del proyecto, permisos, skills, cuatro revisores y seis agentes de trabajo. El mismo prompt propone herramientas y colecciones de skills opcionales.
 
 Los ejemplos usan Claude Code en la terminal. Se instala con el instalador nativo que publica su documentación. A partir de ahí se abre entrando en el directorio del proyecto y ejecutando `claude`, que pide iniciar sesión la primera vez<Cite n={1} />. La misma herramienta existe como extensión de VS Code y de JetBrains, como aplicación de escritorio y en el navegador, y todas comparten el mismo motor y la misma configuración<Cite n={1} repeat />. En Cursor el agente viene dentro del editor y no hay nada que instalar aparte.
 
@@ -321,8 +321,8 @@ model: sonnet
 
 Tu pregunta es una: ¿este cambio se va a poder sostener?
 Busca funciones que el proyecto ya tiene y el cambio reimplementa,
-errores que se devuelven como si fueran éxito, y parámetros que
-se pierden al llamar a otra función.
+imports sin usar o que cruzan una capa, y funciones que
+hacen varias cosas a la vez.
 Cada hallazgo lleva archivo:línea, el fallo concreto y qué ejecutaste para comprobarlo.
 Cero hallazgos es un resultado válido.
 ```
@@ -334,7 +334,7 @@ Qué hace cada campo:
 - **`model`**: el modelo que usa; `inherit` toma el de la sesión.
 - **El cuerpo**: sus instrucciones, que sustituyen a las de la herramienta.
 
-Una revisión útil se reparte en tres subagentes con una pregunta cada uno. El de **seguridad** pregunta si el cambio deja a alguien hacer o ver algo que no debería. El de **calidad**, si deja el código mejor o peor: duplicación, imports, estructura. El de **pruebas** es la rutina: ejecuta la suite, los tipos y el linter, mide si las pruebas fallarían al romper el código, y ejecuta lo que el de seguridad necesita comprobar. Un solo revisor con las tres preguntas reparte la atención y devuelve una lista larga de avisos menores.
+Una revisión útil se reparte en cuatro subagentes con una pregunta cada uno. El de **seguridad** pregunta si el cambio deja a alguien hacer o ver algo que no debería. El de **calidad**, si deja el código mejor o peor: duplicación, imports, estructura. El de **errores y tipos** pregunta si algún error puede pasar sin que nadie se entere, o si los tipos permiten un estado que no debería existir. El de **pruebas** es la rutina: ejecuta la suite, los tipos y el linter, mide si las pruebas fallarían al romper el código, y ejecuta lo que el de seguridad necesita comprobar. Un solo revisor con las cuatro preguntas reparte la atención y devuelve una lista larga de avisos menores.
 
 Lo que separa un revisor útil de uno que genera ruido es lo que exige a cada hallazgo, y varias fuentes públicas lo dejan escrito. La guía de auditoría de Cloudflare no acepta un hallazgo de seguridad sin nombrar quién cruza qué frontera de confianza y qué resultado concreto produce, y da gravedad solo a lo confirmado<Cite n={14} />. El revisor de seguridad de Anthropic solo reporta lo que tiene más de un 80 % de confianza y descarta de forma explícita categorías que suelen ser ruido<Cite n={15} />. ECC obliga a citar la línea exacta, a leer a quien llama al código y a aceptar que una revisión sin hallazgos es válida<Cite n={16} />. La guía de revisión de Google pide no aceptar cambios que empeoren la salud del código del sistema<Cite n={17} />.
 
@@ -342,15 +342,17 @@ Cada subagente consume tokens con su propio modelo, y el campo `model` decide cu
 
 Varios subagentes que editan a la vez el mismo directorio se pisan. Los árboles de trabajo de git lo evitan: cada subagente trabaja en otro directorio con su propia rama, y el agente principal integra las ramas de una en una. En Claude Code se activa con `isolation: worktree` en la definición del subagente, y por omisión el árbol parte de la rama principal del remoto, no de la rama actual<Cite n={18} />.
 
+Los agentes de trabajo se reparten igual que los revisores, cada uno con su nivel de modelo. `explorador` y `documentador` usan un modelo pequeño: el primero localiza y explica código, y el segundo pone al día la documentación. `arquitecto` usa un modelo mayor para diseñar y partir el trabajo en piezas. `implementador` resuelve una pieza en su propio árbol de trabajo, con un modelo intermedio. `resolutor-compilacion`, con el mismo nivel, devuelve la compilación, los tipos y el linter a verde con el cambio mínimo. `limpiador` completa el grupo: código muerto y duplicación, a petición, también con un modelo intermedio. Solo el agente principal los lanza, e integra sus ramas de una en una.
+
 Un workflow lleva lo mismo a otra escala: un guion que lanza decenas de subagentes por fases. Claude Code avisa cuando uno programa más de 25 agentes, y admite una guía de tamaño que apunta a menos de 5, de 10 o de 50<Cite n={19} />.
 
 **Cómo se hace.**
 
 1. Se crea `.claude/agents/revisor-calidad.md` con el ejemplo.
 2. Se lanza nombrándolo: `@agent-revisor-calidad revisa el diff actual`<Cite n={13} repeat />.
-3. Los tres revisores completos, y la skill que los lanza en orden, los crea el prompt del punto 14.
+3. Los cuatro revisores, los seis agentes de trabajo y la skill `revisar-cambio` que lanza la revisión los crea el prompt del punto 14.
 
-**Cómo se comprueba.** Se introduce a propósito un fallo que el revisor debe ver, por ejemplo un `catch` que devuelve una lista vacía, y se lanza el revisor. Si no lo señala, sus instrucciones no bastan.
+**Cómo se comprueba.** Se introducen a propósito dos fallos de calidad, una utilidad que ya existe reimplementada y un import sin usar, y se lanza el revisor. Si no los señala, sus instrucciones no bastan.
 
 ## 11. Los plugins instalan lo que otro ya escribió
 
@@ -459,17 +461,19 @@ Compilar tampoco es ejecutar. Un cambio puede pasar el linter y no hacer lo que 
 
 ## 14. Configurar el entorno entero en un paso
 
-Todo lo anterior se puede montar a mano, archivo por archivo. Hay un prompt que lo hace el agente, en cualquier herramienta que lo reciba. Se copia con el botón **Copiar prompt** que aparece bajo **Configurar entorno**, se pega en una sesión abierta en la raíz del proyecto, y el agente sigue nueve fases:
+Todo lo anterior se puede montar a mano, archivo por archivo. Hay un prompt que lo hace el agente, en cualquier herramienta que lo reciba. Se copia con el botón **Copiar prompt** que aparece bajo **Configurar entorno**, se pega en una sesión abierta en la raíz del proyecto, y el agente sigue once fases:
 
 1. **Reconoce el proyecto** sin escribir nada: su herramienta, los modelos que ofrece clasificados en tres niveles, el lenguaje, las órdenes reales de pruebas, linter, tipos y auditoría, y cómo autentica y autoriza el proyecto.
-2. **Propone y espera**: presenta los archivos que va a crear y el modelo de cada subagente, y se detiene hasta recibir confirmación.
-3. **Escribe `AGENTS.md`** con las órdenes comprobadas, las convenciones y qué skill usar en cada situación.
+2. **Propone y espera**: presenta los archivos que va a crear y el modelo de cada subagente, y se detiene hasta recibir confirmación. Incluye también las herramientas recomendadas, cada una con lo que envía fuera de la máquina.
+3. **Escribe `AGENTS.md`** con las órdenes comprobadas, las convenciones, una sección opcional de vocabulario del dominio y qué skill o agente usar en cada situación.
 4. **Bloquea la lectura de secretos** con la regla de permisos de su herramienta, y lo comprueba intentando leer `.env`.
-5. **Crea tres skills de método**: pruebas primero, depuración hasta la causa raíz, y orquestación de subagentes con el número y el modelo justos.
-6. **Crea tres revisores**. El de seguridad lleva un contexto del proyecto y nueve listas por dominio que carga según lo que toque el cambio. El de calidad se centra en duplicación, imports y estructura. El de pruebas es la rutina que ejecuta y mide.
-7. **Crea la skill `revisar-cambio`**, que lanza seguridad y calidad en paralelo, pruebas al final, y compone el veredicto.
-8. **Propone ajustes opcionales**: el modelo por omisión de los subagentes, el tamaño de los workflows, la rama base de los árboles de trabajo y dos hooks.
-9. **Comprueba y cierra**: introduce un fallo para cada revisor en una rama temporal, confirma que cada uno lo detecta y la borra.
+5. **Crea cuatro skills de método**. `aclarar` entrevista al usuario por rondas antes de construir, con la respuesta que recomienda el agente en cada pregunta. Lo que se averigua en el código lo busca el agente, y las decisiones son del usuario. `pruebas-primero` y `depurar` fijan el ciclo de la prueba que falla y la búsqueda de la causa raíz. `orquestar` decide cuántos subagentes lanzar, con qué nivel de modelo, y cuándo usar árboles de trabajo y workflows.
+6. **Crea cuatro revisores**. El de seguridad lleva un archivo de contexto del proyecto y nueve listas por dominio que carga según lo que toque el cambio. El de calidad se centra en duplicación, imports, estructura y en si el cambio hace lo que se pidió, con lo que falta y lo que sobra. El de errores y tipos busca fallos silenciosos, `catch` que ocultan errores, respaldos engañosos, estados imposibles y conversiones forzadas. El de pruebas es la rutina que ejecuta y mide.
+7. **Crea seis agentes de trabajo**, cada uno con su nivel de modelo. `explorador` localiza y explica código con un modelo pequeño. `arquitecto` diseña y parte el trabajo en piezas con un modelo mayor. `implementador` resuelve una pieza en su propio árbol de trabajo con un modelo intermedio. `resolutor-compilacion` devuelve la compilación, los tipos y el linter a verde con el cambio mínimo, también con un modelo intermedio. `documentador` pone al día la documentación con un modelo pequeño. `limpiador` quita código muerto y duplicación a petición, con un modelo intermedio.
+8. **Crea la skill `revisar-cambio`**, que lanza seguridad, calidad y errores en paralelo, pruebas al final, y compone el veredicto.
+9. **Propone ajustes opcionales**: el modelo por omisión de los subagentes, el tamaño de los workflows, la rama base de los árboles de trabajo y tres hooks. Los hooks formatean, protegen los archivos sensibles y bloquean órdenes destructivas como `git push --force`, `git reset --hard` o `rm -rf`.
+10. **Propone tres herramientas y dos colecciones de skills opcionales**, y pregunta antes de instalar cada una: graphify, claude-council, archify, las skills de Matt Pocock y gstack.
+11. **Comprueba y cierra**: siembra en una rama temporal un fallo para cada uno de los cuatro revisores, comprueba que cada uno lo detecta y borra la rama. Pide al arquitecto el plan de una tarea de ejemplo. Repite la comprobación de las herramientas instaladas.
 
 El prompt no toca el código de la aplicación. Si durante la configuración el agente ve necesario instalar una dependencia, un plugin o un servidor MCP, primero lo propone con su origen y su motivo, y espera confirmación.
 
@@ -477,9 +481,25 @@ El prompt no toca el código de la aplicación. Si durante la configuración el 
 	Este prompt pide al agente que ejecute órdenes del proyecto y escriba archivos de configuración. El texto completo se lee con **Ver el prompt completo**, bajo el botón, y es exactamente lo que se copia. La fase 2 obliga al agente a detenerse antes de escribir: si continúa sin preguntar, se interrumpe con `Esc`.
 </Callout>
 
-Los revisores y las skills de método adaptan ideas de siete fuentes públicas. En seguridad, la guía de auditoría de Cloudflare<Cite n={14} repeat />, el revisor de Anthropic<Cite n={15} repeat /> y las skills de Trail of Bits<Cite n={28} />. En calidad, pruebas y método, los plugins oficiales de revisión de Anthropic<Cite n={29} />, ECC<Cite n={16} repeat />, la guía de revisión de Google<Cite n={17} repeat /> y Superpowers<Cite n={30} />. De las que tienen licencia CC BY-SA se toman ideas, no texto.
+Los revisores, las skills de método y los agentes de trabajo adaptan ideas de nueve fuentes públicas. En seguridad, la guía de auditoría de Cloudflare<Cite n={14} repeat />, el revisor de Anthropic<Cite n={15} repeat /> y las skills de Trail of Bits<Cite n={28} />. En calidad, pruebas y método, los plugins oficiales de Anthropic `pr-review-toolkit` y `feature-dev`<Cite n={29} />, ECC<Cite n={16} repeat />, la guía de revisión de Google<Cite n={17} repeat />, Superpowers<Cite n={30} />, las skills de Matt Pocock<Cite n={31} /> y gstack<Cite n={32} />. De las que tienen licencia CC BY-SA se toman ideas, no texto.
 
 **Cómo se comprueba.** Las skills y los subagentes nuevos se registran al abrir la sesión, así que se cierra y se vuelve a abrir. Entonces `/revisar-cambio` aparece al escribir `/` y la lectura de `.env` devuelve el bloqueo. `git status --porcelain` enseña solo los archivos que el agente propuso en la fase 2.
+
+## 15. Herramientas que se pueden añadir
+
+Además de lo que crea, el prompt propone tres herramientas y dos colecciones de skills, todas opcionales.
+
+**graphify** convierte el repositorio en un grafo de conocimiento: qué función llama a cuál, qué módulo importa a cuál y qué archivos forman un subsistema. El agente lo consulta antes de abrir archivos uno por uno, por ejemplo para ubicar todo lo que usa una función antes de cambiar su firma. El código se analiza en local con tree-sitter, un analizador de sintaxis, sin modelo de lenguaje, y la documentación, los PDF y las imágenes sí se envían al modelo del asistente. Con la opción `--code-only` no sale nada de la máquina<Cite n={33} />.
+
+**claude-council** es un plugin de terceros para Claude Code que hace la misma pregunta a varios modelos y muestra las respuestas lado a lado, con una síntesis de acuerdos y desacuerdos. Sirve para decisiones de diseño en las que el sesgo de un solo modelo puede engañar, por ejemplo elegir entre dos estructuras de datos posibles. Con proveedores por API, como OpenAI, Gemini o Grok, se envían a esos terceros la pregunta y hasta cinco archivos del proyecto que el plugin añade solo. El modo `--local`, con subagentes de Claude, y el modo `ollama` no envían nada fuera de la máquina<Cite n={34} />.
+
+**archify** es una skill con una herramienta de línea de órdenes en Node.js que convierte una descripción o un repositorio en un diagrama interactivo, en un único archivo HTML autónomo. Hay cinco tipos: arquitectura, flujo de trabajo, secuencia, flujo de datos y ciclo de vida. Sirve para ver cómo se conectan las piezas de un proyecto, incluido el código que escribió el agente, y valida el diagrama antes de entregarlo. No envía datos del proyecto, y cada unas 72 horas hace una comprobación opcional de versiones nuevas en la que el servidor solo ve la IP y la hora<Cite n={35} />.
+
+Las skills de **Matt Pocock**, `mattpocock-skills`<Cite n={31} repeat />, entrevistan antes de construir, aplican pruebas primero, depuran y revisan un cambio contra los estándares del repositorio y lo que pedía la tarea. Sus skills `tdd`, `diagnosing-bugs`, `code-review` y `grill-me` se solapan con las que crea este prompt, así que al instalarlas el prompt propone quedarse con una de cada par. Son instrucciones en Markdown y no envían nada por sí mismas. Aportan además lo que el prompt no tiene: convertir una conversación en una especificación o en tareas, con `to-spec` y `to-tickets`. `improve-codebase-architecture` mejora la arquitectura del código ya existente, y `handoff` pasa el trabajo a otra sesión.
+
+**gstack**<Cite n={32} repeat /> es un proceso de desarrollo completo con unas cuarenta skills, para planificar, revisar, probar en un navegador, publicar y hacer retrospectivas. Se instala para todo el usuario, necesita Bun, y su instalación compila un navegador propio y registra un hook en la configuración global `~/.claude/settings.json`. En modo equipo añade otro hook que descarga y reinstala la última versión al abrir cada sesión, como mucho una vez por hora. Por eso el prompt lo propone sin modo equipo, con la telemetría apagada y sin importar las cookies del navegador, que darían al agente las sesiones iniciadas del usuario.
+
+**Cómo se hace.** La fase 10 del prompt propone las tres herramientas y las dos colecciones una a una, y solo instala cada una si el usuario confirma.
 
 ## Las órdenes que se usan desde el primer día
 
@@ -513,11 +533,11 @@ Los atajos de teclado que hacen falta son cuatro<Cite n={3} repeat />.
 
 ## Qué cabe esperar de los resultados
 
-La velocidad que se percibe y la que se mide no coinciden, y hay un experimento que separó las dos. METR repartió al azar 246 tareas entre permitir y prohibir las herramientas de IA. Los 16 participantes eran desarrolladores de proyectos maduros de código abierto, con una media de cinco años en esos mismos repositorios. Antes de empezar preveían terminar un 24 % antes con las herramientas. Al acabar el estudio estimaban haber terminado un 20 % antes. La medición dio lo contrario: un 19 % más de tiempo<Cite n={31} />.
+La velocidad que se percibe y la que se mide no coinciden, y hay un experimento que separó las dos. METR repartió al azar 246 tareas entre permitir y prohibir las herramientas de IA. Los 16 participantes eran desarrolladores de proyectos maduros de código abierto, con una media de cinco años en esos mismos repositorios. Antes de empezar preveían terminar un 24 % antes con las herramientas. Al acabar el estudio estimaban haber terminado un 20 % antes. La medición dio lo contrario: un 19 % más de tiempo<Cite n={36} />.
 
 Ese resultado describe a desarrolladores expertos sobre código que ya conocían, con las herramientas del primer semestre de 2025, y no se traslada a cualquier otra situación. Lo que sí se traslada es la distancia entre las tres cifras: la impresión de haber avanzado no sirve para decidir si se avanzó.
 
-La encuesta de Stack Overflow de 2025, con 49 009 respuestas de 177 países, mide la dificultad sobre una población mucho más amplia. La frustración más citada con las herramientas de IA, con un 66 %, es que la solución está «casi bien, pero no del todo». Un 45,2 % añade que depurar el código generado lleva más tiempo<Cite n={32} />.
+La encuesta de Stack Overflow de 2025, con 49 009 respuestas de 177 países, mide la dificultad sobre una población mucho más amplia. La frustración más citada con las herramientas de IA, con un 66 %, es que la solución está «casi bien, pero no del todo». Un 45,2 % añade que depurar el código generado lleva más tiempo<Cite n={37} />.
 
 Las dos cifras apuntan al mismo sitio. Un resultado casi correcto compila y se lee bien, así que el trabajo se desplaza de escribir a comprobar. El tiempo que se ahorra escribiendo se pierde cuando no hay una comprobación barata que ejecutar.
 
@@ -702,15 +722,45 @@ La segunda es cómo conseguir que la revisión se ejecute sola en cada cambio en
 		},
 		{
 			source: 'Anthropic',
-			title: 'claude-plugins-official, plugin pr-review-toolkit',
-			note: 'licencia Apache 2.0; revisión de código, fallos silenciosos, diseño de tipos, comentarios y cobertura de pruebas',
-			url: 'https://github.com/anthropics/claude-plugins-official/tree/main/plugins/pr-review-toolkit'
+			title: 'claude-plugins-official, plugins pr-review-toolkit y feature-dev',
+			note: 'licencia Apache 2.0; revisión de código, fallos silenciosos, diseño de tipos, comentarios y cobertura de pruebas, exploración y diseño de una función nueva',
+			url: 'https://github.com/anthropics/claude-plugins-official/tree/main/plugins'
 		},
 		{
 			source: 'Jesse Vincent',
 			title: 'Superpowers',
 			note: 'licencia MIT; pruebas primero, depuración sistemática, verificación antes de terminar y cómo recibir una revisión',
 			url: 'https://github.com/obra/superpowers'
+		},
+		{
+			source: 'Matt Pocock',
+			title: 'Skills For Real Engineers',
+			note: 'licencia MIT; commit c55ee46 del 18 de septiembre de 2026; catalogada como mattpocock-skills en el catálogo oficial de plugins; consultado el 26 de septiembre de 2026',
+			url: 'https://github.com/mattpocock/skills'
+		},
+		{
+			source: 'Garry Tan',
+			title: 'gstack',
+			note: 'licencia MIT; versión 1.91.2.0; consultado el 26 de septiembre de 2026',
+			url: 'https://github.com/garrytan/gstack'
+		},
+		{
+			source: 'Graphify Labs',
+			title: 'graphify',
+			note: 'licencia Apache 2.0; paquete de PyPI graphifyy, con dos "y", versión 0.9.69; consultado el 26 de septiembre de 2026',
+			url: 'https://github.com/Graphify-Labs/graphify'
+		},
+		{
+			source: 'hex',
+			title: 'claude-council',
+			note: 'licencia MIT; versión 2026.9.15; consultado el 26 de septiembre de 2026',
+			url: 'https://github.com/hex/claude-council'
+		},
+		{
+			source: 'tt-a1i',
+			title: 'archify',
+			note: 'licencia MIT; última versión publicada v2.16.0; consultado el 26 de septiembre de 2026',
+			url: 'https://github.com/tt-a1i/archify'
 		},
 		{
 			source: 'Becker, J., Rush, N., Barnes, E. y Rein, D.',
