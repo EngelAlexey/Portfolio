@@ -41,8 +41,8 @@ Sigue el estilo de las publicaciones anteriores de la cuenta: pregunta de gancho
 ## Historia del mismo día
 
 - **Qué se publica.** La publicación compartida en la historia, con el texto «¿Qué pasa si cambias el id de la URL?».
-- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta a la sección 2:
-  `https://www.alexherrera.dev/es/blog/revisar-codigo-generado-por-ia?utm_source=instagram&utm_medium=story&utm_campaign=api#2-el-recurso-se-carga-por-id-y-nadie-comprueba-de-qui%C3%A9n-es`
+- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta al punto 2, «Cómo comprobar de quién es un recurso que se carga por id» (ancla comprobada el 2026-09-26):
+  `https://www.alexherrera.dev/es/blog/revisar-codigo-generado-por-ia?utm_source=instagram&utm_medium=story&utm_campaign=api#2-c%C3%B3mo-comprobar-de-qui%C3%A9n-es-un-recurso-que-se-carga-por-id`
 - **Después.** Guardar la historia en la destacada del artículo.
 
 El temario enlaza este carrusel con «¿Qué es CORS y para qué sirve?», que está sin escribir. La sección 2 de «Siete cosas que revisar» explica la fila «id» de la lámina 5 con código.

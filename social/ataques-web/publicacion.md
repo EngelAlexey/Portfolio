@@ -40,8 +40,8 @@ Sigue el estilo de las publicaciones anteriores de la cuenta: pregunta de gancho
 ## Historia del mismo día
 
 - **Qué se publica.** La publicación compartida en la historia, con el texto «¿Cómo se ve una inyección SQL?».
-- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta a la sección 3:
-  `https://www.alexherrera.dev/es/blog/revisar-codigo-generado-por-ia?utm_source=instagram&utm_medium=story&utm_campaign=ataques-web#3-la-consulta-se-arma-concatenando`
+- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta al punto 3, «Cómo construir una consulta sin concatenar texto» (ancla comprobada el 2026-09-26):
+  `https://www.alexherrera.dev/es/blog/revisar-codigo-generado-por-ia?utm_source=instagram&utm_medium=story&utm_campaign=ataques-web#3-c%C3%B3mo-construir-una-consulta-sin-concatenar-texto`
 - **Después.** Guardar la historia en la destacada del artículo.
 
 El temario enlaza este carrusel con «¿Cómo funcionan las cookies?», que está sin escribir. La sección 3 de «Siete cosas que revisar» enseña la consulta armada concatenando, que es la inyección SQL de la lámina 4.

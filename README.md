@@ -136,7 +136,7 @@ Siempre `.mdx`, aunque el artículo no importe ningún componente: así el carga
 ```yaml
 ---
 slug: revisar-codigo-generado-por-ia   # debe coincidir con el nombre de la carpeta
-title: Siete cosas que revisar en el código que genera tu IA
+title: Siete cosas que revisar en el código que genera la IA
 tagline: Una línea, 10–180 caracteres.
 description: null                      # 50–160 caracteres para el buscador, o null = usa la tagline
 areas: [seguridad]                     # 1 a 3 de la misma taxonomía que las fichas

@@ -1,10 +1,10 @@
 ---
 slug: revisar-codigo-generado-por-ia
-title: Siete cosas que revisar en el código que genera tu IA
-tagline: Siete fallos de seguridad que se repiten en el código generado, con el código que falla, la corrección y la comprobación de cada uno.
+title: Siete cosas que revisar en el código que genera la IA
+tagline: Siete fallos de seguridad frecuentes en el código generado por IA, con su corrección y la orden que la comprueba.
 areas: [seguridad]
 published: '2026-09-07'
-updated: '2026-09-07'
+updated: '2026-09-26'
 draft: false
 repo: null
 related: [intercargo-plataforma, kaizen-ai]
@@ -16,15 +16,15 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-El código que produce un asistente de IA compila, pasa las pruebas y cumple el enunciado que recibió. El modelo de seguridad no suele formar parte de ese enunciado, así que tampoco forma parte del resultado.
+El código que genera un modelo de lenguaje, desde un chat o desde un agente, compila, pasa las pruebas y cumple el enunciado que recibió. Ese enunciado no suele incluir los requisitos de seguridad, como quién puede ver o cambiar cada dato. Por eso el resultado tampoco los cumple.
 
-El fallo está medido. Veracode probó más de cien modelos sobre tareas de programación en cuatro lenguajes, y el 45 % de las muestras generadas falló las pruebas de seguridad. Los modelos más nuevos y más grandes no salieron mejor parados que los pequeños<Cite n={1} />. El resultado no depende del modelo concreto, sino del método con el que se genera el código.
+Veracode probó más de cien modelos con tareas de programación en cuatro lenguajes. El 45 % de las muestras de código generadas falló las pruebas de seguridad. Los modelos más nuevos y más grandes no obtuvieron mejores resultados que los pequeños<Cite n={1} />. El resultado depende, por tanto, del método con el que se genera el código y no del modelo que lo escribe.
 
-Estos siete fallos son los que más se repiten. Cada punto trae tres cosas: el código tal como sale del asistente, la corrección, y el comando que demuestra cuál de los dos resiste. Los ejemplos están reconstruidos para el artículo y no salen de ningún sistema en producción.
+Los siete fallos que siguen son los que más se repiten en el código generado. Todos los ejemplos están reconstruidos para el artículo y no salen de ningún sistema en producción.
 
-## 1. El permiso se comprueba en la interfaz
+## 1. Cómo comprobar el permiso en el servidor
 
-El componente esconde el botón según el rol y el endpoint borra sin comprobar nada.
+El componente oculta el botón según el rol, y el endpoint borra la factura sin comprobar nada.
 
 ```tsx
 {user.role === 'admin' && <button onClick={borrar}>Borrar factura</button>}
@@ -38,9 +38,9 @@ export async function DELETE(req: Request, { params }: Ctx) {
 }
 ```
 
-Esconder el botón es una decisión de presentación, no un permiso. El endpoint sigue aceptando la petición de cualquiera que conozca la dirección, y la dirección está en el código que el navegador ya descargó. El OWASP API Security Top 10 lo cataloga como control de acceso a nivel de función roto. Recuerda además que la autorización se resuelve en configuración o en código<Cite n={2} />.
+Ocultar el botón es una decisión de presentación, no un permiso. El endpoint sigue aceptando la petición de cualquiera que conozca la dirección, y esa dirección está en el código que el navegador ya descargó. El API Security Top 10 de OWASP recoge este fallo como API5:2023, *Broken Function Level Authorization*. Consiste en que una función del servidor no comprueba el permiso de quien la llama. OWASP señala además que la autorización se gestiona en la configuración o en el código<Cite n={2} />.
 
-La corrección es repetir la comprobación en el servidor, que es el único sitio donde el usuario no puede editarla.
+Repita la comprobación en el servidor, que es el único sitio que el usuario no puede modificar:
 
 ```ts
 export async function DELETE(req: Request, { params }: Ctx) {
@@ -52,20 +52,22 @@ export async function DELETE(req: Request, { params }: Ctx) {
 }
 ```
 
-Hay una versión más estricta de la misma regla, y en una plataforma multiempresa conviene adoptarla desde el primer día: la autorización vive entera en el código de la aplicación. El usuario técnico con el que la aplicación se conecta a la base de datos concede acceso al proceso, nunca a la persona que hizo la petición.
+En una plataforma multiempresa, adopte desde el primer día una versión más estricta de esta regla. Toda la autorización se decide en el código de la aplicación. La cuenta de base de datos de la aplicación da acceso al proceso, nunca a la persona que hizo la petición.
 
-Se comprueba saltándose la interfaz. Con la sesión de un usuario sin rol de administrador:
+**Cómo comprobarlo.** Salte la interfaz y envíe la petición con la sesión de un usuario que no sea administrador:
 
 ```bash
 curl -i -X DELETE http://localhost:3000/api/facturas/42 \
   -H "Cookie: session=$SESION_DE_USUARIO_NORMAL"
 ```
 
-Antes devuelve `200 OK` y la factura desaparece. Después devuelve `403` y sigue ahí.
+Sin la corrección, la respuesta es `200 OK` y la factura desaparece. Con la corrección, la respuesta es `403` y la factura sigue ahí.
 
-## 2. El recurso se carga por id y nadie comprueba de quién es
+<span id="2-el-recurso-se-carga-por-id-y-nadie-comprueba-de-quién-es" style="scroll-margin-top: 5rem"></span>
 
-La consulta busca por el identificador que viene en la URL y por nada más.
+## 2. Cómo comprobar de quién es un recurso que se carga por id
+
+La consulta busca la factura por el identificador que llega en la URL y por nada más.
 
 ```ts
 export async function GET(req: Request, { params }: Ctx) {
@@ -74,9 +76,9 @@ export async function GET(req: Request, { params }: Ctx) {
 }
 ```
 
-Este endpoint sí exige sesión, así que parece resuelto. El fallo es otro: cualquier usuario autenticado lee las facturas de cualquier empresa cambiando el número de la dirección. El OWASP API Security Top 10 lo pone en el primer puesto y lo describe exactamente así, manipulando el identificador que viaja dentro de la petición<Cite n={3} />.
+Este endpoint sí exige una sesión, así que parece correcto. Sin embargo, cualquier usuario con sesión puede leer las facturas de otra empresa cambiando el número de la dirección. La misma lista de OWASP pone este fallo en el primer puesto, como API1:2023. Lo describe como la manipulación del identificador que se envía dentro de la petición<Cite n={3} />.
 
-La decisión que elimina la clase entera, y no solo este caso, es que el dueño forme parte de la consulta. Una comprobación posterior se puede olvidar en el siguiente endpoint; una condición dentro del `where` viaja con la consulta.
+Para corregir este caso y todos los de su tipo, incluya al dueño en la condición de la consulta. Una comprobación posterior se puede olvidar en el siguiente endpoint. Una condición dentro del `where` se aplica cada vez que se ejecuta la consulta.
 
 ```ts
 const session = await auth();
@@ -88,13 +90,15 @@ if (!invoice) return new Response(null, { status: 404 });
 return Response.json(invoice);
 ```
 
-La respuesta es `404` y no `403` a propósito. Un `403` confirma que la factura existe, y esa confirmación ya es información sobre otra empresa.
+La corrección responde `404` y no `403` a propósito. Un `403` confirma que la factura existe, y esa confirmación ya es información sobre otra empresa.
 
-Se comprueba con dos sesiones. Entra como empresa A, pide un id que pertenece a la empresa B, y espera `404`.
+**Cómo comprobarlo.** Use dos sesiones. Inicie sesión como la empresa A, pida un id que pertenezca a la empresa B y compruebe que la respuesta es `404`.
 
-## 3. La consulta se arma concatenando
+<span id="3-la-consulta-se-arma-concatenando" style="scroll-margin-top: 5rem"></span>
 
-El filtro llega desde un formulario de búsqueda y entra en la sentencia como texto.
+## 3. Cómo construir una consulta sin concatenar texto
+
+El filtro llega desde un formulario de búsqueda y entra en la sentencia SQL como texto.
 
 ```ts
 const rows = await db.$queryRawUnsafe(
@@ -102,41 +106,45 @@ const rows = await db.$queryRawUnsafe(
 );
 ```
 
-El valor entra dentro de las comillas y puede cerrarlas. Con `x' OR '1'='1` la condición se vuelve siempre cierta y la consulta devuelve la tabla entera. La recomendación de OWASP es no llegar al intérprete: una interfaz con parámetros, o un ORM<Cite n={4} />.
+El valor queda dentro de las comillas y puede cerrarlas. Con `x' OR '1'='1`, la condición siempre se cumple y la consulta devuelve la tabla entera. OWASP recomienda no pasar el valor al intérprete de SQL como texto, sino usar una interfaz con parámetros o un ORM<Cite n={4} />.
+
+La versión corregida usa `$queryRaw` con una plantilla etiquetada, que es una cadena con `${}` que se pasa a una función. La función recibe el valor aparte y lo envía como parámetro, no como parte de la sentencia:
 
 ```ts
 const client = req.nextUrl.searchParams.get('client') ?? '';
 const rows = await db.$queryRaw`SELECT * FROM invoices WHERE client = ${client}`;
 ```
 
-Queda un caso que el parámetro no cubre: el nombre de la columna por la que se ordena. Ahí la única defensa es una lista cerrada.
+Queda un caso que el parámetro no cubre: el nombre de la columna por la que se ordena. Un parámetro sustituye un valor, no el nombre de una columna, así que ahí la única defensa es una lista cerrada:
 
 ```ts
 const COLUMNS = { fecha: 'issued_at', monto: 'total' } as const;
 const column = COLUMNS[sort as keyof typeof COLUMNS] ?? 'issued_at';
 ```
 
-Cuando la consulta no la escribe una persona sino un modelo, la comprobación cambia de sitio. Una expresión regular sobre el texto de la consulta se esquiva con un comentario, un espacio o un alias. Lo que sí aguanta es analizar la sentencia, inyectar los filtros de seguridad sobre el árbol sintáctico y ejecutar solo el resultado de esa transformación.
+Si un modelo escribe la consulta mientras la aplicación se ejecuta, la comprobación tiene que hacerse sobre la sentencia analizada. Una expresión regular sobre el texto no sirve, porque basta un comentario, un espacio o un alias para que no reconozca la consulta. Analice la sentencia para obtener su árbol sintáctico, añada ahí los filtros de seguridad y ejecute solo la sentencia que resulta.
 
-Se comprueba enviando el valor con la comilla:
+**Cómo comprobarlo.** Envíe el valor con la comilla:
 
 ```bash
 curl "http://localhost:3000/api/facturas?client=x%27%20OR%20%271%27%3D%271"
 ```
 
-Antes devuelve todas las facturas. Después devuelve una lista vacía, que es la respuesta correcta a un cliente que no existe.
+Sin la corrección, la respuesta trae todas las facturas. Con la corrección, trae una lista vacía, que es la respuesta correcta para un cliente que no existe.
 
-## 4. Un secreto termina en el paquete que descarga el navegador
+<span id="4-un-secreto-termina-en-el-paquete-que-descarga-el-navegador" style="scroll-margin-top: 5rem"></span>
 
-La variable tiene que estar disponible dentro del componente, así que el asistente le pone el prefijo que la hace pública.
+## 4. Cómo evitar que un secreto llegue al navegador
+
+La variable tiene que estar disponible dentro del componente, así que el modelo le pone el prefijo que la hace pública.
 
 ```ts
 const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!);
 ```
 
-El prefijo `NEXT_PUBLIC_` no es una etiqueta. La documentación de Next.js lo dice sin rodeos: el valor se incrusta en tiempo de compilación en el paquete que se entrega al cliente, y cada referencia se sustituye por una constante<Cite n={5} />. Ocurre igual con `VITE_` y con `PUBLIC_` en Astro.
+Según la documentación de Next.js, el valor de una variable con el prefijo `NEXT_PUBLIC_` se incrusta en el *bundle* durante la compilación. El *bundle* es el JavaScript que descarga el navegador, y en él cada referencia a la variable se sustituye por su valor<Cite n={5} />. Lo mismo ocurre con `VITE_` y con `PUBLIC_` en Astro.
 
-La corrección es que la clave no salga del servidor. El componente llama a una ruta, y la ruta habla con el servicio.
+La corrección es que la clave no salga del servidor. El componente llama a una ruta propia, y esa ruta llama a Stripe con la clave:
 
 ```ts
 // app/api/pagos/route.ts
@@ -148,9 +156,9 @@ export async function POST(req: Request) {
 }
 ```
 
-Recordar el prefijo no es una defensa, porque depende de que alguien lo recuerde cada vez. La defensa es estructural: un escáner de secretos en el *hook* de pre-commit y otra vez en integración continua, y las claves en un gestor de secretos en lugar del repositorio.
+Una protección que depende de recordar el prefijo falla el día que alguien lo olvida. Configure un escáner de secretos en el *hook* de pre-commit, que es una orden que git ejecuta antes de crear cada commit. Ejecútelo otra vez en la integración continua, que comprueba cada cambio que se sube al repositorio. Guarde las claves en un gestor de secretos y no en el repositorio.
 
-Se comprueba sobre el resultado de la compilación, no sobre el código. El paquete que descarga el navegador queda en `.next/static`. Ahí se busca el valor de la clave y no el nombre de la variable, porque la compilación ya sustituyó uno por otro.
+**Cómo comprobarlo.** Busque en el resultado de la compilación, no en el código fuente. Next.js deja el *bundle* en `.next/static`. Busque el comienzo del valor de la clave, `sk_live`, y no el nombre de la variable, porque la compilación ya sustituyó uno por otro:
 
 ```bash
 pnpm build && grep -r "sk_live" .next/static | head
@@ -158,13 +166,13 @@ pnpm build && grep -r "sk_live" .next/static | head
 
 La salida tiene que estar vacía.
 
-<Callout kind="riesgo" title="Una clave que llegó al paquete ya está expuesta">
-Quitar el prefijo no la recupera. El valor estuvo publicado y pudo quedar en la caché de alguien, en un despliegue anterior o en un repositorio. La corrección completa es rotarla en el proveedor y después cambiar el código.
+<Callout kind="riesgo" title="Una clave que llegó al navegador ya está expuesta">
+Quitar el prefijo no la vuelve secreta. El valor ya se publicó y pudo quedar en la caché de alguien, en un despliegue anterior o en un repositorio. Genere una clave nueva en el proveedor, anule la expuesta y después cambie el código.
 </Callout>
 
-## 5. La validación existe en el formulario y no en el endpoint
+## 5. Cómo validar la entrada en el endpoint
 
-El formulario limita el campo y el endpoint confía en que el valor llegó limitado.
+El formulario limita el campo, y el endpoint da por hecho que el valor llegó limitado.
 
 ```tsx
 <input type="number" name="cantidad" min={1} max={5} required />
@@ -177,9 +185,9 @@ export async function POST(req: Request) {
 }
 ```
 
-Los atributos `min`, `max` y `required` son ayudas para la persona que rellena el formulario. La petición no pasa por ellos. Con una cantidad negativa el total que se guarda sale negativo. El catálogo CWE le da número propio: CWE-602, aplicar en el cliente una protección que le corresponde al servidor<Cite n={6} />.
+Los atributos `min`, `max` y `required` ayudan a la persona que rellena el formulario, pero una petición enviada fuera del formulario no pasa por ellos. Con una cantidad negativa, el total que se guarda sale negativo. El catálogo CWE lo recoge como CWE-602: aplicar en el cliente una protección que corresponde al servidor<Cite n={6} />.
 
-La regla que lo cubre entero es validar en los límites de confianza, donde el dato cruza desde algo que el usuario controla hacia algo que no. Un endpoint es uno de esos límites. Una cola de mensajes y un webhook también.
+Valide en cada límite de confianza, el punto donde un dato pasa de algo que el usuario controla a algo que no controla. Un endpoint es uno de esos límites, y también lo son una cola de mensajes y un webhook. La corrección valida el cuerpo con un esquema de Zod antes de crear el pedido:
 
 ```ts
 const Body = z.object({ cantidad: z.number().int().min(1).max(5) });
@@ -193,7 +201,9 @@ export async function POST(req: Request) {
 }
 ```
 
-Se comprueba enviando lo que el formulario no deja escribir:
+`safeParse` devuelve el resultado de la validación en lugar de lanzar una excepción, y el endpoint responde `400` cuando falla.
+
+**Cómo comprobarlo.** Envíe un valor que el formulario no deja escribir:
 
 ```bash
 curl -i -X POST http://localhost:3000/api/pedidos \
@@ -201,11 +211,11 @@ curl -i -X POST http://localhost:3000/api/pedidos \
   -d '{"cantidad": -3}'
 ```
 
-Antes devuelve `200` y crea el pedido. Después devuelve `400` y no crea nada.
+Sin la corrección, la respuesta es `200` y el pedido se crea. Con la corrección, la respuesta es `400` y no se crea nada.
 
-## 6. Las dependencias citan paquetes que no existen
+## 6. Cómo comprobar que un paquete existe antes de instalarlo
 
-Este fallo no está en el código sino en el `package.json`. El modelo propone un paquete con un nombre verosímil que nunca se publicó. El nombre de este ejemplo está inventado para el artículo y no existía en el registro público el 7 de septiembre de 2026.
+Este fallo no está en el código, sino en `package.json`. El modelo propone un paquete con un nombre verosímil que nunca se publicó en el registro de npm, desde donde se instalan los paquetes. El nombre del ejemplo está inventado para el artículo y no existía en el registro el 7 de septiembre de 2026.
 
 ```json
 "dependencies": {
@@ -213,25 +223,31 @@ Este fallo no está en el código sino en el `package.json`. El modelo propone u
 }
 ```
 
-El tamaño del problema está medido. Un estudio publicado en USENIX Security 2025 generó 576.000 muestras de código con 16 modelos y encontró 205.474 nombres de paquete alucinados distintos. Al menos un 5,2 % de los paquetes citados por los modelos comerciales no existía, y un 21,7 % en los modelos abiertos<Cite n={7} />.
+Un **paquete alucinado** es un nombre de paquete que el modelo inventa. Un estudio publicado en USENIX Security 2025 generó 576 000 muestras de código con 16 modelos y encontró 205 474 nombres alucinados distintos. Al menos un 5,2 % de los paquetes que citaban los modelos comerciales no existía, y un 21,7 % en los modelos abiertos<Cite n={7} />.
 
-El nombre inventado es predecible, y quien lo registra en el registro público consigue que se instale código suyo en cualquier proyecto que siga la sugerencia. Si el gestor ejecuta los scripts de instalación, el daño no espera a que alguien importe el paquete. Cuáles lo hacen depende de la versión: yarn 1 los ejecuta sin excepciones, npm los ejecutó hasta la 11, y npm 12 y pnpm 10 los bloquean salvo los que estén en una lista declarada aparte. [Otro artículo mide los cuatro comportamientos](/es/blog/npm-vs-pnpm-seguridad).
+El nombre inventado es predecible, así que cualquiera puede publicarlo en el registro con su propio código. Desde ese momento, ese código se instala en todos los proyectos que siguen la sugerencia. Además, un paquete puede declarar scripts de instalación, que son órdenes que el gestor de paquetes ejecuta al instalarlo. Si el gestor los ejecuta, el código de quien publicó el paquete se ejecuta antes de que nadie lo importe.
 
-La comprobación va antes de instalar, no después:
+Que el gestor los ejecute depende de la versión: yarn 1 los ejecuta sin excepciones, y npm los ejecutó hasta la versión 11. En npm 12 y en pnpm 10 están bloqueados, salvo los de los paquetes que aparecen en una lista declarada aparte. El artículo [Diferencia entre npm y pnpm en la seguridad al instalar](/es/blog/npm-vs-pnpm-seguridad) mide cuatro versiones de los dos gestores.
+
+**Cómo comprobarlo.** Antes de instalar, consulte el registro:
 
 ```bash
 npm view react-input-sanitizer-pro time.created maintainers repository.url
 ```
 
-Hay tres respuestas que desaconsejan instalar. Un `E404` significa que el paquete no existe. Una fecha de creación de hace pocos días significa que puede haberse registrado para esta campaña. Un repositorio ausente o que no corresponde al nombre significa que no hay nada que auditar.
+Tres respuestas desaconsejan instalar:
 
-<Callout kind="nota" title="Fija la versión y publica el archivo de bloqueo">
-Un rango como `^2.1.0` acepta versiones que aún no existen cuando se escribe. `npm ci` instala lo que dice el archivo de bloqueo y falla si no coincide con el `package.json`, en lugar de actualizarlo<Cite n={8} />. Con ese archivo versionado, una versión nueva no entra sin que alguien la mire.
+1. Un `E404` significa que el paquete no existe.
+2. Una fecha de creación de hace pocos días significa que alguien pudo registrarlo para aprovechar el nombre inventado.
+3. Un repositorio ausente, o que no corresponde al nombre, significa que no hay nada que auditar.
+
+<Callout kind="nota" title="Fije la versión y confirme el archivo de bloqueo">
+El archivo de bloqueo, `package-lock.json` en npm, guarda la versión exacta de cada dependencia. Un rango como `^2.1.0` acepta versiones que todavía no existen cuando se escribe. `npm ci` instala lo que dice el archivo de bloqueo y falla si no coincide con `package.json`, en lugar de actualizarlo<Cite n={8} />. Con ese archivo en el repositorio, una versión nueva no entra sin que alguien la revise.
 </Callout>
 
-## 7. El error devuelve el detalle interno al cliente
+## 7. Cómo devolver un error sin exponer el detalle interno
 
-El manejador devuelve el error entero, que durante el desarrollo resulta conveniente.
+El manejador devuelve el error entero al cliente, algo cómodo mientras se desarrolla.
 
 ```ts
 catch (error) {
@@ -239,9 +255,9 @@ catch (error) {
 }
 ```
 
-El mensaje de un error de base de datos nombra la tabla, la columna y la restricción que falló. La traza nombra las rutas del servidor y las versiones de las dependencias. Es CWE-209, un mensaje de error que revela información del entorno o de sus datos<Cite n={9} />. Esa información reduce el trabajo de quien busca una vulnerabilidad.
+El mensaje de un error de base de datos nombra la tabla, la columna y la restricción que falló. La traza (*stack trace*), que es la lista de llamadas que llevaron al error, nombra las rutas del servidor y las versiones de las dependencias. Es CWE-209: un mensaje de error que revela información del entorno o de sus datos<Cite n={9} />. Esa información reduce el trabajo de quien busca una vulnerabilidad.
 
-La corrección es guardar el detalle donde solo lo lee el equipo, y devolver un identificador para poder cruzarlo.
+Guarde el detalle en el log del servidor, que solo lee el equipo, y devuelva un identificador para encontrarlo después:
 
 ```ts
 catch (error) {
@@ -251,19 +267,17 @@ catch (error) {
 }
 ```
 
-Un log tampoco es un sitio privado: se exporta, se envía a un proveedor y lo leen personas que no necesitan verlo todo. Los datos personales se depuran antes de escribirlos, no cuando alguien pide acceso.
+El log tampoco es un sitio privado: se exporta, se envía a un proveedor y lo leen personas que no necesitan verlo todo. Depure los datos personales antes de escribirlos en el log, no cuando alguien pida acceso.
 
-Se comprueba provocando el fallo. Se apaga la base de datos, se lanza la petición y se lee el cuerpo de la respuesta. No puede aparecer ningún nombre de tabla ni ninguna ruta del servidor.
+**Cómo comprobarlo.** Provoque el fallo: detenga la base de datos, envíe la petición y lea el cuerpo de la respuesta. No puede aparecer ningún nombre de tabla ni ninguna ruta del servidor.
 
-## Por dónde empezar
+## Qué corregir primero
 
-Los siete no cuestan lo mismo. Los puntos 1, 2 y 4 se explotan desde fuera sin necesidad de ningún otro fallo, así que van primero. Los puntos 3 y 5 necesitan que alguien envíe una petición hecha a mano, que es barato pero deliberado. El punto 6 se revisa en el momento de instalar, y el 7 se corrige de una vez en el manejador de errores común.
+Los siete fallos no tienen la misma urgencia. Los puntos 1, 2 y 4 se pueden explotar desde fuera sin ningún otro fallo y sin preparar ningún valor, así que van primero. Los puntos 3 y 5 necesitan que alguien envíe un valor preparado a propósito, como una comilla o una cantidad negativa. Eso cuesta poco, pero es deliberado. El punto 6 se revisa al instalar una dependencia, y el 7 se corrige una sola vez en el manejador de errores común.
 
-Hay una regla que cubre a los siete cuando la comprobación no puede decidir: fallar cerrado. Si la sesión no se resuelve, si la validación lanza, si el permiso no aparece, la respuesta correcta es negar. El código generado tiende a lo contrario. Un `?? 0`, un `catch` vacío o un `if (!user) return next()` dejan que la petición siga su curso normal y hacen que el fallo no se note.
+**Fallar cerrado** significa negar la petición cuando una comprobación no puede decidir. Esa regla vale para los siete casos. Por ejemplo, la petición se rechaza si la sesión no se resuelve, si la validación lanza una excepción o si el permiso no aparece. El código generado suele hacer lo contrario. Un `?? 0`, un `catch` vacío o un `if (!user) return next()` dejan que la petición siga su curso normal, y el fallo no se nota.
 
-La lista deja fuera el HTML sin escapar, la configuración de CORS abierta y la ausencia de límite de peticiones. Son fallos frecuentes, pero no aparecen con la misma insistencia en el código generado.
-
-El asistente resuelve el caso que se le describió y da por hecho que quien llama es quien dice ser. La revisión consiste en repetir cada comprobación en el lado que el usuario no controla.
+Quedan fuera de la lista el HTML sin escapar, una configuración de CORS abierta y la falta de un límite de peticiones. Son fallos frecuentes, pero no se repiten tanto en el código generado.
 
 <References
 	title="Referencias"

@@ -37,8 +37,10 @@ Sigue el estilo de las publicaciones anteriores de la cuenta: pregunta de gancho
 ## Historia del mismo día
 
 - **Qué se publica.** La publicación compartida en la historia, con el texto «Todo lo que descarga el navegador se puede leer».
-- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta a la sección 4. No está comprobado que el navegador de Instagram baje hasta ella; como mínimo abre el artículo:
-  `https://www.alexherrera.dev/es/blog/revisar-codigo-generado-por-ia?utm_source=instagram&utm_medium=story&utm_campaign=pagina-web#4-un-secreto-termina-en-el-paquete-que-descarga-el-navegador`
+- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta al punto 4, «Cómo evitar que un secreto llegue al navegador» (ancla comprobada el 2026-09-26). No está comprobado que el navegador de Instagram baje hasta ella; como mínimo abre el artículo:
+  `https://www.alexherrera.dev/es/blog/revisar-codigo-generado-por-ia?utm_source=instagram&utm_medium=story&utm_campaign=pagina-web#4-c%C3%B3mo-evitar-que-un-secreto-llegue-al-navegador`
+
+  La historia publicada el 18 de septiembre usa el ancla anterior, `#4-un-secreto-termina-en-el-paquete-que-descarga-el-navegador`. El artículo la conserva con un `span`, así que sigue llevando al punto 4.
 - **Después.** Guardar la historia en la destacada del artículo.
 
 Todavía no hay un artículo sobre cómo funciona la web. El temario lo enlaza con «¿Tu router sabe qué buscas?», que está sin escribir. Mientras tanto, la historia lleva a la sección de «Siete cosas que revisar» que trata lo que descarga el navegador.

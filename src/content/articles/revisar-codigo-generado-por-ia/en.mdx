@@ -1,10 +1,10 @@
 ---
 slug: revisar-codigo-generado-por-ia
 title: Seven things to check in the code your AI writes
-tagline: Seven security failures that keep showing up in generated code, each with the code that breaks, the fix, and the command that proves it.
+tagline: Seven common security failures in AI-generated code, each with its fix and the command that checks it.
 areas: [seguridad]
 published: '2026-09-07'
-updated: '2026-09-07'
+updated: '2026-09-26'
 draft: false
 path: seven-things-to-check-in-ai-generated-code
 repo: null
@@ -17,15 +17,15 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-The code an AI assistant produces compiles, passes the tests and satisfies the prompt it was given. The security model is rarely part of that prompt, so it is not part of the result either.
+The code a language model generates, from a chat or from an agent, compiles, passes the tests and does what its task description asked. That description rarely includes the security requirements, such as who may see or change each piece of data. So the result does not meet them either.
 
-The failure has been measured. Veracode tested more than a hundred models on coding tasks across four languages, and 45% of the generated samples failed the security tests. Newer and larger models did no better than small ones<Cite n={1} />. The result does not depend on the particular model, but on the method used to generate the code.
+Veracode tested more than a hundred models on coding tasks in four languages. Of the generated code samples, 45% failed the security tests. Newer and larger models did no better than small ones<Cite n={1} />. The result therefore depends on the method used to generate the code, not on the model that writes it.
 
-These seven failures are the ones that repeat most. Each point carries three things: the code as the assistant produces it, the fix, and the command that shows which of the two holds. The examples are rebuilt for this article and none of them comes from a production system.
+The seven failures that follow are the ones that repeat most in generated code. Every example was rebuilt for the article and none of them comes from a production system.
 
-## 1. The permission is checked in the interface
+## 1. How to check the permission on the server
 
-The component hides the button by role and the endpoint deletes without checking anything.
+The component hides the button by role, and the endpoint deletes the invoice without checking anything.
 
 ```tsx
 {user.role === 'admin' && <button onClick={remove}>Delete invoice</button>}
@@ -39,9 +39,9 @@ export async function DELETE(req: Request, { params }: Ctx) {
 }
 ```
 
-Hiding the button is a rendering decision, not a permission. The endpoint still accepts the request from anyone who knows the address, and the address sits in code the browser already downloaded. The OWASP API Security Top 10 files this as broken function level authorisation, and notes that authorisation is handled in configuration or in code<Cite n={2} />.
+Hiding the button is a rendering decision, not a permission. The endpoint still accepts the request from anyone who knows the address, and that address sits in code the browser has already downloaded. The OWASP API Security Top 10 lists this failure as API5:2023, Broken Function Level Authorization. It means that a server function does not check the permission of whoever calls it. OWASP also notes that authorisation is managed in configuration or in code<Cite n={2} />.
 
-The fix is to repeat the check on the server, the only place the user cannot edit.
+Repeat the check on the server, the only place the user cannot modify:
 
 ```ts
 export async function DELETE(req: Request, { params }: Ctx) {
@@ -53,20 +53,20 @@ export async function DELETE(req: Request, { params }: Ctx) {
 }
 ```
 
-There is a stricter version of the same rule, worth adopting from day one in a multi tenant platform: authorisation lives entirely in application code. The technical user the application connects to the database with grants access to the process, never to the person who made the request.
+On a multi-tenant platform, adopt a stricter version of this rule from day one. All authorisation is decided in the application code. The application's database account grants access to the process, never to the person who made the request.
 
-You check it by skipping the interface. With the session of a user who is not an administrator:
+**How to check it.** Skip the interface and send the request with the session of a user who is not an administrator:
 
 ```bash
 curl -i -X DELETE http://localhost:3000/api/invoices/42 \
   -H "Cookie: session=$REGULAR_USER_SESSION"
 ```
 
-Before, it returns `200 OK` and the invoice is gone. After, it returns `403` and the invoice is still there.
+Without the fix, the response is `200 OK` and the invoice is gone. With the fix, the response is `403` and the invoice is still there.
 
-## 2. The record is loaded by id and nobody checks who owns it
+## 2. How to check who owns a record loaded by id
 
-The query looks the record up by the identifier in the URL and by nothing else.
+The query looks the invoice up by the identifier in the URL and by nothing else.
 
 ```ts
 export async function GET(req: Request, { params }: Ctx) {
@@ -75,9 +75,9 @@ export async function GET(req: Request, { params }: Ctx) {
 }
 ```
 
-This endpoint does require a session, so it looks settled. The failure is a different one: any authenticated user reads any company's invoices by changing the number in the address. The OWASP API Security Top 10 puts it in first place and describes it exactly this way, by manipulating the identifier sent inside the request<Cite n={3} />.
+This endpoint does require a session, so it looks correct. Even so, any user with a session can read another company's invoices by changing the number in the address. The same OWASP list puts this failure in first place, as API1:2023. It describes it as manipulating the identifier sent inside the request<Cite n={3} />.
 
-The decision that removes the whole class, not just this case, is to make ownership part of the query. A check that runs afterwards can be forgotten in the next endpoint; a condition inside the `where` travels with the query.
+To fix this case and every case like it, include the owner in the query condition. A check that runs afterwards can be forgotten in the next endpoint. A condition inside the `where` applies every time the query runs.
 
 ```ts
 const session = await auth();
@@ -89,13 +89,13 @@ if (!invoice) return new Response(null, { status: 404 });
 return Response.json(invoice);
 ```
 
-The response is `404` and not `403` on purpose. A `403` confirms that the invoice exists, and that confirmation is already information about another company.
+The fix answers `404` and not `403` on purpose. A `403` confirms that the invoice exists, and that confirmation is already information about another company.
 
-You check it with two sessions. Sign in as company A, request an id that belongs to company B, and expect `404`.
+**How to check it.** Use two sessions. Sign in as company A, request an id that belongs to company B and check that the response is `404`.
 
-## 3. The query is built by concatenation
+## 3. How to build a query without concatenating text
 
-The filter comes from a search form and enters the statement as text.
+The filter comes from a search form and enters the SQL statement as text.
 
 ```ts
 const rows = await db.$queryRawUnsafe(
@@ -103,41 +103,43 @@ const rows = await db.$queryRawUnsafe(
 );
 ```
 
-The value lands inside the quotes and can close them. With `x' OR '1'='1` the condition becomes always true and the query returns the whole table. The OWASP recommendation is to avoid the interpreter altogether: a parameterised interface, or an ORM<Cite n={4} />.
+The value lands inside the quotes and can close them. With `x' OR '1'='1`, the condition is always true and the query returns the whole table. OWASP recommends not passing the value to the SQL interpreter as text, and using a parameterised interface or an ORM instead<Cite n={4} />.
+
+The fixed version uses `$queryRaw` with a tagged template, which is a string with `${}` passed to a function. The function receives the value separately and sends it as a parameter, not as part of the statement:
 
 ```ts
 const client = req.nextUrl.searchParams.get('client') ?? '';
 const rows = await db.$queryRaw`SELECT * FROM invoices WHERE client = ${client}`;
 ```
 
-One case a parameter cannot cover is left: the name of the column used for sorting. There the only defence is a closed list.
+One case remains that a parameter cannot cover: the name of the column used for sorting. A parameter replaces a value, not a column name, so the only defence there is a closed list:
 
 ```ts
 const COLUMNS = { date: 'issued_at', amount: 'total' } as const;
 const column = COLUMNS[sort as keyof typeof COLUMNS] ?? 'issued_at';
 ```
 
-When the query is written by a model rather than a person, the check moves. A regular expression over the query text is dodged with a comment, a space or an alias. What holds is parsing the statement, injecting the security filters into the syntax tree, and executing only the result of that transformation.
+If a model writes the query while the application runs, the check has to happen on the parsed statement. A regular expression over the text fails, because a comment, a space or an alias is enough to hide the query from it. Parse the statement to get its syntax tree, add the security filters there and run only the statement that results.
 
-You check it by sending the value with the quote:
+**How to check it.** Send the value with the quote:
 
 ```bash
 curl "http://localhost:3000/api/invoices?client=x%27%20OR%20%271%27%3D%271"
 ```
 
-Before, it returns every invoice. After, it returns an empty list, which is the right answer for a client that does not exist.
+Without the fix, the response contains every invoice. With the fix, it contains an empty list, which is the right answer for a client that does not exist.
 
-## 4. A secret ends up in the bundle the browser downloads
+## 4. How to keep a secret out of the browser
 
-The variable has to be available inside the component, so the assistant gives it the prefix that makes it public.
+The variable has to be available inside the component, so the model gives it the prefix that makes it public.
 
 ```ts
 const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!);
 ```
 
-The `NEXT_PUBLIC_` prefix is not a label. The Next.js documentation says it plainly: the value is inlined at build time into the bundle delivered to the client, and every reference is replaced by a hard-coded value<Cite n={5} />. The same happens with `VITE_` and with `PUBLIC_` in Astro.
+According to the Next.js documentation, the value of a variable with the `NEXT_PUBLIC_` prefix is inlined into the bundle at build time. The bundle is the JavaScript the browser downloads, and in it every reference to the variable is replaced by its value<Cite n={5} />. The same happens with `VITE_` and with `PUBLIC_` in Astro.
 
-The fix is to keep the key on the server. The component calls a route, and the route talks to the service.
+The fix is to keep the key on the server. The component calls a route of its own, and that route calls Stripe with the key:
 
 ```ts
 // app/api/payments/route.ts
@@ -149,9 +151,9 @@ export async function POST(req: Request) {
 }
 ```
 
-Remembering the prefix is not a defence, because it depends on somebody recalling it every time. The defence is structural: a secret scanner in the pre-commit hook and again in continuous integration, with the keys in a secret manager instead of the repository.
+A protection that depends on remembering the prefix fails the day someone forgets it. Set up a secret scanner in the pre-commit hook, a command git runs before it creates each commit. Run it again in continuous integration, which checks every change pushed to the repository. Keep the keys in a secret manager and not in the repository.
 
-You check it against the build output, not against the source. The bundle the browser downloads sits in `.next/static`. What you search for there is the value of the key, not the name of the variable, because the build already replaced one with the other.
+**How to check it.** Search the build output, not the source code. Next.js puts the bundle in `.next/static`. Search for the start of the key's value, `sk_live`, not for the variable name, because the build has already replaced one with the other:
 
 ```bash
 pnpm build && grep -r "sk_live" .next/static | head
@@ -159,13 +161,13 @@ pnpm build && grep -r "sk_live" .next/static | head
 
 The output has to be empty.
 
-<Callout kind="riesgo" title="A key that reached the bundle is already exposed">
-Removing the prefix does not bring it back. The value was published and may sit in someone's cache, in an earlier deployment or in a repository. The complete fix is to rotate it at the provider and change the code afterwards.
+<Callout kind="riesgo" title="A key that reached the browser is already exposed">
+Removing the prefix does not make it secret again. The value has been published and may sit in someone's cache, in an earlier deployment or in a repository. Generate a new key at the provider, revoke the exposed one and then change the code.
 </Callout>
 
-## 5. Validation lives in the form and not in the endpoint
+## 5. How to validate input in the endpoint
 
-The form limits the field and the endpoint trusts that the value arrived limited.
+The form limits the field, and the endpoint assumes that the value arrived limited.
 
 ```tsx
 <input type="number" name="quantity" min={1} max={5} required />
@@ -178,9 +180,9 @@ export async function POST(req: Request) {
 }
 ```
 
-The `min`, `max` and `required` attributes help the person filling in the form. The request never passes through them. With a negative quantity the total that gets stored comes out negative. The CWE catalogue gives it a number of its own: CWE-602, client-side enforcement of a protection that belongs to the server<Cite n={6} />.
+The `min`, `max` and `required` attributes help the person filling in the form, but a request sent outside the form never passes through them. With a negative quantity, the stored total comes out negative. The CWE catalogue lists it as CWE-602: enforcing on the client a protection that belongs to the server<Cite n={6} />.
 
-The rule that covers all of it is to validate at trust boundaries, where data crosses from something the user controls into something they do not. An endpoint is one of those boundaries. So is a message queue, and so is a webhook.
+Validate at every trust boundary, the point where data passes from something the user controls to something they do not. An endpoint is one of those boundaries, and so are a message queue and a webhook. The fix validates the body with a Zod schema before creating the order:
 
 ```ts
 const Body = z.object({ quantity: z.number().int().min(1).max(5) });
@@ -194,7 +196,9 @@ export async function POST(req: Request) {
 }
 ```
 
-You check it by sending what the form will not let you type:
+`safeParse` returns the result of the validation instead of throwing an exception, and the endpoint answers `400` when it fails.
+
+**How to check it.** Send a value the form does not let you type:
 
 ```bash
 curl -i -X POST http://localhost:3000/api/orders \
@@ -202,11 +206,11 @@ curl -i -X POST http://localhost:3000/api/orders \
   -d '{"quantity": -3}'
 ```
 
-Before, it returns `200` and creates the order. After, it returns `400` and creates nothing.
+Without the fix, the response is `200` and the order is created. With the fix, the response is `400` and nothing is created.
 
-## 6. The dependencies name packages that do not exist
+## 6. How to check that a package exists before installing it
 
-This failure is not in the code but in `package.json`. The model suggests a package with a plausible name that was never published. The name in this example was invented for the article and did not exist in the public registry on 7 September 2026.
+This failure is not in the code but in `package.json`. The model suggests a package with a plausible name that was never published to the npm registry, where packages are installed from. The name in the example was invented for the article and did not exist in the registry on 7 September 2026.
 
 ```json
 "dependencies": {
@@ -214,25 +218,31 @@ This failure is not in the code but in `package.json`. The model suggests a pack
 }
 ```
 
-The size of the problem has been measured. A study published at USENIX Security 2025 generated 576,000 code samples with 16 models and found 205,474 distinct hallucinated package names. At least 5.2% of the packages named by commercial models did not exist, and 21.7% of those named by open-source models<Cite n={7} />.
+A **hallucinated package** is a package name the model invents. A study published at USENIX Security 2025 generated 576,000 code samples with 16 models and found 205,474 distinct hallucinated names. At least 5.2% of the packages named by commercial models did not exist, and 21.7% of those named by open-source models<Cite n={7} />.
 
-The invented name is predictable, and whoever registers it in the public registry gets their own code installed in every project that follows the suggestion. If the package manager runs install scripts, the damage does not wait for anyone to import the package. Which ones do depends on the version: yarn 1 runs them with no exceptions, npm ran them up to version 11, and npm 12 and pnpm 10 block them unless they appear in a list declared separately. [Another article measures the four behaviours](/en/blog/npm-vs-pnpm-install-security).
+The invented name is predictable, so anyone can publish it to the registry with their own code. From then on, that code is installed in every project that follows the suggestion. A package can also declare install scripts, which are commands the package manager runs when it installs the package. If the package manager runs them, the publisher's code runs before anyone imports the package.
 
-The check goes before installing, not after:
+Whether the package manager runs them depends on the version: yarn 1 runs them with no exceptions, and npm ran them up to version 11. In npm 12 and pnpm 10 they are blocked, except for the packages that appear in a list declared separately. The article [npm vs pnpm 11: install script security and allowBuilds](/en/blog/npm-vs-pnpm-install-security) measures four versions of the two package managers.
+
+**How to check it.** Before installing, query the registry:
 
 ```bash
 npm view react-input-sanitizer-pro time.created maintainers repository.url
 ```
 
-There are three answers that argue against installing. An `E404` means the package does not exist. A creation date a few days old means it may have been registered for this campaign. A missing repository, or one that does not match the name, means there is nothing to audit.
+Three answers argue against installing:
+
+1. An `E404` means the package does not exist.
+2. A creation date a few days old means someone may have registered it to take advantage of the invented name.
+3. A missing repository, or one that does not match the name, means there is nothing to audit.
 
 <Callout kind="nota" title="Pin the version and commit the lockfile">
-A range like `^2.1.0` accepts versions that do not exist yet when it is written. `npm ci` installs what the lockfile says and fails when it does not match `package.json`, instead of updating it<Cite n={8} />. With that file in the repository, a new version does not get in without someone looking at it.
+The lockfile, `package-lock.json` in npm, records the exact version of every dependency. A range like `^2.1.0` accepts versions that do not exist yet when it is written. `npm ci` installs what the lockfile says and fails when it does not match `package.json`, instead of updating it<Cite n={8} />. With that file in the repository, a new version does not get in without someone reviewing it.
 </Callout>
 
-## 7. The error returns the internal detail to the client
+## 7. How to return an error without exposing internal detail
 
-The handler returns the whole error, which is convenient during development.
+The handler returns the whole error to the client, which is convenient during development.
 
 ```ts
 catch (error) {
@@ -240,9 +250,9 @@ catch (error) {
 }
 ```
 
-The message from a database error names the table, the column and the constraint that failed. The stack names the server paths and the dependency versions. This is CWE-209, an error message that reveals information about the environment or its data<Cite n={9} />. That information reduces the work of anyone looking for a vulnerability.
+The message of a database error names the table, the column and the constraint that failed. The stack trace, the list of calls that led to the error, names the server paths and the dependency versions. This is CWE-209: an error message that reveals information about the environment or its data<Cite n={9} />. That information reduces the work of anyone looking for a vulnerability.
 
-The fix is to keep the detail where only the team reads it, and return an identifier so the two can be matched.
+Keep the detail in the server log, which only the team reads, and return an identifier to find it later:
 
 ```ts
 catch (error) {
@@ -252,19 +262,17 @@ catch (error) {
 }
 ```
 
-A log is not a private place either: it is exported, sent to a provider and read by people who do not need to see all of it. Personal data is scrubbed before it is written, not when somebody asks for access.
+The log is not a private place either. It is exported, sent to a provider and read by people who do not need to see all of it. Scrub personal data before writing it to the log, not when someone asks for access.
 
-You check it by causing the failure. Stop the database, send the request and read the response body. No table name and no server path can appear in it.
+**How to check it.** Cause the failure: stop the database, send the request and read the response body. No table name and no server path can appear in it.
 
-## Where to start
+## What to fix first
 
-The seven do not cost the same. Points 1, 2 and 4 are exploitable from outside with no other failure in place, so they go first. Points 3 and 5 need someone to send a hand written request, which is cheap but deliberate. Point 6 is checked at install time, and point 7 is fixed once in the shared error handler.
+The seven failures are not equally urgent. Sections 1, 2 and 4 can be exploited from outside with no other failure and without crafting any value, so they go first. Sections 3 and 5 need someone to send a value crafted on purpose, such as a quote or a negative quantity. That is cheap, but deliberate. Section 6 is checked when a dependency is installed, and section 7 is fixed once in the shared error handler.
 
-One rule covers all seven when a check cannot decide: fail closed. If the session does not resolve, if validation throws, if the permission is missing, the correct answer is to deny. Generated code leans the other way, because a `?? 0`, an empty `catch` or an `if (!user) return next()` keep the happy path running and hide the failure.
+**Failing closed** means denying the request when a check cannot decide. That rule applies to all seven cases. For example, the request is refused if the session does not resolve, if validation throws an exception or if the permission is missing. Generated code tends to do the opposite. A `?? 0`, an empty `catch` or an `if (!user) return next()` let the request carry on as normal, and the failure goes unnoticed.
 
-The list leaves out unescaped HTML, open CORS configuration and missing rate limits. They are common failures, but they do not show up with the same insistence in generated code.
-
-The assistant solves the case it was given and assumes the caller is who they claim to be. Reviewing it means repeating every check on the side the user does not control.
+Unescaped HTML, an open CORS configuration and a missing rate limit are left out of the list. They are common failures, but they do not repeat as much in generated code.
 
 <References
 	title="References"
