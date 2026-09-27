@@ -292,7 +292,7 @@ You can review the seven sections by hand. A coding agent can also do it with a 
 
 The run was measured with Claude Code 2.1.283 on an Express invoicing API with the seven failures. It took 6 minutes, not counting the wait for confirmation: 3 up to the proposal and 3 to fix and check.
 
-The agent found the seven failures, confirmed each one with its check and assigned it to its layer. It also found an eighth that fails open: with the token `__proto__`, the session lookup returned the object's prototype and the request went through. The nine tests it added failed before the fixes, and all pass afterwards. It also warned that the exposed key was still in the git history.
+The agent found the seven failures, confirmed each one with a check and assigned it to its layer. It also found an eighth that fails open: with the token `__proto__`, the session lookup returned the object's prototype and the request went through. The nine tests it added failed before the fixes, and all pass afterwards. It also warned that the exposed key was still in the git history.
 
 <Callout kind="riesgo" title="Read the prompt before pasting it">
 	This prompt asks the agent to run the project's commands and change the code. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.

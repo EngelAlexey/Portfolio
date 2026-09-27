@@ -6,7 +6,7 @@ description: 'How to secure a web application with users: HTTPS, headers, cookie
 areas: [seguridad]
 published: '2026-09-27'
 updated: null
-draft: true
+draft: false
 path: how-to-secure-a-web-application
 repo: null
 related: []
@@ -119,10 +119,10 @@ With the CSP active, Chrome blocks the script written inside the sample page's H
 
 ```text
 Executing inline script violates the following Content Security Policy directive
-'default-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-Gl02dwIVyohd6RBc
-ZoYZc3TfZvDUQjb/ZiHsJ3xX58U='), or a nonce ('nonce-...') is required to enable inline
-execution. Note also that 'script-src' was not explicitly set, so 'default-src' is used as
-a fallback. The action has been blocked.
+'default-src 'self''. Either the 'unsafe-inline' keyword, a hash
+('sha256-Gl02dwIVyohd6RBcZoYZc3TfZvDUQjb/ZiHsJ3xX58U='), or a nonce ('nonce-...') is
+required to enable inline execution. Note also that 'script-src' was not explicitly set, so
+'default-src' is used as a fallback. The action has been blocked.
 ```
 
 For a script of your own to run, move it to a `.js` file or allow it with the hash or nonce the message gives. Do not add `'unsafe-inline'`, because it cancels most of the protection<Cite n={5} repeat />.
@@ -272,10 +272,10 @@ export function escaparHtml(texto) {
 }
 ```
 
-With the output escaped, the page shows the text and the browser does not run it:
+With the output escaped, the HTML the browser receives carries the encoded text, and the page shows it as text without running it:
 
 ```text
-Resultados para: &lt;img src=x onerror="console.log('XSS ejecutado')"&gt;
+Resultados para: &lt;img src=x onerror=&quot;console.log(&#39;XSS ejecutado&#39;)&quot;&gt;
 ```
 
 Input is validated on the server, against a list of what is accepted<Cite n={16} />. Validation does not replace parameterised queries or escaped output. [Seven things to check](/en/blog/seven-things-to-check-in-ai-generated-code) shows the query built without concatenating text (section 3) and the validation in the endpoint (section 5).
@@ -375,7 +375,7 @@ A coding agent can go through the ten layers in your project. Copy the prompt wi
 
 The run was measured with Claude Code 2.1.283 on a sample Express shop that was missing almost every layer. It took 10 minutes, not counting the wait for confirmation: 4 up to the proposal and 6 to fix and check.
 
-The agent found thirteen failures. Among them were a payment key written in the code, another user's order readable by its id and SHA-256 passwords. The 13 tests it wrote failed before the fixes, and afterwards they all pass, along with the one that already existed. What depended on the production proxy, such as the redirect to HTTPS, it noted as pending.
+In the diagnosis it found thirteen failures, and one more while fixing. Among them were a payment key written in the code, another user's order readable by its id and SHA-256 passwords. The 13 tests it wrote failed before the fixes, and afterwards they all pass, along with the one that already existed. What depended on the production proxy, such as the number of hops for `trust proxy`, it noted as unverified.
 
 <Callout kind="riesgo" title="Read the prompt before pasting it">
 	This prompt asks the agent to start the application, run commands and change its configuration. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.

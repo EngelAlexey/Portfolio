@@ -6,7 +6,7 @@ description: 'Cómo proteger una página web con usuarios: HTTPS, cabeceras, coo
 areas: [seguridad]
 published: '2026-09-27'
 updated: null
-draft: true
+draft: false
 path: null
 repo: null
 related: []
@@ -119,10 +119,10 @@ Con la CSP activa, Chrome bloquea el script escrito dentro del HTML de la págin
 
 ```text
 Executing inline script violates the following Content Security Policy directive
-'default-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-Gl02dwIVyohd6RBc
-ZoYZc3TfZvDUQjb/ZiHsJ3xX58U='), or a nonce ('nonce-...') is required to enable inline
-execution. Note also that 'script-src' was not explicitly set, so 'default-src' is used as
-a fallback. The action has been blocked.
+'default-src 'self''. Either the 'unsafe-inline' keyword, a hash
+('sha256-Gl02dwIVyohd6RBcZoYZc3TfZvDUQjb/ZiHsJ3xX58U='), or a nonce ('nonce-...') is
+required to enable inline execution. Note also that 'script-src' was not explicitly set, so
+'default-src' is used as a fallback. The action has been blocked.
 ```
 
 Para que un script propio se ejecute, muévalo a un archivo `.js` o autorícelo con el *hash* o el *nonce* que indica el mensaje. No añada `'unsafe-inline'`, porque anula gran parte de la protección<Cite n={5} repeat />.
@@ -272,10 +272,10 @@ export function escaparHtml(texto) {
 }
 ```
 
-Con la salida escapada, la página muestra el texto y el navegador no lo ejecuta:
+Con la salida escapada, el HTML que recibe el navegador lleva el texto codificado, y la página lo muestra como texto sin ejecutarlo:
 
 ```text
-Resultados para: &lt;img src=x onerror="console.log('XSS ejecutado')"&gt;
+Resultados para: &lt;img src=x onerror=&quot;console.log(&#39;XSS ejecutado&#39;)&quot;&gt;
 ```
 
 La entrada se valida en el servidor, con una lista de lo que se acepta<Cite n={16} />. La validación no sustituye a las consultas parametrizadas ni a la salida escapada. [Siete cosas que revisar](/es/blog/revisar-codigo-generado-por-ia) muestra la consulta construida sin concatenar texto (punto 3) y la validación en el *endpoint* (punto 5).
@@ -375,7 +375,7 @@ Un agente de programación puede recorrer las diez capas en su proyecto. Copie e
 
 La ejecución se midió con Claude Code 2.1.283 sobre una tienda de ejemplo en Express a la que le faltaban casi todas las capas. Tardó 10 minutos sin contar la espera de la confirmación: 4 hasta la propuesta y 6 para corregir y comprobar.
 
-El agente encontró trece fallos. Entre ellos había una clave de pagos escrita en el código, un pedido ajeno legible por su id y contraseñas con SHA-256. Las 13 pruebas que escribió fallaban antes de las correcciones, y después pasan todas, junto con la que ya había. Lo que dependía del proxy de producción, como la redirección a HTTPS, lo dejó anotado como pendiente.
+En el diagnóstico encontró trece fallos y, durante la corrección, uno más. Entre ellos había una clave de pagos escrita en el código, un pedido ajeno legible por su id y contraseñas con SHA-256. Las 13 pruebas que escribió fallaban antes de las correcciones, y después pasan todas, junto con la que ya había. Lo que dependía del proxy de producción, como el número de saltos de `trust proxy`, lo anotó como no comprobado.
 
 <Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
 	Este prompt pide al agente que arranque la aplicación, ejecute órdenes y cambie su configuración. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 3 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo.

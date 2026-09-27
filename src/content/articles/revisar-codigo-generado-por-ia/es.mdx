@@ -297,7 +297,7 @@ Los siete puntos se pueden revisar a mano. También puede hacerlo un agente de p
 
 La ejecución se midió con Claude Code 2.1.283 sobre una API de facturas en Express con los siete fallos. Tardó 6 minutos sin contar la espera de la confirmación: 3 hasta la propuesta y 3 para corregir y comprobar.
 
-El agente encontró los siete fallos, confirmó cada uno con su comprobación y los asignó a su capa. Encontró además un octavo que falla abierto: con el token `__proto__`, la búsqueda de la sesión devolvía el prototipo del objeto y la petición pasaba. Las nueve pruebas que añadió fallaban antes de las correcciones, y después pasan todas. También avisó de que la clave expuesta seguía en el historial de git.
+El agente encontró los siete fallos, confirmó cada uno con una comprobación y los asignó a su capa. Encontró además un octavo que falla abierto: con el token `__proto__`, la búsqueda de la sesión devolvía el prototipo del objeto y la petición pasaba. Las nueve pruebas que añadió fallaban antes de las correcciones, y después pasan todas. También avisó de que la clave expuesta seguía en el historial de git.
 
 <Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
 	Este prompt pide al agente que ejecute órdenes del proyecto y que cambie el código. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 3 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo.

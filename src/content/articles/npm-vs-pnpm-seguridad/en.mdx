@@ -331,6 +331,8 @@ Declaring the version in `package.json` documents the intent, but does not enfor
 
 In a project with that field and without Corepack enabled, `pnpm --version` still returns the version installed on the machine. That version may be older than any in the table. Corepack is the Node.js utility that uses the `packageManager` field to install that version of the package manager. For the declared version to be the one that runs, enable Corepack or install the package manager as a dependency of the project itself. Until then, the field is a declaration and not a control.
 
+Dependencies are one of the ten layers in [How to secure a web application](/en/blog/how-to-secure-a-web-application), which links the article for each layer.
+
 <References
 	title="References"
 	back="Back to citation"
