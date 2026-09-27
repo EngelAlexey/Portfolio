@@ -218,7 +218,7 @@ To measure it, the API adds two routes: `/login`, which sets the `sesion` cookie
 
 ```js
 const r = await fetch('http://localhost:3000/perfil', { credentials: 'include' });
-return await r.text();
+await r.text();
 // {"email":"ana@example.com","saldo":1200}
 ```
 
@@ -238,6 +238,8 @@ The cookie's `SameSite` attribute decides whether it is sent with a `fetch` from
 | `http://localhost:8080` | Yes | `SameSite=Lax` | Reads the data |
 | `http://127.0.0.1:8080` | No | `SameSite=Lax` | `401`: the cookie is not sent |
 | `http://127.0.0.1:8080` | No | `SameSite=None; Secure` | Reads the data |
+
+The last row depends on the browser allowing third-party cookies, as Chrome 153 does in its default configuration.
 
 Since version 80, Chrome treats a cookie without `SameSite` as `Lax`<Cite n={10} />. `SameSite=Lax` limits the attack to pages on the same site, such as another subdomain. An API that needs cookies across sites uses `SameSite=None`, and then only the allowlist protects it.
 
@@ -284,7 +286,7 @@ curl -s -i -X OPTIONS -H "Origin: <origen permitido>" \
 | The third request gets its origin back | The comparison looks at the start of the origin or searches for a substring, not the whole origin |
 | `Access-Control-Allow-Origin: *` on a route with private data | Any site reads the route. Without cookies, it is only safe for public data |
 | `Vary: Origin` is missing when the header changes with the origin | A cache can serve one origin's header to another |
-| The preflight request carries no `Access-Control-Allow-Headers` with `content-type` | The browser will not send requests with JSON or with `Authorization` |
+| `Access-Control-Allow-Headers` does not include a header the page uses, such as `content-type` or `authorization` | The browser will not send that request |
 | The preflight request carries no `Access-Control-Allow-Methods` | The browser will not send `PUT`, `PATCH` or `DELETE` |
 
 On the sample API with the reflected origin, the first three requests got their own origin back with `Access-Control-Allow-Credentials: true`. With the list from section 4, none carried `Access-Control-Allow-Origin`.
