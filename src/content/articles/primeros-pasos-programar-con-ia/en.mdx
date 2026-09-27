@@ -18,7 +18,7 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-A coding agent reads the repository, edits files and runs commands on its own. With one, your job becomes deciding what gets built, giving the agent a check it can run and reviewing what it wrote.
+A coding agent reads the repository, edits files and runs commands on its own. With one, your job becomes deciding what to build, giving the agent a check it can run and reviewing what it wrote.
 
 The examples use Claude Code in the terminal. Install it with the native installer its documentation publishes. Then open a terminal in the project directory and run `claude`, which asks you to log in the first time<Cite n={1} />. Claude Code also exists as a VS Code and JetBrains extension, as a desktop app and in the browser. All of them work the same way and read the same configuration<Cite n={1} repeat />. In Cursor, the agent is built into the editor and needs no separate installation.
 
@@ -203,7 +203,7 @@ When the agent writes the code, you skip the part of the work where the learning
 | "Add validation to the endpoint" | "Where is the request body validated, and in which file does the path start" | a map that serves the next tasks |
 | "Write the function" | "Review my version against error handling, edge cases and naming" | the difference between the two versions |
 
-An agent handles questions about where something is well, because it can search the repository instead of guessing. Check against the documentation, however, anything it says about a library or a standard. The answer sounds just as sure when the fact is right as when it is wrong.
+An agent is good at questions about where something is, because it can search the repository instead of guessing. Check against the documentation, however, anything it says about a library or a standard. The answer sounds just as sure when the fact is right as when it is wrong.
 
 **How to check it.** After an explanation, close the session and try to rebuild what was explained without it. Whatever you cannot rebuild is what you need to read again.
 
@@ -598,7 +598,7 @@ no total may drop below zero, and the change comes with its tests.
 **What the environment does with that request:**
 
 1. **It starts from `AGENTS.md`.** The agent already knows that tests run with `npm test`, that amounts are integer cents and that only `formatearPrecio` turns them into text. It does not have to work that out from the code.
-2. **It clarifies before planning.** The request leaves decisions open, so `clarify` comes into play. The agent looks up what it can find in the code and asks you the rest in rounds, with a recommendation for each question. In the section 14 run, faced with a similar request, it asked (translated from Spanish):
+2. **It clarifies before planning.** The request leaves decisions open, so the agent uses `clarify`. The agent looks up what it can find in the code and asks you the rest in rounds, with a recommendation for each question. In the section 14 run, faced with a similar request, it asked (translated from Spanish):
 
    ```text
    1. What kind of discount? a) percentage, b) fixed amount in cents, c) both.
