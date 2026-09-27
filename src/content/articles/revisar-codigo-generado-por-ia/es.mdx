@@ -277,7 +277,7 @@ Los siete fallos no tienen la misma urgencia. Los puntos 1, 2 y 4 se pueden expl
 
 **Fallar cerrado** significa negar la petición cuando una comprobación no puede decidir. Esa regla vale para los siete casos. Por ejemplo, la petición se rechaza si la sesión no se resuelve, si la validación lanza una excepción o si el permiso no aparece. El código generado suele hacer lo contrario. Un `?? 0`, un `catch` vacío o un `if (!user) return next()` dejan que la petición siga su curso normal, y el fallo no se nota.
 
-Quedan fuera de la lista el HTML sin escapar, una configuración de CORS abierta y la falta de un límite de peticiones. Son fallos frecuentes, pero no se repiten tanto en el código generado.
+Quedan fuera de la lista el HTML sin escapar, [una configuración de CORS abierta](/es/blog/que-es-cors) y la falta de un límite de peticiones. Son fallos frecuentes, pero no se repiten tanto en el código generado.
 
 <References
 	title="Referencias"

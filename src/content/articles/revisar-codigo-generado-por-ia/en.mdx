@@ -272,7 +272,7 @@ The seven failures are not equally urgent. Sections 1, 2 and 4 can be exploited 
 
 **Failing closed** means denying the request when a check cannot decide. That rule applies to all seven cases. For example, the request is refused if the session does not resolve, if validation throws an exception or if the permission is missing. Generated code tends to do the opposite. A `?? 0`, an empty `catch` or an `if (!user) return next()` let the request carry on as normal, and the failure goes unnoticed.
 
-Unescaped HTML, an open CORS configuration and a missing rate limit are left out of the list. They are common failures, but they do not repeat as much in generated code.
+Unescaped HTML, [an open CORS configuration](/en/blog/what-is-cors) and a missing rate limit are left out of the list. They are common failures, but they do not repeat as much in generated code.
 
 <References
 	title="References"
