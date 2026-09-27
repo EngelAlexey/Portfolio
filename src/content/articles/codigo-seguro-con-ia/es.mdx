@@ -1,10 +1,10 @@
 ---
 slug: codigo-seguro-con-ia
 title: Cómo pedirle a la IA código seguro
-tagline: Seis prácticas que se montan una vez y actúan en cada cambio, para que el asistente escriba código correcto desde el principio en lugar de acumular defectos.
+tagline: Seis prácticas que se configuran una vez para que el agente escriba código seguro y cada cambio se compruebe.
 areas: [ia, seguridad]
 published: '2026-09-07'
-updated: '2026-09-07'
+updated: '2026-09-26'
 draft: false
 path: null
 repo: null
@@ -16,80 +16,90 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-La cantidad de código que un asistente produce por unidad de tiempo supera a la que un equipo puede revisar en ese mismo tiempo. Ese desajuste, y no la tasa de acierto del modelo, determina cuántos defectos llegan a producción.
+La cantidad de código que un agente produce por unidad de tiempo supera a la que un equipo puede revisar en ese mismo tiempo. Ese desajuste, y no la tasa de acierto del modelo, determina cuántos defectos llegan a producción.
 
-Veracode midió en marzo de 2026 más de 150 modelos contra 80 tareas de programación en cuatro lenguajes. El 55 % de las tareas terminó en código seguro<Cite n={1} />. Un estudio revisado por pares generó 1689 programas cinco años antes y encontró vulnerable alrededor del 40 %<Cite n={2} />. Los modelos que sustentan las dos medidas no tienen nada en común, y las cifras no son comparables entre sí. Ninguna de las dos llega al 100 %.
+Veracode midió en marzo de 2026 más de 150 modelos con 80 tareas de programación en cuatro lenguajes. El 55 % de las tareas terminó en código seguro<Cite n={1} />. Un estudio revisado por pares generó 1689 programas cinco años antes y encontró vulnerable alrededor del 40 %<Cite n={2} />. Los modelos de las dos mediciones no tienen nada en común, y las cifras no son comparables entre sí. Ninguna de las dos llega al 100 %.
 
-Los defectos que pasan ese filtro no producen ninguna señal. El código compila, la aplicación arranca y las pruebas pasan, así que nada distingue la parte correcta de la que no lo es. Sin una revisión atada a cada cambio, los defectos no se detectan de uno en uno: se acumulan hasta que alguien audita el árbol entero, que es la forma más cara de encontrarlos.
+Los defectos que introduce el modelo no dan ninguna señal. El código compila, la aplicación arranca y las pruebas pasan, así que nada distingue la parte correcta de la que no lo es. Si la revisión no se hace en cada cambio, los defectos no se detectan de uno en uno. Se acumulan hasta que alguien revisa todo el repositorio, que es la forma más cara de encontrarlos.
 
-Lo que sigue son seis prácticas que se montan una vez y actúan en cada cambio. Ninguna depende de que el modelo haya obedecido una instrucción. Otro artículo de este blog lista [siete fallos que se buscan a mano en un diff](/es/blog/revisar-codigo-generado-por-ia); este va de no llegar a tener que buscarlos.
+Las seis prácticas que siguen se configuran una vez y se aplican a cada cambio. Ninguna depende de que el modelo haya obedecido una instrucción. El artículo [Siete cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) enseña a buscar a mano siete fallos en cada cambio. El objetivo de estas prácticas es no tener que buscarlos.
 
-Todo el código está reconstruido para el artículo. Versiones medidas: Node.js 24.19.0, TypeScript 6.0.3, Zod 4.5.4, ESLint 10.10.0 con typescript-eslint 8.70.0, Slonik 49.10.9 y eslint-plugin-security 4.0.1.
+Todo el código está reconstruido para el artículo. Las mediciones usan Node.js 24.19.0, TypeScript 6.0.3, Zod 4.5.4, ESLint 10.10.0 con typescript-eslint 8.70.0, Slonik 49.10.9 y eslint-plugin-security 4.0.1.
 
-La versión de TypeScript no es la última, y el motivo es parte del punto 5. typescript-eslint 8.70.0 declara `typescript: '>=4.8.4 <6.1.0'` en sus dependencias de pares, así que instalarlo junto a TypeScript 7.0.2 falla con `ERESOLVE`, y forzándolo el linter aborta con `typescript-eslint does not support TS 7.0`. La regla del punto 5 no se puede ejecutar sobre la versión más reciente del compilador: el rango que soporta el linter decide la versión de TypeScript, y no al revés.
+La versión de TypeScript no es la última, por una razón que afecta al punto 5. El paquete typescript-eslint 8.70.0 declara `typescript: '>=4.8.4 <6.1.0'` en sus dependencias de pares. Por eso, instalarlo junto a TypeScript 7.0.2 falla con `ERESOLVE`, y si se fuerza la instalación, el linter se detiene con `typescript-eslint does not support TS 7.0`. La regla del linter que usa el punto 5 no se puede ejecutar con la versión más reciente del compilador. El rango que admite el linter decide la versión de TypeScript, y no al revés.
 
-## 1. Una regla llega al modelo solo si algo decide cargarla
+## 1. Cómo hacer que una regla se cargue cuando hace falta
 
-Escribir las reglas del proyecto no garantiza que se apliquen. Una regla influye en el resultado únicamente cuando está en la ventana de contexto en el momento del cambio. Lo que decide si entra no es el tema bajo el que se archivó, sino el disparador que se le puso.
+Una **regla** es una instrucción para el agente guardada en un archivo que el *harness* carga en la sesión. El *harness* es el programa que ejecuta el agente, como Claude Code o Cursor. En Claude Code, una regla puede ser una skill; en Cursor, un archivo de `.cursor/rules`.
 
-Las dos herramientas más usadas resuelven eso de forma parecida. Claude Code carga las reglas en tres niveles. El nombre y la descripción de cada una entran siempre, y cuestan alrededor de 100 tokens por regla. El cuerpo se lee solo cuando la petición coincide con esa descripción, y se recomienda mantenerlo por debajo de 5000 tokens. Los archivos anexos no cuestan nada hasta que se abren<Cite n={3} />. La documentación es explícita en que la descripción tiene que decir **qué hace la regla y cuándo aplicarla**, porque es el único texto contra el que se decide<Cite n={4} />. Cursor ofrece cuatro modos y dos de ellos son automáticos: uno decide por la descripción y otro por los patrones de archivo que toca el cambio<Cite n={5} />.
+Escribir una regla no garantiza que se aplique. Una regla influye en el resultado solo si está en la ventana de contexto en el momento del cambio. La ventana de contexto es el texto que el modelo tiene disponible en la sesión. El *harness* carga una regla según su **disparador**, la condición que la activa, y no según el tema en el que se clasificó.
 
-La consecuencia práctica es que las reglas se parten por **momento de disparo**, no por tema. Una regla archivada bajo «seguridad» no se carga cuando alguien escribe una prueba; una archivada bajo «al escribir una prueba», sí.
+Claude Code carga las skills en tres niveles, medidos en tokens, la unidad en la que el modelo cuenta el texto:
 
-La segunda mitad del principio es tan importante como la primera. La documentación de Anthropic la enuncia sin rodeos: la ventana de contexto es un bien común, y cada párrafo de una regla compite con la conversación y con el trabajo en curso<Cite n={4} repeat />. Solo debe entrar la información que el modelo no tiene ya. Una regla que explica qué es una consulta parametrizada ocupa espacio sin aportar nada; una que indica qué cliente usa este repositorio aporta un dato que el modelo no puede deducir.
+1. El nombre y la descripción de cada skill se cargan siempre, y ocupan unos 100 tokens por skill.
+2. El cuerpo se lee solo cuando la petición coincide con la descripción, y se recomienda que no pase de 5000 tokens.
+3. Los archivos anexos no ocupan nada hasta que se abren<Cite n={3} />.
 
-La diferencia entre las dos formas de organizar se puede medir. El repositorio público de skills de Vercel publica cada guía en dos formatos: un índice y la concatenación de todas sus reglas. En `react-best-practices`, consultado el 7 de septiembre de 2026, el índice ocupa 7251 bytes y la concatenación 108 261, repartidos en 72 archivos de regla de 1535 bytes de media<Cite n={6} />. Leer el índice y las dos reglas que toca un cambio cuesta unos 10 000 bytes. Leer la concatenación cuesta diez veces más para traer setenta reglas que no hacían falta.
+Según la documentación, la descripción tiene que decir qué hace la skill y cuándo usarla. Es el único texto con el que se decide si se carga<Cite n={4} />. Cursor ofrece cuatro modos para sus reglas, y dos son automáticos. Uno decide por la descripción, y el otro, por los patrones de archivo que toca el cambio<Cite n={5} />.
+
+Por eso, divida las reglas por el momento en que tienen que cargarse, no por tema. Una regla cuya descripción dice «seguridad» no se carga cuando el agente escribe una prueba. Una cuya descripción dice «al escribir una prueba», sí.
+
+Según la guía de Anthropic, la ventana de contexto es un recurso compartido. Cada párrafo de una regla ocupa espacio que necesitan la conversación y el trabajo en curso<Cite n={4} repeat />. Por eso una regla solo debe contener lo que el modelo no sabe ya. Una regla que explica qué es una consulta parametrizada ocupa espacio sin aportar nada. Una que indica qué cliente de base de datos usa el repositorio aporta un dato que el modelo no puede deducir.
+
+El repositorio público de skills de Vercel permite medir la diferencia entre cargar solo lo necesario y cargarlo todo. Publica cada guía en dos formatos: un índice y la concatenación de todas sus reglas.
+
+En `react-best-practices`, consultado el 7 de septiembre de 2026, el índice ocupa 7251 bytes y la concatenación, 108 261. La concatenación reúne 72 archivos de regla, de 1535 bytes de media<Cite n={6} />. Leer el índice y las dos reglas que afectan a un cambio ocupa unos 10 000 bytes. Leer la concatenación ocupa diez veces más, para cargar setenta reglas que no hacían falta.
 
 <Callout kind="riesgo" title="Las reglas también son superficie de ataque">
-	Una regla instalada de un tercero se ejecuta con el mismo alcance que el asistente. La documentación de Anthropic advierte que una regla maliciosa puede dirigirlo a invocar herramientas o a ejecutar código de formas que no coinciden con su propósito declarado. Recomienda auditar todo lo que traiga antes de instalarla<Cite n={3} repeat />. Vale sobre todo para las que descargan contenido de una URL, porque ese contenido puede cambiar después de la auditoría.
+	Una regla instalada de un tercero actúa con los mismos permisos que el agente. Según la documentación de Anthropic, una skill maliciosa puede llevar al agente a invocar herramientas o a ejecutar código con otro fin que el declarado. Por eso recomienda auditar todo lo que incluye antes de instalarla<Cite n={3} repeat />. Esto importa sobre todo en las que descargan contenido de una URL, porque ese contenido puede cambiar después de la auditoría.
 
-	Una auditoría sola no cubre ese caso, porque comprueba una versión y no la siguiente. Lo que la cubre es anotar cada regla externa en un archivo versionado con su origen y el hash de su contenido. Un cambio posterior deja de ser invisible y aparece como una diferencia en ese archivo. Es el mismo mecanismo de `go.sum` o de `pip install --require-hashes`, aplicado a las reglas en lugar de a las dependencias.
+	Una auditoría no cubre ese caso, porque comprueba una versión y no la siguiente. Anote cada regla externa en un archivo versionado, con su origen y el hash de su contenido. Así, un cambio posterior aparece como una diferencia en ese archivo. Es el mismo mecanismo de `go.sum` o de `pip install --require-hashes`, aplicado a las reglas en lugar de a las dependencias.
 </Callout>
 
-**Cómo se comprueba.** Se concatena lo que el asistente carga siempre —el archivo de instrucciones base más las descripciones de todas las reglas— y se cuentan los caracteres. Ese número es el coste fijo de cada sesión. Después, para cada regla, se nombra el momento en que debería dispararse; si la respuesta es «siempre», pertenece a las instrucciones base y tiene que ser corta.
+**Cómo comprobarlo.** Junte lo que el agente carga siempre, el archivo de instrucciones y las descripciones de todas las reglas, y cuente sus caracteres. Ese número es el coste fijo de cada sesión. Después, escriba para cada regla el momento en que debería cargarse. Si la respuesta es «siempre», la regla va en el archivo de instrucciones y tiene que ser corta.
 
-## 2. Cada regla lleva el fallo que la produjo y la orden que lo detecta
+## 2. Cómo escribir una regla que se pueda comprobar
 
-Una regla enunciada como preferencia admite discusión. «Prefiere consultas parametrizadas» admite excepciones que el modelo justificará razonablemente, y quien revise el cambio no tiene con qué contradecirlo. Una regla que trae el fallo concreto y la orden que lo encuentra no admite esa conversación.
+Una regla escrita como preferencia admite discusión. Ante «Prefiere consultas parametrizadas», el modelo puede justificar excepciones razonables, y quien revise el cambio no tiene con qué contradecirlo. Una regla que trae el fallo concreto y la orden que lo detecta no deja margen para esa discusión.
 
-La forma que funciona tiene cinco partes fijas:
+Una regla útil tiene cinco partes:
 
-- **El mecanismo del defecto.** Qué hace el código incorrecto, no cómo se llama.
-- **El caso que costó.** Un ejemplo real y localizable, para que la regla no se lea como una opinión.
-- **La regla**, en una frase.
-- **Un par mal y bien**, sin comentarios que expliquen cuál es cuál. El código tiene que distinguirse solo.
-- **La orden que lo vuelve a detectar**: un `grep`, una regla de linter o una prueba.
+1. **El mecanismo del defecto**: qué hace el código incorrecto, no cómo se llama el fallo.
+2. **Un caso real** que se pueda localizar, para que la regla no se lea como una opinión.
+3. **La regla**, en una frase.
+4. **Un ejemplo incorrecto y uno correcto**, sin comentarios que digan cuál es cuál, porque el código tiene que distinguirse solo.
+5. **La orden que vuelve a detectar el fallo**: un `grep`, una regla del linter o una prueba.
 
-La quinta parte es la que separa una regla útil de una recomendación. Sin ella no hay forma de comprobar si el árbol ya la incumple en otros lugares.
+La quinta parte convierte la regla en algo comprobable. Sin ella, no hay forma de saber si el código ya incumple la regla en otros archivos.
 
-Conviene además escribir la comprobación antes que la regla. La guía de autoría de Anthropic lo recomienda como método: primero se mide qué falla sin la regla, y solo después se escribe la instrucción mínima que corrige eso<Cite n={4} repeat />. Escribirlo al revés produce reglas para problemas que nunca ocurrieron.
+Escriba la comprobación antes que la regla. La guía de Anthropic lo recomienda: primero se mide qué falla sin la regla, y después se escribe la instrucción mínima que lo corrige<Cite n={4} repeat />. Si se hace al revés, se escriben reglas para problemas que nunca ocurrieron.
 
-**Cómo se comprueba.** La orden de detección se ejecuta sobre el ejemplo malo y sobre el bueno. Tiene que encontrar el primero y no encontrar el segundo. Si no distingue entre los dos, la regla no tiene detector y hay que escribir otro.
+**Cómo comprobarlo.** Ejecute la orden de detección sobre el ejemplo incorrecto y sobre el correcto. Tiene que encontrar el primero y no encontrar el segundo. Si no distingue los dos, la regla no tiene detector: escriba otro.
 
-## 3. La revisión ocurre por cambio y con instrucción de tumbar
+## 3. Cómo revisar cada cambio y qué pedir al revisor
 
-Las guías de ingeniería de Google fijan el orden de magnitud: 100 líneas es un tamaño razonable para un cambio y 1000 suele ser demasiado. Las razones que dan no son de estilo. Un cambio pequeño se revisa antes, porque encontrar cinco minutos varias veces al día es más fácil que reservar media hora. Y se revisa mejor: en un cambio grande el volumen de comentarios hace que los importantes se pierdan. El documento llega a decir que un revisor puede rechazar un cambio por el solo motivo de ser demasiado grande<Cite n={7} />.
+Las guías de ingeniería de Google fijan el orden de magnitud: 100 líneas es un tamaño razonable para un cambio, y 1000 suele ser demasiado. Un cambio pequeño se revisa antes, porque encontrar cinco minutos varias veces al día es más fácil que reservar media hora. También se revisa mejor, porque en un cambio grande el volumen de comentarios hace que se pierdan los importantes. Según el documento, un revisor puede rechazar un cambio solo por ser demasiado grande<Cite n={7} />.
 
-Con un asistente ese límite deja de ser natural. Un cambio de 800 líneas cuesta lo mismo de pedir que uno de 80, así que el tamaño hay que fijarlo a propósito y antes de empezar.
+Con un agente, el tiempo de escribir ya no limita el tamaño del cambio. Pedir 800 líneas cuesta lo mismo que pedir 80. Fije el tamaño antes de empezar.
 
-La segunda parte es qué se le pide al revisor. El resultado de una revisión depende de esa instrucción: pedir una aprobación produce informes que aprueban. La instrucción que produce hallazgos es la contraria, buscar lo que no se sostiene. Un informe vacío obliga a comprobar la cobertura de la revisión antes de aceptarlo.
+El resultado de una revisión depende también de lo que se pide al revisor, sea una persona o un agente. Pedir una aprobación produce informes que aprueban. La instrucción que produce hallazgos es la contraria: buscar lo que no se sostiene. Si el informe sale vacío, compruebe qué cubrió la revisión antes de aceptarlo.
 
-Esa instrucción tiene un contrapeso que conviene escribir junto a ella, porque sin él la revisión se vuelve dañina. Un falso positivo cuesta un cambio innecesario en código que funcionaba. Las herramientas mecánicas que detectan código muerto o duplicado sirven como pista y nunca como fuente: no ven las reexportaciones ni los guiones que se invocan desde la línea de órdenes, así que marcan como muerto lo que sí se usa. Toda afirmación de la forma «esto no se usa» se verifica en el archivo antes de escribirla.
+Escriba junto a esa instrucción su límite, porque sin él la revisión hace daño. Un falso positivo cuesta un cambio innecesario en código que funcionaba. Los programas que detectan código muerto o duplicado solo sirven para orientar la búsqueda. No ven las reexportaciones ni los scripts que se ejecutan desde la línea de órdenes, así que marcan como muerto código que sí se usa. Antes de escribir en el informe que algo no se usa, compruébelo en el archivo.
 
-**Cómo se comprueba.** Cada revisión queda atada al hash del commit que revisó. Una revisión sin hash no se puede repetir ni contrastar, así que a efectos prácticos no ocurrió.
+**Cómo comprobarlo.** Anote en cada revisión el hash del commit que revisó. Sin ese hash, nadie puede repetir la revisión ni contrastarla con el código.
 
-## 4. Una prueba se acepta cuando se ha visto fallar
+## 4. Cómo comprobar que una prueba detecta el defecto
 
-Un asistente al que se le piden pruebas las produce, y en general pasan. El problema es que las escribe después del código, así que tienden a describir lo que ese código hace en lugar de comprobar lo que debería hacer. Una prueba que pasa con el defecto presente y también con el defecto corregido no distingue entre los dos estados.
+Si pide pruebas a un agente, las escribe, y en general pasan. El problema es que las escribe después del código, así que tienden a describir lo que el código hace, no lo que debería hacer. Una prueba que pasa con el defecto y sin él no distingue los dos estados.
 
-La disciplina que resuelve esto tiene nombre y vocabulario propios. En pruebas de mutación se introduce un defecto en el código de producción y se ejecutan las pruebas: si alguna falla, el mutante queda *matado*; si todas pasan, el mutante *sobrevive*, y un mutante que sobrevive señala una carencia en las pruebas. La documentación de Stryker lo contrasta con la cobertura, que mide qué líneas se ejecutan y no si las pruebas comprueban el comportamiento<Cite n={8} />.
+Las **pruebas de mutación** miden eso. Introducen un defecto, llamado **mutante**, en el código de producción y ejecutan las pruebas. Si alguna falla, el mutante queda *matado*; si todas pasan, el mutante *sobrevive* y señala una carencia en las pruebas. La documentación de Stryker lo distingue de la cobertura, que mide qué líneas se ejecutan y no si las pruebas comprueban el comportamiento<Cite n={8} />.
 
-La versión manual, que no necesita herramienta, se mide en dos direcciones antes de dar una prueba por buena.
+La versión manual no necesita ningún programa. Antes de dar una prueba por buena, compruébela en dos direcciones:
 
-- **Dirección roja.** Se reintroduce el defecto exacto que la prueba dice cubrir, sin renombrar nada, y la prueba tiene que ponerse roja. Si sigue verde, no defiende nada.
-- **Dirección verde.** Se renombra algo sin cambiar la semántica —una variable local, un parámetro, un tipo— y la prueba tiene que seguir verde. Si se pone roja, muerde nombres y no comportamiento.
+1. **Dirección roja.** Reintroduzca el defecto exacto que la prueba dice cubrir, sin renombrar nada. La prueba tiene que fallar; si sigue pasando, no protege de nada.
+2. **Dirección verde.** Renombre algo sin cambiar el comportamiento, como una variable local, un parámetro o un tipo. La prueba tiene que seguir pasando; si falla, comprueba nombres y no comportamiento.
 
-La mutación se hace siempre en el código de producción y nunca en el archivo de prueba. Si hay que editar la prueba para que falle, no estaba comprobando nada.
+Haga la mutación siempre en el código de producción, nunca en el archivo de prueba. Si tiene que editar la prueba para que falle, la prueba no comprobaba nada.
 
 ```js
 // pedidos.mjs
@@ -118,7 +128,7 @@ test('no devuelve el pedido a otro usuario', () => {
 });
 ```
 
-Con la comprobación de propiedad, `node --test` devuelve `pass 2` y termina con salida 0<Cite n={9} />. Al retirar la línea que compara `usuarioId`, la segunda prueba falla:
+Con la comprobación del dueño, `node --test` devuelve `pass 2` y termina con código 0<Cite n={9} />. Al quitar la línea que compara `usuarioId`, la segunda prueba falla:
 
 ```text
 ✔ devuelve el pedido a su dueno
@@ -132,15 +142,13 @@ AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
 - null
 ```
 
-**Cómo se comprueba.** Se revierte la corrección, se ejecutan las pruebas y se confirma que la nueva falla. Después se vuelve a aplicar.
+**Cómo comprobarlo.** Revierta la corrección, ejecute las pruebas y compruebe que la nueva prueba falla. Después, vuelva a aplicar la corrección.
 
-## 5. Lo que el código puede imponer no se escribe como regla
+## 5. Cómo hacer que el compilador y el linter impongan una regla
 
-Una regla del prompt y una comprobación del compilador no compiten: hacen cosas distintas. La regla influye y la comprobación decide. Cuando el incumplimiento de algo se puede detectar en el árbol de sintaxis o en la salida, escribirlo como regla ocupa contexto en algo que ya está resuelto.
+Una regla influye en el modelo, y una comprobación del compilador decide si el código pasa. El **árbol de sintaxis** es la estructura del código que analizan el compilador y el linter. Si un incumplimiento se detecta en ese árbol o en la salida, no lo escriba como regla. Ya lo comprueban el compilador o el linter. Una regla así solo ocuparía contexto.
 
-Dos ejemplos, con el patrón completo en cada uno.
-
-**Validar en el límite.** «Valida las entradas» es una regla. La versión que decide consiste en que la función del dominio solo acepte datos ya validados.
+**Validar en el límite.** «Valida las entradas» es una regla. La versión que comprueba el compilador consiste en que la función del dominio, la que aplica la lógica del negocio, solo acepte datos ya validados.
 
 ```ts
 import { z } from 'zod';
@@ -157,14 +165,14 @@ export function crearPedido(datos: CrearPedido): string {
 }
 ```
 
-`z.infer` deriva el tipo del esquema, así que el tipo y la validación son la misma declaración. Una ruta que pase el cuerpo de la petición sin validar no compila:
+`z.infer` deriva el tipo del esquema, así que el tipo y la validación son la misma declaración. Una ruta que pase el cuerpo de la solicitud HTTP sin validar no compila:
 
 ```text
 ruta.ts(5,34): error TS2345: Argument of type 'unknown' is not assignable
 to parameter of type '{ clienteId: string; monto: number; }'.
 ```
 
-Queda una salida, y hay que cerrarla. Escribir `cuerpo as CrearPedido` es una aserción de tipo: le dice al compilador que trate el valor como si fuera de ese tipo y no genera ninguna comprobación. Con ella, `tsc --noEmit` termina en 0 y el dato sin validar llega a la función. La regla `@typescript-eslint/no-unsafe-type-assertion` lee la misma información de tipos que `tsc` y prohíbe las aserciones que estrechan un tipo<Cite n={10} />, así que la línea que el compilador acepta la rechaza el linter:
+Queda un caso que el compilador no detiene. Escribir `cuerpo as CrearPedido` es una aserción de tipo. Le dice al compilador que trate el valor como si fuera de ese tipo, y no genera ninguna comprobación. Con ella, `tsc --noEmit` termina en 0 y el dato sin validar llega a la función. La regla del linter `@typescript-eslint/no-unsafe-type-assertion` lee la misma información de tipos que `tsc` y prohíbe las aserciones que estrechan un tipo<Cite n={10} />. Así, el linter rechaza la línea que el compilador acepta:
 
 ```text
   5:34  error  Unsafe type assertion: type '{ clienteId: string; monto: number; }'
@@ -174,7 +182,7 @@ Queda una salida, y hay que cerrarla. Escribir `cuerpo as CrearPedido` es una as
 ✖ 1 problem (1 error, 0 warnings)
 ```
 
-**Quitar la ruta insegura.** La inyección SQL ocurre cuando el texto que envía el usuario acaba formando parte de la consulta que la base de datos analiza. Un cliente con plantillas etiquetadas lo impide desde el diseño: la plantilla entrega a la función el texto fijo y los valores en argumentos distintos, y los valores viajan aparte hasta que la consulta ya está analizada.
+**Construir SQL solo con plantillas etiquetadas.** La inyección SQL ocurre cuando el texto que envía el usuario acaba formando parte de la consulta que analiza la base de datos. Una **plantilla etiquetada** es una cadena con `${}` que se pasa a una función. Un cliente de base de datos basado en ellas impide la inyección desde el diseño. La plantilla entrega a la función el texto fijo y los valores en argumentos distintos. Los valores se envían aparte hasta que la base de datos ya analizó la consulta.
 
 ```js
 import { sql } from 'slonik';
@@ -186,54 +194,66 @@ console.log(consulta.sql);    // select * from pedidos where cliente = $slonik_1
 console.log(consulta.values); // [ '1 OR 1=1' ]
 ```
 
-El texto hostil se queda en la lista de valores. Construir SQL dinámico obliga a llamar a otra función, `sql.identifier`, que además entrecomilla lo que escribe, y esa llamada se localiza con una búsqueda.
+El texto malicioso queda en la lista de valores. Para construir SQL dinámico hay que llamar a otra función, `sql.identifier`, que además entrecomilla lo que escribe, y esa llamada se encuentra con una búsqueda.
 
-<Callout kind="riesgo" title="Un aviso sobre el linter">
-	`eslint-plugin-security` 4.0.1 incluye catorce reglas y ninguna trata sobre inyección SQL. La lista completa se obtiene leyendo `Object.keys(plugin.rules)`. Antes de contar un paquete como control conviene revisar qué detecta, porque el nombre no lo indica.
+<Callout kind="riesgo" title="eslint-plugin-security no detecta la inyección SQL">
+	`eslint-plugin-security` 4.0.1 incluye catorce reglas del linter, y ninguna trata la inyección SQL. La lista completa se obtiene con `Object.keys(plugin.rules)`. Antes de contar un paquete como control, compruebe qué detecta, porque el nombre no lo dice.
 </Callout>
 
-**Cómo se comprueba.** Los dos casos incorrectos se escriben a propósito y se pasan por las dos herramientas, porque cada una detecta el que la otra deja pasar. El cuerpo sin validar detiene a `tsc` con salida 2, y el linter no dice nada. La aserción `as` pasa `tsc` con salida 0, y la detiene el linter con salida 1. Ejecutar solo una de las dos deja abierta exactamente una de las dos vías.
+**Cómo comprobarlo.** Escriba a propósito los dos casos incorrectos y páselos por `tsc` y por el linter. Cada uno detecta el caso que el otro deja pasar. El cuerpo sin validar detiene a `tsc` con código 2, y el linter no dice nada. La aserción `as` pasa `tsc` con código 0, y el linter la detiene con código 1. Si ejecuta solo uno de los dos, uno de los casos pasa sin detectarse.
 
-## 6. Lo que se ejecuta sin que nadie lo pida
+## 6. Cómo ejecutar las comprobaciones en cada cambio
 
-Las prácticas anteriores solo actúan cuando alguien las aplica. En integración continua se aplican en cada cambio, sin depender de que alguien lo recuerde. Son cinco pasos, contando los dos que no dependen del código recién escrito.
+Las prácticas anteriores solo actúan si alguien las aplica. En la integración continua, el servidor que comprueba cada cambio que se sube al repositorio, se aplican siempre, sin depender de que alguien lo recuerde. Son cinco pasos, y dos de ellos no dependen del código recién escrito:
 
-1. **Compilación.** `tsc --noEmit` sobre todo el proyecto. Sostiene el punto 5 y localiza cualquier otro lugar donde un dato sin validar llegue a una función que espera datos validados.
+1. **Compilación.** Ejecute `tsc --noEmit` sobre todo el proyecto. Aplica el punto 5 y encuentra cualquier otro lugar donde un dato sin validar llegue a una función que espera datos validados.
 2. **Linter con información de tipos.** Impide la aserción del punto 5 y localiza las llamadas que construyen SQL dinámico, que son las que hay que leer una por una.
-3. **Pruebas.** La ejecución en verde se automatiza sin más. La condición del punto 4, que la prueba se haya visto fallar, se comprueba al revisar el cambio, porque requiere el código anterior a la corrección.
-4. **Dependencias.** Instalar ejecuta código de terceros y el archivo de bloqueo decide qué se instala. Eso tiene [su propio artículo](/es/blog/npm-vs-pnpm-seguridad) y no se repite aquí.
-5. **Secretos.** GitHub bloquea el envío cuando detecta una credencial. En repositorios públicos la protección viene activada por defecto para las cuentas de usuario; en privados hay que habilitarla y requiere GitHub Secret Protection<Cite n={11} />.
+3. **Pruebas.** Automatice la ejecución de las pruebas. La condición del punto 4, haber visto fallar la prueba, se comprueba en la revisión. Necesita el código anterior a la corrección.
+4. **Dependencias.** Instalar ejecuta código de terceros, y el archivo de bloqueo decide qué se instala. El artículo [Diferencia entre npm y pnpm en la seguridad al instalar](/es/blog/npm-vs-pnpm-seguridad) explica cómo configurarlo.
+5. **Secretos.** GitHub bloquea la subida de un commit cuando detecta una credencial. En los repositorios públicos, esa protección viene activada por defecto para las cuentas de usuario. En los privados hay que activarla, y requiere GitHub Secret Protection<Cite n={11} />.
 
-Ninguno de los cinco pasos consulta el origen del código. Se aplican igual a un cambio escrito a mano y a uno generado por un modelo.
+Ninguno de los cinco pasos distingue si el cambio lo escribió una persona o un modelo, así que se aplican igual a los dos.
 
-Los mismos comandos admiten dos puntos de ejecución anteriores. El primero es el propio bucle del asistente: los harness de agente permiten enganchar una orden después de cada escritura de archivo, y poner ahí la compilación evita que el modelo siga construyendo sobre código que ya no compila. El segundo es el *hook* de pre-commit, que corre antes de que el cambio exista como commit. Ninguno de los dos sustituye a la integración continua, porque los dos viven en la máquina de quien programa y se pueden saltar. Lo que hacen es acortar el intervalo entre el defecto y el aviso.
+Las mismas órdenes se pueden ejecutar también en dos momentos anteriores:
 
-**Cómo se comprueba.** Se abre un cambio que contenga un fallo de cada tipo y se confirma que la integración continua lo detiene. Un control que nunca se ha visto fallar no está comprobado, por la misma razón que una prueba que nunca ha fallado.
+1. **Después de cada edición del agente.** El *harness* puede ejecutar un *hook*, una orden en un momento fijo, cada vez que el agente escribe un archivo. Si ejecuta ahí la compilación, el modelo no sigue construyendo sobre código que ya no compila.
+2. **Antes de cada commit.** El *hook* de pre-commit ejecuta las órdenes antes de que el cambio exista como commit.
 
-## Lo que ningún control detecta
+Ninguno de los dos sustituye a la integración continua, porque los dos se ejecutan en su máquina y se pueden saltar. Sirven para que el aviso llegue antes, más cerca del momento en que se introdujo el defecto.
 
-Las seis prácticas escalan en poder. La primera depende de que algo cargue la regla y la última se ejecuta sin que nadie lo pida. Esa escala tiene un suelo, y vale la pena decir dónde está.
+**Cómo comprobarlo.** Abra un cambio que contenga un fallo de cada tipo y compruebe que la integración continua lo detiene. Un control que nunca se ha visto fallar no está comprobado, igual que una prueba que nunca ha fallado (punto 4).
 
-El control de acceso roto no lo encuentra ninguna de las herramientas anteriores. No hay firma que distinga `obtenerPedido(pedidos, id, usuarioId)` de `obtenerPedido(pedidos, id)`. Las dos compilan, las dos pasan el linter, y la comprobación ausente no deja rastro en el árbol de sintaxis. Un analizador estático encuentra la consulta que concatena texto; no encuentra la consulta correcta a la que le falta un filtro.
+## Qué fallos no detecta ningún control
 
-En esa clase, y en las demás que dependen de las reglas del negocio, las prácticas 3 y 4 cargan solas con todo el peso. La revisión atada al cambio y la prueba vista fallar son los únicos controles que quedan, y por eso el punto 4 usa justo ese ejemplo.
+La primera práctica depende de que el *harness* cargue la regla, y la última se ejecuta en cada cambio sin que nadie la lance. Aun así, hay un tipo de fallo que ningún control detecta.
 
-Hay una forma barata de reducir la superficie. Que el dueño forme parte de la consulta, dentro del `where`, en lugar de comprobarse en una línea posterior. La condición viaja entonces con la consulta, y una comprobación posterior se puede olvidar en el siguiente endpoint. [El otro artículo lo desarrolla con el código](/es/blog/revisar-codigo-generado-por-ia).
+Ninguna de las comprobaciones anteriores encuentra el control de acceso roto. Ningún patrón de búsqueda distingue `obtenerPedido(pedidos, id, usuarioId)` de `obtenerPedido(pedidos, id)`. Las dos versiones compilan y pasan el linter, y la comprobación que falta no deja rastro en el árbol de sintaxis. Un analizador estático encuentra la consulta que concatena texto, pero no la consulta correcta a la que le falta un filtro.
 
-**Cómo se comprueba.** Con la sesión de un usuario se pide un identificador que pertenece a otro. La respuesta correcta es `404`. Si llega el registro, ninguna de las seis prácticas lo iba a detener.
+En ese tipo de fallo, y en los demás que dependen de la lógica del negocio, solo quedan dos controles. Son la revisión por cambio del punto 3 y la prueba que se ha visto fallar del punto 4. Por eso el punto 4 usa justo ese ejemplo.
 
-## Qué se queda en la petición
+Para reducir el riesgo, incluya al dueño en la condición de la consulta, dentro del `where`, y no lo compruebe en una línea posterior. Una comprobación posterior se puede olvidar en el siguiente endpoint, y la condición del `where` se aplica siempre que se ejecuta la consulta. El punto 2 de [Siete cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) lo muestra con código.
 
-Escribir buenas peticiones sigue teniendo efecto. El modelo toma decisiones que ningún control puede tomar por él: qué pide en realidad quien abre el issue, qué parte del sistema hay que tocar, cómo se llama lo que va a existir y cuánto detalle necesita la respuesta. Esas decisiones son semánticas y no tienen ninguna comprobación asociada, así que la petición es el único sitio donde caben.
+**Cómo comprobarlo.** Con la sesión de un usuario, pida un identificador que pertenezca a otro. La respuesta correcta es `404`. Si llega el registro, ninguna de las seis prácticas lo habría detenido.
 
-Para decidir dónde va una regla nueva sirven cuatro preguntas:
+## Qué decisiones van en la petición
 
-- Si su incumplimiento se detecta en el árbol de sintaxis o en la salida, la regla va al código.
-- Si describe un algoritmo con pasos, va a un script o a una función tipada.
-- Si es una decisión de cuál, de cómo se llama o de cómo suena, va a la petición y lo más corta posible.
-- Si contradice un ejemplo del mismo archivo, gana el ejemplo, porque el modelo lee los dos y el ejemplo es más concreto.
+Una buena petición sigue teniendo efecto, porque el modelo toma decisiones que ningún control puede tomar por él:
 
-Montar las seis prácticas cuesta unas horas, y después cuestan minutos por cambio. La alternativa es encontrar los mismos defectos más tarde, leyendo el árbol entero, que es exactamente la situación que las guías de Google describen como la que se revisa peor.
+- qué quiere en realidad quien abrió la tarea;
+- qué parte del sistema hay que tocar;
+- cómo se llama lo que se va a crear;
+- cuánto detalle necesita la respuesta.
+
+Esas decisiones dependen del significado y no tienen ninguna comprobación asociada, así que la petición es el único sitio donde caben.
+
+Para decidir dónde va una regla nueva, aplique estos cuatro criterios:
+
+1. Si su incumplimiento se detecta en el árbol de sintaxis o en la salida, la regla va al código.
+2. Si describe un algoritmo con pasos, va a un script o a una función tipada.
+3. Si es una decisión de qué usar, de cómo llamar algo o de cómo debe sonar, va a la petición. Escríbala lo más corta posible.
+4. Si contradice un ejemplo del mismo archivo, prevalece el ejemplo, porque el modelo lee los dos y el ejemplo es más concreto.
+
+Configurar las seis prácticas lleva unas horas, y después cada cambio suma unos minutos. Sin ellas, los mismos defectos aparecen más tarde, al revisar todo el repositorio. Según las guías de Google del punto 3, ese es el caso que peor se revisa.
 
 <References
 	title="Referencias"
