@@ -714,6 +714,126 @@ body {
 }
 
 
+/* Lista de comprobación de seguridad (SecurityChecklist.astro). Aquí por el mismo
+   motivo que el simulador de CORS: un componente de un .mdx pierde su CSS con ámbito. */
+.sec-check {
+	margin: 1.75rem 0;
+	padding: 1.1rem 1.15rem 1rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--paper-sunken);
+}
+
+.sec-check p {
+	margin: 0;
+}
+
+.sec-check-cabecera {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.3rem 1rem;
+}
+
+.sec-check .sec-check-titulo {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.sec-check .sec-check-progreso {
+	font-size: 0.8125rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--ink-muted);
+}
+
+.sec-check .sec-check-intro {
+	margin: 0.3rem 0 0.9rem;
+	font-size: 0.9375rem;
+	line-height: 1.6;
+	color: var(--ink-muted);
+}
+
+.sec-check-capa {
+	margin: 0 0 0.8rem;
+	padding: 0.6rem 0 0;
+	border: 0;
+	border-top: 1px solid var(--line);
+	min-width: 0;
+}
+
+.sec-check-capa legend {
+	padding: 0 0.4rem 0 0;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.sec-check-capa legend a {
+	margin-left: 0.35rem;
+	font-size: 0.75rem;
+	font-weight: 400;
+	color: var(--ink-faint);
+}
+
+.sec-check-punto {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.55rem;
+	align-items: start;
+	padding: 0.3rem 0;
+	font-size: 0.9rem;
+	line-height: 1.55;
+	color: var(--ink);
+	cursor: pointer;
+}
+
+.sec-check-punto input {
+	width: 1rem;
+	height: 1rem;
+	margin: 0.2rem 0 0;
+	accent-color: var(--action);
+}
+
+.sec-check-punto input:focus-visible,
+.sec-check-reiniciar:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+.sec-check-punto input:checked + span {
+	color: var(--ink-muted);
+}
+
+.sec-check .sec-check-orden {
+	display: block;
+	width: fit-content;
+	max-width: 100%;
+	margin-top: 0.25rem;
+	padding: 0.15rem 0.4rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	background: var(--paper);
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	overflow-wrap: anywhere;
+	color: var(--ink);
+}
+
+.sec-check-reiniciar {
+	margin-top: 0.2rem;
+	padding: 0.3rem 0.65rem;
+	border: 1px solid var(--line-strong);
+	border-radius: var(--radius-sm);
+	background: var(--surface);
+	color: var(--ink-muted);
+	font: inherit;
+	font-size: 0.8125rem;
+	cursor: pointer;
+}
+
+
 /* Shiki emite --shiki-light y --shiki-dark con defaultColor: false. Se toma de
    ahi solo el color del texto; el fondo sigue siendo el del sitio, para que un
    bloque de codigo sea el mismo objeto en una ficha y en un articulo. */

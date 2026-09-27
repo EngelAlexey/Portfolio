@@ -1,0 +1,258 @@
+---
+// Lista de comprobación del artículo como-proteger-una-pagina-web. Las capas siguen el
+// mismo orden y los mismos nombres que la tabla del punto 1 y la fase 2 del prompt.
+// El estado se guarda en localStorage solo como comodidad para quien lee.
+// Los estilos están en src/app.css (.sec-check): un componente importado desde un .mdx
+// no recibe su CSS con ámbito.
+interface Props {
+	lang: 'es' | 'en';
+}
+
+const { lang } = Astro.props;
+
+type Punto = { id: string; texto: string; orden?: string };
+type Capa = { id: string; nombre: string; ancla: string; puntos: Punto[] };
+
+const T = {
+	es: {
+		titulo: 'Lista de comprobación',
+		intro: 'Marque cada punto después de comprobarlo en su aplicación. Sustituya su-dominio.example por el suyo.',
+		progreso: (n: number, m: number) => `${n} de ${m} comprobados`,
+		reiniciar: 'Desmarcar todo',
+		irA: 'Ver el punto',
+		capas: [
+			{
+				id: 'https', nombre: '1. HTTPS', ancla: '#3-cómo-servir-la-aplicación-por-https-y-activar-hsts',
+				puntos: [
+					{ id: 'https-redir', texto: 'La dirección con http:// redirige a https://.', orden: 'curl -sI http://su-dominio.example' },
+					{ id: 'https-hsts', texto: 'La respuesta por HTTPS trae Strict-Transport-Security con un max-age de al menos un año (OWASP recomienda dos).', orden: 'curl -sI https://su-dominio.example' }
+				]
+			},
+			{
+				id: 'cabeceras', nombre: '2. Cabeceras de seguridad', ancla: '#4-qué-cabeceras-de-seguridad-enviar',
+				puntos: [
+					{ id: 'cab-csp', texto: 'Content-Security-Policy existe e incluye frame-ancestors.', orden: 'curl -sI https://su-dominio.example' },
+					{ id: 'cab-otras', texto: 'X-Content-Type-Options: nosniff y Referrer-Policy están presentes.' },
+					{ id: 'cab-powered', texto: 'No aparece X-Powered-By.' }
+				]
+			},
+			{
+				id: 'sesion', nombre: '3. Sesión y cookies', ancla: '#5-cómo-proteger-la-sesión-y-las-cookies',
+				puntos: [
+					{ id: 'ses-atributos', texto: 'La cookie de sesión lleva HttpOnly, Secure y SameSite, con el prefijo __Host-.', orden: 'curl -si -d "email=…&contrasena=…" https://su-dominio.example/login' },
+					{ id: 'ses-js', texto: 'Con la sesión iniciada, document.cookie en la consola no muestra la cookie de sesión.' }
+				]
+			},
+			{
+				id: 'contrasenas', nombre: '4. Contraseñas e intentos', ancla: '#6-cómo-guardar-las-contraseñas-y-limitar-los-intentos',
+				puntos: [
+					{ id: 'pwd-hash', texto: 'Las contraseñas se guardan con Argon2id o scrypt (bcrypt solo en sistemas heredados), nunca en claro ni con un hash rápido.' },
+					{ id: 'pwd-limite', texto: 'Tras varios intentos fallidos, el inicio de sesión responde 429.' }
+				]
+			},
+			{
+				id: 'permisos', nombre: '5. Permisos', ancla: '#7-cómo-comprobar-los-permisos-en-el-servidor',
+				puntos: [
+					{ id: 'perm-rol', texto: 'Una acción de administrador, pedida con la sesión de un usuario normal, responde 403.' },
+					{ id: 'perm-id', texto: 'Un recurso de otra cuenta, pedido por su id, responde 404.' }
+				]
+			},
+			{
+				id: 'entrada', nombre: '6. Entrada y salida', ancla: '#8-cómo-tratar-la-entrada-y-la-salida',
+				puntos: [
+					{ id: 'ent-comilla', texto: 'Una comilla simple en un campo de búsqueda no produce un error 500.' },
+					{ id: 'ent-xss', texto: 'Un texto como <img src=x onerror=alert(1)> en la búsqueda se muestra como texto.' }
+				]
+			},
+			{
+				id: 'origenes', nombre: '7. Otros orígenes (CORS y CSRF)', ancla: '#9-cómo-controlar-las-peticiones-de-otros-orígenes',
+				puntos: [
+					{ id: 'ori-cors', texto: 'Una petición con un Origin ajeno no recibe Access-Control-Allow-Origin.', orden: 'curl -si -H "Origin: https://atacante.example" https://su-dominio.example/api/perfil' },
+					{ id: 'ori-csrf', texto: 'Las rutas que cambian datos exigen un token anti-CSRF o la protección del framework.' }
+				]
+			},
+			{
+				id: 'secretos', nombre: '8. Secretos', ancla: '#10-cómo-mantener-los-secretos-fuera-del-código-y-del-navegador',
+				puntos: [
+					{ id: 'sec-bundle', texto: 'Ninguna clave privada aparece en el JavaScript que descarga el navegador.' },
+					{ id: 'sec-git', texto: 'El archivo .env no está en el repositorio.', orden: 'git ls-files .env' }
+				]
+			},
+			{
+				id: 'dependencias', nombre: '9. Dependencias', ancla: '#11-cómo-controlar-las-dependencias',
+				puntos: [
+					{ id: 'dep-ci', texto: 'La instalación usa el archivo de bloqueo.', orden: 'npm ci' },
+					{ id: 'dep-firmas', texto: 'Las firmas de los paquetes instalados se verifican.', orden: 'npm audit signatures' }
+				]
+			},
+			{
+				id: 'errores', nombre: '10. Errores y registros', ancla: '#12-cómo-responder-a-los-errores-sin-filtrar-datos',
+				puntos: [
+					{ id: 'err-traza', texto: 'Un error 500 devuelve un identificador, sin traza ni datos internos.' },
+					{ id: 'err-log', texto: 'El registro del servidor no guarda contraseñas, cookies de sesión ni tokens.' }
+				]
+			}
+		] as Capa[]
+	},
+	en: {
+		titulo: 'Checklist',
+		intro: 'Tick each item after checking it on your application. Replace your-domain.example with your own.',
+		progreso: (n: number, m: number) => `${n} of ${m} checked`,
+		reiniciar: 'Untick all',
+		irA: 'See the section',
+		capas: [
+			{
+				id: 'https', nombre: '1. HTTPS', ancla: '#3-how-to-serve-the-application-over-https-and-enable-hsts',
+				puntos: [
+					{ id: 'https-redir', texto: 'The http:// address redirects to https://.', orden: 'curl -sI http://your-domain.example' },
+					{ id: 'https-hsts', texto: 'The HTTPS response carries Strict-Transport-Security with a max-age of at least one year (OWASP recommends two).', orden: 'curl -sI https://your-domain.example' }
+				]
+			},
+			{
+				id: 'cabeceras', nombre: '2. Security headers', ancla: '#4-which-security-headers-to-send',
+				puntos: [
+					{ id: 'cab-csp', texto: 'Content-Security-Policy exists and includes frame-ancestors.', orden: 'curl -sI https://your-domain.example' },
+					{ id: 'cab-otras', texto: 'X-Content-Type-Options: nosniff and Referrer-Policy are present.' },
+					{ id: 'cab-powered', texto: 'X-Powered-By does not appear.' }
+				]
+			},
+			{
+				id: 'sesion', nombre: '3. Session and cookies', ancla: '#5-how-to-protect-the-session-and-the-cookies',
+				puntos: [
+					{ id: 'ses-atributos', texto: 'The session cookie carries HttpOnly, Secure and SameSite, with the __Host- prefix.', orden: 'curl -si -d "email=…&contrasena=…" https://your-domain.example/login' },
+					{ id: 'ses-js', texto: 'With the session started, document.cookie in the console does not show the session cookie.' }
+				]
+			},
+			{
+				id: 'contrasenas', nombre: '4. Passwords and attempts', ancla: '#6-how-to-store-passwords-and-limit-attempts',
+				puntos: [
+					{ id: 'pwd-hash', texto: 'Passwords are stored with Argon2id or scrypt (bcrypt only for legacy systems), never in plain text or with a fast hash.' },
+					{ id: 'pwd-limite', texto: 'After several failed attempts, the login answers 429.' }
+				]
+			},
+			{
+				id: 'permisos', nombre: '5. Permissions', ancla: '#7-how-to-check-permissions-on-the-server',
+				puntos: [
+					{ id: 'perm-rol', texto: "An admin action, requested with a regular user's session, answers 403." },
+					{ id: 'perm-id', texto: "A resource from another account, requested by its id, answers 404." }
+				]
+			},
+			{
+				id: 'entrada', nombre: '6. Input and output', ancla: '#8-how-to-handle-input-and-output',
+				puntos: [
+					{ id: 'ent-comilla', texto: 'A single quote in a search field does not produce a 500 error.' },
+					{ id: 'ent-xss', texto: 'Text such as <img src=x onerror=alert(1)> in the search is shown as text.' }
+				]
+			},
+			{
+				id: 'origenes', nombre: '7. Other origins (CORS and CSRF)', ancla: '#9-how-to-control-requests-from-other-origins',
+				puntos: [
+					{ id: 'ori-cors', texto: 'A request with a foreign Origin gets no Access-Control-Allow-Origin.', orden: 'curl -si -H "Origin: https://atacante.example" https://your-domain.example/api/perfil' },
+					{ id: 'ori-csrf', texto: "Routes that change data require an anti-CSRF token or the framework's protection." }
+				]
+			},
+			{
+				id: 'secretos', nombre: '8. Secrets', ancla: '#10-how-to-keep-secrets-out-of-the-code-and-the-browser',
+				puntos: [
+					{ id: 'sec-bundle', texto: 'No private key appears in the JavaScript the browser downloads.' },
+					{ id: 'sec-git', texto: 'The .env file is not in the repository.', orden: 'git ls-files .env' }
+				]
+			},
+			{
+				id: 'dependencias', nombre: '9. Dependencies', ancla: '#11-how-to-control-dependencies',
+				puntos: [
+					{ id: 'dep-ci', texto: 'The install uses the lockfile.', orden: 'npm ci' },
+					{ id: 'dep-firmas', texto: 'The signatures of the installed packages are verified.', orden: 'npm audit signatures' }
+				]
+			},
+			{
+				id: 'errores', nombre: '10. Errors and logs', ancla: '#12-how-to-answer-errors-without-leaking-data',
+				puntos: [
+					{ id: 'err-traza', texto: 'A 500 error returns an identifier, with no stack trace or internal data.' },
+					{ id: 'err-log', texto: 'The server log does not store passwords, session cookies or tokens.' }
+				]
+			}
+		] as Capa[]
+	}
+}[lang];
+
+const total = T.capas.reduce((n, c) => n + c.puntos.length, 0);
+---
+
+<section class="sec-check" data-total={total} data-lang={lang} aria-labelledby={`sec-check-titulo-${lang}`}>
+	<div class="sec-check-cabecera">
+		<p class="sec-check-titulo" id={`sec-check-titulo-${lang}`}>{T.titulo}</p>
+		<p class="sec-check-progreso" aria-live="polite" data-plantilla-es="{n} de {m} comprobados" data-plantilla-en="{n} of {m} checked">
+			{T.progreso(0, total)}
+		</p>
+	</div>
+	<p class="sec-check-intro">{T.intro}</p>
+	{
+		T.capas.map((capa) => (
+			<fieldset class="sec-check-capa">
+				<legend>
+					{capa.nombre} <a href={capa.ancla}>{T.irA}</a>
+				</legend>
+				{capa.puntos.map((p) => (
+					<label class="sec-check-punto">
+						<input type="checkbox" data-id={p.id} />
+						<span>
+							{p.texto}
+							{p.orden && <code class="sec-check-orden">{p.orden}</code>}
+						</span>
+					</label>
+				))}
+			</fieldset>
+		))
+	}
+	<button type="button" class="sec-check-reiniciar">{T.reiniciar}</button>
+</section>
+
+<script>
+	const CLAVE = 'sec-check:como-proteger-una-pagina-web';
+
+	function leer(): Record<string, boolean> {
+		try {
+			return JSON.parse(localStorage.getItem(CLAVE) ?? '{}');
+		} catch {
+			return {};
+		}
+	}
+
+	function guardar(estado: Record<string, boolean>) {
+		try {
+			localStorage.setItem(CLAVE, JSON.stringify(estado));
+		} catch {
+			// Sin almacenamiento (ventana privada o bloqueado): la lista funciona igual, sin recordar.
+		}
+	}
+
+	for (const raiz of document.querySelectorAll<HTMLElement>('.sec-check')) {
+		const casillas = [...raiz.querySelectorAll<HTMLInputElement>('input[type=checkbox]')];
+		const progreso = raiz.querySelector<HTMLElement>('.sec-check-progreso')!;
+		const plantilla = progreso.dataset[raiz.dataset.lang === 'en' ? 'plantillaEn' : 'plantillaEs']!;
+		const total = Number(raiz.dataset.total);
+
+		const pintar = () => {
+			const n = casillas.filter((c) => c.checked).length;
+			progreso.textContent = plantilla.replace('{n}', String(n)).replace('{m}', String(total));
+		};
+
+		const estado = leer();
+		for (const c of casillas) {
+			c.checked = !!estado[c.dataset.id!];
+			c.addEventListener('change', () => {
+				const actual = leer();
+				actual[c.dataset.id!] = c.checked;
+				guardar(actual);
+				pintar();
+			});
+		}
+		raiz.querySelector('.sec-check-reiniciar')!.addEventListener('click', () => {
+			for (const c of casillas) c.checked = false;
+			guardar({});
+			pintar();
+		});
+		pintar();
+	}
+</script>
