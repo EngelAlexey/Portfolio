@@ -500,11 +500,35 @@ El prompt no toca el código de la aplicación. Si durante la configuración el 
 	Este prompt pide al agente que ejecute órdenes del proyecto y escriba archivos de configuración. El texto completo se lee con **Ver el prompt completo**, bajo el botón, y es exactamente lo que se copia. La fase 2 obliga al agente a detenerse antes de escribir: si continúa sin preguntar, se interrumpe con `Esc`.
 </Callout>
 
-Los revisores, las skills de método y los agentes de trabajo adaptan ideas de nueve fuentes públicas. En seguridad, la guía de auditoría de Cloudflare<Cite n={14} repeat />, el revisor de Anthropic<Cite n={15} repeat /> y las skills de Trail of Bits<Cite n={28} />. En calidad, pruebas y método, los plugins oficiales de Anthropic `pr-review-toolkit` y `feature-dev`<Cite n={29} />, ECC<Cite n={16} repeat />, la guía de revisión de Google<Cite n={17} repeat />, Superpowers<Cite n={30} />, las skills de Matt Pocock<Cite n={31} /> y gstack<Cite n={32} />. De las que tienen licencia CC BY-SA se toman ideas, no texto.
-
 **Cómo se comprueba.** Las skills y los subagentes nuevos se registran al abrir la sesión, así que se cierra y se vuelve a abrir. Entonces `/revisar-cambio` aparece al escribir `/` y la lectura de `.env` devuelve el bloqueo. `git status --porcelain` enseña solo los archivos que el agente propuso en la fase 2.
 
-## 15. Herramientas que se pueden añadir
+## 15. Para qué sirve cada pieza y de dónde sale
+
+Sin esta configuración, el agente empieza cada sesión sin conocer las órdenes del proyecto, puede leer un `.env` sin preguntar y revisa su trabajo con el mismo sesgo con que lo escribió. Además, sus subagentes heredan el modelo de la sesión, que suele ser el más caro. Cada pieza del prompt cubre uno de esos huecos:
+
+- **`AGENTS.md`** fija los hechos del proyecto (órdenes comprobadas, vocabulario y convenciones) para que el agente no tenga que deducirlos en cada sesión.
+- **La regla de secretos y los hooks** convierten los límites en reglas que aplica la herramienta: la lectura de `.env` y las órdenes destructivas se bloquean aunque el modelo las intente.
+- **Las skills de método** dan un procedimiento para cada tipo de tarea. Se aclara antes de construir, se ve fallar la prueba antes de escribir el código, se busca la causa antes de arreglar y se reparte con el número y el modelo justos.
+- **Los revisores** reparten la revisión en cuatro preguntas, cada una en un contexto propio y sin el sesgo de quien escribió el cambio.
+- **Los agentes de trabajo** reciben piezas acotadas de una tarea grande, cada una con el nivel de modelo que necesita.
+
+En la prueba del punto 14, los cuatro revisores detectaron los cuatro fallos sembrados, y el de seguridad confirmó la inyección ejecutándola. La revisión completa tardó unos 8 minutos.
+
+Las ideas vienen de nueve fuentes públicas:
+
+- **La guía de auditoría de Cloudflare**<Cite n={14} repeat /> exige que un hallazgo de seguridad viole una frontera de confianza real, con evidencia en el código, una reproducción segura y el arreglo más pequeño. De ahí salen el método y la gravedad del `revisor-seguridad` y sus nueve listas por dominio.
+- **El revisor de seguridad de Anthropic**<Cite n={15} repeat /> solo reporta lo que es explotable con más de un 80 % de confianza. Excluye categorías que casi siempre son ruido, como la denegación de servicio, y esa lista está en lo que el `revisor-seguridad` no reporta.
+- **Las skills de Trail of Bits**<Cite n={28} /> revisan solo lo que introduce el cambio, comprueban cada sospecha para descartar falsos positivos y mutan el código para medir las pruebas. Esas tres ideas están en el contrato común de los revisores y en el `revisor-pruebas`.
+- **Los plugins oficiales `pr-review-toolkit` y `feature-dev` de Anthropic**<Cite n={29} /> traen revisores de fallos silenciosos, diseño de tipos y cobertura de pruebas, y agentes que exploran el código y diseñan antes de implementar. De ellos salen el `revisor-errores-y-tipos`, la puntuación de huecos del `revisor-pruebas`, el `explorador` y el `arquitecto`.
+- **ECC**<Cite n={16} repeat /> tiene agentes de trabajo acotados: uno arregla la compilación con el cambio mínimo, otro limpia el código muerto y otro pone al día la documentación. Son el `resolutor-compilacion`, el `limpiador` y el `documentador`.
+- **La guía de revisión de Google**<Cite n={17} repeat /> dice qué mirar en una revisión, pide leer cada línea y no aprobar un cambio que empeore la salud del código. Son la pregunta y la lista de categorías del `revisor-calidad`.
+- **Superpowers**<Cite n={30} /> aporta tres hábitos: ver fallar la prueba primero, buscar la causa raíz y parar tras tres arreglos fallidos, y no afirmar nada sin la orden que lo demuestra. También elige el modelo más barato que pueda con cada tarea, porque pesan más los turnos que el precio por token. Está en `pruebas-primero`, `depurar`, el final de `AGENTS.md` y los niveles de `orquestar`.
+- **Las skills de Matt Pocock**<Cite n={31} /> entrevistan al usuario antes de construir, comprueban si el cambio hace lo pedido y resuelven los conflictos de fusión según la intención de cada lado. De ahí salen `aclarar`, la sección «Lo pedido» del `revisor-calidad` y la regla de integración de `orquestar`.
+- **gstack**<Cite n={32} /> reutiliza antes de escribir código nuevo, avisa antes de una orden destructiva y trata el acuerdo entre dos modelos como una señal, no como una decisión. Está en el `implementador`, en el hook de órdenes destructivas y en el uso de claude-council.
+
+De las fuentes con licencia CC BY-SA se toman ideas, no texto.
+
+## 16. Herramientas que se pueden añadir
 
 Además de lo que crea, el prompt propone tres herramientas y dos colecciones de skills, todas opcionales.
 
@@ -519,6 +543,55 @@ Las skills de **Matt Pocock**, `mattpocock-skills`<Cite n={31} repeat />, entrev
 **gstack**<Cite n={32} repeat /> es un proceso de desarrollo completo con unas cuarenta skills, para planificar, revisar, probar en un navegador, publicar y hacer retrospectivas. Se instala para todo el usuario, necesita Bun, y su instalación compila un navegador propio y registra un hook en la configuración global `~/.claude/settings.json`. En modo equipo añade otro hook que descarga y reinstala la última versión al abrir cada sesión, como mucho una vez por hora. Por eso el prompt lo propone sin modo equipo, con la telemetría apagada y sin importar las cookies del navegador, que darían al agente las sesiones iniciadas del usuario.
 
 **Cómo se hace.** La fase 10 del prompt propone las tres herramientas y las dos colecciones una a una, y solo instala cada una si el usuario confirma.
+
+## 17. Cómo se trabaja con el entorno: una función nueva de principio a fin
+
+Con el entorno configurado, una petición ya no llega a un agente que empieza de cero. Llega a una sesión que conoce las órdenes y las convenciones del proyecto y que tiene un procedimiento para cada paso. Este ejemplo sigue una función nueva en el proyecto de prueba, desde la petición hasta el commit.
+
+**La petición.** Se escribe `/plan` seguido de lo que se quiere y de los requisitos que ya se conocen. En modo plan el agente lee, busca y ejecuta órdenes de exploración, pero no edita nada hasta que se aprueba el plan<Cite n={8} repeat />:
+
+```text
+/plan Añadir descuentos a los pedidos. resumen() tiene que mostrar el importe final,
+ningún total puede quedar por debajo de cero y el cambio lleva sus pruebas.
+```
+
+**Qué hace el entorno con esa petición:**
+
+1. **Parte de `AGENTS.md`.** El agente ya sabe que las pruebas se lanzan con `npm test`, que los importes son céntimos enteros y que solo `formatearPrecio` los convierte en texto. No tiene que deducirlo del código.
+2. **Aclara antes de planificar.** La petición deja decisiones abiertas, así que se activa `aclarar`. Busca en el código lo que se puede averiguar y pregunta el resto por rondas, con una recomendación en cada pregunta. En la prueba, ante una petición parecida, preguntó así:
+
+   ```text
+   1. ¿Qué tipo de descuento? a) porcentaje, b) importe fijo en céntimos, c) los dos.
+      Recomiendo b: es entero desde el principio y no obliga a decidir cómo redondear.
+   3. ¿Qué pasa si el descuento es mayor que el total? a) se lanza un error, b) el neto queda en 0.
+      Recomiendo a, por coherencia con el TypeError de formatearPrecio.
+   ```
+
+3. **Diseña y reparte.** Con las decisiones tomadas, `orquestar` decide si la tarea merece repartirse. Si la merece, el `arquitecto`, en el modelo mayor, la parte en piezas que no comparten archivos, cada una con su prueba, su orden de comprobación y su nivel de modelo. Antes de proponer código nuevo busca lo que ya existe, aquí `formatearPrecio`.
+4. **Se aprueba el plan.** El plan aparece como texto: se aprueba, se pide que siga planeando o se edita con `Ctrl+G`<Cite n={8} repeat />. Un enfoque equivocado se corrige en ese texto, sin revertir archivos.
+5. **Implementa con la prueba primero.** Cada pieza sigue `pruebas-primero`. Primero se escribe la prueba del comportamiento, por ejemplo que un descuento mayor que el total lanza un error, y se ve fallar; después, el código mínimo. Si hay piezas independientes, cada `implementador` trabaja en su propio árbol de trabajo y el agente principal las integra de una en una, con la suite después de cada integración.
+6. **Los límites siguen activos.** Si el agente intenta leer `.env`, editar `package-lock.json` o ejecutar `git reset --hard`, la regla de permisos y los hooks lo bloquean. No depende de que el modelo lo recuerde.
+7. **Revisa antes de confirmar.** `AGENTS.md` pide ejecutar `revisar-cambio` antes de cada commit, y también se lanza a mano con `/revisar-cambio`. El de calidad compara el cambio con el plan aprobado, y el de errores y tipos busca, por ejemplo, un descuento negativo que nadie valida. El de pruebas muta la lógica del descuento para ver si alguna prueba lo detecta.
+8. **Confirma.** Con el veredicto limpio, o solo con avisos, el cambio se confirma con el formato de commit del proyecto. Si algo bloquea, se arregla y se vuelve a revisar.
+
+Las herramientas opcionales entran en los mismos pasos. El `explorador` consulta graphify antes de abrir archivos, archify dibuja el flujo si se pide, y claude-council sirve para una decisión de verdad dudosa, como porcentaje frente a importe fijo.
+
+**Qué gana el proyecto.** Cada paso cierra una vía concreta por la que un error llega al repositorio:
+
+- Una decisión que nadie tomó, como el tipo de descuento o qué pasa con los negativos, se pregunta antes de escribir código en lugar de descubrirse en la revisión.
+- Una convención olvidada, como formatear un importe fuera de `formatearPrecio`, está escrita en `AGENTS.md` y la comprueba el revisor de calidad.
+- Una prueba que pasa por construcción no protege nada: `pruebas-primero` exige verla fallar, y el revisor de pruebas muta el código para comprobarlo.
+- Un fallo de seguridad no depende de que lo vea el mismo agente que lo escribió: lo revisa otro, en su propio contexto, y lo confirma ejecutándolo.
+- Un secreto o una orden destructiva no dependen de la atención de nadie: los bloquea la herramienta.
+
+En la prueba del punto 14, esa revisión detectó los cuatro fallos sembrados y bloqueó el cambio. El revisor de pruebas demostró además que una prueba sembrada seguía en verde con la función rota.
+
+**Cómo se hace.**
+
+1. Se escribe `/plan` seguido de la petición, o se pulsa `Shift+Tab` hasta el modo plan y se escribe la petición.
+2. Se responden las preguntas de `aclarar` y se aprueba el plan.
+3. Durante la implementación, `/context` muestra cuánto ocupa la conversación y `/rewind` deshace un paso que salió mal.
+4. Antes de confirmar, `/revisar-cambio`, si el agente no la ha lanzado ya.
 
 ## Las órdenes que se usan desde el primer día
 

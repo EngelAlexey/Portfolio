@@ -500,11 +500,35 @@ The prompt does not touch application code. If during setup the agent finds it n
 	This prompt asks the agent to run the project's commands and write configuration files. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Phase 2 makes the agent stop before writing: if it carries on without asking, interrupt it with `Esc`.
 </Callout>
 
-The reviewers, the method skills and the work agents adapt ideas from nine public sources. For security, Cloudflare's audit guide<Cite n={14} repeat />, Anthropic's reviewer<Cite n={15} repeat /> and Trail of Bits' skills<Cite n={28} />. For quality, tests and method, Anthropic's official `pr-review-toolkit` and `feature-dev` plugins<Cite n={29} />, ECC<Cite n={16} repeat />, Google's review guide<Cite n={17} repeat />, Superpowers<Cite n={30} />, Matt Pocock's skills<Cite n={31} /> and gstack<Cite n={32} />. From the CC BY-SA sources, ideas are taken, not text.
-
 **How to check it.** New skills and subagents register when a session opens, so close it and open it again. Then `/review-change` appears on typing `/` and reading `.env` returns the block. `git status --porcelain` shows only the files the agent proposed in phase 2.
 
-## 15. Tools that can be added
+## 15. What each piece is for and where it comes from
+
+Without this setup, the agent starts every session without knowing the project's commands, can read a `.env` without asking, and reviews its work with the same bias it wrote it with. Its subagents also inherit the session's model, which is usually the most expensive one. Each piece of the prompt covers one of those gaps:
+
+- **`AGENTS.md`** records the project's facts (checked commands, vocabulary and conventions), so the agent does not have to work them out again in every session.
+- **The secrets rule and the hooks** turn limits into rules the tool enforces: reading `.env` and running destructive commands are blocked even when the model tries.
+- **The method skills** give a procedure for each kind of task. Clarify before building, see the test fail before writing code, find the cause before fixing, and split work with the right number of agents and models.
+- **The reviewers** split the review into four questions, each in its own context and free of the bias of whoever wrote the change.
+- **The work agents** take bounded pieces of a large task, each on the model tier it needs.
+
+In the section 14 test, the four reviewers caught the four planted flaws, and the security reviewer confirmed the injection by running it. The whole review took about 8 minutes.
+
+The ideas come from nine public sources:
+
+- **Cloudflare's audit guide**<Cite n={14} repeat /> defines when a security finding exists: when it violates a real trust boundary, backed by evidence in the source, a safe reproduction and the smallest fix. It is the basis for the `security-reviewer`'s method and severity, and for its nine per-domain checklists.
+- **Anthropic's security reviewer**<Cite n={15} repeat /> only reports what it is more than 80 % confident is exploitable, and excludes categories that are almost always noise, such as denial of service. That list is what the `security-reviewer` does not report.
+- **Trail of Bits' skills**<Cite n={28} /> review only what a change introduces and whom it affects, check each suspicion to rule out false positives, and mutate code to measure the tests. Those three ideas live in the reviewers' shared contract and in the `tests-reviewer`.
+- **Anthropic's official `pr-review-toolkit` and `feature-dev` plugins**<Cite n={29} /> bring reviewers for silent failures, type design and test coverage, plus agents that explore the code and design before implementing. They are the source of the `errors-and-types-reviewer`, the `tests-reviewer`'s gap scoring, the `explorer` and the `architect`.
+- **ECC**<Cite n={16} repeat /> has bounded work agents: one fixes the build with the smallest change, another clears dead code, and another brings the documentation up to date. They became the `build-fixer`, the `cleaner` and the `doc-writer`.
+- **Google's review guide**<Cite n={17} repeat /> says what to look for in a review, asks for every line to be read, and rejects changes that make code health worse. It gives the `quality-reviewer` its question and its list of categories.
+- **Superpowers**<Cite n={30} /> contributes three habits: see the test fail first, find the root cause and stop after three failed fixes, and claim nothing without the command that proves it. It also picks the cheapest model that can handle each task, because turn count matters more than price per token. It is in `test-first`, `root-cause-debugging`, the end of `AGENTS.md` and the tiers in `orchestrate`.
+- **Matt Pocock's skills**<Cite n={31} /> interview the user before building, check whether a change does what the task asked, and resolve merge conflicts by each side's intent. They gave `clarify`, the "What was asked" section of the `quality-reviewer` and the merge rule in `orchestrate`.
+- **gstack**<Cite n={32} /> reuses before writing new code, warns before destructive commands, and treats agreement between two models as a signal, not a decision. It is in the `implementer`, the destructive-command hook and the way claude-council is used.
+
+From the CC BY-SA sources, ideas are taken, not text.
+
+## 16. Tools that can be added
 
 Besides what it creates, the prompt proposes three tools and two skill collections, all optional.
 
@@ -519,6 +543,55 @@ Besides what it creates, the prompt proposes three tools and two skill collectio
 **gstack**<Cite n={32} repeat /> is a complete development process with roughly forty skills, for planning, reviewing, testing in a browser, publishing and running retrospectives. It installs for the whole user account, needs Bun, and its installer compiles its own browser and registers a hook in the global `~/.claude/settings.json`. In team mode it adds another hook that pulls and reinstalls the latest version whenever a session opens, at most once an hour. That is why the prompt proposes it without team mode, with telemetry off and without importing the browser's cookies, which would hand the agent the user's signed-in sessions.
 
 **How to do it.** Phase 10 of the prompt proposes the three tools and the two collections one at a time, and only installs each one if the user confirms.
+
+## 17. Working with the environment: a new feature from start to finish
+
+With the environment set up, a request no longer reaches an agent that starts from zero. It reaches a session that knows the project's commands and conventions and has a procedure for each step. This example follows a new feature in the test project, from the request to the commit.
+
+**The request.** Type `/plan` followed by what you want and the requirements you already know. In plan mode the agent reads, searches and runs exploration commands, but edits nothing until the plan is approved<Cite n={8} repeat />:
+
+```text
+/plan Add discounts to orders. resumen() has to show the final amount,
+no total may drop below zero, and the change comes with its tests.
+```
+
+**What the environment does with that request:**
+
+1. **It starts from `AGENTS.md`.** The agent already knows that tests run with `npm test`, that amounts are integer cents, and that only `formatearPrecio` turns them into text. It does not have to work that out from the code.
+2. **It clarifies before planning.** The request leaves decisions open, so `clarify` kicks in. It looks up what the code can tell it and asks the rest in rounds, with a recommendation for each question. In the test, faced with a similar request, it asked (translated from Spanish):
+
+   ```text
+   1. What kind of discount? a) percentage, b) fixed amount in cents, c) both.
+      I recommend b: it is an integer from the start and needs no rounding decision.
+   3. What happens if the discount is larger than the total? a) throw an error, b) the net stays at 0.
+      I recommend a, consistent with the TypeError that formatearPrecio throws.
+   ```
+
+3. **It designs and splits.** With the decisions made, `orchestrate` decides whether the task is worth splitting. If it is, the `architect`, on the top model, splits it into pieces that share no files, each with its test, its check command and its model tier. Before proposing new code it looks for what already exists, here `formatearPrecio`.
+4. **The plan is approved.** The plan appears as text: approve it, ask for more planning, or edit it with `Ctrl+G`<Cite n={8} repeat />. A wrong approach gets fixed in that text, with no files to revert.
+5. **It implements test first.** Each piece follows `test-first`. First comes the test for the behaviour, for instance that a discount larger than the total throws an error, and it is seen to fail; then the minimal code. If there are independent pieces, each `implementer` works in its own worktree and the main agent merges them one at a time, running the suite after each merge.
+6. **The limits stay on.** If the agent tries to read `.env`, edit `package-lock.json` or run `git reset --hard`, the permission rule and the hooks block it. It does not depend on the model remembering.
+7. **It reviews before committing.** `AGENTS.md` asks for `review-change` before every commit, and it can also be run by hand with `/review-change`. The quality reviewer compares the change with the approved plan, and the errors and types reviewer looks, for example, for a negative discount nobody validates. The tests reviewer mutates the discount logic to see whether any test catches it.
+8. **It commits.** With a clean verdict, or only warnings, the change is committed in the project's commit format. If something blocks, it gets fixed and reviewed again.
+
+The optional tools fit into the same steps. The `explorer` queries graphify before opening files, archify draws the flow when asked, and claude-council helps with a genuinely uncertain decision, such as percentage versus fixed amount.
+
+**What the project gains.** Each step closes a specific way an error reaches the repository:
+
+- A decision nobody made, such as the kind of discount or what happens with negatives, gets asked before any code is written instead of turning up in review.
+- A forgotten convention, such as formatting an amount outside `formatearPrecio`, is written down in `AGENTS.md` and checked by the quality reviewer.
+- A test that passes by construction protects nothing: `test-first` requires seeing it fail, and the tests reviewer mutates the code to check.
+- A security flaw does not depend on the same agent that wrote it noticing it: another one reviews it, in its own context, and confirms it by running it.
+- A secret or a destructive command does not depend on anyone's attention: the tool blocks it.
+
+In the section 14 test, that review caught the four planted flaws and blocked the change. The tests reviewer also showed that a planted test stayed green with the function broken.
+
+**How to do it.**
+
+1. Type `/plan` followed by the request, or press `Shift+Tab` until plan mode and type the request.
+2. Answer the `clarify` questions and approve the plan.
+3. During implementation, `/context` shows how much of the window the conversation takes, and `/rewind` undoes a step that went wrong.
+4. Before committing, run `/review-change` if the agent has not already.
 
 ## The commands used from day one
 
