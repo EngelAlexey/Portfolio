@@ -478,20 +478,20 @@ Everything above can be built by hand, file by file. There is a prompt that has 
 
 The base setup, phases 1 to 9, takes 15 to 20 minutes on a small project. In the test run it took 14: 5 to survey the project and propose, 2 waiting for the answer, and 7 to create every file. With the five optional tools and the phase 11 tests, the whole run took 29 minutes. Two things account for the difference. gstack compiles its binaries and downloads its browser, about 5 minutes. The reviewer test takes about 8, because it launches the four reviewers on planted flaws and the tests reviewer mutates the code to see whether any test catches it.
 
-On a Node.js test project, the prompt left this structure. `.claude/agents` holds the eleven subagents: the four reviewers, the six work agents and a replacement for Claude Code's own explorer. `.claude/skills` holds the nine skills, and the root holds `AGENTS.md` and the `CLAUDE.md` that imports it. This run used the Spanish prompt; the English one creates the same structure with English names.
+On a Node.js test project, with the five optional tools installed, the prompt left this structure. `.claude/agents` holds the ten subagents: the four reviewers and the six work agents. `.claude/skills` holds sixteen skills: the prompt's nine, graphify's and six of Matt Pocock's. The tools installed for the user (archify, gstack and claude-council) appear at the bottom, collapsed, with their path under `~/.claude`.
 
 <figure class="shot">
-	<a href="/img/blog/estructura-tras-el-prompt.webp">
+	<a href="/img/blog/structure-after-the-prompt.webp">
 		<img
-			src="/img/blog/estructura-tras-el-prompt.webp"
-			width="1600"
-			height="1527"
+			src="/img/blog/structure-after-the-prompt.webp"
+			width="1500"
+			height="1373"
 			loading="lazy"
 			decoding="async"
-			alt="VS Code explorer with the .claude folder expanded: agents with eleven files, hooks with two, skills with nine folders and settings.json, and at the root AGENTS.md and CLAUDE.md. On the right, the preview of the generated AGENTS.md, in Spanish, with its commands, environment, vocabulary and conventions sections."
+			alt="VS Code explorer with the tienda project: .claude with agents (ten subagents), hooks (two), skills (sixteen folders), CLAUDE.md and settings.json; at the root, graphify-out, .graphifyignore, AGENTS.md, CLAUDE.md and skills-lock.json; at the bottom, collapsed, the user folders for archify, gstack and claude-council. On the right, the preview of AGENTS.md, with its commands, environment, vocabulary, conventions and how-we-work sections."
 		/>
 	</a>
-	<figcaption>VS Code screenshot after running the prompt with Claude Code 2.1.283, with the GitHub Dark Dimmed theme and the vscode-icons icon set. On the right, the preview of the generated `AGENTS.md`.</figcaption>
+	<figcaption>VS Code screenshot of the test project after running the English prompt with Claude Code 2.1.283, with the GitHub Dark Dimmed theme and the vscode-icons icon set. On the right, the preview of the generated `AGENTS.md`.</figcaption>
 </figure>
 
 The prompt does not touch application code. If during setup the agent finds it needs to install a dependency, plugin or MCP server, it first proposes it with its source and reason, and waits for confirmation.
