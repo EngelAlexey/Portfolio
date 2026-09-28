@@ -410,7 +410,7 @@ Una ejecución sobre un proyecto preparado muestra cómo trabaja el prompt, pero
 Las diez capas tratan los fallos más frecuentes de una aplicación con usuarios, pero no todos. El OWASP Top 10:2025 incluye otros que aquí no se desarrollan<Cite n={1} repeat />:
 
 - **Registro y alertas** (A09:2025). Guardar los errores no basta: alguien tiene que recibir un aviso cuando se repiten los inicios de sesión fallidos o las respuestas `403`.
-- **Peticiones del servidor a direcciones que elige el usuario**, o SSRF. En la edición de 2025 forma parte del control de acceso roto, A01<Cite n={27} />. Afecta a cualquier función que descarga una URL, como una vista previa de enlaces o una importación.
+- **Peticiones del servidor a direcciones que elige el usuario**, o SSRF. En la edición de 2025 forma parte del control de acceso roto, A01<Cite n={27} />. Afecta a cualquier función que descarga una URL, como una vista previa de enlaces o una importación. El punto 5 de [los ataques web más comunes](/es/blog/ataques-web-comunes) lo reproduce y lo corrige.
 - **Condiciones excepcionales** (A10:2025): errores que dejan la aplicación en un estado abierto, como un `catch` que sigue adelante. El punto 12 solo trata la respuesta que recibe el navegador.
 - **Subida de archivos**: el tipo, el tamaño, el nombre y el lugar desde el que se sirven. OWASP lo trata en su *File Upload Cheat Sheet*<Cite n={28} />.
 - **Autenticación multifactor**: el punto 6 la cita como la mejor defensa contra los ataques a contraseñas, pero no explica cómo implementarla.
@@ -420,7 +420,7 @@ Las diez capas tratan los fallos más frecuentes de una aplicación con usuarios
 
 Si empieza desde cero, prepare primero el entorno con [Primeros pasos para programar con IA](/es/blog/primeros-pasos-programar-con-ia). Después, use la tabla del punto 1 para decidir qué capas necesita su aplicación.
 
-Para revisar el código capa por capa, lea [Ocho cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia). Para las peticiones entre orígenes, lea [Qué es CORS](/es/blog/que-es-cors), y para las dependencias, [la diferencia entre npm y pnpm](/es/blog/npm-vs-pnpm-seguridad).
+Para revisar el código capa por capa, lea [Ocho cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia). Para las peticiones entre orígenes, lea [Qué es CORS](/es/blog/que-es-cors), y para las dependencias, [la diferencia entre npm y pnpm](/es/blog/npm-vs-pnpm-seguridad). [Los ataques web más comunes](/es/blog/ataques-web-comunes) muestra catorce ataques contra estas capas, cada uno con la petición que lo aprovecha y su corrección.
 
 <References
 	title="Referencias"

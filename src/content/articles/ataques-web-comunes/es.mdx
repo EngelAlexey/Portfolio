@@ -7,7 +7,7 @@ areas: [seguridad]
 category: seguridad-web
 published: '2026-09-27'
 updated: null
-draft: true
+draft: false
 path: null
 repo: null
 related: []
@@ -557,13 +557,15 @@ const datos = jwt.verify(token, process.env.JWT_SECRET, {
 
 El prompt del botón «Copiar prompt» pide a un agente de programación que busque en su proyecto estos catorce ataques y los fallos de JWT. Primero reconoce el proyecto sin cambiar nada. Después entrega un informe con cada hallazgo en `archivo:línea`, espera su confirmación y corrige cada fallo con una prueba que primero falla y después pasa. La fase 3 hace que el agente se detenga antes de escribir; si sigue sin preguntar, interrúmpalo.
 
-En una ejecución de demostración con `claude -p` en Windows, sobre una copia del laboratorio del artículo, el agente tardó 2,5 minutos en llegar a la fase 3 y se detuvo. Después de la confirmación tardó 6 minutos más en escribir 19 pruebas, ver fallar 18 antes de corregir y pasar las 19 después. Para el recorrido de rutas pidió `../package.json`, como indica el prompt. Dejó pendientes la verificación en dos pasos y el hash de las contraseñas, que cambian la lógica del inicio de sesión.
+En una ejecución de demostración con `claude -p` en Windows, sobre una copia del laboratorio del artículo, el agente tardó 2,5 minutos en llegar a la fase 3 y se detuvo. Después de la confirmación tardó 6 minutos más en escribir 19 pruebas, ver fallar 18 antes de corregir y pasar las 19 después.
+
+Su prueba del recorrido de rutas usa `../package.json`, como indica el prompt. Dejó pendientes, entre otros, la verificación en dos pasos y el hash de las contraseñas, que cambian la lógica del inicio de sesión. También cambió dos rutas que no había marcado en la fase 3 y la orden de arranque de `package.json`, y lo explicó en el informe.
 
 <Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
 	Este prompt pide al agente que arranque la aplicación, ejecute órdenes y cambie código. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. Ejecútelo en una rama aparte.
 </Callout>
 
-**Cómo comprobarlo.** `git diff` muestra solo las correcciones confirmadas y sus pruebas. Cada prueba nueva falla si revierte la corrección que la acompaña.
+**Cómo comprobarlo.** Revise `git diff` antes de aceptar el resultado: debe contener las correcciones que confirmó y sus pruebas, y el informe debe explicar cualquier otro cambio. Cada prueba nueva falla si revierte la corrección que la acompaña.
 
 ## Qué corregir primero
 

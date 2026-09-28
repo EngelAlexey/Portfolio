@@ -410,7 +410,7 @@ A single run on a prepared project shows how the prompt works, but it does not m
 The ten layers cover the most common failures of an application with users, but not all of them. The OWASP Top 10:2025 includes others that are not developed here<Cite n={1} repeat />:
 
 - **Logging and alerting** (A09:2025). Storing errors is not enough: someone has to be alerted when failed logins or `403` responses repeat.
-- **Requests the server makes to addresses the user chooses**, or SSRF. In the 2025 edition it is part of broken access control, A01<Cite n={27} />. It affects any feature that downloads a URL, such as a link preview or an import.
+- **Requests the server makes to addresses the user chooses**, or SSRF. In the 2025 edition it is part of broken access control, A01<Cite n={27} />. It affects any feature that downloads a URL, such as a link preview or an import. Section 5 of [the most common web attacks](/en/blog/common-web-attacks) reproduces it and fixes it.
 - **Exceptional conditions** (A10:2025): errors that leave the application in an open state, such as a `catch` that carries on. Section 12 only covers the response the browser receives.
 - **File uploads**: the type, the size, the name and where they are served from. OWASP covers it in its *File Upload Cheat Sheet*<Cite n={28} />.
 - **Multi-factor authentication**: section 6 cites it as the best defence against password attacks, but does not explain how to implement it.
@@ -420,7 +420,7 @@ The ten layers cover the most common failures of an application with users, but 
 
 If you are starting from scratch, first prepare the environment with [First steps with AI coding](/en/blog/first-steps-with-ai-coding). Then use the table in section 1 to decide which layers your application needs.
 
-To review the code layer by layer, read [Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code). For requests across origins, read [What CORS is](/en/blog/what-is-cors), and for dependencies, [npm vs pnpm](/en/blog/npm-vs-pnpm-install-security).
+To review the code layer by layer, read [Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code). For requests across origins, read [What CORS is](/en/blog/what-is-cors), and for dependencies, [npm vs pnpm](/en/blog/npm-vs-pnpm-install-security). [The most common web attacks](/en/blog/common-web-attacks) shows fourteen attacks against these layers, each with the request that exploits it and its fix.
 
 <References
 	title="References"

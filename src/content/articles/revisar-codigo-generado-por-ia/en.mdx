@@ -354,7 +354,7 @@ The eight failures are not equally urgent. Sections 1, 2 and 4 can be exploited 
 
 **Failing closed** means denying the request when a check cannot decide. That rule applies to all eight cases. For example, the request is refused if the session does not resolve, if validation throws an exception or if the permission is missing. Generated code tends to do the opposite. A `?? 0`, an empty `catch` or an `if (!user) return next()` let the request carry on as normal, and the failure goes unnoticed.
 
-[An open CORS configuration](/en/blog/what-is-cors) and a missing rate limit are left out of the list. [How to secure a web application](/en/blog/how-to-secure-a-web-application) covers them in its other origins and passwords and attempts layers. The last one includes the login attempt limit.
+[An open CORS configuration](/en/blog/what-is-cors) and a missing rate limit are left out of the list. [How to secure a web application](/en/blog/how-to-secure-a-web-application) covers them in its other origins and passwords and attempts layers. The last one includes the login attempt limit. [The most common web attacks](/en/blog/common-web-attacks) brings these failures together with other frequent attacks, such as SSRF and command injection.
 
 <References
 	title="References"

@@ -359,7 +359,7 @@ Los ocho fallos no tienen la misma urgencia. Los puntos 1, 2 y 4 se pueden explo
 
 **Fallar cerrado** significa negar la petición cuando una comprobación no puede decidir. Esa regla vale para los ocho casos. Por ejemplo, la petición se rechaza si la sesión no se resuelve, si la validación lanza una excepción o si el permiso no aparece. El código generado suele hacer lo contrario. Un `?? 0`, un `catch` vacío o un `if (!user) return next()` dejan que la petición siga su curso normal, y el fallo no se nota.
 
-Quedan fuera de la lista [una configuración de CORS abierta](/es/blog/que-es-cors) y la falta de un límite de peticiones. [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) los trata en sus capas de otros orígenes y de contraseñas e intentos. Esta última incluye el límite de intentos de inicio de sesión.
+Quedan fuera de la lista [una configuración de CORS abierta](/es/blog/que-es-cors) y la falta de un límite de peticiones. [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) los trata en sus capas de otros orígenes y de contraseñas e intentos. Esta última incluye el límite de intentos de inicio de sesión. [Los ataques web más comunes](/es/blog/ataques-web-comunes) reúne estos fallos con otros ataques frecuentes, como el SSRF y la inyección de órdenes.
 
 <References
 	title="Referencias"

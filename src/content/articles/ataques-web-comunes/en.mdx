@@ -7,7 +7,7 @@ areas: [seguridad]
 category: seguridad-web
 published: '2026-09-27'
 updated: null
-draft: true
+draft: false
 path: common-web-attacks
 repo: null
 related: []
@@ -557,13 +557,15 @@ const datos = jwt.verify(token, process.env.JWT_SECRET, {
 
 The prompt behind the **Copy prompt** button asks a coding agent to look for these fourteen attacks and the JWT mistakes in your project. First it surveys the project without changing anything. Then it delivers a report with each finding as `file:line`, waits for your confirmation, and fixes each flaw with a test that fails first and then passes. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.
 
-In a demonstration run with `claude -p` on Windows, on a copy of the article's lab, the agent took 2.5 minutes to reach phase 3 and stopped. After confirmation it took 6 more minutes to write 19 tests, see 18 of them fail before the fixes and all 19 pass after. For path traversal it requested `../package.json`, as the prompt says. It left two-step verification and password hashing pending, because they change the login logic.
+In a demonstration run with `claude -p` on Windows, on a copy of the article's lab, the agent took 2.5 minutes to reach phase 3 and stopped. After confirmation it took 6 more minutes to write 19 tests, see 18 of them fail before the fixes and all 19 pass after.
+
+Its path traversal test uses `../package.json`, as the prompt says. Among other items, it left two-step verification and password hashing pending, because they change the login logic. It also changed two routes it had not marked in phase 3 and the start command in `package.json`, and explained this in the report.
 
 <Callout kind="riesgo" title="Read the prompt before you paste it">
 	This prompt asks the agent to start the application, run commands and change code. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Run it on a separate branch.
 </Callout>
 
-**How to check it.** `git diff` shows only the confirmed fixes and their tests. Each new test fails if you revert the fix it goes with.
+**How to check it.** Review `git diff` before accepting the result: it should contain the fixes you confirmed and their tests, and the report should explain any other change. Each new test fails if you revert the fix it goes with.
 
 ## What to fix first
 

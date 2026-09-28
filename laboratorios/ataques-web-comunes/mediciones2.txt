@@ -45,3 +45,9 @@ Retry-After: 900
 $ curl -s -G http://127.0.0.1:3000/f/vista-previa --data-urlencode 'url=https://www.iana.org/' | wc -c
 300
 
+
+### Pwned Passwords (Windows, curl 8.12.1, 2026-09-27)
+$ printf password | sha1sum | cut -c1-5
+5baa6
+$ curl -s https://api.pwnedpasswords.com/range/5baa6 | grep -i 1E4C9B93F3F0682250B6CF8331B7EE68FD8
+1E4C9B93F3F0682250B6CF8331B7EE68FD8:52372427
