@@ -84,10 +84,23 @@ export const es = {
 	},
 	blog: {
 		title: 'Blog',
-		lead: 'Artículos sobre seguridad en desarrollo. Cada uno trae el código que falla, la corrección y cómo se comprueba.',
+		lead: 'Artículos sobre seguridad web y sobre programar con IA, agrupados por tema. Cada sección empieza por el artículo que conviene leer primero.',
 		empty: 'Todavía no hay artículos publicados.',
 		read: 'Leer el artículo',
-		minutes: (n: number) => `${n} min de lectura`
+		minutes: (n: number) => `${n} min de lectura`,
+		sections: 'Secciones del blog',
+		count: (n: number) => (n === 1 ? '1 artículo' : `${n} artículos`),
+		startHere: 'Empiece aquí',
+		categories: {
+			'seguridad-web': {
+				label: 'Seguridad web',
+				lede: 'Cómo proteger una aplicación web con usuarios, capa por capa, y cómo comprobar cada control.'
+			},
+			'programar-con-ia': {
+				label: 'Programar con IA',
+				lede: 'Cómo preparar un proyecto para trabajar con un agente, cómo revisar lo que produce y qué efecto tiene en el aprendizaje.'
+			}
+		}
 	},
 	article: {
 		back: 'Volver al blog',

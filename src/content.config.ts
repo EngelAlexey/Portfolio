@@ -2,6 +2,7 @@ import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
 import { AREA_IDS } from './lib/areas';
+import { CATEGORY_IDS } from './lib/categories';
 
 const url = z.url();
 
@@ -110,6 +111,10 @@ const articleSchema = z
 		description: z.string().min(50).max(160).nullable().default(null),
 
 		areas: z.array(z.enum(AREA_IDS)).min(1).max(3),
+
+		// Seccion del blog en la que aparece, y si es el articulo por el que se empieza.
+		category: z.enum(CATEGORY_IDS),
+		lead: z.boolean().default(false),
 
 		published: z.string().regex(DATE, 'use YYYY-MM-DD'),
 		updated: z.string().regex(DATE, 'use YYYY-MM-DD').nullable().default(null),

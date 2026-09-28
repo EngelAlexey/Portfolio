@@ -86,10 +86,23 @@ export const en: Dict = {
 	},
 	blog: {
 		title: 'Blog',
-		lead: 'Articles on security in day to day development. Each one carries the failing code, the fix, and how to check it.',
+		lead: 'Articles on web security and on coding with AI, grouped by topic. Each section opens with the article to read first.',
 		empty: 'No articles published yet.',
 		read: 'Read the article',
-		minutes: (n: number) => `${n} min read`
+		minutes: (n: number) => `${n} min read`,
+		sections: 'Blog sections',
+		count: (n: number) => (n === 1 ? '1 article' : `${n} articles`),
+		startHere: 'Start here',
+		categories: {
+			'seguridad-web': {
+				label: 'Web security',
+				lede: 'How to protect a web application with users, layer by layer, and how to check each control.'
+			},
+			'programar-con-ia': {
+				label: 'Coding with AI',
+				lede: 'How to set up a project to work with an agent, how to review what it produces, and how it affects learning.'
+			}
+		}
 	},
 	article: {
 		back: 'Back to the blog',

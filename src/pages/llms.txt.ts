@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { allArticles } from '../lib/articles';
+import { allArticles, articlesByCategory } from '../lib/articles';
 import { areaLabel } from '../lib/areas';
 import { fichas } from '../lib/content';
 import { DEFAULT_LANG, other, path as routePath, t } from '../lib/i18n';
@@ -30,21 +30,25 @@ export const GET: APIRoute = async () => {
 
 	if (articles.length) {
 		sections.push('## Artículos', '');
-		for (const { meta, path: segment } of articles) {
-			const areas = meta.areas.map((area) => areaLabel(area, lang)).join(', ');
-			const dates =
-				meta.updated && meta.updated !== meta.published
-					? `Publicado ${meta.published}, actualizado ${meta.updated}.`
-					: `Publicado ${meta.published}.`;
-			sections.push(
-				line(
-					meta.title,
-					absolute(routePath(lang, 'article', segment)),
-					`${meta.tagline} ${dates} Área: ${areas}.`
-				)
-			);
+		for (const { category, lead, rest } of await articlesByCategory(lang)) {
+			sections.push(`### ${strings.blog.categories[category].label}`, '');
+			for (const { meta, path: segment } of [lead, ...rest].filter((a) => a !== undefined)) {
+				const areas = meta.areas.map((area) => areaLabel(area, lang)).join(', ');
+				const dates =
+					meta.updated && meta.updated !== meta.published
+						? `Publicado ${meta.published}, actualizado ${meta.updated}.`
+						: `Publicado ${meta.published}.`;
+				sections.push(
+					line(
+						meta.title,
+						absolute(routePath(lang, 'article', segment)),
+						`${meta.tagline} ${dates} Área: ${areas}.`
+					)
+				);
+			}
+			sections.push('');
 		}
-		sections.push('', `Feed: ${absolute(`/${lang}/blog.xml`)}`, '');
+		sections.push(`Feed: ${absolute(`/${lang}/blog.xml`)}`, '');
 	}
 
 	sections.push('## Proyectos', '');

@@ -1,4 +1,5 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { CATEGORY_IDS, type CategoryId } from './categories';
 import { fichaSlugs } from './content';
 import type { Lang } from './i18n';
 import { LANGS } from './i18n';
@@ -65,7 +66,7 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Article>>>> {
 			if (!bucket[lang]) fail(`src/content/articles/${slug}`, `missing \`${lang}.mdx\``);
 		}
 
-		for (const field of ['draft', 'published'] as const) {
+		for (const field of ['draft', 'published', 'category', 'lead'] as const) {
 			const es = bucket.es!.meta[field];
 			const en = bucket.en!.meta[field];
 			if (es !== en) {
@@ -112,6 +113,22 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Article>>>> {
 		}
 	}
 
+	// Una seccion tiene como mucho un articulo por el que empezar; con dos, la
+	// pagina elegiria uno por el orden de carga de los archivos.
+	const leads = new Map<CategoryId, string>();
+	for (const [slug, bucket] of bySlug) {
+		const { category, lead } = bucket.es!.meta;
+		if (!lead) continue;
+		const owner = leads.get(category);
+		if (owner) {
+			fail(
+				`src/content/articles/${slug}`,
+				`\`lead\` in "${category}" is already set by "${owner}"`
+			);
+		}
+		leads.set(category, slug);
+	}
+
 	CONTENT = bySlug;
 	return bySlug;
 }
@@ -132,6 +149,27 @@ export async function allArticles(lang: Lang): Promise<Article[]> {
 		.filter((article): article is Article => Boolean(article))
 		.filter(visible)
 		.sort(compare);
+}
+
+export type ArticleGroup = {
+	category: CategoryId;
+	lead?: Article;
+	rest: Article[];
+};
+
+// Las secciones del blog en su orden, con el articulo de inicio aparte y el
+// resto por fecha. Una seccion sin nada publicado no sale: un titulo vacio
+// en produccion anuncia algo que no existe.
+export async function articlesByCategory(lang: Lang): Promise<ArticleGroup[]> {
+	const list = await allArticles(lang);
+	return CATEGORY_IDS.map((category) => {
+		const inside = list.filter((a) => a.meta.category === category);
+		return {
+			category,
+			lead: inside.find((a) => a.meta.lead),
+			rest: inside.filter((a) => !a.meta.lead)
+		};
+	}).filter((group) => group.lead || group.rest.length > 0);
 }
 
 export const latestArticles = async (lang: Lang, count = HOME_ARTICLES): Promise<Article[]> =>
@@ -165,7 +203,12 @@ export async function neighbours(
 	lang: Lang,
 	slug: string
 ): Promise<{ prev?: Article; next?: Article }> {
-	const list = await allArticles(lang);
+	// El recorrido sigue la seccion del articulo, en el mismo orden que el blog.
+	const group = (await articlesByCategory(lang)).find((g) =>
+		[g.lead, ...g.rest].some((a) => a?.meta.slug === slug)
+	);
+	if (!group) return {};
+	const list = [group.lead, ...group.rest].filter((a): a is Article => Boolean(a));
 	const index = list.findIndex((a) => a.meta.slug === slug);
 	if (index === -1) return {};
 	return { prev: list[index - 1], next: list[index + 1] };

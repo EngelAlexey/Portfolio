@@ -140,6 +140,8 @@ title: Siete cosas que revisar en el código que genera la IA
 tagline: Una línea, 10–180 caracteres.
 description: null                      # 50–160 caracteres para el buscador, o null = usa la tagline
 areas: [seguridad]                     # 1 a 3 de la misma taxonomía que las fichas
+category: seguridad-web                # sección del blog: seguridad-web o programar-con-ia
+lead: false                            # true = artículo por el que empieza su sección
 published: '2026-09-07'                # YYYY-MM-DD
 updated: null                          # YYYY-MM-DD o null
 draft: true                            # true = solo se ve en `astro dev`
@@ -156,11 +158,14 @@ Reglas que el build hace cumplir:
 - `slug` en minúsculas y guiones, y debe coincidir con la carpeta.
 - Si existe `es.mdx` debe existir `en.mdx`, con el mismo `draft`, el mismo `published` y el mismo `related`.
 - `updated` no puede ser anterior a `published`.
+- `category` y `lead` son iguales en los dos idiomas, y cada sección tiene como mucho un artículo con `lead: true`.
 - `path` en minúsculas y guiones, y no puede repetirse entre dos artículos del mismo idioma.
 
 **`path` es la dirección del artículo en ese idioma y se declara por archivo.** El `slug` sigue siendo la carpeta y la identidad interna; `path` es solo lo que se ve en la barra de direcciones. Cuando es `null`, la ruta usa el `slug`, así que un artículo sin traducir la URL no cambia. Declararlo en `en.mdx` es lo que evita que un lector anglófono llegue a `/en/blog/revisar-codigo-generado-por-ia`, una dirección sin una sola palabra en su idioma. Cambiar un `path` que lleve tiempo publicado obliga a redirigir el anterior desde `vercel.json`, porque esa dirección ya está indexada y compartida. Si el cambio ocurre a las horas de publicar y nadie ha llegado todavía, un 404 sin enlaces entrantes no cuesta nada y la redirección sobra.
 
 **`updated` es la fecha de la última edición y hay que ponerla a mano** cuando se corrige o se amplía un artículo ya publicado. Mientras es `null`, el artículo se describe solo con `published`. En cuanto tiene fecha aparece en cinco sitios: la línea de datos de la ficha del artículo, `dateModified` en los datos estructurados, `article:modified_time` en Open Graph, `<lastmod>` en el sitemap y `atom:updated` en el feed. La fecha declarada **gana sobre la del historial de git**: es la que el autor afirma, y el historial queda de reserva para los artículos que no la declaran.
+
+**`category` decide en qué sección del blog aparece el artículo**, y la sección decide su color en la tarjeta del blog y en la página del artículo: `seguridad-web` usa el del área de seguridad y `programar-con-ia` el de IA, aunque `areas` diga otra cosa. La página del blog muestra primero el artículo con `lead: true`, marcado con «Empiece aquí», y después el resto por fecha. «Artículo anterior» y «Siguiente artículo» recorren la sección en ese mismo orden. Una sección sin artículos publicados no aparece. Añadir una sección nueva toca `src/lib/categories.ts` (el identificador y su área) y `blog.categories` en los dos diccionarios. Todo artículo de seguridad web es complementario de `como-proteger-una-pagina-web`, así que va en `seguridad-web` y se enlaza desde su capa.
 
 **`description` es solo para el buscador.** Cuando tiene valor, sustituye a la tagline en `<meta name="description">`, en la descripción de Open Graph y en `TechArticle.description`. La tagline sigue en las tarjetas, bajo el título, en el feed y en `/llms.txt`. Existe porque las dos piezas tienen reglas opuestas: la tagline no admite jerga, y el fragmento de un resultado tiene que contener lo que la gente teclea, que a menudo es un código de error o el nombre de un ajuste (`ERR_PNPM_IGNORED_BUILDS`, `allowBuilds`). Se usa cuando Search Console enseña una consulta que la tagline no nombra.
 

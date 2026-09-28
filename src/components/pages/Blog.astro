@@ -2,7 +2,9 @@
 import ArticleCard from '../ArticleCard.astro';
 import Container from '../Container.astro';
 import Layout from '../../layouts/Layout.astro';
-import { allArticles } from '../../lib/articles';
+import { accentStyle } from '../../lib/areas';
+import { articlesByCategory } from '../../lib/articles';
+import { CATEGORY_AREA } from '../../lib/categories';
 import { t, type Lang } from '../../lib/i18n';
 
 interface Props {
@@ -12,7 +14,8 @@ interface Props {
 const { lang } = Astro.props;
 
 const strings = t(lang);
-const articles = await allArticles(lang);
+const groups = await articlesByCategory(lang);
+const total = groups.reduce((sum, g) => sum + g.rest.length + (g.lead ? 1 : 0), 0);
 ---
 
 <Layout
@@ -20,27 +23,72 @@ const articles = await allArticles(lang);
 	key="blog"
 	title={strings.meta.titleTemplate(strings.blog.title)}
 	description={strings.blog.lead}
-	noindex={articles.length === 0}
+	noindex={total === 0}
 >
 	<Container as="header">
 		<div class="head">
 			<h1>{strings.blog.title}</h1>
 			<p class="lead">{strings.blog.lead}</p>
+
+			{
+				groups.length > 1 && (
+					<nav class="index" aria-label={strings.blog.sections}>
+						<ul>
+							{groups.map(({ category, lead, rest }) => (
+								<li style={accentStyle(CATEGORY_AREA[category])}>
+									<a href={`#${category}`}>
+										<span class="name">{strings.blog.categories[category].label}</span>
+										<span class="count">{strings.blog.count(rest.length + (lead ? 1 : 0))}</span>
+									</a>
+								</li>
+							))}
+						</ul>
+					</nav>
+				)
+			}
 		</div>
 	</Container>
 
 	<Container>
 		{
-			articles.length === 0 ? (
+			total === 0 ? (
 				<p class="empty">{strings.blog.empty}</p>
 			) : (
-				<ul class="list">
-					{articles.map((article) => (
-						<li data-areas={article.meta.areas.join(' ')}>
-							<ArticleCard {article} {lang} />
-						</li>
-					))}
-				</ul>
+				<div class="sections">
+					{groups.map(({ category, lead, rest }) => {
+						const area = CATEGORY_AREA[category];
+						const copy = strings.blog.categories[category];
+						return (
+							<section id={category} style={accentStyle(area)} aria-labelledby={`${category}-title`}>
+								<header class="section-head">
+									<h2 id={`${category}-title`}>{copy.label}</h2>
+									<p>{copy.lede}</p>
+								</header>
+
+								{lead && (
+									<div class="lead-card" data-areas={lead.meta.areas.join(' ')}>
+										<ArticleCard
+											article={lead}
+											{lang}
+											accent={area}
+											lead={strings.blog.startHere}
+										/>
+									</div>
+								)}
+
+								{rest.length > 0 && (
+									<ul class="list">
+										{rest.map((article) => (
+											<li data-areas={article.meta.areas.join(' ')}>
+												<ArticleCard {article} {lang} accent={area} />
+											</li>
+										))}
+									</ul>
+								)}
+							</section>
+						);
+					})}
+				</div>
 			)
 		}
 	</Container>
@@ -67,14 +115,108 @@ const articles = await allArticles(lang);
 		color: var(--ink-muted);
 	}
 
+	.index ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		list-style: none;
+		margin: 1.5rem 0 0;
+		padding: 0;
+	}
+
+	.index a {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.5rem;
+		padding: 0.45rem 0.85rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		background: var(--surface);
+		font-size: 0.9375rem;
+		text-decoration: none;
+		transition: border-color 140ms ease;
+	}
+
+	.index a:hover,
+	.index a:focus-visible {
+		border-color: var(--accent-line);
+	}
+
+	.index .name {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		font-weight: 500;
+		color: var(--ink);
+	}
+
+	.index .name::before {
+		content: '';
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		background: var(--accent);
+	}
+
+	.index .count {
+		font-size: 0.8125rem;
+		color: var(--ink-faint);
+	}
+
+	.sections {
+		display: grid;
+		gap: clamp(2.5rem, 6vw, 3.75rem);
+		margin: 0.5rem 0 clamp(3rem, 7vw, 5rem);
+		max-width: 60rem;
+	}
+
+	section {
+		scroll-margin-top: 6rem;
+	}
+
+	.section-head {
+		padding-top: 1rem;
+		border-top: 1px solid var(--line);
+		margin-bottom: 1.25rem;
+	}
+
+	h2 {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		margin: 0;
+		font-size: clamp(1.25rem, 2.6vw, 1.5rem);
+		font-weight: 600;
+		letter-spacing: -0.02em;
+	}
+
+	h2::before {
+		content: '';
+		flex: none;
+		width: 0.6rem;
+		height: 0.6rem;
+		border-radius: 50%;
+		background: var(--accent);
+	}
+
+	.section-head p {
+		margin: 0.5rem 0 0;
+		max-width: var(--measure);
+		color: var(--ink-muted);
+		line-height: 1.6;
+	}
+
+	.lead-card {
+		margin-bottom: 1rem;
+	}
+
 	.list {
 		display: grid;
 		gap: 1rem;
-		grid-template-columns: 1fr;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
 		list-style: none;
-		margin: 0 0 clamp(3rem, 7vw, 5rem);
+		margin: 0;
 		padding: 0;
-		max-width: 46rem;
 	}
 
 	.empty {

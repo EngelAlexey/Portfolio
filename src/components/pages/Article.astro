@@ -5,6 +5,7 @@ import PromptRail from '../PromptRail.astro';
 import Prose from '../Prose.astro';
 import Toc from '../Toc.astro';
 import { accentStyle } from '../../lib/areas';
+import { CATEGORY_AREA } from '../../lib/categories';
 import { neighbours, readingMinutes, renderArticle, type Article } from '../../lib/articles';
 import { getProject } from '../../lib/content';
 import { formatDate } from '../../lib/format';
@@ -54,12 +55,16 @@ const prompt = prompts[`/src/content/articles/${meta.slug}/prompt.${lang}.md`]?.
 	published={meta.published}
 	updated={meta.updated}
 >
-	<div class="articulo" style={accentStyle(meta.areas[0])}>
+	<div class="articulo" style={accentStyle(CATEGORY_AREA[meta.category])}>
 		<header class="head-zone">
 			<a class="back" href={path(lang, 'blog')}>← {strings.article.back}</a>
 
 			<div class="head">
-				<p class="kind">{strings.blog.title}</p>
+				<p class="kind">
+					<a href={`${path(lang, 'blog')}#${meta.category}`}>
+						{strings.blog.categories[meta.category].label}
+					</a>
+				</p>
 				<h1>{meta.title}</h1>
 				<p class="tagline">{meta.tagline}</p>
 
@@ -292,6 +297,15 @@ const prompt = prompts[`/src/content/articles/${meta.slug}/prompt.${lang}.md`]?.
 		font-size: 0.8125rem;
 		font-weight: 500;
 		color: var(--accent);
+	}
+
+	.kind a {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.kind a:hover {
+		text-decoration: underline;
 	}
 
 	h1 {
