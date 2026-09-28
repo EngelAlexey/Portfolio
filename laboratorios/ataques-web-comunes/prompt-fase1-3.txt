@@ -1,0 +1,47 @@
+Advisor no disponible. Sigo con mi criterio. Fase 2 completa: los 15 puntos confirmados en local contra `127.0.0.1`. Detengo aquí para Fase 3.
+
+Nota: el repo es un **laboratorio didáctico**: cada ataque ya trae una ruta vulnerable `/v/...` y su corrección de referencia `/f/...`. Las `/v/` siguen montadas y explotables. Esto define la pregunta central de abajo.
+
+## Fase 1 — Reconocimiento
+
+- **Lenguaje/framework:** Node.js v24.19 + Express 5. BD: `node:sqlite` en memoria. Arranque: `npm start` (`node lab.mjs`) → `http://127.0.0.1:3000`. Servicio interno en `127.0.0.1:4001`.
+- **Auth:** cookie de sesión `sid` (Map en memoria); sesión creada en `/v/login` (lab.mjs:45) y `/f/login` (lab.mjs:71). JWT sin estado en `/*/perfil`.
+- **Pruebas:** `npm test` = `node --test`. **No hay tests todavía.** Sin CI (`.github`/`.gitlab-ci.yml`/`.circleci` ausentes).
+- **npm:** `ignore-scripts=false`, sin `.npmrc`. `.env` con `DB_PASSWORD` (no rastreado por git; el código no lo usa).
+
+## Fase 3 — Hallazgos, evidencia y correcciones propuestas
+
+| # | Ataque | `archivo:línea` (vuln) | Estado | Petición → salida (local) | Corrección propuesta |
+|---|--------|------------------------|--------|---------------------------|----------------------|
+| 9 | **Inyección SQL** | lab.mjs:95 | ✅ Confirmado | `/v/buscar?q=' OR 1=1 --` (sesión ana) → devuelve facturas de luis `[200]` | Consulta parametrizada (ya en `/f/buscar`:103) |
+| 1 | **IDOR** | lab.mjs:81 | ✅ Confirmado | ana → `/v/facturas/3` (de luis) → `200` con datos | Filtrar por `duenio` + `404` igual para ajeno/inexistente (`/f`:87) |
+| 11 | **Órdenes del sistema** | lab.mjs:140 | ✅ Confirmado | `/v/dns?host=x & whoami` → ejecutó `whoami` (`alexh`) | `execFile` sin shell + validar host (`/f/dns`:148) |
+| 7 | **Cuenta/secreto de fábrica** | lab.mjs:26,42,216 | ✅ Confirmado | `POST /v/login admin/admin` → `{ok:true} 200`; `SECRETO_DEBIL='secret'` | Exigir `ADMIN_PASSWORD`/`JWT_SECRET`; app no arranca si faltan |
+| 4 | **Recorrido de rutas** | lab.mjs:156 | ✅ Confirmado | `/v/docs?nombre=../..×15/Windows/win.ini` → volcó `win.ini` | `sendFile({root})` (ya en `/f/docs`:162) |
+| 3 | **SSRF** | lab.mjs:169,173 | ✅ Confirmado | `/v/vista-previa?url=http://127.0.0.1:4001/admin` → fugó servicio interno; `/v2` saltó filtro con IP decimal `2130706433` | Allowlist + IP resuelta no privada + sin redirecciones (`/f`:185) |
+| 15 | **JWT** | lab.mjs:216,219,226 | ✅ Confirmado | token `alg:none rol:admin` → `/v/perfil` → `{rol:"admin"} 200`; `/v2` usa secreto `'secret'` | `jwt.verify` con algs fijos+iss+aud+maxAge, secreto 32B de env (`/f`:236) |
+| 8 | **Errores detallados** | lab.mjs:112 | ✅ Confirmado | `/v/ordenar?campo=nada` → `err.message`+`stack` con ruta del archivo | Respuesta genérica + id, detalle al log (`/f`:122) |
+| 10 | **XSS** | lab.mjs:130 | ✅ Confirmado | `/v/saludo?nombre=<img src=x onerror=alert(1)>` → reflejado sin escapar | Escapar salida (`/f/saludo`:135) |
+| 2 | **CSRF** | lab.mjs:201 | ✅ Confirmado | `POST /v/email` con `Sec-Fetch-Site: cross-site` → `200` | Token anti-CSRF + `Sec-Fetch-Site` + `SameSite` (`/f`:206) |
+| 14 | **Robo de sesión** | lab.mjs:47 | ✅ Confirmado | `Set-Cookie: sid=…; Path=/` (sin HttpOnly/Secure/SameSite/expiración) | `httpOnly,secure,sameSite,maxAge` (`/f/login`:74) |
+| 12 | **Fuerza bruta** | lab.mjs:39 | ✅ Confirmado | 6 intentos a `/v/login` → `401×6`, nunca `429`; `/f/login` → `429`+`Retry-After` al 6º | Límite por cuenta+IP con `429`/`Retry-After` (`/f`:54) |
+| 5 | **Scripts de instalación** | (falta `.npmrc`) | ✅ Confirmado | `npm config get ignore-scripts` → `false` | Añadir `.npmrc` con `ignore-scripts=true` |
+| 6 | **Dependencias vulnerables** | package-lock.json | ✅ Sin hallazgos | `npm audit` → `found 0 vulnerabilities` | Nada |
+| 13 | **Suplantación (MFA/contraseñas)** | lab.mjs:39,54 | ⚠️ Posible | No hay registro ni política de contraseñas; sin 2FA | Decisión de producto (ver abajo) |
+
+### Orden de aplicación propuesto
+Exponen datos de todos + arreglo en minutos primero: **9 SQLi → 1 IDOR → 11 Órdenes → 7 Fábrica/secretos → 15 JWT → 4 Recorrido → 3 SSRF → 8 Errores → 10 XSS → 2 CSRF → 14 Sesión → 12 Fuerza bruta → 5 Scripts**. (6 sin acción; 13 es decisión.)
+
+### Preguntas de Fase 1 sin resolver — **necesito tu respuesta**
+1. **Central.** Cada ataque ya tiene su `/f/` corregido. ¿Qué quieres que corrija?
+   - **(A)** Endurecer o eliminar las rutas `/v/` y `/v2/` para que la app en marcha no tenga ruta explotable (test que falla contra `/v`, luego fix/eliminación).
+   - **(B)** Dejar `/v/` como demos intencionadas y corregir solo lo transversal sin par corregido: `.npmrc` (5), admin/admin + `'secret'` (7/15), y verificar cada `/f/` con tests.
+   - **(C)** Otra cosa.
+2. ¿Creo `test/*.test.mjs` con `node:test` (el runner ya configurado)?
+3. Item 13 (2FA): sin proveedor de auth; activarlo es decisión de producto, fuera del código. ¿Lo dejo pendiente?
+4. `DIR` sale de `URL.pathname`: en Windows queda `\C:\…`, por lo que `/v/docs` y `/f/docs` ya sirven con base malformada aquí. ¿Lo corrijo también (afecta cómo escribo el test de recorrido) o es solo para Linux?
+5. `.env` tiene `DB_PASSWORD` pero el código nunca lo lee (BD en memoria). ¿Lo dejo?
+
+**Me detengo aquí. Dime qué correcciones aplico (p. ej. "A, todas" o una lista) y sigo con Fase 4 (test que falla → fix → test que pasa).**
+
+Variables de entorno que introduciría si confirmas 7/15: `ADMIN_PASSWORD` y `JWT_SECRET` (≥32 bytes aleatorios) — sin valores por defecto, la app no arrancaría si faltan.

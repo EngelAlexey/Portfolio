@@ -23,7 +23,7 @@ import References from '../../../components/References.astro';
 
 The OWASP Top 10:2025 ranks web application security failures using data from more than 2.8 million applications<Cite n={1} />. First place goes to broken access control, with 1,839,701 recorded occurrences<Cite n={2} />. The fourteen attacks below belong to five of the ten categories, and each one is prevented by a specific change to the code or the configuration.
 
-Each section shows the vulnerable code, the request that exploits it, the fix, and the same request against the fixed code. The measurements were taken on 27 September 2026 with Node.js 24.19.0, Express 5.2.1, jsonwebtoken 9.0.3, npm 11.17.0 and curl 8.18.0 on Ubuntu 26.04. All the code was rebuilt for the article.
+Each section explains the attack, the fix and how to check it. When the attack can be reproduced in code, the section also shows the vulnerable route, the request that exploits it and the same request against the fixed route. The measurements were taken on 27 September 2026 with Node.js 24.19.0, Express 5.2.1, jsonwebtoken 9.0.3, npm 11.17.0 and curl 8.18.0 on Ubuntu 26.04. All the code was rebuilt for the article.
 
 ## 1. What the most common attacks are
 
@@ -223,7 +223,7 @@ app.get('/f/vista-previa', (req, res) => {
 
 `https.get` does not follow redirects, so an allowed destination cannot send the request on to an internal address.
 
-**How to check it.** `url=http://2130706433:4001/admin` against `/f/vista-previa` returns `400` with `destino no permitido`, and `url=https://example.com/` returns the page. To test the IP check, add `localhost` to `PERMITIDOS` and request `https://localhost:4001/admin`: the answer is `400` before any connection opens. `https://www.iana.org/domains/example` redirects, and the route answers `502` with `redirección no seguida`.
+**How to check it.** `url=http://2130706433:4001/admin` against `/f/vista-previa` returns `400` with `destino no permitido`, and `url=https://example.com/` returns the page. In the lab, the list is read from the `PERMITIDOS` environment variable. To test the IP check, add `localhost` to that list and request `https://localhost:4001/admin`: the answer is `400` before any connection opens. `https://www.iana.org/domains/example` redirects, and the route answers `502` with `redirección no seguida`.
 
 ## 6. What path traversal is and how to prevent it
 

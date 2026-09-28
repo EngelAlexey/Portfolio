@@ -23,7 +23,7 @@ import References from '../../../components/References.astro';
 
 El OWASP Top 10:2025 ordena los fallos de seguridad de las aplicaciones web con datos de más de 2,8 millones de aplicaciones<Cite n={1} />. El primer puesto es el control de acceso roto, con 1 839 701 casos registrados<Cite n={2} />. Los catorce ataques que siguen pertenecen a cinco de las diez categorías, y cada uno se evita con un cambio concreto en el código o en la configuración.
 
-Cada punto muestra el código vulnerable, la petición que lo aprovecha, la corrección y la misma petición contra el código corregido. Las mediciones se hicieron el 27 de septiembre de 2026 con Node.js 24.19.0, Express 5.2.1, jsonwebtoken 9.0.3, npm 11.17.0 y curl 8.18.0 sobre Ubuntu 26.04. Todo el código está reconstruido para el artículo.
+Cada punto explica el ataque, la corrección y cómo comprobarla. Cuando el ataque se reproduce en código, el punto muestra además la ruta vulnerable, la petición que la aprovecha y la misma petición contra la ruta corregida. Las mediciones se hicieron el 27 de septiembre de 2026 con Node.js 24.19.0, Express 5.2.1, jsonwebtoken 9.0.3, npm 11.17.0 y curl 8.18.0 sobre Ubuntu 26.04. Todo el código está reconstruido para el artículo.
 
 ## 1. Qué ataques son los más comunes
 
@@ -223,7 +223,7 @@ app.get('/f/vista-previa', (req, res) => {
 
 `https.get` no sigue redirecciones, así que un destino permitido no puede enviar la petición a una dirección interna.
 
-**Cómo comprobarlo.** `url=http://2130706433:4001/admin` contra `/f/vista-previa` devuelve `400` con `destino no permitido`, y `url=https://example.com/` devuelve la página. Para probar la comprobación de la IP, añada `localhost` a `PERMITIDOS` y pida `https://localhost:4001/admin`: la respuesta es `400` antes de abrir la conexión. `https://www.iana.org/domains/example` redirige, y la ruta responde `502` con `redirección no seguida`.
+**Cómo comprobarlo.** `url=http://2130706433:4001/admin` contra `/f/vista-previa` devuelve `400` con `destino no permitido`, y `url=https://example.com/` devuelve la página. En el laboratorio, la lista se lee de la variable de entorno `PERMITIDOS`. Para probar la comprobación de la IP, añada `localhost` a esa lista y pida `https://localhost:4001/admin`: la respuesta es `400` antes de abrir la conexión. `https://www.iana.org/domains/example` redirige, y la ruta responde `502` con `redirección no seguida`.
 
 ## 6. Qué es el recorrido de rutas y cómo evitarlo
 

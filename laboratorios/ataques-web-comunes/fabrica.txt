@@ -1,0 +1,7 @@
+$ node fabrica.mjs
+  throw new Error('Defina ADMIN_PASSWORD con 16 caracteres o más');
+Error: Defina ADMIN_PASSWORD con 16 caracteres o más
+exit=1
+$ ADMIN_PASSWORD=... node fabrica.mjs
+arranca
+exit=0

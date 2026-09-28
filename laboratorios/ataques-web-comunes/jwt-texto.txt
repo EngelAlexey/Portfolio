@@ -1,0 +1,15 @@
+--- base64 exacto del artículo
+{"sub":"ana","rol":"usuario","iat":1790558984,"exp":1790559884,"aud":"app-web","iss":"https://api.ejemplo.test"} exit=0
+--- NONE v
+{"hola":"ana","rol":"admin"}
+--- NONE v2
+{"error":"jwt signature is required"}
+--- DEBIL v2
+{"hola":"ana","rol":"admin"}
+--- DEBIL f
+{"error":"invalid signature"}
+--- vencido
+--- login sesión (texto sec.2)
+{"ok":true}
+--- f/perfil sin token
+{"error":"jwt must be provided"}

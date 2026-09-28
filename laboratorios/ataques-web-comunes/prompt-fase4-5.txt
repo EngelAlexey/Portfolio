@@ -1,0 +1,66 @@
+Todo verificado. `/f/` intactas, `/v/` y `/v2/` ya no explotables, arranque bloqueado sin variables.
+
+# Fase 5 — Informe
+
+## Tabla de hallazgos (con estado final)
+
+| # | Ataque | `archivo:línea` (vuln) | Estado inicial | Corrección | Estado final |
+|---|--------|------------------------|----------------|------------|--------------|
+| 9 | Inyección SQL | lab.mjs:95 | Confirmado | Consulta parametrizada en `/v/buscar` | ✅ Corregido |
+| 1 | IDOR | lab.mjs:81 | Confirmado | Filtro `AND duenio=?`, `404` igual ajeno/inexistente | ✅ Corregido |
+| 11 | Órdenes del sistema | lab.mjs:140 | Confirmado | `execFile` sin shell + validación de host | ✅ Corregido |
+| 7 | Cuenta/secreto de fábrica | lab.mjs:26,42,216 | Confirmado | Sin default `admin`/`secret`; la app no arranca sin `ADMIN_PASSWORD`/`JWT_SECRET` | ✅ Corregido |
+| 15 | JWT | lab.mjs:216,219,226 | Confirmado | `jwt.verify` con algs fijos+iss+aud+maxAge; secreto ≥32B de env | ✅ Corregido |
+| 4 | Recorrido de rutas | lab.mjs:156 | Confirmado | `sendFile({root,dotfiles:'deny'})` + arreglo de `DIR` (Windows) | ✅ Corregido |
+| 3 | SSRF | lab.mjs:169,173 | Confirmado | Allowlist + IP resuelta no privada + sin redirecciones (`/v` y `/v2`) | ✅ Corregido |
+| 8 | Errores detallados | lab.mjs:112 | Confirmado | Respuesta genérica + id; detalle al log | ✅ Corregido |
+| 10 | XSS | lab.mjs:130 | Confirmado | Escapado de la salida | ✅ Corregido |
+| 2 | CSRF | lab.mjs:201 | Confirmado | `Sec-Fetch-Site` + token anti-CSRF; cookie `SameSite=Lax` | ✅ Corregido |
+| 14 | Robo de sesión | lab.mjs:47 | Confirmado | `HttpOnly,Secure,SameSite,maxAge` + sid nuevo al iniciar | ✅ Corregido |
+| 12 | Fuerza bruta | lab.mjs:39 | Confirmado | Límite por cuenta **e IP**, `429`+`Retry-After` | ✅ Corregido |
+| 5 | Scripts de instalación | (falta `.npmrc`) | Confirmado | `.npmrc` con `ignore-scripts=true` | ⏳ **Pendiente** (bloqueo de permiso) |
+| 6 | Dependencias vulnerables | package-lock.json | Sin hallazgos | — | ✅ Sin acción (`npm audit`=0) |
+| 13 | Suplantación / 2FA | lab.mjs:39 | Posible | Activar 2FA / política de contraseñas | ⏳ **Pendiente** (decisión de producto) |
+
+## Corrección → archivo → prueba
+
+- Único archivo de producto cambiado: **`lab.mjs`** (`git diff --stat`: 110 insert / 84 delete). Las rutas `/f/` conservan su lógica (verificado en vivo: `/f/facturas` propia `200`/ajena `404`, `/f/buscar`, `/f/perfil` con token válido `200`).
+- Pruebas nuevas: **`test/seguridad.test.mjs`** (marco `node:test`, `npm test`). Cada test envía la petición de ataque a la ruta `/v/`|`/v2/` y espera la respuesta segura.
+
+## Salida de la batería
+
+Rojo (código actual, antes de corregir): **17 fallan**.
+Verde (tras corregir):
+
+```
+ℹ tests 17
+ℹ pass 16
+ℹ fail 1        ← solo "Config: .npmrc..." (bloqueado por permiso del entorno)
+```
+
+Los 16 que pasan cubren: SQLi, IDOR, órdenes, recorrido (+DIR), SSRF `/v` y `/v2`, JWT `alg=none` y secreto débil, errores, XSS, CSRF (cross-site y sin token), cookie de sesión, fuerza bruta (`429`+`Retry-After`), y arranque abortado sin `ADMIN_PASSWORD` y sin `JWT_SECRET`.
+
+## Variables de entorno nuevas (sin valores reales)
+
+| Variable | Requisito | Uso |
+|----------|-----------|-----|
+| `ADMIN_PASSWORD` | obligatoria, no vacía | Contraseña de `admin`; sin ella la app no arranca (`process.exit(1)`) |
+| `JWT_SECRET` | obligatoria, **≥32 bytes** aleatorios | Firma/verificación de JWT; sin ella o si es corta, la app no arranca |
+| `PORT` / `PORT_INTERNO` | opcional (def. 3000/4001) | Andamiaje para pruebas; sin efecto en producción |
+
+Generar el secreto: `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`.
+
+## Pendiente y quién decide
+
+- **Item 5 (`.npmrc`)** — corrección lista (una línea `ignore-scripts=true`), pero el entorno **bloqueó la escritura de `.npmrc`** (archivo sensible, sesión no interactiva). El test queda en rojo a propósito, documentando el requisito. **Necesito tu OK para escribir `.npmrc`**, o créalo tú: `npm config set ignore-scripts true --location project`.
+- **Item 13 (2FA / política de contraseñas)** — decisión de producto; no hay proveedor de auth. Lo dejas tú.
+- **Item 6** — sin acción; revisa periódicamente con `npm audit`.
+
+## No comprobado
+
+- Config de proxy/plataforma de producción: `Secure` en la cookie exige HTTPS; en local sobre HTTP el navegador no reenviaría la cookie (las pruebas la adjuntan a mano). Verificar tras el TLS del proxy real.
+- `.env` con `DB_PASSWORD`: se queda (no lo lee el código; BD en memoria; no rastreado por git).
+
+Nota: aparecieron `fase4-5.txt` y `tiempos.txt` sin seguimiento; no los creé yo (artefactos del entorno).
+
+**Cierre:** 13 de 15 puntos corregidos y probados; 2 pendientes (uno por permiso del entorno, uno por decisión tuya). Dime si apruebo la escritura de `.npmrc` y lo cierro.

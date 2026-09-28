@@ -1,0 +1,52 @@
+
+### CSRF corregido: otro sitio
+$ curl -s -b /tmp/lab-cookies -H 'Sec-Fetch-Site: cross-site' -X POST http://127.0.0.1:3000/f/email -d email=atacante@ejemplo.test
+{"error":"origen no permitido"}
+
+### CSRF corregido: sin cabeceras ni token
+$ curl -s -w ' [%{http_code}]' -b /tmp/lab-cookies -X POST http://127.0.0.1:3000/f/email -d email=atacante@ejemplo.test
+{"error":"token CSRF"} [403]
+
+### CSRF corregido: Origin ajeno sin Sec-Fetch-Site
+$ curl -s -b /tmp/lab-cookies -H 'Origin: https://atacante.example' -X POST http://127.0.0.1:3000/f/email -d email=atacante@ejemplo.test
+{"error":"origen no permitido"}
+
+### CSRF corregido: misma página con token
+$ curl -s -H 'Cookie: sid=WujzHM9gHeV38f1y_RCVDPx_G93xdtoeUESmUBh1cyo' -H 'Sec-Fetch-Site: same-origin' -H 'X-CSRF-Token: 2X-5W9EiGACDaryQKoU5D1qc_nFMTw5jCjMzbZwmhaw' -X POST http://127.0.0.1:3000/f/email -d email=ana@ejemplo.test
+{"cambiado":true,"email":"ana@ejemplo.test"}
+
+### CSRF corregido: misma página con token equivocado
+$ curl -s -H 'Cookie: sid=WujzHM9gHeV38f1y_RCVDPx_G93xdtoeUESmUBh1cyo' -H 'Sec-Fetch-Site: same-origin' -H 'X-CSRF-Token: otro' -X POST http://127.0.0.1:3000/f/email -d email=ana@ejemplo.test
+{"error":"token CSRF"}
+
+### SSRF corregido, IP en decimal
+$ curl -s -w ' [%{http_code}]' -G http://127.0.0.1:3000/f/vista-previa --data-urlencode 'url=http://2130706433:4001/admin'
+destino no permitido [400]
+
+### SSRF corregido, nombre permitido que resuelve a 127.0.0.1
+$ curl -s -w ' [%{http_code}]' -G http://127.0.0.1:3000/f/vista-previa --data-urlencode 'url=https://localhost:4001/admin'
+destino no permitido [400]
+
+### SSRF corregido, destino permitido
+$ curl -s -w ' [%{http_code}]' -G http://127.0.0.1:3000/f/vista-previa --data-urlencode 'url=https://example.com/' | head -c 100
+<!doctype html><html lang="en"><head><title>Example Domain</title><link rel="icon" href="data:,"><me
+
+### SSRF corregido, redirección
+$ curl -s -w ' [%{http_code}]' -G http://127.0.0.1:3000/f/vista-previa --data-urlencode 'url=https://www.iana.org/domains/example'
+redirección no seguida [502]
+
+### fuerza bruta: Retry-After
+$ for i in $(seq 1 5); do curl -s -o /dev/null -X POST http://127.0.0.1:3000/f/login -d nombre=luis -d clave=x$i; done; curl -s -i -X POST http://127.0.0.1:3000/f/login -d nombre=luis -d clave=luis-clave-larga | grep -iE '^HTTP|retry-after'
+HTTP/1.1 429 Too Many Requests
+Retry-After: 900
+
+
+### SSRF corregido, IPv4 escrita en IPv6
+$ curl -s -w ' [%{http_code}]' -G http://127.0.0.1:3000/f/vista-previa --data-urlencode 'url=http://[::ffff:127.0.0.1]:4001/admin'
+destino no permitido [400]
+
+### Pwned Passwords (Windows, curl 8.12.1, 2026-09-27)
+$ printf password | sha1sum | cut -c1-5
+5baa6
+$ curl -s https://api.pwnedpasswords.com/range/5baa6 | grep -i 1E4C9B93F3F0682250B6CF8331B7EE68FD8
+1E4C9B93F3F0682250B6CF8331B7EE68FD8:52372427

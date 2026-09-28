@@ -1,0 +1,2 @@
+exit=0 segundos=203
+fase4-5 exit=0 segundos=596
