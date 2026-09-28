@@ -2,10 +2,10 @@
 slug: npm-vs-pnpm-seguridad
 title: 'npm vs pnpm 11: install script security and allowBuilds'
 tagline: Four npm and pnpm install behaviours, measured version by version, and the configuration that makes them match.
-description: pnpm 11 stops the install with ERR_PNPM_IGNORED_BUILDS and drops onlyBuiltDependencies for allowBuilds. The fix, and how npm handles the same scripts.
+description: 'What npm 12 and pnpm 11 do with install scripts, how to fix ERR_PNPM_IGNORED_BUILDS with allowBuilds and how to configure npm.'
 areas: [seguridad, infra]
 published: '2026-09-07'
-updated: '2026-09-26'
+updated: '2026-09-27'
 draft: false
 path: npm-vs-pnpm-install-security
 repo: null
@@ -33,7 +33,7 @@ The table compares npm 11.8.0 and npm 12.0.2 with pnpm 10.0.0 and pnpm 11.26.0 a
 | CI install with a stale lockfile | installs another version, exit 0 | installs another version, exit 0 | exit 1 | exit 1 |
 | Wait before resolving a freshly published version | setting does not exist | setting present, unset | none | 1440 minutes |
 
-The table measures defaults and not capabilities. The value in the first row changes with the manager's major version, not with a file in the project. So the first thing to know is which version the machine runs. Rows 3 and 4 can be matched with configuration: `npm ci` in continuous integration and a setting in `.npmrc` (section 7). Row 2 cannot be matched, because it depends on how each manager lays packages out on disk.
+The table measures defaults and not capabilities. The default in the first row changes with the manager's major version. So the first thing to know is which version the machine runs. Row 1 can be matched in npm 12 with `strict-allow-scripts=true`, which makes the install exit 1 (section 1). Rows 3 and 4 can be matched with `npm ci` in continuous integration and a setting in `.npmrc` (section 7). Row 2 cannot be matched, because it depends on how each manager lays packages out on disk.
 
 ## 1. What third-party code the install runs
 
@@ -82,6 +82,18 @@ npm install
 
 An exit code of 0 does not stop continuous integration, the server that runs the checks on every change. So this block protects the machine but obliges nobody to review the list. The two commands in the warning show the list and approve a package, and the permission is stored in `allowScripts`, inside `package.json`<Cite n={2} repeat />.
 
+To make npm 12 stop the install, turn on `strict-allow-scripts`. With npm 12.1.0, the same command ends like this:
+
+```bash
+npm install --strict-allow-scripts=true
+# npm error code ESTRICTALLOWSCRIPTS
+# npm error --strict-allow-scripts: 1 package(s) have install scripts not covered by allowScripts:
+# npm error   evil-postinstall@1.0.0 (postinstall: node -e "...")
+# exit 1
+```
+
+Write `strict-allow-scripts=true` in the project's `.npmrc` so that it applies on every machine.
+
 With pnpm 11, the install stops earlier:
 
 ```bash
@@ -91,7 +103,7 @@ pnpm install
 # exit 1
 ```
 
-Of the four versions measured, pnpm 11 is the only one that exits with a code other than 0 when it meets an install script. That is why it is the only one that stops continuous integration without anyone configuring anything.
+Of the four versions measured, pnpm 11 is the only one that exits with a code other than 0 when it meets an install script, without anyone configuring anything.
 
 Writing an empty file is harmless. With the same permission, a script can read environment variables, search the disk for credentials or publish packages with the credentials of whoever is installing.
 
@@ -111,6 +123,8 @@ ignore-scripts=true
 ```
 
 With that line, the install of the project above finishes without creating `IT-RAN.txt`.
+
+The setting also affects the project's own scripts. The npm documentation says that `npm run`, `npm test` and `npm start` still run the script you ask for, but not its `pre` and `post` scripts<Cite n={6} repeat />. In the measurement, with npm 11.8.0, `ignore-scripts=true` did not run the project's `prepare` during `npm install` either. If the project uses `prepare` to install git hooks, as husky does, those hooks stop being installed. Run that step separately, with `npm run prepare`.
 
 Blocking scripts has a cost. Packages such as `esbuild`, `puppeteer` or `sqlite3` download or compile their binary during the install, and without it they do not work. Run the script of each one separately, without the block and for that command only:
 
@@ -236,12 +250,13 @@ Error: ERR_PNPM_NO_MATURE_MATCHING_VERSION
 
 Add exceptions by hand in `minimumReleaseAgeExclude`, as the message says. Unlike what it does with `allowBuilds`, pnpm does not write these entries to the file. Another setting, `minimumReleaseAgeStrict`, decides whether pnpm fails or chooses an older version that meets the constraint<Cite n={11} repeat />.
 
-npm 12 gained an equivalent setting, `min-release-age`, with two differences. It is measured in days rather than minutes, and it comes with no value, so by default it waits for nothing. The `min-release-age-exclude` setting accepts package names and `minimatch` patterns, which allow wildcards<Cite n={6} repeat />.
+npm has had an equivalent setting, `min-release-age`, since version 11.10.0, with two differences. It is measured in days rather than minutes, and it comes with no value, so by default it waits for nothing. The `min-release-age-exclude` setting accepts package names and `minimatch` patterns, which allow wildcards<Cite n={6} repeat />.
 
 ```bash
 npm config get min-release-age
-# npm 11.8.0 -> undefined   (the setting does not exist)
-# npm 12.0.2 -> null        (it exists, unset)
+# npm 11.8.0  -> undefined   (the setting does not exist)
+# npm 11.10.0 -> null        (it exists, unset)
+# npm 12.0.2  -> null
 ```
 
 npm also has the `before` setting, which pins every resolution to a fixed date and also comes with no value.
@@ -250,20 +265,32 @@ npm also has the `before` setting, which pins every resolution to a fixed date a
 
 Both record the integrity hash of every package in the lockfile. If the downloaded content does not match, both stop. If you tamper with a lockfile entry by hand, npm fails with `EINTEGRITY` and pnpm with `ERR_PNPM_TARBALL_INTEGRITY`. Both have a command that forces that file to be respected (section 4). Neither inspects what the package code does once installed, which is the `chalk` and `debug` case (section 1).
 
-In their current versions, both block install scripts in the same way. They use an allowlist of packages, versioned with the repository, and an interactive command that fills it. In npm, the list is `allowScripts` in `package.json` and the command is `npm install-scripts approve`. In pnpm, the list is `allowBuilds` in `pnpm-workspace.yaml` and the command is `pnpm approve-builds`. The severity differs: npm 12 warns and exits 0, and pnpm 11 exits 1.
+In their current versions, both block install scripts in the same way. They use an allowlist of packages, versioned with the repository, and an interactive command that fills it. In npm, the list is `allowScripts` in `package.json` and the command is `npm install-scripts approve`. In pnpm, the list is `allowBuilds` in `pnpm-workspace.yaml` and the command is `pnpm approve-builds`. The default severity differs: npm 12 warns and exits 0, and pnpm 11 exits 1. With `strict-allow-scripts=true`, npm 12 also exits 1.
 
 The npm registry is also changing how packages are published. In September 2025, npm announced publishing with a verified identity, called trusted publishing, and the retirement of classic tokens. It also announced a seven-day limit on the lifetime of granular tokens and a shorter expiration for those that can publish<Cite n={12} />. These are changes to how a package is published, not to what happens when it is installed, so they add to the above.
 
 ## 7. How to configure npm safely
 
-You do not need to switch package manager. In npm, three of the four behaviours can be matched with two lines of `.npmrc` and one install command.
+You do not need to switch package manager. What you can match depends on the npm version:
 
-Check the version first. Since July 2026, npm 12 blocks install scripts with nothing configured and adds the wait setting, which you do have to configure. On an earlier version, no configuration line gives that block with the same scope. The steps below hold for both situations. On npm 12 they add to the `allowScripts` block, and on an earlier version they are the only protection.
+| Version | Install scripts | Minimum release age |
+|---|---|---|
+| npm 12 | `allowScripts` by default; `strict-allow-scripts=true` to exit 1 | `min-release-age` |
+| npm 11.16 to 11.x | `allowScripts` and `strict-allow-scripts=true`; unconfigured, it warns and runs the scripts | `min-release-age` |
+| npm 11.10 to 11.15 | `ignore-scripts=true` | `min-release-age` |
+| npm before 11.10 | `ignore-scripts=true` | does not exist |
 
-Write `ignore-scripts=true` in the project's `.npmrc`, the setting from section 1, and commit it to the repository so that it applies to the whole team:
+Check the version first with `npm --version`. On npm 12, keep the `allowScripts` block and add the line that stops the install:
 
 ```ini
-# .npmrc
+# .npmrc, npm 12
+strict-allow-scripts=true
+```
+
+npm 11.16 added `allowScripts` and `strict-allow-scripts`, and npm 11.18 the `npm install-scripts` command. In those versions, without `strict-allow-scripts=true` the install warns but runs the scripts, so add the same line. On a version before 11.16, no setting gives an allowlist of packages. Write `ignore-scripts=true`, the setting from section 1, and commit it to the repository so that it applies to the whole team. Bear in mind that it also turns off the project's `prepare` (section 1):
+
+```ini
+# .npmrc, npm before 11.16
 ignore-scripts=true
 ```
 
@@ -273,12 +300,13 @@ On the server, install with `npm ci`. The command respects the lockfile (section
 npm ci
 ```
 
-With that configuration, the project from section 1 installs without creating `IT-RAN.txt` and exits 0. It is the result pnpm 10 and npm 12 give, reached with a different configuration.
+With `ignore-scripts=true`, the project from section 1 installs without creating `IT-RAN.txt` and exits 0. It is the result pnpm 10 and an unconfigured npm 12 give, reached with a different setting.
 
 **How to check it.** On the machine that installs, check that the setting is active:
 
 ```bash
-npm config get ignore-scripts
+npm config get strict-allow-scripts   # npm 12, or 11.16 and later
+npm config get ignore-scripts         # npm before 11.16
 # true
 ```
 
@@ -289,10 +317,10 @@ npm audit signatures
 # 2 packages have verified registry signatures
 ```
 
-For the minimum release age, add `min-release-age` to `.npmrc`. It requires npm 12 or later, and the value is measured in days:
+For the minimum release age, add `min-release-age` to `.npmrc`. It requires npm 11.10.0 or later, and the value is measured in days:
 
 ```ini
-# .npmrc, npm 12 or later
+# .npmrc, npm 11.10.0 or later
 min-release-age=1
 ```
 
@@ -313,8 +341,8 @@ The protection depends on the version the machine runs and on its configuration:
 
 - pnpm 9 and npm 11 without configuration block no scripts.
 - pnpm 10 and npm 12 show a warning and carry on.
-- pnpm 11 stops the install with an error.
-- npm 11 with `ignore-scripts=true` in `.npmrc` blocks more than an unconfigured npm 12, because it does not accept an allowlist.
+- pnpm 11, and npm 12 with `strict-allow-scripts=true`, stop the install with an error.
+- npm 11 before 11.16 with `ignore-scripts=true` blocks every script, including those of packages that do need them, because it does not accept an allowlist. An unconfigured npm 12 blocks only the ones not in `allowScripts`.
 
 **How to check it.** Check which version the machine runs:
 
@@ -329,7 +357,9 @@ Declaring the version in `package.json` documents the intent, but does not enfor
 { "packageManager": "pnpm@10.11.0" }
 ```
 
-In a project with that field and without Corepack enabled, `pnpm --version` still returns the version installed on the machine. That version may be older than any in the table. Corepack is the Node.js utility that uses the `packageManager` field to install that version of the package manager. For the declared version to be the one that runs, enable Corepack or install the package manager as a dependency of the project itself. Until then, the field is a declaration and not a control.
+In a project with that field and without Corepack enabled, `pnpm --version` still returns the version installed on the machine. That version may be older than any in the table.
+
+Corepack is the utility that uses the `packageManager` field to install that version of the package manager. Node.js ships it from version 14.19.0 up to 24; from Node.js 25 you install it with `npm install -g corepack`<Cite n={13} />. For the declared version to be the one that runs, enable Corepack with `corepack enable` or install the package manager as a dependency of the project itself. Until then, the field is a declaration and not a control.
 
 Dependencies are one of the ten layers in [How to secure a web application](/en/blog/how-to-secure-a-web-application), which links the article for each layer.
 
@@ -402,6 +432,12 @@ Dependencies are one of the ten layers in [How to secure a web application](/en/
 		title: 'Our plan for a more secure npm supply chain',
 		note: '22 September 2025',
 		url: 'https://github.blog/security/supply-chain-security/our-plan-for-a-more-secure-npm-supply-chain/'
+	},
+	{
+		source: 'Node.js',
+		title: 'Corepack, README',
+		note: 'shipped with Node.js from 14.19.0 up to, but not including, 25.0.0',
+		url: 'https://github.com/nodejs/corepack#readme'
 	}
 ]}
 />

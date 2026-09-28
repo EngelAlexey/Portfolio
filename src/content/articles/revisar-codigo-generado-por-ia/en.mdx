@@ -1,7 +1,7 @@
 ---
 slug: revisar-codigo-generado-por-ia
-title: Seven things to check in the code your AI writes
-tagline: Seven common security failures in AI-generated code, each with its fix and the command that checks it.
+title: Eight things to check in the code your AI writes
+tagline: Eight common security failures in AI-generated code, each with its fix and the command that checks it.
 areas: [seguridad]
 published: '2026-09-07'
 updated: '2026-09-27'
@@ -21,19 +21,21 @@ import References from '../../../components/References.astro';
 
 The code a language model generates, from a chat or from an agent, compiles, passes the tests and does what its task description asked. That description rarely includes the security requirements, such as who may see or change each piece of data. So the result does not meet them either.
 
-Veracode tested more than a hundred models on coding tasks in four languages. Of the generated code samples, 45% failed the security tests. Newer and larger models did no better than small ones<Cite n={1} />. The result therefore depends on the method used to generate the code, not on the model that writes it.
+Veracode tested more than a hundred models on coding tasks in four languages. Of the generated code samples, 45% failed the security tests. Newer and larger models did no better than small ones<Cite n={1} />.
 
-The seven failures that follow are the ones that repeat most in generated code. Each one belongs to a layer of [How to secure a web application](/en/blog/how-to-secure-a-web-application). That guide explains how to apply each layer and how to check it. Here you see the same failure in the code, with its fix and the command that checks it.
+In its March 2026 update, with more than 150 models, the secure rate was still around 55%. XSS was one of the two failures they avoided least: only 15% of the samples avoided it, against 13% for log injection<Cite n={2} />. Changing models is not enough, so the review has to look for these failures in the code.
+
+The eight failures that follow are common in generated code. Each one belongs to a layer of [How to secure a web application](/en/blog/how-to-secure-a-web-application). That guide explains how to apply each layer and how to check it. Here you see the same failure in the code, with its fix and the command that checks it.
 
 | Section | Layer in the guide |
 |---|---|
 | 1 and 2 | Permissions |
-| 3 and 5 | Input and output |
+| 3, 5 and 8 | Input and output |
 | 4 | Secrets |
 | 6 | Dependencies |
 | 7 | Errors and logs |
 
-Every example was rebuilt for the article and none of them comes from a production system.
+Every example was rebuilt for the article and none of them comes from a production system. The routes in sections 1, 2, 5 and 8 were run on 27 September 2026 against an in-memory mock database. The versions were Next.js 16.3.6, React 19.3.0, Zod 4.6.5 and isomorphic-dompurify 4.4.0.
 
 ## 1. How to check the permission on the server
 
@@ -45,22 +47,26 @@ The component hides the button by role, and the endpoint deletes the invoice wit
 
 ```ts
 // app/api/invoices/[id]/route.ts
-export async function DELETE(req: Request, { params }: Ctx) {
-  await db.invoice.delete({ where: { id: params.id } });
+export async function DELETE(req: Request, ctx: RouteContext<'/api/invoices/[id]'>) {
+  const { id } = await ctx.params;
+  await db.invoice.delete({ where: { id } });
   return Response.json({ ok: true });
 }
 ```
 
-Hiding the button is a rendering decision, not a permission. The endpoint still accepts the request from anyone who knows the address, and that address sits in code the browser has already downloaded. The OWASP API Security Top 10 lists this failure as API5:2023, Broken Function Level Authorization. It means that a server function does not check the permission of whoever calls it. OWASP also notes that authorisation is managed in configuration or in code<Cite n={2} />.
+Since Next.js 15, `params` is a promise and has to be awaited. Next.js 16 removed synchronous access<Cite n={3} /><Cite n={4} />. `RouteContext` is a type Next.js generates for each route, and it does not need to be imported.
+
+Hiding the button is a rendering decision, not a permission. The endpoint still accepts the request from anyone who knows the address, and that address sits in code the browser has already downloaded. The OWASP API Security Top 10 lists this failure as API5:2023, Broken Function Level Authorization. It means that a server function does not check the permission of whoever calls it. OWASP also notes that authorisation is managed in configuration or in code<Cite n={5} />.
 
 Repeat the check on the server, the only place the user cannot modify:
 
 ```ts
-export async function DELETE(req: Request, { params }: Ctx) {
+export async function DELETE(req: Request, ctx: RouteContext<'/api/invoices/[id]'>) {
+  const { id } = await ctx.params;
   const session = await auth();
   if (session?.user.role !== 'admin') return new Response(null, { status: 403 });
 
-  await db.invoice.delete({ where: { id: params.id } });
+  await db.invoice.delete({ where: { id } });
   return Response.json({ ok: true });
 }
 ```
@@ -81,46 +87,52 @@ Without the fix, the response is `200 OK` and the invoice is gone. With the fix,
 The query looks the invoice up by the identifier in the URL and by nothing else.
 
 ```ts
-export async function GET(req: Request, { params }: Ctx) {
-  const invoice = await db.invoice.findUnique({ where: { id: params.id } });
+export async function GET(req: Request, ctx: RouteContext<'/api/invoices/[id]'>) {
+  const { id } = await ctx.params;
+  const invoice = await db.invoice.findUnique({ where: { id } });
   return Response.json(invoice);
 }
 ```
 
-This endpoint does require a session, so it looks correct. Even so, any user with a session can read another company's invoices by changing the number in the address. The same OWASP list puts this failure in first place, as API1:2023. It describes it as manipulating the identifier sent inside the request<Cite n={3} />.
+This endpoint does require a session, so it looks correct. Even so, any user with a session can read another company's invoices by changing the number in the address. The same OWASP list puts this failure in first place, as API1:2023. It describes it as manipulating the identifier sent inside the request<Cite n={6} />.
 
 To fix this case and every case like it, include the owner in the query condition. A check that runs afterwards can be forgotten in the next endpoint. A condition inside the `where` applies every time the query runs.
 
 ```ts
-const session = await auth();
-const invoice = await db.invoice.findFirst({
-  where: { id: params.id, companyId: session.user.companyId }
-});
+export async function GET(req: Request, ctx: RouteContext<'/api/invoices/[id]'>) {
+  const { id } = await ctx.params;
+  const session = await auth();
+  if (!session) return new Response(null, { status: 401 });
 
-if (!invoice) return new Response(null, { status: 404 });
-return Response.json(invoice);
+  const invoice = await db.invoice.findFirst({
+    where: { id, companyId: session.user.companyId }
+  });
+  if (!invoice) return new Response(null, { status: 404 });
+  return Response.json(invoice);
+}
 ```
 
-The fix answers `404` and not `403` on purpose. A `403` confirms that the invoice exists, and that confirmation is already information about another company.
+The fix answers `404` and not `403` on purpose. A `403` confirms that the invoice exists, and that confirmation is already information about another company. The session is checked before the query. Without that line, a request with no session throws an error when it reads `session.user`, and the server answers `500`.
 
-**How to check it.** Use two sessions. Sign in as company A, request an id that belongs to company B and check that the response is `404`.
+**How to check it.** Use two sessions. Sign in as company A, request an id that belongs to company B and check that the response is `404`. In the measurement, without the fix, the same request returned `200` with the other company's invoice. Repeat the request with no session: the response has to be `401`.
 
 ## 3. How to build a query without concatenating text
 
 The filter comes from a search form and enters the SQL statement as text.
 
 ```ts
+const client = new URL(req.url).searchParams.get('client');
 const rows = await db.$queryRawUnsafe(
-  `SELECT * FROM invoices WHERE client = '${req.nextUrl.searchParams.get('client')}'`
+  `SELECT * FROM invoices WHERE client = '${client}'`
 );
 ```
 
-The value lands inside the quotes and can close them. With `x' OR '1'='1`, the condition is always true and the query returns the whole table. OWASP recommends not passing the value to the SQL interpreter as text, and using a parameterised interface or an ORM instead<Cite n={4} />.
+The value lands inside the quotes and can close them. With `x' OR '1'='1`, the condition is always true and the query returns the whole table. OWASP recommends not passing the value to the SQL interpreter as text, and using a parameterised interface or an ORM instead<Cite n={7} />.
 
 The fixed version uses `$queryRaw` with a tagged template, which is a string with `${}` passed to a function. The function receives the value separately and sends it as a parameter, not as part of the statement:
 
 ```ts
-const client = req.nextUrl.searchParams.get('client') ?? '';
+const client = new URL(req.url).searchParams.get('client') ?? '';
 const rows = await db.$queryRaw`SELECT * FROM invoices WHERE client = ${client}`;
 ```
 
@@ -130,8 +142,6 @@ One case remains that a parameter cannot cover: the name of the column used for 
 const COLUMNS = { date: 'issued_at', amount: 'total' } as const;
 const column = COLUMNS[sort as keyof typeof COLUMNS] ?? 'issued_at';
 ```
-
-If a model writes the query while the application runs, the check has to happen on the parsed statement. A regular expression over the text fails, because a comment, a space or an alias is enough to hide the query from it. Parse the statement to get its syntax tree, add the security filters there and run only the statement that results.
 
 **How to check it.** Send the value with the quote:
 
@@ -149,7 +159,7 @@ The variable has to be available inside the component, so the model gives it the
 const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!);
 ```
 
-According to the Next.js documentation, the value of a variable with the `NEXT_PUBLIC_` prefix is inlined into the bundle at build time. The bundle is the JavaScript the browser downloads, and in it every reference to the variable is replaced by its value<Cite n={5} />. The same happens with `VITE_` and with `PUBLIC_` in Astro.
+According to the Next.js documentation, the value of a variable with the `NEXT_PUBLIC_` prefix is inlined into the bundle at build time. The bundle is the JavaScript the browser downloads, and in it every reference to the variable is replaced by its value<Cite n={8} />. The same happens with `VITE_` and with `PUBLIC_` in Astro.
 
 The fix is to keep the key on the server. The component calls a route of its own, and that route calls Stripe with the key:
 
@@ -165,10 +175,10 @@ export async function POST(req: Request) {
 
 A protection that depends on remembering the prefix fails the day someone forgets it. [The secrets layer in the guide](/en/blog/how-to-secure-a-web-application#10-how-to-keep-secrets-out-of-the-code-and-the-browser) explains how to detect them before the commit and where to store them.
 
-**How to check it.** Search the build output, not the source code. Next.js puts the bundle in `.next/static`. Search for the start of the key's value, `sk_live`, not for the variable name, because the build has already replaced one with the other:
+**How to check it.** Search the build output, not the source code. Next.js puts the bundle in `.next/static`. Search for the start of the key's value, not for the variable name, because the build has already replaced one with the other. Stripe keys start with `sk_live_` in live mode and `sk_test_` in test mode:
 
 ```bash
-pnpm build && grep -r "sk_live" .next/static | head
+pnpm build && grep -rE "sk_(live|test)_" .next/static | head
 ```
 
 The output has to be empty.
@@ -188,11 +198,12 @@ The form limits the field, and the endpoint assumes that the value arrived limit
 ```ts
 export async function POST(req: Request) {
   const { quantity } = await req.json();
-  await db.order.create({ data: { quantity, total: quantity * PRICE } });
+  const order = await db.order.create({ data: { quantity, total: quantity * PRICE } });
+  return Response.json(order, { status: 201 });
 }
 ```
 
-The `min`, `max` and `required` attributes help the person filling in the form, but a request sent outside the form never passes through them. With a negative quantity, the stored total comes out negative. The CWE catalogue lists it as CWE-602: enforcing on the client a protection that belongs to the server<Cite n={6} />.
+The `min`, `max` and `required` attributes help the person filling in the form, but a request sent outside the form never passes through them. With a negative quantity, the stored total comes out negative. The CWE catalogue lists it as CWE-602: enforcing on the client a protection that belongs to the server<Cite n={9} />.
 
 Validate at every trust boundary, the point where data passes from something the user controls to something they do not. An endpoint is one of those boundaries, and so are a message queue and a webhook. The fix validates the body with a Zod schema before creating the order:
 
@@ -204,11 +215,12 @@ export async function POST(req: Request) {
   if (!parsed.success) return new Response(null, { status: 400 });
 
   const { quantity } = parsed.data;
-  await db.order.create({ data: { quantity, total: quantity * PRICE } });
+  const order = await db.order.create({ data: { quantity, total: quantity * PRICE } });
+  return Response.json(order, { status: 201 });
 }
 ```
 
-`safeParse` returns the result of the validation instead of throwing an exception, and the endpoint answers `400` when it fails.
+`safeParse` returns the result of the validation instead of throwing an exception, and the endpoint answers `400` when it fails. Every branch of the handler returns a response. If a branch ends without `return`, Next.js answers `500` and logs "No response is returned from route handler".
 
 **How to check it.** Send a value the form does not let you type:
 
@@ -218,7 +230,7 @@ curl -i -X POST http://localhost:3000/api/orders \
   -d '{"quantity": -3}'
 ```
 
-Without the fix, the response is `200` and the order is created. With the fix, the response is `400` and nothing is created.
+Without the fix, the response is `201` and the order is stored with `"total":-3000`. With the fix, the response is `400` and nothing is created.
 
 ## 6. How to check that a package exists before installing it
 
@@ -230,7 +242,7 @@ This failure is not in the code but in `package.json`. The model suggests a pack
 }
 ```
 
-A **hallucinated package** is a package name the model invents. A study published at USENIX Security 2025 generated 576,000 code samples with 16 models and found 205,474 distinct hallucinated names. At least 5.2% of the packages named by commercial models did not exist, and 21.7% of those named by open-source models<Cite n={7} />.
+A **hallucinated package** is a package name the model invents. A study published at USENIX Security 2025 generated 576,000 code samples with 16 models and found 205,474 distinct hallucinated names. At least 5.2% of the packages named by commercial models did not exist, and 21.7% of those named by open-source models<Cite n={10} />.
 
 The invented name is predictable, so anyone can publish it to the registry with their own code. From then on, that code is installed in every project that follows the suggestion. A package can also declare install scripts, which are commands the package manager runs when it installs the package. If the package manager runs them, the publisher's code runs before anyone imports the package.
 
@@ -249,7 +261,7 @@ Three answers argue against installing:
 3. A missing repository, or one that does not match the name, means there is nothing to audit.
 
 <Callout kind="nota" title="Pin the version and commit the lockfile">
-The lockfile, `package-lock.json` in npm, records the exact version of every dependency. A range like `^2.1.0` accepts versions that do not exist yet when it is written. `npm ci` installs what the lockfile says and fails when it does not match `package.json`, instead of updating it<Cite n={8} />. With that file in the repository, a new version does not get in without someone reviewing it.
+The lockfile, `package-lock.json` in npm, records the exact version of every dependency. A range like `^2.1.0` accepts versions that do not exist yet when it is written. `npm ci` installs what the lockfile says and fails when it does not match `package.json`, instead of updating it<Cite n={11} />. With that file in the repository, a new version does not get in without someone reviewing it.
 </Callout>
 
 ## 7. How to return an error without exposing internal detail
@@ -262,7 +274,7 @@ catch (error) {
 }
 ```
 
-The message of a database error names the table, the column and the constraint that failed. The stack trace, the list of calls that led to the error, names the server paths and the dependency versions. This is CWE-209: an error message that reveals information about the environment or its data<Cite n={9} />. That information reduces the work of anyone looking for a vulnerability.
+The message of a database error names the table, the column and the constraint that failed. The stack trace, the list of calls that led to the error, names the server paths and the dependency versions. This is CWE-209: an error message that reveals information about the environment or its data<Cite n={12} />. That information reduces the work of anyone looking for a vulnerability.
 
 Keep the detail in the server log, which only the team reads, and return an identifier to find it later:
 
@@ -278,21 +290,56 @@ The log is not a private place either. It is exported, sent to a provider and re
 
 **How to check it.** Cause the failure: stop the database, send the request and read the response body. No table name and no server path can appear in it.
 
-## 8. How to review generated code with a prompt
+## 8. How to display HTML a user wrote
 
-You can review the seven sections by hand. A coding agent can also do it with a prompt, on recent changes or on the whole repository. Copy it with the **Copy prompt** button in the **Review the code** panel and paste it into a session opened at the project root. The agent follows seven phases:
+The profile shows the biography the user wrote and a link to their website. To keep the biography's formatting, the model uses `dangerouslySetInnerHTML`.
+
+```tsx
+// app/profile/page.tsx
+<div dangerouslySetInnerHTML={{ __html: profile.bio }} />
+<a href={profile.website}>My website</a>
+```
+
+React escapes the text written between braces, but `dangerouslySetInnerHTML` turns that escaping off and the value reaches the browser as HTML. With the biography `<img src=x onerror="console.log('XSS executed')">`, the HTML the server returns contains the tag as is. The browser cannot load the image and runs the `onerror` attribute. This is stored XSS, CWE-79<Cite n={13} />.
+
+The link is the second case. An `href` that starts with `javascript:` runs code when it is clicked. React 19 already blocks it: in the measurement it replaced the value with `javascript:throw new Error('React has blocked a javascript: URL as a security precaution.')`. The same value in a text template, in Vue's `v-html` or in an earlier version of React has no such protection.
+
+If the text does not need formatting, render it between braces and let React escape it. If it does, pass the HTML through a sanitiser before inserting it. OWASP recommends DOMPurify, which removes script tags and event attributes<Cite n={14} />. For links, accept only `http` and `https`:
+
+```tsx
+import DOMPurify from 'isomorphic-dompurify';
+
+const website = /^https?:\/\//i.test(profile.website) ? profile.website : undefined;
+
+<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(profile.bio) }} />
+<a href={website}>My website</a>
+```
+
+**How to check it.** Save the test biography in the profile and request the page:
+
+```bash
+curl -s http://localhost:3000/profile | grep -o '<img[^>]*>'
+```
+
+Without the fix, the output is `<img src=x onerror="console.log('XSS executed')">`. With the fix, it is `<img src="x">`, without the `onerror` attribute.
+
+## 9. How to review generated code with a prompt
+
+You can review the eight sections by hand. A coding agent can also do it with a prompt, on recent changes or on the whole repository. Copy it with the **Copy prompt** button in the **Review the code** panel and paste it into a session opened at the project root. The agent follows seven phases:
 
 1. **It asks what to review:** a range of commits, a branch or the whole repository if it is small.
-2. **It reviews the seven sections** with their checks, and confirms each failure by running the check when it can.
+2. **It reviews the eight sections** with their checks, and confirms each failure by running the check when it can.
 3. **It proposes and waits.** It presents the failures, from most to least serious, and the fix for each one, and stops until you confirm.
 4. **It fixes** each failure with the smallest change that closes it.
 5. **It adds a test** per failure and checks that it fails before the fix.
 6. **It repeats the checks** and pastes the outputs from before and after.
 7. **It delivers a report** with what changed, what it could not check and the guide layer each failure belongs to.
 
-The run was measured with Claude Code 2.1.283 on an Express invoicing API with the seven failures. It took 6 minutes, not counting the wait for confirmation: 3 up to the proposal and 3 to fix and check.
+The prompt was run once, as a demonstration, with Claude Code 2.1.283 and the previous version of the prompt, which reviewed seven sections without XSS. The project was an Express invoicing API prepared with those seven failures. It took 6 minutes, not counting the wait for confirmation: 3 up to the proposal and 3 to fix and check.
 
-The agent found the seven failures, confirmed each one with a check and assigned it to its layer. It also found an eighth that fails open: with the token `__proto__`, the session lookup returned the object's prototype and the request went through. The nine tests it added failed before the fixes, and all pass afterwards. It also warned that the exposed key was still in the git history.
+The agent flagged the seven planted failures. It also found one that was not planted. With the token `__proto__`, the session lookup returned the object's prototype and the request went through. The nine tests it added failed before the fixes and passed afterwards. It also warned that the exposed key was still in the git history.
+
+A single run on a prepared project shows how the prompt works, but it does not measure how many failures it finds in a real project. Nor does it measure the failures the prompt does not name. Review the report as you would review one written by a person.
 
 <Callout kind="riesgo" title="Read the prompt before pasting it">
 	This prompt asks the agent to run the project's commands and change the code. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.
@@ -302,11 +349,11 @@ The agent found the seven failures, confirmed each one with a check and assigned
 
 ## What to fix first
 
-The seven failures are not equally urgent. Sections 1, 2 and 4 can be exploited from outside with no other failure and without crafting any value, so they go first. Sections 3 and 5 need someone to send a value crafted on purpose, such as a quote or a negative quantity. That is cheap, but deliberate. Section 6 is checked when a dependency is installed, and section 7 is fixed once in the shared error handler.
+The eight failures are not equally urgent. Sections 1, 2 and 4 can be exploited from outside with no other failure and without crafting any value, so they go first. Sections 3, 5 and 8 need someone to send a value crafted on purpose, such as a quote, a negative quantity or an HTML tag. That is cheap, but deliberate. Section 6 is checked when a dependency is installed, and section 7 is fixed once in the shared error handler.
 
-**Failing closed** means denying the request when a check cannot decide. That rule applies to all seven cases. For example, the request is refused if the session does not resolve, if validation throws an exception or if the permission is missing. Generated code tends to do the opposite. A `?? 0`, an empty `catch` or an `if (!user) return next()` let the request carry on as normal, and the failure goes unnoticed.
+**Failing closed** means denying the request when a check cannot decide. That rule applies to all eight cases. For example, the request is refused if the session does not resolve, if validation throws an exception or if the permission is missing. Generated code tends to do the opposite. A `?? 0`, an empty `catch` or an `if (!user) return next()` let the request carry on as normal, and the failure goes unnoticed.
 
-Unescaped HTML, [an open CORS configuration](/en/blog/what-is-cors) and a missing rate limit are left out of the list. They are common failures, but they do not repeat as much in generated code. [How to secure a web application](/en/blog/how-to-secure-a-web-application) covers them in its input and output, other origins, and passwords and attempts layers. The last one includes the login attempt limit.
+[An open CORS configuration](/en/blog/what-is-cors) and a missing rate limit are left out of the list. [How to secure a web application](/en/blog/how-to-secure-a-web-application) covers them in its other origins and passwords and attempts layers. The last one includes the login attempt limit.
 
 <References
 	title="References"
@@ -316,6 +363,24 @@ Unescaped HTML, [an open CORS configuration](/en/blog/what-is-cors) and a missin
 		source: 'Veracode',
 		title: '2025 GenAI Code Security Report',
 		url: 'https://www.veracode.com/resources/analyst-reports/2025-genai-code-security-report/'
+	},
+	{
+		source: 'Veracode',
+		title: 'Spring 2026 GenAI Code Security Update',
+		note: '24 March 2026; more than 150 models, XSS avoided in 15% of samples',
+		url: 'https://www.veracode.com/blog/spring-2026-genai-code-security/'
+	},
+	{
+		source: 'Next.js',
+		title: 'route.js, Version History',
+		note: 'params is a promise since 15.0.0-RC; synchronous access removed in 16',
+		url: 'https://nextjs.org/docs/app/api-reference/file-conventions/route'
+	},
+	{
+		source: 'Next.js',
+		title: 'How to upgrade to version 16',
+		note: 'params: synchronous access removed in Next.js 16',
+		url: 'https://nextjs.org/docs/app/guides/upgrading/version-16'
 	},
 	{
 		source: 'OWASP',
@@ -357,6 +422,16 @@ Unescaped HTML, [an open CORS configuration](/en/blog/what-is-cors) and a missin
 		source: 'MITRE',
 		title: 'CWE-209: Generation of Error Message Containing Sensitive Information',
 		url: 'https://cwe.mitre.org/data/definitions/209.html'
+	},
+	{
+		source: 'MITRE',
+		title: "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+		url: 'https://cwe.mitre.org/data/definitions/79.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'Cross Site Scripting Prevention Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html'
 	}
 ]}
 />

@@ -1,11 +1,11 @@
 ---
 slug: como-proteger-una-pagina-web
 title: 'Cómo proteger una página web: guía por capas para una aplicación con usuarios'
-tagline: Las diez capas que protegen una aplicación web con usuarios, cómo aplicar cada una y cómo comprobar que funciona.
+tagline: Las diez capas que protegen una aplicación web con usuarios, con un ejemplo en Express y cómo comprobar cada una.
 description: 'Cómo proteger una página web con usuarios: HTTPS, cabeceras, cookies, contraseñas, permisos, XSS, CORS, CSRF, secretos, dependencias y errores.'
 areas: [seguridad]
 published: '2026-09-27'
-updated: null
+updated: '2026-09-27'
 draft: false
 path: null
 repo: null
@@ -25,7 +25,7 @@ Una página web con usuarios tiene un *frontend*, una API y un inicio de sesión
 
 La edición 2025 del OWASP Top 10 sitúa el control de acceso roto en primer lugar y la configuración de seguridad incorrecta en segundo<Cite n={1} />. Varios fallos de configuración aparecen ya en el primer borrador de una aplicación Express. Sin ajustes, responde con `X-Powered-By: Express`, crea la cookie de sesión sin atributos de seguridad y devuelve la traza de un error al navegador.
 
-Ningún control protege la aplicación entera. Cada capa evita una amenaza concreta, y las demás capas cubren lo que esa deja pasar. Las diez capas siguen en orden, y cada una enlaza al artículo que profundiza en ella.
+Ningún control protege la aplicación entera. Cada capa evita una amenaza concreta, y las demás capas cubren lo que esa deja pasar. Las diez capas siguen en orden, y cada una enlaza al artículo que profundiza en ella. El ejemplo usa Node.js y Express, pero las capas y las comprobaciones con curl valen para cualquier *framework*.
 
 Las mediciones se hicieron el 27 de septiembre de 2026 con Node.js 24.19.0, Express 5.2.1, helmet 8.3.0, express-rate-limit 8.7.0, curl 8.12.1 y Chrome 153.0.8010.54. Todo el código está reconstruido para el artículo.
 
@@ -37,20 +37,20 @@ Las mediciones se hicieron el 27 de septiembre de 2026 con Node.js 24.19.0, Expr
 | 2. Cabeceras de seguridad | Scripts inyectados y la carga en un `iframe` ajeno | CSP, `frame-ancestors` y `nosniff` | Punto 4 |
 | 3. Sesión y cookies | El robo de la sesión | `HttpOnly`, `Secure` y `SameSite` | Punto 5 |
 | 4. Contraseñas e intentos | El robo de contraseñas y la fuerza bruta | Un hash lento y un límite por cuenta | Punto 6 |
-| 5. Permisos | Leer o cambiar datos ajenos | La comprobación en el servidor | [Siete cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), puntos 1 y 2 |
-| 6. Entrada y salida | La inyección y el XSS | Consultas parametrizadas y salida escapada | [Siete cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), puntos 3 y 5 |
+| 5. Permisos | Leer o cambiar datos ajenos | La comprobación en el servidor | [Ocho cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), puntos 1 y 2 |
+| 6. Entrada y salida | La inyección y el XSS | Consultas parametrizadas y salida escapada | [Ocho cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), puntos 3, 5 y 8 |
 | 7. Otros orígenes (CORS y CSRF) | Que otra web lea la API o actúe con la sesión | Lista de orígenes y token anti-CSRF | [Qué es CORS](/es/blog/que-es-cors) |
-| 8. Secretos | Claves expuestas en el repositorio o en el navegador | Secretos fuera del código y del *bundle* | [Siete cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), punto 4 |
+| 8. Secretos | Claves expuestas en el repositorio o en el navegador | Secretos fuera del código y del *bundle* | [Ocho cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), punto 4 |
 | 9. Dependencias | Código de terceros que se ejecuta al instalar | Archivo de bloqueo, firmas y scripts de instalación bloqueados | [npm y pnpm](/es/blog/npm-vs-pnpm-seguridad) |
-| 10. Errores y registros | Detalles internos en las respuestas y datos en los registros | Respuesta genérica con un identificador | [Siete cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), punto 7 |
+| 10. Errores y registros | Detalles internos en las respuestas y datos en los registros | Respuesta genérica con un identificador | [Ocho cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), punto 7 |
 
 Cada capa se explica con lo que pasa sin ella en una aplicación de ejemplo y con la orden que la comprueba. Los artículos enlazados muestran el mismo fallo visto en el código, con su corrección.
 
 ## 2. Cómo preparar el entorno antes de escribir código
 
-Si un agente de programación escribe parte de la aplicación, antes de las capas está el entorno en el que trabaja. [Primeros pasos para programar con IA](/es/blog/primeros-pasos-programar-con-ia) explica cómo prepararlo. El agente no puede leer `.env`, pide permiso antes de las órdenes peligrosas y un revisor de seguridad revisa cada cambio. [Cómo pedirle a la IA código seguro](/es/blog/codigo-seguro-con-ia) explica cómo convertir estas capas en reglas que el agente carga y comprueba en cada cambio.
+Si un agente de programación escribe parte de la aplicación, dos ajustes de su entorno reducen el riesgo desde el principio. El agente no debe poder leer `.env`, y cada cambio tiene que pasar una revisión. [Primeros pasos para programar con IA](/es/blog/primeros-pasos-programar-con-ia) explica los dos. [Cómo pedirle a la IA código seguro](/es/blog/codigo-seguro-con-ia) explica qué poner en la petición y qué comprobar con el compilador, el linter y las pruebas.
 
-**Cómo hacerlo.** Configure el entorno con el prompt de primeros pasos antes de pedir la primera función. Después, añada al archivo de instrucciones del proyecto las capas de la tabla del punto 1 que su aplicación necesita.
+**Cómo hacerlo.** Antes de pedir la primera función, añada al archivo de instrucciones del proyecto las capas de la tabla del punto 1 que su aplicación necesita.
 
 ## 3. Cómo servir la aplicación por HTTPS y activar HSTS
 
@@ -129,6 +129,12 @@ Para que un script propio se ejecute, muévalo a un archivo `.js` o autorícelo 
 
 El paquete `helmet` 8.3.0 configura trece cabeceras con una sola línea, `app.use(helmet())`: envía doce y quita `X-Powered-By`<Cite n={6} />. Tres de sus valores por defecto difieren de los del ejemplo: `Referrer-Policy: no-referrer`, `frame-ancestors 'self'` y un `max-age` de un año. Ajústelos con sus opciones si quiere los del ejemplo.
 
+<Callout kind="riesgo" title="Pruebe la CSP antes de aplicarla">
+	`default-src 'self'` también bloquea los estilos escritos en el HTML, tanto los elementos `<style>` como los atributos `style=`, porque `style-src` toma el valor de `default-src` cuando no se declara<Cite n={7} />. En una aplicación que ya existe, eso puede romper estilos, fuentes externas, analítica y los scripts que añade el *framework*. Despliegue primero la misma política con la cabecera `Content-Security-Policy-Report-Only`, que informa de cada bloqueo sin aplicarlo<Cite n={8} />. Cuando la consola ya no muestre avisos, cambie al nombre `Content-Security-Policy`.
+
+	La CSP por defecto de helmet 8.3.0 es menos estricta: su `style-src` es `'self' https: 'unsafe-inline'`. En Next.js, la guía oficial genera un *nonce* distinto en cada petición desde `proxy.ts`<Cite n={9} />.
+</Callout>
+
 **Cómo comprobarlo.** Pida las cabeceras de la página principal:
 
 ```text
@@ -138,7 +144,7 @@ X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
 ```
 
-`X-Powered-By` no aparece. Abra la página con la consola del navegador abierta y compruebe que la CSP no bloquea ningún script propio.
+`X-Powered-By` no aparece. Abra cada tipo de página con la consola del navegador abierta y compruebe que la CSP no bloquea ningún script ni ningún estilo propio.
 
 ## 5. Cómo proteger la sesión y las cookies
 
@@ -149,7 +155,7 @@ Set-Cookie: sesion=8f81d9b1-ee09-471d-9134-ac51dd2b3c08; Path=/
 document.cookie = "sesion=a093f210-c912-4b0b-9afe-23761b9c2a2f"
 ```
 
-OWASP considera obligatorios `Secure` y `HttpOnly` en la cookie de sesión. Pide además fijar `SameSite` de forma explícita, preferiblemente `Strict`, sin depender del valor por defecto del navegador<Cite n={7} />:
+OWASP considera obligatorios `Secure` y `HttpOnly` en la cookie de sesión. Pide además fijar `SameSite` de forma explícita, preferiblemente `Strict`, sin depender del valor por defecto del navegador<Cite n={10} />:
 
 ```js
 res.cookie('__Host-sesion', id, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' });
@@ -157,10 +163,10 @@ res.cookie('__Host-sesion', id, { httpOnly: true, secure: true, sameSite: 'lax',
 
 El ejemplo usa `Lax` para que un enlace desde otro sitio llegue con la sesión iniciada. Use `Strict` si la aplicación no lo necesita.
 
-- **`HttpOnly`** impide que JavaScript lea la cookie. Un XSS ya no puede copiarla<Cite n={8} />.
+- **`HttpOnly`** impide que JavaScript lea la cookie. Un XSS ya no puede copiarla<Cite n={11} />.
 - **`Secure`** solo la envía por HTTPS.
-- **`SameSite=Lax`** no la envía en peticiones de otros sitios. La excepción es la navegación de nivel superior con un método seguro como `GET`, por ejemplo un enlace hacia la aplicación. `Strict` tampoco la envía en ese caso<Cite n={8} repeat />.
-- **El prefijo `__Host-`** exige tres condiciones, o el navegador rechaza la cookie. Tiene que fijarse desde un origen HTTPS, llevar `Secure` y `Path=/`, y no llevar `Domain`<Cite n={8} repeat />. OWASP lo recomienda para la sesión<Cite n={7} repeat />.
+- **`SameSite=Lax`** no la envía en peticiones de otros sitios. La excepción es la navegación de nivel superior con un método seguro como `GET`, por ejemplo un enlace hacia la aplicación. `Strict` tampoco la envía en ese caso<Cite n={11} repeat />.
+- **El prefijo `__Host-`** exige tres condiciones, o el navegador rechaza la cookie. Tiene que fijarse desde un origen HTTPS, llevar `Secure` y `Path=/`, y no llevar `Domain`<Cite n={11} repeat />. OWASP lo recomienda para la sesión<Cite n={10} repeat />.
 
 Con estos atributos, la misma página ya no ve la sesión:
 
@@ -171,17 +177,19 @@ document.cookie = ""
 
 **Cómo hacerlo.**
 
-1. Genere un identificador de sesión nuevo al iniciar sesión, como hace `randomUUID()` en el ejemplo. OWASP obliga a renovarlo en cada cambio de privilegio<Cite n={7} repeat />.
+1. Genere un identificador de sesión nuevo al iniciar sesión, como hace `randomUUID()` en el ejemplo. OWASP obliga a renovarlo en cada cambio de privilegio<Cite n={10} repeat />.
 2. Fije `HttpOnly`, `Secure`, `SameSite` y `Path=/`, y use el prefijo `__Host-`.
-3. Si el *frontend* y la API están en sitios distintos y necesitan la cookie, lea [cómo permitir cookies entre orígenes sin abrir la API](/es/blog/que-es-cors).
+3. Caduque la sesión en el servidor. OWASP propone de 15 a 30 minutos de inactividad en aplicaciones de riesgo bajo y de 2 a 5 en las de alto valor. Para el límite absoluto, propone de 4 a 8 horas si la aplicación se usa durante una jornada de trabajo<Cite n={10} repeat />.
+4. Al cerrar sesión, borre la sesión en el servidor, además de la cookie. Según OWASP, la invalidación en el servidor es la obligatoria<Cite n={10} repeat />. Si solo se borra la cookie, el identificador sigue siendo válido para quien lo haya copiado.
+5. Si el *frontend* y la API están en sitios distintos y necesitan la cookie, lea [cómo permitir cookies entre orígenes sin abrir la API](/es/blog/que-es-cors).
 
-**Cómo comprobarlo.** Inicie sesión con curl y lea la cabecera `Set-Cookie`. Después, con la sesión iniciada en el navegador, escriba `document.cookie` en la consola: la cookie de sesión no debe aparecer.
+**Cómo comprobarlo.** Inicie sesión con curl y lea la cabecera `Set-Cookie`. Después, con la sesión iniciada en el navegador, escriba `document.cookie` en la consola: la cookie de sesión no debe aparecer. Por último, guarde la cookie, cierre la sesión y repita una petición con la cookie guardada: la respuesta tiene que ser `401`.
 
 ## 6. Cómo guardar las contraseñas y limitar los intentos
 
-Una contraseña se guarda como un *hash* lento, nunca en claro ni con un *hash* rápido como SHA-256. OWASP recomienda Argon2id. Si no está disponible, recomienda scrypt; bcrypt, solo en sistemas heredados, y PBKDF2 si se exige FIPS-140<Cite n={9} />.
+Una contraseña se guarda como un *hash* lento, nunca en claro ni con un *hash* rápido como SHA-256. OWASP recomienda Argon2id. Si no está disponible, recomienda scrypt; bcrypt, solo en sistemas heredados, y PBKDF2 si se exige FIPS-140<Cite n={12} />.
 
-Node.js incluye scrypt en `node:crypto`, sin dependencias. Sus parámetros por defecto (N = 2<sup>14</sup>, r = 8, p = 1) no alcanzan ninguna de las combinaciones mínimas de OWASP<Cite n={9} repeat /><Cite n={10} />. El ejemplo usa la primera, N = 2<sup>17</sup>, r = 8 y p = 1:
+Node.js incluye scrypt en `node:crypto`, sin dependencias. Sus parámetros por defecto (N = 2<sup>14</sup>, r = 8, p = 1) no alcanzan ninguna de las combinaciones mínimas de OWASP<Cite n={12} repeat /><Cite n={13} />. El ejemplo usa la primera, N = 2<sup>17</sup>, r = 8 y p = 1:
 
 ```js
 // Parámetros de scrypt: N = 2^17, r = 8, p = 1.
@@ -201,16 +209,20 @@ export async function verificarContrasena(contrasena, guardado) {
 }
 ```
 
-Estos parámetros necesitan unos 128 MiB. Con el límite por defecto de scrypt en Node.js (`maxmem`, 32 MiB), la llamada falla<Cite n={10} repeat />:
+Estos parámetros necesitan unos 128 MiB. Con el límite por defecto de scrypt en Node.js (`maxmem`, 32 MiB), la llamada falla<Cite n={13} repeat />:
 
 ```text
 ERR_CRYPTO_INVALID_SCRYPT_PARAMS Invalid scrypt params: error:030000AC:digital envelope
 routines::memory limit exceeded
 ```
 
-Por eso el ejemplo sube `maxmem` a 256 MiB. Con esos parámetros, calcular un *hash* tardó unos 260 ms. `timingSafeEqual` compara el resultado en un tiempo que no depende de dónde difieren los dos valores<Cite n={10} repeat />.
+Por eso el ejemplo sube `maxmem` a 256 MiB. Con esos parámetros, calcular un *hash* tardó unos 260 ms. `timingSafeEqual` compara el resultado en un tiempo que no depende de dónde difieren los dos valores<Cite n={13} repeat />.
 
-Un *hash* lento no frena a quien prueba contraseñas contra el inicio de sesión. Para eso sirve un límite de intentos. OWASP pide asociar el contador de fallos a la cuenta, no a la dirección IP<Cite n={11} />. `skipSuccessfulRequests` hace que el límite solo cuente los intentos fallidos:
+Ese coste lo paga también el servidor. OWASP advierte de que un factor de trabajo demasiado alto permite a un atacante agotar la CPU del servidor con peticiones de inicio de sesión<Cite n={12} repeat />. Con estos parámetros, además, cada cálculo reserva unos 128 MiB. Por eso el límite de intentos que sigue se monta en la ruta de inicio de sesión, delante del cálculo del *hash*: `app.post('/login', limite, iniciarSesion)`.
+
+El límite por cuenta no acota esa carga cuando se prueban muchas cuentas; la acota el segundo límite, por IP. Mida también cuántos inicios de sesión simultáneos soporta su servidor antes de fijar los parámetros.
+
+Un *hash* lento no frena a quien prueba contraseñas contra el inicio de sesión. Para eso sirve un límite de intentos. OWASP pide asociar el contador de fallos a la cuenta, no a la dirección IP<Cite n={14} />. `skipSuccessfulRequests` hace que el límite solo cuente los intentos fallidos:
 
 ```js
 // Cinco intentos por cuenta cada 15 minutos (OWASP asocia el contador a la cuenta, no a la IP).
@@ -224,7 +236,7 @@ const limite = rateLimit({
 });
 ```
 
-Tras un inicio de sesión correcto y cinco contraseñas incorrectas, el sexto intento fallido responde `429`, que significa demasiadas peticiones<Cite n={12} />:
+Tras un inicio de sesión correcto y cinco contraseñas incorrectas, el sexto intento fallido responde `429`, que significa demasiadas peticiones<Cite n={15} />:
 
 ```text
 HTTP/1.1 401 Unauthorized RateLimit: "5-in-15min"; r=0; t=899
@@ -233,11 +245,15 @@ HTTP/1.1 429 Too Many Requests RateLimit: "5-in-15min"; r=0; t=898 Retry-After: 
 
 El límite de una cuenta no afecta a las demás: justo después, un intento con otra cuenta respondió `401`, no `429`.
 
+Por la misma razón, el límite por cuenta no frena el *password spraying*, que OWASP define como probar una sola contraseña débil contra muchas cuentas distintas<Cite n={16} />. Cada cuenta recibe un intento, y ningún contador llega a cinco. OWASP recomienda no depender de un único límite de volumen predecible<Cite n={16} repeat />. Añada un segundo límite, más alto, sobre los intentos fallidos de cada IP, y revise los registros cuando fallen inicios de sesión en muchas cuentas a la vez.
+
+Quedan dos detalles del ejemplo. Si la petición no trae `email`, la clave es una cadena vacía y todas esas peticiones comparten un contador, así que rechace antes del límite la petición sin `email`. Además, el almacén por defecto de express-rate-limit guarda los contadores en la memoria del proceso y no los comparte entre varios procesos o servidores<Cite n={17} />. Con más de una instancia, use un almacén compartido, como Redis.
+
 <Callout kind="riesgo" title="Detrás de un proxy, un límite por IP necesita trust proxy">
-	Por defecto, express-rate-limit identifica al cliente por su IP. Con un límite por IP detrás de un proxy y sin `trust proxy`, todas las peticiones parecen llegar del proxy. El límite se vuelve global<Cite n={13} />. Fije `app.set('trust proxy', 1)` con el número de proxies que hay delante, nunca `true`, que permite falsear la IP con `X-Forwarded-For`<Cite n={14} />.
+	Por defecto, express-rate-limit identifica al cliente por su IP. Con un límite por IP detrás de un proxy y sin `trust proxy`, todas las peticiones parecen llegar del proxy. El límite se vuelve global<Cite n={18} />. Fije `app.set('trust proxy', 1)` con el número de proxies que hay delante, nunca `true`, que permite falsear la IP con `X-Forwarded-For`<Cite n={19} />.
 </Callout>
 
-Bloquear una cuenta también permite a un atacante bloquear a su dueño. Por eso el límite dura unos minutos, aunque un atacante puede renovarlo. OWASP propone permitir el acceso por la recuperación de contraseña aunque la cuenta esté bloqueada. La mejor defensa contra la mayoría de los ataques a contraseñas, incluida la fuerza bruta, es la autenticación multifactor<Cite n={11} repeat />.
+Bloquear una cuenta también permite a un atacante bloquear a su dueño. Por eso el límite dura unos minutos, aunque un atacante puede renovarlo. OWASP propone permitir el acceso por la recuperación de contraseña aunque la cuenta esté bloqueada. La mejor defensa contra la mayoría de los ataques a contraseñas, incluida la fuerza bruta, es la autenticación multifactor<Cite n={14} repeat />.
 
 **Cómo comprobarlo.** Envíe seis intentos con una contraseña incorrecta y compruebe que el sexto responde `429`. Después, busque en la base de datos una contraseña guardada: debe incluir la sal y no parecerse a la contraseña. En el ejemplo tiene la forma `sal:hash`; con Argon2id empieza por `$argon2id$`.
 
@@ -245,7 +261,7 @@ Bloquear una cuenta también permite a un atacante bloquear a su dueño. Por eso
 
 El control de acceso roto es el primer fallo del OWASP Top 10:2025<Cite n={1} repeat />. Un botón oculto en el *frontend* no impide la acción, porque cualquiera puede enviar la petición sin la interfaz. La API tiene que comprobar en cada petición quién la hace y si ese usuario puede hacer esa acción sobre ese recurso.
 
-[Siete cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) muestra los dos fallos más frecuentes en el código, con su corrección. El punto 1 trata el permiso que solo se comprueba en la interfaz. El punto 2 trata el recurso que se carga por id sin comprobar de quién es.
+[Ocho cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) muestra los dos fallos más frecuentes en el código, con su corrección. El punto 1 trata el permiso que solo se comprueba en la interfaz. El punto 2 trata el recurso que se carga por id sin comprobar de quién es.
 
 **Cómo comprobarlo.** Pida una acción de administrador con la sesión de un usuario normal: debe responder `403`. Pida un recurso de otra cuenta por su id: debe responder `404`.
 
@@ -259,7 +275,7 @@ https://localhost:3443/?q=<img src=x onerror="console.log('XSS ejecutado')">
 
 Sin protección, Chrome ejecuta el código del atributo y la consola muestra `XSS ejecutado`. Ese código podría leer la sesión o enviar peticiones en nombre del usuario. Esto es un XSS reflejado.
 
-La defensa principal es codificar la salida según el contexto, o dejar que lo haga el *framework*. La CSP del punto 4 es una capa adicional, no la defensa principal<Cite n={15} />. En el contenido HTML y en los atributos entre comillas, codificar la salida significa escapar cinco caracteres<Cite n={15} repeat />:
+La defensa principal es codificar la salida según el contexto, o dejar que lo haga el *framework*. La CSP del punto 4 es una capa adicional, no la defensa principal<Cite n={20} />. En el contenido HTML y en los atributos entre comillas, codificar la salida significa escapar cinco caracteres<Cite n={20} repeat />:
 
 ```js
 export function escaparHtml(texto) {
@@ -278,7 +294,7 @@ Con la salida escapada, el HTML que recibe el navegador lleva el texto codificad
 Resultados para: &lt;img src=x onerror=&quot;console.log(&#39;XSS ejecutado&#39;)&quot;&gt;
 ```
 
-La entrada se valida en el servidor, con una lista de lo que se acepta<Cite n={16} />. La validación no sustituye a las consultas parametrizadas ni a la salida escapada. [Siete cosas que revisar](/es/blog/revisar-codigo-generado-por-ia) muestra la consulta construida sin concatenar texto (punto 3) y la validación en el *endpoint* (punto 5).
+La entrada se valida en el servidor, con una lista de lo que se acepta<Cite n={21} />. La validación no sustituye a las consultas parametrizadas ni a la salida escapada. [Ocho cosas que revisar](/es/blog/revisar-codigo-generado-por-ia) muestra la consulta construida sin concatenar texto (punto 3) y la validación en el *endpoint* (punto 5).
 
 **Cómo comprobarlo.** Escriba `<img src=x onerror=alert(1)>` en cada campo que se muestre después en la página: debe aparecer como texto. Escriba una comilla simple en un campo de búsqueda: no debe producir un error `500`.
 
@@ -286,20 +302,22 @@ La entrada se valida en el servidor, con una lista de lo que se acepta<Cite n={1
 
 Otra web abierta en el navegador del usuario puede enviar peticiones a su API. CORS decide si esa web puede leer la respuesta. [Qué es CORS](/es/blog/que-es-cors) explica cómo configurarlo con una lista de orígenes permitidos, y tiene un simulador para probar cada configuración.
 
-CORS no impide que la petición llegue. Si la API usa cookies, otra web puede enviar un formulario que cambie datos con la sesión del usuario. Eso es CSRF (*Cross-Site Request Forgery*). OWASP pide usar primero la protección que traiga el *framework* y, si no la hay, un token anti-CSRF en cada petición que cambie datos<Cite n={17} />. `SameSite` es una capa adicional, y con `Lax` no protege una acción que cambie datos con una petición `GET`<Cite n={17} repeat />.
+CORS no impide que la petición llegue. Si la API usa cookies, otra web puede enviar un formulario que cambie datos con la sesión del usuario. Eso es CSRF (*Cross-Site Request Forgery*). OWASP pide usar primero la protección que traiga el *framework* y, si no la hay, un token anti-CSRF en cada petición que cambie datos<Cite n={22} />.
+
+Si la aplicación solo admite navegadores modernos, OWASP acepta también la cabecera `Sec-Fetch-Site`, que el navegador envía con el valor `cross-site` cuando la petición viene de otro sitio. En ese caso exige comprobar además `Origin` o `Referer`, porque algunos navegadores antiguos no envían `Sec-Fetch-Site`<Cite n={22} repeat />. `SameSite` es una capa adicional, y con `Lax` no protege una acción que cambie datos con una petición `GET`<Cite n={22} repeat />.
 
 **Cómo comprobarlo.** Envíe una petición con un origen ajeno y compruebe que la respuesta no trae `Access-Control-Allow-Origin`. Después, envíe una petición que cambie datos sin el token: debe fallar.
 
 ## 10. Cómo mantener los secretos fuera del código y del navegador
 
-Un secreto es una clave de API, una contraseña de la base de datos o cualquier valor que da acceso a un servicio. OWASP advierte de que muchos acaban escritos en el código fuente, y recomienda detectarlos antes del commit<Cite n={18} />.
+Un secreto es una clave de API, una contraseña de la base de datos o cualquier valor que da acceso a un servicio. OWASP advierte de que muchos acaban escritos en el código fuente, y recomienda detectarlos antes del commit<Cite n={23} />.
 
 **Cómo hacerlo.**
 
 1. Deje `.env` fuera del repositorio con `.gitignore`.
-2. Guarde los secretos de producción en el gestor de secretos de la plataforma de despliegue. En contenedores, OWASP no recomienda pasarlos por variables de entorno si hay otro método<Cite n={18} repeat />.
+2. Guarde los secretos de producción en el gestor de secretos de la plataforma de despliegue. En contenedores, OWASP no recomienda pasarlos por variables de entorno si hay otro método<Cite n={23} repeat />.
 3. Añada un detector de secretos al *hook* de pre-commit y a la integración continua.
-4. Revise que ninguna clave privada llegue al JavaScript del navegador. [Siete cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), punto 4, explica cómo ocurre con las variables públicas de Next.js y cómo buscarla en el *bundle*.
+4. Revise que ninguna clave privada llegue al JavaScript del navegador. [Ocho cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), punto 4, explica cómo ocurre con las variables públicas de Next.js y cómo buscarla en el *bundle*.
 
 **Cómo comprobarlo.** `git ls-files .env` no debe devolver nada. Si un secreto llegó a un commit, revóquelo y genere otro: borrarlo del archivo no lo borra del historial.
 
@@ -307,7 +325,7 @@ Un secreto es una clave de API, una contraseña de la base de datos o cualquier 
 
 Las dependencias son código de terceros que se ejecuta con los mismos permisos que la aplicación. La edición 2025 del OWASP Top 10 las trata en una categoría nueva, los fallos en la cadena de suministro de software. Amplía la de componentes vulnerables y desactualizados de 2021<Cite n={1} repeat />.
 
-[Diferencia entre npm y pnpm en la seguridad al instalar](/es/blog/npm-vs-pnpm-seguridad) mide qué código ejecuta la instalación y cómo configurar npm para bloquearlo. [Siete cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), punto 6, explica cómo comprobar que un paquete que propone la IA existe antes de instalarlo.
+[Diferencia entre npm y pnpm en la seguridad al instalar](/es/blog/npm-vs-pnpm-seguridad) mide qué código ejecuta la instalación y cómo configurar npm para bloquearlo. [Ocho cosas que revisar](/es/blog/revisar-codigo-generado-por-ia), punto 6, explica cómo comprobar que un paquete que propone la IA existe antes de instalarlo.
 
 **Cómo comprobarlo.** Instale siempre con el archivo de bloqueo y verifique las firmas:
 
@@ -332,7 +350,7 @@ Error: connect ECONNREFUSED 10.0.0.12:5432 (usuario tienda_admin)
     at file:///C:/…/tienda-segura/src/index.js:71:9
 ```
 
-La respuesta revela la IP interna de la base de datos, un nombre de usuario y la ruta del código en el servidor. El manejador de errores por defecto de Express solo oculta la traza si `NODE_ENV` vale `production`<Cite n={19} />. OWASP pide devolver una respuesta genérica y guardar el detalle en el servidor<Cite n={20} />:
+La respuesta revela la IP interna de la base de datos, un nombre de usuario y la ruta del código en el servidor. El manejador de errores por defecto de Express solo oculta la traza si `NODE_ENV` vale `production`<Cite n={24} />. OWASP pide devolver una respuesta genérica y guardar el detalle en el servidor<Cite n={25} />:
 
 ```js
 function errorSeguro(err, req, res, _next) {
@@ -351,7 +369,7 @@ HTTP/1.1 500 Internal Server Error
 {"id":"09910789-0f1c-4dc8-914b-fe9a471ca607","ruta":"/api/fallo","error":"connect ECONNREFUSED 10.0.0.12:5432 (usuario tienda_admin)"}
 ```
 
-El registro tampoco debe guardar contraseñas, identificadores de sesión ni tokens<Cite n={21} />.
+El registro tampoco debe guardar contraseñas, identificadores de sesión ni tokens<Cite n={26} />.
 
 **Cómo comprobarlo.** Provoque un error, por ejemplo con la base de datos apagada, y compruebe que la respuesta solo trae el identificador. Busque ese identificador en el registro del servidor.
 
@@ -373,9 +391,11 @@ Un agente de programación puede recorrer las diez capas en su proyecto. Copie e
 6. **Repite las comprobaciones** de la lista y pega las salidas.
 7. **Entrega un informe** con lo que cambió, lo que no pudo comprobar y el artículo que profundiza en cada capa pendiente.
 
-La ejecución se midió con Claude Code 2.1.283 sobre una tienda de ejemplo en Express a la que le faltaban casi todas las capas. Tardó 10 minutos sin contar la espera de la confirmación: 4 hasta la propuesta y 6 para corregir y comprobar.
+El prompt se ejecutó una vez, como demostración, con Claude Code 2.1.283 y la versión anterior del prompt. El proyecto era una tienda de ejemplo en Express a la que le faltaban casi todas las capas. Tardó 10 minutos sin contar la espera de la confirmación: 4 hasta la propuesta y 6 para corregir y comprobar.
 
 En el diagnóstico encontró trece fallos y, durante la corrección, uno más. Entre ellos había una clave de pagos escrita en el código, un pedido ajeno legible por su id y contraseñas con SHA-256. Las 13 pruebas que escribió fallaban antes de las correcciones, y después pasan todas, junto con la que ya había. Lo que dependía del proxy de producción, como el número de saltos de `trust proxy`, lo anotó como no comprobado.
+
+Una ejecución sobre un proyecto preparado muestra cómo trabaja el prompt, pero no mide cuántos fallos encuentra en un proyecto real. Revise el informe como revisaría el de una persona.
 
 <Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
 	Este prompt pide al agente que arranque la aplicación, ejecute órdenes y cambie su configuración. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 3 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo.
@@ -383,11 +403,22 @@ En el diagnóstico encontró trece fallos y, durante la corrección, uno más. E
 
 **Cómo comprobarlo.** `git status` y `git diff` muestran solo cambios de configuración y de seguridad y los archivos de prueba nuevos, y las pruebas pasan. Las comprobaciones de la lista del punto 13 dan el resultado esperado.
 
+## Qué queda fuera de las diez capas
+
+Las diez capas tratan los fallos más frecuentes de una aplicación con usuarios, pero no todos. El OWASP Top 10:2025 incluye otros que aquí no se desarrollan<Cite n={1} repeat />:
+
+- **Registro y alertas** (A09:2025). Guardar los errores no basta: alguien tiene que recibir un aviso cuando se repiten los inicios de sesión fallidos o las respuestas `403`.
+- **Peticiones del servidor a direcciones que elige el usuario**, o SSRF. En la edición de 2025 forma parte del control de acceso roto, A01<Cite n={27} />. Afecta a cualquier función que descarga una URL, como una vista previa de enlaces o una importación.
+- **Condiciones excepcionales** (A10:2025): errores que dejan la aplicación en un estado abierto, como un `catch` que sigue adelante. El punto 12 solo trata la respuesta que recibe el navegador.
+- **Subida de archivos**: el tipo, el tamaño, el nombre y el lugar desde el que se sirven. OWASP lo trata en su *File Upload Cheat Sheet*<Cite n={28} />.
+- **Autenticación multifactor**: el punto 6 la cita como la mejor defensa contra los ataques a contraseñas, pero no explica cómo implementarla.
+- **Copias de seguridad y recuperación**, que no dependen del código de la aplicación.
+
 ## Por dónde seguir
 
 Si empieza desde cero, prepare primero el entorno con [Primeros pasos para programar con IA](/es/blog/primeros-pasos-programar-con-ia). Después, use la tabla del punto 1 para decidir qué capas necesita su aplicación.
 
-Para revisar el código capa por capa, lea [Siete cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia). Para las peticiones entre orígenes, lea [Qué es CORS](/es/blog/que-es-cors), y para las dependencias, [la diferencia entre npm y pnpm](/es/blog/npm-vs-pnpm-seguridad).
+Para revisar el código capa por capa, lea [Ocho cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia). Para las peticiones entre orígenes, lea [Qué es CORS](/es/blog/que-es-cors), y para las dependencias, [la diferencia entre npm y pnpm](/es/blog/npm-vs-pnpm-seguridad).
 
 <References
 	title="Referencias"
@@ -424,6 +455,21 @@ Para revisar el código capa por capa, lea [Siete cosas que revisar en el códig
 		url: 'https://www.npmjs.com/package/helmet'
 	},
 	{
+		source: 'MDN',
+		title: 'Content-Security-Policy, style-src',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src'
+	},
+	{
+		source: 'MDN',
+		title: 'Content-Security-Policy-Report-Only',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy-Report-Only'
+	},
+	{
+		source: 'Next.js',
+		title: 'How to set a Content Security Policy (CSP) for your Next.js application',
+		url: 'https://nextjs.org/docs/app/guides/content-security-policy'
+	},
+	{
 		source: 'OWASP',
 		title: 'Session Management Cheat Sheet',
 		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html'
@@ -452,6 +498,16 @@ Para revisar el código capa por capa, lea [Siete cosas que revisar en el códig
 		source: 'IETF',
 		title: 'RFC 6585, Additional HTTP Status Codes, 429 Too Many Requests',
 		url: 'https://www.rfc-editor.org/rfc/rfc6585.html#section-4'
+	},
+	{
+		source: 'OWASP',
+		title: 'Credential Stuffing Prevention Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html'
+	},
+	{
+		source: 'express-rate-limit',
+		title: 'Data stores',
+		url: 'https://express-rate-limit.mintlify.app/reference/stores'
 	},
 	{
 		source: 'express-rate-limit',
@@ -497,6 +553,16 @@ Para revisar el código capa por capa, lea [Siete cosas que revisar en el códig
 		source: 'OWASP',
 		title: 'Logging Cheat Sheet',
 		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'A01:2025 Broken Access Control',
+		url: 'https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/'
+	},
+	{
+		source: 'OWASP',
+		title: 'File Upload Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html'
 	}
 	]}
 />

@@ -5,7 +5,7 @@ tagline: Why the browser blocks a response that curl reads, what CORS protects a
 description: "What CORS is, why Chrome says \"has been blocked by CORS policy\" and how to configure the server with an allowlist of origins."
 areas: [seguridad]
 published: '2026-09-27'
-updated: null
+updated: '2026-09-27'
 draft: false
 path: what-is-cors
 repo: null
@@ -31,7 +31,7 @@ resource.
 
 The API log records the request in both cases. The server answered, and it was the browser that did not hand the response to the page. That block comes from the same-origin policy, and CORS is the protocol the server uses to relax it.
 
-The measurements were taken on 27 September 2026 with Chrome 153.0.8010.54 in *headless* mode, Node.js 24.19.0, curl 8.12.1 and Express 5.2.1. All the code is rebuilt for the article.
+The measurements were taken on 27 September 2026 with Chrome 153.0.8010.54 in *headless* mode, Node.js 24.19.0, curl 8.12.1, Express 5.2.1 and Vite 8.3.1. All the code is rebuilt for the article.
 
 ## 1. What the same origin is and what CORS relaxes
 
@@ -130,7 +130,27 @@ POST /pedido Origin=http://localhost:5173 Cookie=-
 
 ## 4. How to fix the error on the server
 
-The error is fixed on the server that answers, not in the page that asks. `Access-Control-Allow-Origin` accepts a single origin, `*` or `null`, but not a list<Cite n={2} repeat />. To accept several origins, the server compares the `Origin` of each request with its own list and returns the one that matches.
+The error goes away if the page and the API share an origin, because then there is no request to another origin. In development, Vite's server can forward the requests that start with `/api` to the API<Cite n={5} />:
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
+});
+```
+
+The page requests `/api/...` from its own origin, `http://localhost:5173`, and Vite forwards the request to `http://localhost:3000`. In the measurement, the API with no CORS header at all answered `200` and the page received the response without CORS errors. Vite's proxy works in the dev server and in `vite preview`, not in the build output. In production you get the same result by serving the page and the API from the same domain, behind a reverse proxy.
+
+When the page and the API have to be on different origins, the error is fixed on the server that answers, not in the page that asks. `Access-Control-Allow-Origin` accepts a single origin, `*` or `null`, but not a list<Cite n={2} repeat />. To accept several origins, the server compares the `Origin` of each request with its own list and returns the one that matches.
 
 ```js
 // api.mjs, con lista de orígenes permitidos
@@ -179,13 +199,31 @@ curl -s -i -H "Origin: https://atacante.example" http://localhost:3000/
 
 The first response carries `Access-Control-Allow-Origin: http://localhost:5173` and `Vary: Origin`. The second carries only `Vary: Origin`.
 
+**When the error is not in the CORS configuration.** The same message appears when the response leaves without the CORS headers, even if the configuration is correct. In the measurement, with the origin list active, two cases gave the error:
+
+- A route that fails and answers `500` before adding the headers. Chrome showed "No 'Access-Control-Allow-Origin' header is present on the requested resource", the same text as with no CORS configured.
+- An authentication check that runs before CORS. The preflight request never carries credentials<Cite n={4} repeat />, so the check answered `401`. Chrome reported "Response to preflight request doesn't pass access control check".
+
+The browser does not give the script the details of a request blocked by CORS<Cite n={6} />. To see the real status, repeat the request with curl and the same `Origin` header:
+
+```bash
+curl -s -i -H "Origin: http://localhost:5173" http://localhost:3000/falla
+# HTTP/1.1 500 Internal Server Error
+curl -s -i -X OPTIONS -H "Origin: http://localhost:5173" \
+  -H "Access-Control-Request-Method: GET" \
+  -H "Access-Control-Request-Headers: authorization" http://localhost:3000/privado
+# HTTP/1.1 401 Unauthorized
+```
+
+If curl shows an error, fix it before touching CORS. For the authentication case, let `OPTIONS` requests through before checking the session. In Express, that means registering `app.use(cors(...))` before the authentication *middleware*.
+
 <Callout kind="nota" title="Set CORS in one place only">
 	If the code and the proxy each add their own header, the response carries two `Access-Control-Allow-Origin` headers. Chrome rejects it: "The 'Access-Control-Allow-Origin' header contains multiple values…, but only one is allowed". Configure CORS in the code or in the proxy, not in both.
 </Callout>
 
 ## 5. What `mode: 'no-cors'` does not fix
 
-`mode: 'no-cors'` makes the error disappear, but it gives no access to the response. The request is sent and the browser hands the page an opaque response<Cite n={5} />:
+`mode: 'no-cors'` makes the error disappear, but it gives no access to the response. The request is sent and the browser hands the page an opaque response<Cite n={7} />:
 
 ```js
 const r = await fetch('http://localhost:3000/', { mode: 'no-cors' });
@@ -224,15 +262,15 @@ await r.text();
 // {"email":"ana@example.com","saldo":1200}
 ```
 
-The page from another origin read the victim's data with the victim's session. PortSwigger described this in 2016 as the most common CORS vulnerability, and documented two similar failures in real applications<Cite n={6} />.
+The page from another origin read the victim's data with the victim's session. PortSwigger described this in 2016 as the most common CORS vulnerability, and documented two similar failures in real applications<Cite n={8} />.
 
 The first is accepting the `null` origin. A document in a sandboxed `iframe` sends `Origin: null`. In the measurement, an `iframe` with `sandbox="allow-scripts"` read the response from the API that reflected the origin.
 
 The second is comparing the origin only by its start or its end. A check with `endsWith('ejemplo.com')` accepts `https://atacante-ejemplo.com`, and one with `startsWith('https://ejemplo.com')` accepts `https://ejemplo.com.atacante.example`.
 
-All three fit MITRE's CWE-942, a cross-domain policy that includes untrusted domains<Cite n={7} />.
+All three fit MITRE's CWE-942, a cross-domain policy that includes untrusted domains<Cite n={9} />.
 
-The cookie's `SameSite` attribute decides whether it is sent with a `fetch` from another site<Cite n={8} />. A site is the scheme plus the registrable domain, without the port<Cite n={9} />. So `localhost:8080` and `localhost:3000` are the same site, and `127.0.0.1:8080` is another. With the API that reflects the origin:
+The cookie's `SameSite` attribute decides whether it is sent with a `fetch` from another site<Cite n={10} />. A site is the scheme plus the registrable domain, without the port<Cite n={11} />. So `localhost:8080` and `localhost:3000` are the same site, and `127.0.0.1:8080` is another. With the API that reflects the origin:
 
 | Page | Same site as the API? | Cookie | Result |
 |---|---|---|---|
@@ -243,7 +281,7 @@ The cookie's `SameSite` attribute decides whether it is sent with a `fetch` from
 
 The last row depends on the browser allowing third-party cookies, as Chrome 153 does in its default configuration.
 
-Since version 80, Chrome treats a cookie without `SameSite` as `Lax`<Cite n={10} />. `SameSite=Lax` limits the attack to pages on the same site, such as another subdomain. An API that needs cookies across sites uses `SameSite=None`, and then only the allowlist protects it.
+Since version 80, Chrome treats a cookie without `SameSite` as `Lax`<Cite n={12} />. `SameSite=Lax` limits the attack to pages on the same site, such as another subdomain. An API that needs cookies across sites uses `SameSite=None`, and then only the allowlist protects it.
 
 **How to do it.**
 
@@ -266,11 +304,11 @@ Clients that are not browsers do not apply CORS. curl, a *script* or an attacker
 
 Simple requests also reach the server regardless. With the list from section 4 active, the page at `localhost:8080` could not read `/perfil`. Even so, the log recorded the request with the victim's cookie: `GET /perfil Origin=http://localhost:8080 Cookie=sesion=abc123`.
 
-CSRF (*Cross-Site Request Forgery*) relies on this. Another site sends a request with side effects using the victim's session, even though it cannot read the response. CORS does not prevent it. The defence is an anti-CSRF token on the routes that change data, or the protection the *framework* already provides. `SameSite` on the session cookie adds one more layer, but does not replace the token<Cite n={11} />.
+CSRF (*Cross-Site Request Forgery*) relies on this. Another site sends a request with side effects using the victim's session, even though it cannot read the response. CORS does not prevent it. The defence is an anti-CSRF token on the routes that change data, or the protection the *framework* already provides. If the application only supports modern browsers, OWASP also accepts rejecting requests that arrive with `Sec-Fetch-Site: cross-site`, while also checking `Origin` or `Referer` for browsers that do not send it. `SameSite` on the session cookie adds one more layer, but does not replace the token<Cite n={13} />.
 
 ## 8. How to check a project's CORS configuration
 
-The OWASP testing guide asks you to find the routes that answer with CORS and to flag the wildcard and an origin returned without checks<Cite n={12} />. These four requests cover the failures from sections 4 to 6. Send them to every route that returns a user's data:
+The OWASP testing guide asks you to find the routes that answer with CORS and to flag the wildcard and an origin returned without checks<Cite n={14} />. These four requests cover the failures from sections 4 to 6. Send them to every route that returns a user's data:
 
 ```bash
 curl -s -i -H "Origin: https://atacante.example" <url>
@@ -313,9 +351,11 @@ You can apply the previous sections by hand. A coding agent can also do it with 
 6. **It repeats the requests** from section 8 and pastes the headers from before and after.
 7. **It delivers a report** with what changed, what it could not check and what CORS does not cover, such as CSRF.
 
-The run was measured with Claude Code 2.1.283 and the Spanish version of the prompt. The sample project was an API with Express 5.2.1 and `cors({ origin: true, credentials: true })`. It took 6 minutes, not counting the wait for confirmation: 3 up to the proposal and 3 to apply, test and check.
+The prompt was run once, as a demonstration, with Claude Code 2.1.283 and the Spanish version of the prompt. The sample project was an API with Express 5.2.1 and `cors({ origin: true, credentials: true })`. It took 6 minutes, not counting the wait for confirmation: 3 up to the proposal and 3 to apply, test and check.
 
 The agent found four failures: the origin reflected with credentials, the `null` origin, an origin with another domain appended and an unlimited preflight answer. The new test failed 2 of its 3 cases against the previous configuration and passed with the change. It also warned that `npm start` did not load the environment variable, and did not touch `package.json` without confirmation.
+
+A single run on a prepared project shows how the prompt works, but it does not measure how many failures it finds in a real project. Review the report as you would review one written by a person.
 
 <Callout kind="riesgo" title="Read the prompt before pasting it">
 	This prompt asks the agent to start the server, run commands and change the CORS configuration. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.
@@ -325,7 +365,7 @@ The agent found four failures: the origin reflected with credentials, the `null`
 
 ## Where to go next
 
-CORS decides who reads a response in the browser, and the server still has to decide who may do each thing. [Seven things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) covers those permission checks, with their fixes.
+CORS decides who reads a response in the browser, and the server still has to decide who may do each thing. [Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) covers those permission checks, with their fixes.
 
 To have an agent apply these rules on every change without relying on someone remembering them, read [how to ask an AI for secure code](/en/blog/ask-ai-for-secure-code).
 
@@ -354,6 +394,16 @@ CORS is one of the ten layers in [How to secure a web application](/en/blog/how-
 		source: 'MDN',
 		title: 'Cross-Origin Resource Sharing (CORS)',
 		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS'
+	},
+	{
+		source: 'Vite',
+		title: 'Server Options, server.proxy',
+		url: 'https://vite.dev/config/server-options'
+	},
+	{
+		source: 'MDN',
+		title: 'CORS errors',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors'
 	},
 	{
 		source: 'MDN',

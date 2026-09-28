@@ -1,10 +1,11 @@
 ---
 slug: codigo-seguro-con-ia
 title: How to ask an AI for secure code
-tagline: Six practices you set up once so that the agent writes secure code and every change is checked.
+tagline: What to put in the request to get secure code from an AI, and what to check afterwards.
+description: 'What asking a model for "secure code" achieves, what context to add to the request and how to check the result with TypeScript, ESLint and tests.'
 areas: [ia, seguridad]
 published: '2026-09-07'
-updated: '2026-09-26'
+updated: '2026-09-27'
 draft: false
 path: ask-ai-for-secure-code
 repo: null
@@ -16,251 +17,321 @@ import Callout from '../../../components/Callout.astro';
 import Cite from '../../../components/Cite.astro';
 import References from '../../../components/References.astro';
 
-The volume of code an agent produces per unit of time exceeds what a team can review in that same time. That mismatch, rather than the model's success rate, determines how many defects reach production.
+Asking a model to write secure code changes the result very little, except in reasoning models. BaxBench measured 392 *backend* tasks with three versions of the same request<Cite n={1} />:
 
-In March 2026 Veracode tested more than 150 models on 80 coding tasks in four languages. Of those tasks, 55% produced secure code<Cite n={1} />. A peer-reviewed study generated 1,689 programs five years earlier and found roughly 40% of them vulnerable<Cite n={2} />. The models behind the two measurements have nothing in common, and the figures are not comparable to each other. Neither reaches 100%.
+1. with no security instruction at all;
+2. with a generic reminder: "follow best practices for security and avoid common vulnerabilities";
+3. with the exact list of vulnerabilities that task could have.
 
-The defects the model introduces give no signal. The code compiles, the application starts and the tests pass, so nothing separates the correct part from the rest. If review does not happen on every change, defects are not caught one at a time. They accumulate until somebody reviews the whole repository, which is the most expensive way to find them.
+The generic reminder improved the reasoning models a great deal and did not improve the others significantly. The exact list gave the best security result in every model, but it reduced the number of programs that worked<Cite n={1} repeat />. The authors warn that such a list is almost impossible to know in advance on a real project<Cite n={1} repeat />.
 
-The six practices that follow are set up once and apply to every change. None of them depends on the model having followed an instruction. The article [Seven things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) teaches how to look for seven failures by hand in each change. The aim of these practices is not to have to look for them.
+Veracode measures requests that do not mention security. In its March 2026 update, with more than 150 models, 55% of the samples were secure, the same proportion as two years earlier<Cite n={2} />.
 
-Every piece of code was rebuilt for the article. The measurements use Node.js 24.19.0, TypeScript 6.0.3, Zod 4.5.4, ESLint 10.10.0 with typescript-eslint 8.70.0, Slonik 49.10.9 and eslint-plugin-security 4.0.1.
+The two measurements lead to two practices. The request has to name the specific risk of the task, not security in general. And whatever the request does not guarantee has to be checked by a command: the compiler, the linter or a test that has been seen to fail.
 
-The TypeScript version is not the latest one, for a reason that affects section 5. The typescript-eslint 8.70.0 package declares `typescript: '>=4.8.4 <6.1.0'` in its peer dependencies. So installing it alongside TypeScript 7.0.2 fails with `ERESOLVE`, and if the install is forced, the linter stops with `typescript-eslint does not support TS 7.0`. The lint rule that section 5 uses cannot run on the most recent version of the compiler. The range the linter supports decides the TypeScript version, not the other way round.
+All the code is rebuilt for the article. The measurements were taken on 27 September 2026 with Claude Code 2.1.283, Node.js 24.19.0, Express 5.2.1, TypeScript 6.0.3, Zod 4.6.5, ESLint 10.11.0 and typescript-eslint 8.70.1. That last version supports TypeScript up to 6.0, so the linter in section 4 does not yet work with TypeScript 7<Cite n={3} />.
 
-## 1. How to make a rule load when it is needed
+## 1. What to put in the request
 
-A **rule** is an instruction for the agent, stored in a file that the harness loads into the session. The harness is the program that runs the agent, such as Claude Code or Cursor. In Claude Code a rule can be a skill; in Cursor, a file in `.cursor/rules`.
+The model infers what the code shows, such as the name of a field or a convention that repeats. The request has to bring what the code does not show:
 
-Writing a rule does not guarantee that it is applied. A rule influences the result only if it is in the context window at the moment of the change. The context window is the text the model has available in the session. The harness loads a rule according to its **trigger**, the condition that activates it, and not according to the topic it was filed under.
+- **who owns each piece of data** and where the session user is;
+- **what each error case answers**, such as someone else's resource or a request without a session;
+- **the done criterion**, with the test that proves it.
 
-Claude Code loads skills in three levels, measured in tokens, the unit in which the model counts text:
+To measure it, the same task was sent twice to Claude Code, each time on a clean copy of an Express project. The project keeps the orders in memory, with a `usuarioId` field, and puts the session user in `req.usuario`. The first request describes only the feature:
 
-1. The name and description of every skill are always loaded, and take around 100 tokens per skill.
-2. The body is read only when the request matches the description, and it is recommended to stay under 5,000 tokens.
-3. Bundled files take nothing until they are opened<Cite n={3} />.
+```text
+Add to src/app.js a GET /pedidos/:id route that returns the order.
+```
 
-According to the documentation, the description has to say what the skill does and when to use it. It is the only text used to decide whether to load it<Cite n={4} />. Cursor offers four modes for its rules, and two of them are automatic. One decides by the description, and the other by the file patterns the change touches<Cite n={5} />.
+The second adds the owner, the error cases and the criterion:
 
-So split rules by the moment they need to load, not by topic. A rule whose description says "security" does not load when the agent writes a test. One whose description says "when writing a test" does.
+```text
+Add to src/app.js a GET /pedidos/:id route that returns the order.
+Each order belongs to a user (usuarioId field), and the session user is in
+req.usuario. Only its owner may read it: an order belonging to another user
+answers 404, the same as one that does not exist. Without a session, 401.
+Criterion: npm test passes with a new test that requests p2 with ana's
+session and expects 404.
+```
 
-According to Anthropic's guide, the context window is a shared resource. Every paragraph of a rule takes up space that the conversation and the work in progress need<Cite n={4} repeat />. So a rule should only contain what the model does not already know. A rule explaining what a parameterised query is takes up space without adding anything. One stating which database client the repository uses adds a fact the model cannot infer.
+The measurement used the Spanish version of both requests. Both versions filtered by owner, because the `usuarioId` field was in plain sight in the same file. The difference was in the check. The first run wrote no test and ended with "I have not tested it", because its quick check needed an approval that non-interactive mode does not give. The second created `test/pedidos.test.js` with four cases, although it could not run them for the same reason; when they were run afterwards, `npm test` passed.
 
-Vercel's public skills repository makes it possible to measure the difference between loading only what is needed and loading everything. It publishes each guide in two formats: an index, and the concatenation of all its rules.
+When the comparison with `usuarioId` was removed from the code, the test "an order belonging to another user answers 404" failed. The second run also warned that the header that simulates the session can be forged.
 
-In `react-best-practices`, checked on 7 September 2026, the index takes 7,251 bytes and the concatenation 108,261. The concatenation brings together 72 rule files averaging 1,535 bytes each<Cite n={6} />. Reading the index plus the two rules a change affects takes around 10,000 bytes. Reading the concatenation takes ten times that, to load seventy rules nobody needed.
+One run of each request does not measure how often each result happens. It does show what the criterion adds: a command that proves the behaviour and keeps working when someone changes the route.
+
+**How to do it.**
+
+1. Write in the request who owns the data the task touches and where the user comes from.
+2. Write the answer for each error case.
+3. End with the criterion: the command and the result it has to return.
+4. Write in the project's instructions file, and not in every request, what repeats across all tasks, such as the database client or the error format.
+
+**How to check it.** Before sending the request, look for an owner, an error case and a command in it. If the command is missing, you will have to read the whole change to decide whether it is done.
+
+## 2. How to make a rule load when it is needed
+
+A **rule** is an instruction for the agent stored in a file that the *harness* loads into the session. The *harness* is the program that runs the agent, such as Claude Code or Cursor. A rule is for what repeats across every task in one part of the code. It only affects the result if it is in the context window at the moment of the change. The context window is the text the model has available in the session.
+
+The *harness* loads each rule according to its **trigger**, the condition that activates it. Claude Code has two triggers that do not depend on someone naming the rule:
+
+1. Rules in `.claude/rules/` with a `paths` header load when the agent works with a file that matches those paths<Cite n={4} />.
+2. Skills load by their description. The name and description of each one take about 100 tokens and always load; the body is read only when the request matches the description<Cite n={5} />.
+
+Cursor has the same two triggers: by file pattern or by description<Cite n={6} />.
+
+So split rules by the moment they need to load, not by topic. A rule about how API input is validated goes in a file whose `paths` point at the API routes:
+
+```markdown
+---
+paths:
+  - "src/api/**/*.ts"
+---
+
+- Every route validates the body with the Zod schema in src/esquemas before using it.
+- Another user's resource answers 404, not 403.
+```
+
+According to Anthropic's guide, the context window is a shared resource, and every paragraph of a rule takes space the conversation and the work in progress need<Cite n={7} />. So a rule should only contain what the model does not already know. A rule that explains what a parameterised query is adds nothing. One that says which database client the repository uses adds a fact the model cannot infer.
+
+Vercel's public skills repository makes it possible to measure the difference between loading only what is needed and loading everything. It publishes each guide in two formats: an index and the concatenation of all its rules. In `react-best-practices`, checked on 7 September 2026, the index takes 7251 bytes and the concatenation 108,261, spread over 72 rule files<Cite n={8} />. Reading the index and the two rules that affect a change takes about 10,000 bytes, a tenth of the total.
 
 <Callout kind="riesgo" title="Rules are attack surface too">
-	A rule installed from a third party acts with the same permissions as the agent. According to Anthropic's documentation, a malicious skill can lead the agent to invoke tools or execute code for a purpose other than the stated one. That is why it recommends auditing everything a skill bundles before installing it<Cite n={3} repeat />. This matters most for rules that fetch content from a URL, because that content can change after the audit.
+	A rule installed from a third party acts with the same permissions as the agent. According to Anthropic's documentation, a malicious skill can lead the agent to invoke tools or run code for a purpose other than the stated one. That is why it recommends auditing everything it includes before installing it<Cite n={5} repeat />. This matters most for skills that download content from a URL, because that content can change after the audit.
 
-	An audit does not cover that case, because it checks one version and not the next. Record every external rule in a versioned file, with its origin and a hash of its content. A later change then shows up as a difference in that file. It is the mechanism of `go.sum` or `pip install --require-hashes`, applied to rules instead of dependencies.
+	Record every external rule in a versioned file, with its origin and the hash of its content. That way a later change shows up as a difference in that file. It is the same mechanism as `go.sum` or `pip install --require-hashes`, applied to rules.
 </Callout>
 
-**How to check it.** Put together what the agent always loads, the instructions file plus the descriptions of every rule, and count the characters. That number is the fixed cost of every session. Then write down, for each rule, the moment it should load. If the answer is "always", the rule belongs in the instructions file and has to be short.
+**How to check it.** In Claude Code, open a file that matches `paths`, ask for a change and run `/context`. The rule has to appear in the session. Then ask for a change in a file that does not match: the rule must not load.
 
-## 2. How to write a rule that can be checked
+## 3. How to write a rule that can be checked
 
-A rule written as a preference invites argument. Faced with "Prefer parameterised queries", the model can justify reasonable exceptions, and whoever reviews the change has nothing to contradict it with. A rule that brings the concrete failure and the command that detects it leaves no room for that argument.
+A rule written as a preference invites argument. Faced with "Prefer parameterised queries", the model can justify reasonable exceptions, and whoever reviews the change has nothing to contradict it with. A rule that brings the specific failure and the command that detects it leaves no such room.
 
 A useful rule has five parts:
 
-1. **The mechanism of the defect**: what the incorrect code does, not what the failure is called.
+1. **The mechanism of the defect**: what the wrong code does, not what the failure is called.
 2. **A real case** that can be located, so that the rule does not read as an opinion.
 3. **The rule**, in one sentence.
-4. **An incorrect example and a correct one**, with no comments saying which is which, because the code has to be distinguishable on its own.
-5. **The command that detects the failure again**: a `grep`, a lint rule or a test.
+4. **A wrong example and a right one**, with no comments saying which is which, because the code has to tell them apart by itself.
+5. **The command that detects the failure again**: a `grep`, a linter rule or a test.
 
-The fifth part makes the rule checkable. Without it, there is no way to know whether the code already breaks the rule in other files.
+The fifth part is what makes the rule checkable. Without it, there is no way to know whether the code already breaks the rule in other files.
 
-Write the check before the rule. Anthropic's guide recommends it: first measure what fails without the rule, and only then write the minimal instruction that fixes it<Cite n={4} repeat />. Done the other way round, it produces rules for problems that never happened.
+Write the check before the rule. Anthropic's guide recommends it: first measure what fails without the rule, and then write the minimal instruction that fixes it<Cite n={7} repeat />. Done the other way round, you write rules for problems that never happened.
 
-**How to check it.** Run the detection command against the incorrect example and the correct one. It has to find the first and not the second. If it does not tell them apart, the rule has no detector: write another one.
+**How to check it.** Run the detection command on the wrong example and on the right one. It has to find the first and not find the second. If it cannot tell them apart, the rule has no detector: write another.
 
-## 3. How to review each change and what to ask the reviewer
+## 4. What to check with the compiler and the linter
 
-Google's engineering guides set the order of magnitude: 100 lines is a reasonable size for a change, and 1,000 is usually too large. A small change is reviewed sooner, because finding five minutes several times a day is easier than setting aside half an hour. It is also reviewed better, because in a large change the volume of comments makes the important ones easy to miss. According to the document, a reviewer may reject a change for the sole reason of being too large<Cite n={7} />.
+If a violation can be detected in the code without running it, do not leave it as a rule: make the compiler or the linter detect it. A rule influences the model, but the compiler and the linter decide whether the code passes.
 
-With an agent, writing time no longer limits the size of a change. Asking for 800 lines costs the same as asking for 80. Set the size before starting.
+**Validate at the boundary.** The domain function, the one that applies the business logic, only accepts data that has already been validated. The Zod schema declares the validation and the type at once:
 
-The outcome of a review also depends on what the reviewer is asked to do, whether the reviewer is a person or an agent. Asking for an approval produces reports that approve. The instruction that produces findings is the opposite one: look for what does not hold up. If the report comes back empty, check what the review covered before accepting it.
+```ts
+// src/pedido.ts
+import { z } from 'zod';
 
-Write the limit of that instruction next to it, because without it the review does harm. A false positive costs an unnecessary change to code that worked. Programs that detect dead or duplicated code only serve to guide the search. They do not see re-exports or scripts run from the command line, so they mark as dead code that is in use. Before writing in the report that something is unused, check it in the file.
+export const CrearPedido = z.object({
+  clienteId: z.uuid(),
+  monto: z.number().positive()
+});
 
-**How to check it.** Record in every review the hash of the commit it reviewed. Without that hash, nobody can repeat the review or contrast it with the code.
+export type CrearPedido = z.infer<typeof CrearPedido>;
 
-## 4. How to check that a test catches the defect
+export function crearPedido(datos: CrearPedido): string {
+  return `${datos.clienteId}:${datos.monto}`;
+}
+```
 
-If you ask an agent for tests, it writes them, and they generally pass. The problem is that it writes them after the code, so they tend to describe what the code does, not what it should do. A test that passes with and without the defect does not distinguish between the two states.
+The type is not enough. `req.json()` returns `Promise<any>`, and Express's `req.body` is `any` too. An `any` value is accepted by any parameter, so this route, which passes the body without validating it, compiles without errors:
 
-**Mutation testing** measures that. It introduces a defect, called a **mutant**, into the production code and runs the tests. If one fails, the mutant is *killed*; if they all pass, the mutant *survives* and marks something the tests do not check. Stryker's documentation distinguishes it from coverage, which measures which lines run and not whether the tests check the behaviour<Cite n={8} />.
+```ts
+// src/ruta.ts
+import { crearPedido } from './pedido.js';
+
+export async function POST(req: Request) {
+  return crearPedido(await req.json());
+}
+```
+
+In the measurement, `tsc --noEmit` exited with code 0. The linter rule `@typescript-eslint/no-unsafe-argument` detects exactly that case: an `any` value reaching a typed parameter<Cite n={9} />. It is part of typescript-eslint's `recommended-type-checked` configuration.
+
+The type assertion remains. Writing `cuerpo as CrearPedido` tells the compiler to treat the value as if it had that type, and it generates no check:
+
+```ts
+// src/ruta-as.ts
+import { crearPedido, type CrearPedido } from './pedido.js';
+
+export async function POST(req: Request) {
+  const cuerpo: unknown = await req.json();
+  return crearPedido(cuerpo as CrearPedido);
+}
+```
+
+`tsc --noEmit` accepted this route too. The rule `@typescript-eslint/no-unsafe-type-assertion` forbids assertions that narrow a type<Cite n={10} />. It is in neither the recommended nor the strict configurations, so it has to be turned on by hand:
+
+```js
+// eslint.config.js
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  tseslint.configs.recommendedTypeChecked,
+  {
+    languageOptions: { parserOptions: { projectService: true } },
+    rules: { '@typescript-eslint/no-unsafe-type-assertion': 'error' }
+  }
+);
+```
+
+With that configuration, the linter rejected both routes the compiler had accepted:
+
+```text
+src/ruta-as.ts
+  5:22  error  Unsafe type assertion: type '{ clienteId: string; monto: number; }'
+               is more narrow than the original type
+               @typescript-eslint/no-unsafe-type-assertion
+
+src/ruta.ts
+  4:22  error  Unsafe argument of type `any` assigned to a parameter of type
+               `{ clienteId: string; monto: number; }`
+               @typescript-eslint/no-unsafe-argument
+
+✖ 2 problems (2 errors, 0 warnings)
+```
+
+The route that validates passes both checks:
+
+```ts
+// src/ruta-ok.ts
+export async function POST(req: Request) {
+  return crearPedido(CrearPedido.parse(await req.json()));
+}
+```
+
+<Callout kind="riesgo" title="eslint-plugin-security does not detect SQL injection">
+	`eslint-plugin-security` 4.0.1 includes fourteen linter rules, and 4.1.0, published on 27 September 2026, fifteen. None of them covers SQL injection. The full list comes from `Object.keys(plugin.rules)`. Before counting a package as a control, check what it detects, because the name does not tell you.
+</Callout>
+
+**How to check it.** Write the two wrong routes on purpose and run `tsc --noEmit` and the linter. `tsc` has to exit 0 and the linter 1, with one error per route. If the linter says nothing, the type information (`projectService`) is missing or the rule is not turned on.
+
+## 5. How to check that a test detects the defect
+
+If you ask an agent for tests, it writes them, and they usually pass. When it writes them after the code, they tend to describe what the code does and not what it should do. A test that passes with the defect and without it does not tell the two states apart.
+
+**Mutation testing** measures that. It introduces a defect, called a **mutant**, into the production code and runs the tests. If any test fails, the mutant is *killed*; if they all pass, the mutant *survives* and points to a gap in the tests. Stryker's documentation distinguishes it from coverage, which measures which lines run and not whether the tests check the behaviour<Cite n={11} />.
 
 The manual version needs no program. Before accepting a test, check it in two directions:
 
-1. **Red direction.** Reintroduce the exact defect the test claims to cover, without renaming anything. The test has to fail; if it still passes, it protects nothing.
+1. **Red direction.** Reintroduce the exact defect the test claims to cover, without renaming anything. The test has to fail; if it still passes, it protects against nothing.
 2. **Green direction.** Rename something without changing the behaviour, such as a local variable, a parameter or a type. The test has to keep passing; if it fails, it checks names and not behaviour.
 
-Always make the mutation in the production code, never in the test file. If you have to edit the test to make it fail, the test was not checking anything.
+Always make the mutation in the production code, never in the test file. If you have to edit the test for it to fail, the test was checking nothing.
 
 ```js
-// orders.mjs
-export function getOrder(orders, id, userId) {
-	const order = orders.find((o) => o.id === id);
-	if (!order) return null;
-	if (order.userId !== userId) return null;
-	return order;
+// pedidos.mjs
+export function obtenerPedido(pedidos, id, usuarioId) {
+	const pedido = pedidos.find((p) => p.id === id);
+	if (!pedido) return null;
+	if (pedido.usuarioId !== usuarioId) return null;
+	return pedido;
 }
 ```
 
 ```js
-// orders.test.mjs
+// pedidos.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getOrder } from './orders.mjs';
+import { obtenerPedido } from './pedidos.mjs';
 
-const orders = [{ id: 'a1', userId: 'ana' }];
+const pedidos = [{ id: 'a1', usuarioId: 'ana' }];
 
-test('returns the order to its owner', () => {
-	assert.equal(getOrder(orders, 'a1', 'ana')?.id, 'a1');
+test('devuelve el pedido a su dueno', () => {
+	assert.equal(obtenerPedido(pedidos, 'a1', 'ana')?.id, 'a1');
 });
 
-test('does not return the order to another user', () => {
-	assert.equal(getOrder(orders, 'a1', 'beto'), null);
+test('no devuelve el pedido a otro usuario', () => {
+	assert.equal(obtenerPedido(pedidos, 'a1', 'beto'), null);
 });
 ```
 
-With the ownership check in place, `node --test` reports `pass 2` and exits with code 0<Cite n={9} />. Removing the line that compares `userId` makes the second test fail:
+With the owner check, `node --test` returns `pass 2` and exits with code 0<Cite n={12} />. When the line that compares `usuarioId` is removed, the second test fails:
 
 ```text
-✔ returns the order to its owner
-✖ does not return the order to another user
+✔ devuelve el pedido a su dueno
+✖ no devuelve el pedido a otro usuario
 ℹ pass 1
 ℹ fail 1
 
 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
 + actual - expected
-+ { id: 'a1', userId: 'ana' }
++ { id: 'a1', usuarioId: 'ana' }
 - null
 ```
 
+Ask the agent for both directions in the task's criterion, as in the second request in section 1.
+
 **How to check it.** Revert the fix, run the tests and check that the new test fails. Then apply the fix again.
 
-## 5. How to make the compiler and the linter enforce a rule
+## 6. How to review every change
 
-A rule influences the model, and a compiler check decides whether the code passes. The **syntax tree** is the structure of the code that the compiler and the linter analyse. If a violation can be detected in that tree or in the output, do not write it as a rule. The compiler or the linter already checks it. A rule like that would only take up context.
+Google's engineering guides set the order of magnitude: 100 lines is a reasonable size for a change, and 1000 is usually too much. A small change gets reviewed sooner and better, because in a large change the important comments get lost among the rest. According to the document, a reviewer may reject a change just for being too large<Cite n={13} />.
 
-**Validate at the boundary.** "Validate inputs" is a rule. The version the compiler checks is that the domain function, the one that applies the business logic, only accepts validated data.
+With an agent, the time it takes to write no longer limits the size of the change: asking for 800 lines costs the same as asking for 80. Set the size in the request.
 
-```ts
-import { z } from 'zod';
+Ask the reviewer, whether a person or an agent, to look for what does not hold up and to write down what it checked for each finding. Write its limit too. Programs that detect dead or duplicated code are only good for guiding the search, because they do not see re-exports or scripts run from the command line. Before writing in the report that something is unused, check it in the file.
 
-export const CreateOrder = z.object({
-	customerId: z.uuid(),
-	amount: z.number().positive()
-});
+**How to check it.** Record in every review the hash of the commit it reviewed. Without that hash, nobody can repeat the review or compare it with the code.
 
-export type CreateOrder = z.infer<typeof CreateOrder>;
+## 7. How to run the checks on every change
 
-export function createOrder(data: CreateOrder): string {
-	return `${data.customerId}:${data.amount}`;
-}
-```
+The checks above only work if someone runs them. In continuous integration, the server that checks every change pushed to the repository, they always run. There are five steps:
 
-`z.infer` derives the type from the schema, so the type and the validation are one declaration. A route that passes the HTTP request body unvalidated does not compile:
+1. **Compilation.** Run `tsc --noEmit` on the whole project.
+2. **Linter with type information.** It applies the two rules from section 4.
+3. **Tests.** Automate running them. The condition from section 5, having seen the test fail, is checked in review, because it needs the code from before the fix.
+4. **Dependencies.** Installing runs third-party code, and the lockfile decides what gets installed. The article [npm vs pnpm 11: install script security and allowBuilds](/en/blog/npm-vs-pnpm-install-security) explains how to configure it.
+5. **Secrets.** GitHub blocks pushing a commit when it detects a credential. On public repositories that protection is on by default for user accounts. On private ones it has to be turned on, and it requires GitHub Secret Protection<Cite n={14} />.
 
-```text
-route.ts(5,34): error TS2345: Argument of type 'unknown' is not assignable
-to parameter of type '{ customerId: string; amount: number; }'.
-```
-
-One case remains that the compiler does not stop. Writing `body as CreateOrder` is a type assertion. It tells the compiler to treat the value as if it were of that type, and it generates no check. With it, `tsc --noEmit` ends in 0 and the unvalidated data reaches the function. The lint rule `@typescript-eslint/no-unsafe-type-assertion` reads the same type information `tsc` does and disallows assertions that narrow a type<Cite n={10} />. So the linter rejects the line the compiler accepts:
-
-```text
-  5:34  error  Unsafe type assertion: type '{ customerId: string; amount: number; }'
-                is more narrow than the original type
-                @typescript-eslint/no-unsafe-type-assertion
-
-✖ 1 problem (1 error, 0 warnings)
-```
-
-**Build SQL only with tagged templates.** SQL injection happens when text sent by the user ends up forming part of the query the database parses. A **tagged template** is a string with `${}` passed to a function. A database client built on them prevents injection by design. The template hands the function the fixed text and the values as separate arguments. The values are sent separately until the database has already parsed the query.
-
-```js
-import { sql } from 'slonik';
-
-const filter = "1 OR 1=1";
-const query = sql.unsafe`select * from orders where customer = ${filter}`;
-
-console.log(query.sql);    // select * from orders where customer = $slonik_1
-console.log(query.values); // [ '1 OR 1=1' ]
-```
-
-The malicious text stays in the list of values. Building dynamic SQL means calling a different function, `sql.identifier`, which also quotes what it writes, and a search finds that call.
-
-<Callout kind="riesgo" title="eslint-plugin-security does not detect SQL injection">
-	`eslint-plugin-security` 4.0.1 includes fourteen lint rules, and none of them covers SQL injection. The full list comes from `Object.keys(plugin.rules)`. Before counting a package as a control, check what it detects, because the name does not say.
-</Callout>
-
-**How to check it.** Write both incorrect cases on purpose and run them through `tsc` and the linter. Each one catches the case the other lets through. The unvalidated body stops `tsc` with code 2, and the linter says nothing. The `as` assertion passes `tsc` with code 0, and the linter stops it with code 1. If you run only one of the two, one of the cases goes undetected.
-
-## 6. How to run the checks on every change
-
-The practices above only act when somebody applies them. In continuous integration, the server that checks every change pushed to the repository, they always apply, without depending on anyone to remember. They come to five steps, and two of them do not depend on the code just written:
-
-1. **Compilation.** Run `tsc --noEmit` across the project. It applies section 5 and finds anywhere else that unvalidated data reaches a function expecting validated data.
-2. **Type-aware linting.** It prevents the assertion from section 5 and locates the calls that build dynamic SQL, which are the ones to read one by one.
-3. **Tests.** Automate the test run. The condition from section 4, having seen the test fail, is checked in the review. It needs the code from before the fix.
-4. **Dependencies.** Installing runs third-party code, and the lockfile decides what is installed. The article [npm vs pnpm 11: install script security and allowBuilds](/en/blog/npm-vs-pnpm-install-security) explains how to configure it.
-5. **Secrets.** GitHub blocks the push of a commit when it detects a credential. On public repositories this protection is on by default for user accounts. On private ones it has to be enabled, and it requires GitHub Secret Protection<Cite n={11} />.
-
-None of the five steps distinguishes whether a person or a model wrote the change, so they apply the same way to both.
+None of the five steps can tell whether a person or a model wrote the change, so they apply to both alike.
 
 The same commands can also run at two earlier moments:
 
-1. **After every edit by the agent.** The harness can run a hook, a command at a fixed moment, every time the agent writes a file. If the compiler runs there, the model does not keep building on code that no longer compiles.
-2. **Before every commit.** The pre-commit hook runs the commands before the change exists as a commit.
+1. **After every edit by the agent.** The *harness* can run a *hook*, a command at a fixed moment, every time the agent writes a file. If it runs the compilation there, the model does not keep building on code that no longer compiles.
+2. **Before every commit.** The pre-commit *hook* runs the commands before the change exists as a commit.
 
-Neither replaces continuous integration, because both run on your machine and both can be skipped. They make the warning arrive sooner, closer to the moment the defect was introduced.
+Neither replaces continuous integration, because both run on your machine and can be skipped. They make the warning arrive sooner, closer to the moment the defect was introduced.
 
-**How to check it.** Open a change containing one failure of each kind and check that continuous integration stops it. A control that has never been seen to fail is not verified, just as a test that has never failed is not (section 4).
+**How to check it.** Open a change that contains one failure of each kind and check that continuous integration stops it. A control that has never been seen to fail is not verified, just like a test that has never failed.
 
-## Which failures no control detects
+## Which failures static analysis does not detect
 
-The first practice depends on the harness loading the rule, and the last one runs on every change without anyone starting it. Even so, there is a kind of failure that no control detects.
+The compiler and the linter do not find broken access control. No pattern tells `obtenerPedido(pedidos, id, usuarioId)` apart from `obtenerPedido(pedidos, id)`: both versions compile, pass the linter, and the missing check leaves no trace in the code. A static analyser finds the query that concatenates text, but not the correct query that is missing a filter.
 
-None of the checks above finds broken access control. No search pattern distinguishes `getOrder(orders, id, userId)` from `getOrder(orders, id)`. Both versions compile and pass the linter, and the missing check leaves no trace in the syntax tree. A static analyser finds the query that concatenates text, but not the correct query that is missing a filter.
+That failure is detected by a test with two users that has been seen to fail, like the one in section 1, and by reviewing every change. The database can also enforce it with row-level security, which filters every query by the connection's user. In exchange, every request has to open the connection with the user's identity, and the rule ends up split between the application and the database.
 
-For that kind of failure, and for the others that depend on business logic, only two controls remain. They are the per-change review from section 3 and the test seen to fail from section 4. That is why section 4 uses exactly that example.
+If authorisation lives in the application, include the owner in the query condition, inside the `where`. Section 2 of [Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) shows it with code.
 
-To reduce the risk, include the owner in the query condition, inside the `where`, and do not check it on a later line. A later check can be forgotten in the next endpoint, and the `where` condition applies every time the query runs. Section 2 of [Seven things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) shows it with code.
+**How to check it.** With one user's session, request an identifier that belongs to another. The right answer is `404`. If the record comes back, neither the compiler nor the linter would have stopped it.
 
-**How to check it.** With one user's session, request an identifier that belongs to another. The correct answer is `404`. If the record arrives, none of the six practices would have stopped it.
+## Where to go next
 
-## Which decisions go in the request
+[Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) teaches how to look for eight common failures by hand, with the fix for each and the command that checks it.
 
-A good request still has an effect, because the model makes decisions that no control can make for it:
-
-- what the person who opened the task actually wants;
-- which part of the system needs touching;
-- what the new thing should be called;
-- how much detail the answer needs.
-
-Those decisions depend on meaning and have no check attached, so the request is the only place they fit.
-
-To decide where a new rule goes, apply these four criteria:
-
-1. If breaking it can be detected in the syntax tree or in the output, the rule goes in the code.
-2. If it describes an algorithm with steps, it goes in a script or a typed function.
-3. If it is a decision about what to use, what to call something or how it should read, it goes in the request. Keep it as short as possible.
-4. If it contradicts an example in the same file, the example prevails, because the model reads both and the example is more concrete.
-
-Setting up the six practices takes a few hours, and after that each change adds a few minutes. Without them, the same defects appear later, when somebody reviews the whole repository. According to Google's guides from section 3, that is the case where review works worst.
-
-[How to secure a web application](/en/blog/how-to-secure-a-web-application) brings together the ten layers those rules should cover in an application with users.
+[How to secure a web application](/en/blog/how-to-secure-a-web-application) gathers the ten layers these rules and checks have to cover in an application with users.
 
 <References
 	title="References"
 	back="Back to citation"
 	items={[
+		{
+			source: 'Vero, M., Mündler, N., Chibotaru, V., Raychev, V., Baader, M., Jovanović, N., He, J. and Vechev, M.',
+			title: 'BaxBench: Can LLMs Generate Correct and Secure Backends?',
+			note: 'ICML 2025; 392 tasks and three versions of the request',
+			url: 'https://arxiv.org/abs/2502.11844'
+		},
 		{
 			source: 'Veracode',
 			title: 'Spring 2026 GenAI Code Security Update',
@@ -268,10 +339,15 @@ Setting up the six practices takes a few hours, and after that each change adds 
 			url: 'https://www.veracode.com/blog/spring-2026-genai-code-security/'
 		},
 		{
-			source: 'Pearce, Ahmad, Tan, Dolan-Gavitt and Karri',
-			title: "Asleep at the Keyboard? Assessing the Security of GitHub Copilot's Code Contributions",
-			note: 'IEEE Symposium on Security and Privacy 2022; 1,689 programs across 89 scenarios',
-			url: 'https://arxiv.org/abs/2108.09293'
+			source: 'typescript-eslint',
+			title: 'Dependency Versions',
+			note: 'TypeScript >=4.8.4 <6.1.0',
+			url: 'https://typescript-eslint.io/users/dependency-versions/'
+		},
+		{
+			source: 'Claude Code',
+			title: 'How Claude remembers your project, Path-specific rules',
+			url: 'https://code.claude.com/docs/en/memory'
 		},
 		{
 			source: 'Anthropic',
@@ -280,15 +356,15 @@ Setting up the six practices takes a few hours, and after that each change adds 
 			url: 'https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview'
 		},
 		{
-			source: 'Anthropic',
-			title: 'Skill authoring best practices',
-			note: 'the description, conciseness, and evaluations before documentation',
-			url: 'https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices'
-		},
-		{
 			source: 'Cursor',
 			title: 'Rules',
 			url: 'https://cursor.com/docs/context/rules'
+		},
+		{
+			source: 'Anthropic',
+			title: 'Skill authoring best practices',
+			note: 'the description, conciseness and evaluations before documentation',
+			url: 'https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices'
 		},
 		{
 			source: 'Vercel',
@@ -297,9 +373,14 @@ Setting up the six practices takes a few hours, and after that each change adds 
 			url: 'https://github.com/vercel-labs/agent-skills'
 		},
 		{
-			source: 'Google',
-			title: 'Engineering Practices, Small CLs',
-			url: 'https://google.github.io/eng-practices/review/developer/small-cls.html'
+			source: 'typescript-eslint',
+			title: 'no-unsafe-argument',
+			url: 'https://typescript-eslint.io/rules/no-unsafe-argument/'
+		},
+		{
+			source: 'typescript-eslint',
+			title: 'no-unsafe-type-assertion',
+			url: 'https://typescript-eslint.io/rules/no-unsafe-type-assertion/'
 		},
 		{
 			source: 'Stryker Mutator',
@@ -312,9 +393,9 @@ Setting up the six practices takes a few hours, and after that each change adds 
 			url: 'https://nodejs.org/api/test.html'
 		},
 		{
-			source: 'typescript-eslint',
-			title: 'no-unsafe-type-assertion',
-			url: 'https://typescript-eslint.io/rules/no-unsafe-type-assertion/'
+			source: 'Google',
+			title: 'Engineering Practices, Small CLs',
+			url: 'https://google.github.io/eng-practices/review/developer/small-cls.html'
 		},
 		{
 			source: 'GitHub Docs',

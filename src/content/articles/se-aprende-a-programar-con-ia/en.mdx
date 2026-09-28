@@ -4,7 +4,7 @@ title: 'Do you learn to code if the AI writes the code?'
 tagline: What the experiments that took AI away before the exam measured, and which ways of asking preserve learning.
 areas: [ia]
 published: '2026-09-08'
-updated: '2026-09-26'
+updated: '2026-09-27'
 draft: false
 path: do-you-learn-to-code-if-ai-writes-it
 repo: null
@@ -25,9 +25,9 @@ In programming, an experiment with 69 novices found no loss. Half of them used a
 
 Receiving written code neither teaches on its own nor prevents learning on its own. The outcome depends on what you do after receiving it, and that part can be configured.
 
-None of the studies cited measured professional programmers on a production repository. Each figure describes only the population it was measured in. The mechanism that produced the result can be carried over to other cases, but the size of the effect cannot.
+Only one of the learning studies cited measured software engineers, and none of them on a production repository. Each figure describes only the population it was measured in. The mechanism that produced the result can be carried over to other cases, but the size of the effect cannot.
 
-The measurements were made with Claude Code 2.1.263 and git 2.49.0. The Cursor documentation was consulted on 8 September 2026. Every piece of code was rebuilt for the article.
+The measurements were made on 27 September 2026 with Claude Code 2.1.283 and git 2.49.0. The Cursor documentation was consulted the same day. Every piece of code was rebuilt for the article.
 
 ## 1. What happened when AI was taken away before the exam
 
@@ -117,48 +117,57 @@ The two pieces come in this order. The worked example serves to receive the sche
 
 ## 8. How to configure an agent to give hints instead of solutions
 
-The group that lost nothing in the mathematics study used the same model with a different system prompt. That prompt contained the solution and the instruction not to hand it over<Cite n={1} repeat />. In a coding agent, that configuration is reproduced with the project's instructions file, which Claude Code reads at the start of every session<Cite n={6} />.
+The group that lost nothing in the mathematics study used the same model with a different system prompt. That prompt contained the solution and the instruction not to hand it over<Cite n={1} repeat />. In a coding agent, that configuration is reproduced with a project rule. Claude Code loads the files in `.claude/rules/` that carry a `paths` header only when it works with a file that matches those paths<Cite n={6} />. That way the rule applies to the part of the code you want to learn and not to the rest of the repository.
 
-Create a `CLAUDE.md` with these five lines at the root of the repository:
+Create `.claude/rules/learning.md` and list in `paths` the files you want to learn:
 
 ```markdown
+---
+paths:
+  - "src/cart.js"
+---
+
 # Learning rule
 
-Do not write the code for the task. Answer with the next hint instead:
-which file to touch, which concept applies, and one question that points to
+Do not write the code for the task in this file. Answer with the next hint instead:
+which function to touch, which concept applies, and one question that points to
 the next step. If I explicitly ask for the code, then you do write it.
 ```
 
-In the measurement, `cart.js` held a single function and Claude Code had permission to edit files. The request "add a function to `cart.js` that applies a percentage discount to the total" returned this:
+In the measurement, `src/cart.js` held a single function and Claude Code had permission to edit files. The request "add a function to `src/cart.js` that applies a percentage discount to the total" returned this:
 
 ```text
-**File to touch:** `cart.js` — add a second exported function alongside `total`.
+Learning mode on (`.claude/rules/learning.md`), so here's a hint instead of
+the code.
 
-**Concept:** function composition on a pure function. `total(items)` already
-gives you the number to discount, so your new function shouldn't re-walk the
-items array — it should build on the result. A percentage discount of `p`
-means keeping the fraction `(100 - p) / 100` of the amount.
+**Where:** `src/cart.js`. Add a new exported function next to `total(items)`
+and reuse `total` rather than repeating the `reduce`.
 
-**Question to move you forward:** what should your function take as its
-parameters — the `items` array plus a percent, or just an already-computed
-amount plus a percent? Think about which choice makes it easier to test in
-isolation and easier to reuse if later you need to apply a discount to a
-subtotal that isn't the whole cart.
+**Concept:** A percentage discount multiplies the total by what's left after
+the discount. 20% off leaves 80% of the price. Decide whether callers pass
+`20` or `0.2`, and handle bad input like a negative number or anything over
+100.
+
+**Question:** If `total(items)` gives `t` and the discount is `p` percent,
+what one expression gives the discounted total? And should the function take
+`items` or the already-computed `t`?
+
+Say "write the code" if you want the full version.
 ```
 
-The file was left untouched. The last line of the rule lets you ask for the code when you need it. It works: asking for the code explicitly made Claude Code write it and modify the file.
+The file was left untouched. A similar request on `src/dates.js`, which is not in `paths`, wrote the function in that file. The last line of the rule lets you ask for the code when you need it: asking for it explicitly made Claude Code write it in `src/cart.js`.
 
-In Cursor, the same configuration is a `.mdc` file in `.cursor/rules` with `alwaysApply: true` in its frontmatter. Cursor inserts its contents at the start of the model context<Cite n={7} />.
+In Cursor, the same configuration is a `.mdc` file in `.cursor/rules` with `globs: src/cart.js` and `alwaysApply: false` in its frontmatter. Cursor adds the rule when a matching file is in context<Cite n={7} />.
 
 Claude Code also ships two output styles for the same purpose. According to its documentation, *Explanatory* interleaves explanations of implementation decisions while it works. *Learning* asks you to write small pieces of the code and marks them with `TODO(human)` in the file<Cite n={8} />.
 
-In a single non-interactive request against the example file, the *Learning* style returned the explanations and wrote the whole function. Choose the style with `/config`, under the output style entry, or with the `outputStyle` field in a settings file. The `/output-style` command was removed in version 2.1.91<Cite n={8} repeat />.
+In a single non-interactive request, the *Learning* style returned the explanations and wrote the whole function, leaving no part for you. Choose the style with `/output-style learning`, which requires version 2.1.269 or later, with `/config`, under the output style entry, or with the `outputStyle` field in a settings file<Cite n={8} repeat />.
 
 <Callout kind="nota" title="This configuration prevents the loss but adds no gain">
-	In the experiment, the version with hints prevented almost all the loss, with no gain over not using AI<Cite n={1} repeat />. Switch it on for the part of the code you want to learn, not for the whole repository.
+	In the experiment, the version with hints prevented almost all the loss, with no gain over not using AI<Cite n={1} repeat />. Switch it on for the part of the code you want to learn, not for the whole repository. That is what `paths` is for.
 </Callout>
 
-**How to check it.** Write the rule, ask for a small change and run `git status --short`. In the measurement it returned no lines, neither before nor after the request. If a modified file appears, the rule is not being applied.
+**How to check it.** Write the rule, ask for a small change in a file listed in `paths` and run `git status --short`. In the measurement it returned no lines, neither before nor after the request. If that file appears as modified, the rule is not being applied.
 
 ## 9. Which ways of asking preserve learning
 
@@ -172,7 +181,7 @@ Section 7 of [first steps with AI coding](/en/blog/first-steps-with-ai-coding) e
 | Situation | Way of asking | Check |
 |---|---|---|
 | Unfamiliar language or library | Let it write the code and explain each decision | Modify the result by hand, without the agent |
-| Own domain, to be preserved | Hint rule, no code | `git status` with no modified files |
+| Own domain, to be preserved | Hint rule, no code | Write the change yourself and make the tests pass without the agent |
 | Concept just studied | Write your own version first, then ask for a review | Contrast the two versions line by line |
 | Code generated days ago | Rewrite the function from memory | `git diff` against the saved version |
 | Explanation received from the agent | Explain it without opening the file | Ask it to compare the explanation against the file |
@@ -209,7 +218,13 @@ The fourth is closing the session and reconstructing what was explained without 
 
 ## 11. What changes if you already know how to program
 
-The studies cited measured students and apprentices: in high school, in coding camps, in undergraduate courses and in mechanical trades. None of them measured a professional on a working repository.
+Almost all the studies cited measured students and apprentices: in high school, in coding camps, in undergraduate courses and in mechanical trades.
+
+The one closest to a job was published by Anthropic in January 2026. It involved 52 software engineers, mostly junior, who learned Trio, a Python library, with or without an AI assistant. Afterwards they took a quiz without it. The AI group averaged 50%, against 67% for the group that wrote the code by hand, and did not finish significantly faster<Cite n={10} />.
+
+The result depended on how they used the assistant. Those who delegated the code to it, or passed it one error after another, averaged under 40%. Those who asked it conceptual questions, or asked for the code and then explained it, scored 65% or more<Cite n={10} repeat />. It is the same pattern as in sections 1 and 3. The authors warn that the sample is small and that the quiz was taken right after the task<Cite n={10} repeat />.
+
+None of these studies measured a professional on a working repository.
 
 Two consequences follow from the mechanisms above, and they are reasoning, not a measured result:
 
@@ -220,17 +235,19 @@ One case remains that none of the studies covers, and it appears as a project gr
 
 ## 12. What is still unmeasured
 
-The literature search for the article found no randomised trial that takes AI away from professional programmers after months of use. Nor did it find a measurement of what they can do without it in that population. Anything claimed about it is an extrapolation.
+The literature search for the article found no randomised trial that takes AI away from professional programmers after months of use. Anthropic's study in section 11 measured a single session. Nor did it find a measurement of what they can do without it in that population. Anything claimed about it is an extrapolation.
 
-The closest thing in a professional population measures speed, not learning, and even so it repeats the mismatch from section 4. METR randomly assigned 246 tasks between allowing and forbidding AI to 16 developers on mature open-source projects. Before starting, the developers expected AI to cut their completion time by 24%. On finishing, they believed it had cut it by 20%, and the measurement showed 19% more time<Cite n={10} />.
+The closest thing in a professional population measures speed, not learning, and even so it repeats the mismatch from section 4. METR randomly assigned 246 tasks between allowing and forbidding AI to 16 developers on mature open-source projects. Before starting, the developers expected AI to cut their completion time by 24%. On finishing, they believed it had cut it by 20%, and the measurement showed 19% more time<Cite n={11} />.
 
-That result describes experts working on code they already knew, with the AI of the first half of 2025. It coincides with the learning studies in the distance between what participants believed and what was measured. In both populations, self-assessment pointed in the wrong direction.
+METR repeated the experiment from August 2025, with 57 developers and more than 800 tasks. Among those who had already taken part, the estimate moved to 18% less time with AI, with a confidence interval from −38% to +9%. METR warns that this data is only very weak evidence. Many developers no longer agreed to work without AI, and they avoided submitting tasks they did not want to do without it<Cite n={12} />.
+
+The first result describes experts working on code they already knew, with the AI of the first half of 2025. It coincides with the learning studies in the distance between what participants believed and what was measured. In both populations, self-assessment pointed in the wrong direction.
 
 The design that would settle the question consists of taking AI away and measuring. The checks in section 10 are the individual version of that design.
 
 ## Where to go next
 
-Review generated code even when you learned from it. [Seven things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) covers the security failures that repeat most often. Each section brings the code that fails, the fix and the command that checks it.
+Review generated code even when you learned from it. [Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) covers eight common security failures. Each section brings the code that fails, the fix and the command that checks it.
 
 For the review to run on every change without depending on anyone, continue with [how to ask an AI for secure code](/en/blog/ask-ai-for-secure-code).
 
@@ -273,19 +290,19 @@ If you are missing the beginning, [first steps with AI coding](/en/blog/first-st
 		{
 			source: 'Claude Code',
 			title: 'How Claude remembers your project',
-			note: 'CLAUDE.md is read at the start of every session',
+			note: '.claude/rules files with a paths header',
 			url: 'https://code.claude.com/docs/en/memory'
 		},
 		{
 			source: 'Cursor',
 			title: 'Rules',
-			note: 'consulted on 8 September 2026; .cursor/rules, the .mdc extension and alwaysApply',
+			note: 'consulted on 27 September 2026; .cursor/rules, the .mdc extension, globs and alwaysApply',
 			url: 'https://cursor.com/docs/context/rules'
 		},
 		{
 			source: 'Claude Code',
 			title: 'Output styles',
-			note: 'the Explanatory and Learning styles, TODO(human) markers and the removal of /output-style in 2.1.91',
+			note: 'the Explanatory and Learning styles, TODO(human) markers and /output-style since 2.1.269',
 			url: 'https://code.claude.com/docs/en/output-styles'
 		},
 		{
@@ -294,10 +311,22 @@ If you are missing the beginning, [first steps with AI coding](/en/blog/first-st
 			url: 'https://git-scm.com/docs/git-diff'
 		},
 		{
+			source: 'Shen, J. H. and Tamkin, A.',
+			title: 'How AI assistance impacts the formation of coding skills',
+			note: 'Anthropic, 29 January 2026; 52 engineers, mostly junior, and the Trio library',
+			url: 'https://www.anthropic.com/research/AI-assistance-coding-skills'
+		},
+		{
 			source: 'Becker, J., Rush, N., Barnes, E. and Rein, D.',
 			title: 'Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity',
 			note: 'METR, July 2025; randomised trial, 16 developers and 246 tasks',
 			url: 'https://arxiv.org/abs/2507.09089'
+		},
+		{
+			source: 'METR',
+			title: 'We are Changing our Developer Productivity Experiment Design',
+			note: '24 February 2026; 57 developers and more than 800 tasks',
+			url: 'https://metr.org/blog/2026-02-24-uplift-update/'
 		}
 	]}
 />

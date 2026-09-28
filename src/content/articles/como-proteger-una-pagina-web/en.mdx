@@ -1,11 +1,11 @@
 ---
 slug: como-proteger-una-pagina-web
 title: 'How to secure a web application: a layer-by-layer guide'
-tagline: The ten layers that protect a web application with users, how to apply each and how to check it.
+tagline: The ten layers that protect a web application with users, with an Express example and how to check each one.
 description: 'How to secure a web application with users: HTTPS, headers, cookies, passwords, permissions, XSS, CORS, CSRF, secrets, dependencies and errors.'
 areas: [seguridad]
 published: '2026-09-27'
-updated: null
+updated: '2026-09-27'
 draft: false
 path: how-to-secure-a-web-application
 repo: null
@@ -25,7 +25,7 @@ A website with users has a frontend, an API and a login. From here on it is call
 
 The 2025 edition of the OWASP Top 10 puts broken access control first and security misconfiguration second<Cite n={1} />. Several configuration failures already appear in the first draft of an Express application. Without any settings, it answers with `X-Powered-By: Express` and creates the session cookie with no security attributes. It also returns an error's stack trace to the browser.
 
-No single control protects the whole application. Each layer stops one specific threat, and the other layers cover what it lets through. The ten layers follow in order, and each one links to the article that goes deeper into it.
+No single control protects the whole application. Each layer stops one specific threat, and the other layers cover what it lets through. The ten layers follow in order, and each one links to the article that goes deeper into it. The example uses Node.js and Express, but the layers and the curl checks hold for any framework.
 
 The measurements were taken on 27 September 2026 with Node.js 24.19.0, Express 5.2.1, helmet 8.3.0, express-rate-limit 8.7.0, curl 8.12.1 and Chrome 153.0.8010.54. All the code is rebuilt for the article.
 
@@ -37,20 +37,20 @@ The measurements were taken on 27 September 2026 with Node.js 24.19.0, Express 5
 | 2. Security headers | Injected scripts and loading inside a foreign `iframe` | CSP, `frame-ancestors` and `nosniff` | Section 4 |
 | 3. Session and cookies | Session theft | `HttpOnly`, `Secure` and `SameSite` | Section 5 |
 | 4. Passwords and attempts | Password theft and brute force | A slow hash and a per-account limit | Section 6 |
-| 5. Permissions | Reading or changing someone else's data | The check on the server | [Seven things to check](/en/blog/seven-things-to-check-in-ai-generated-code), sections 1 and 2 |
-| 6. Input and output | Injection and XSS | Parameterised queries and escaped output | [Seven things to check](/en/blog/seven-things-to-check-in-ai-generated-code), sections 3 and 5 |
+| 5. Permissions | Reading or changing someone else's data | The check on the server | [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code), sections 1 and 2 |
+| 6. Input and output | Injection and XSS | Parameterised queries and escaped output | [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code), sections 3, 5 and 8 |
 | 7. Other origins (CORS and CSRF) | Another site reading the API or acting with the session | Allowlist of origins and anti-CSRF token | [What CORS is](/en/blog/what-is-cors) |
-| 8. Secrets | Keys exposed in the repository or the browser | Secrets out of the code and the *bundle* | [Seven things to check](/en/blog/seven-things-to-check-in-ai-generated-code), section 4 |
+| 8. Secrets | Keys exposed in the repository or the browser | Secrets out of the code and the *bundle* | [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code), section 4 |
 | 9. Dependencies | Third-party code that runs on install | Lockfile, signatures and blocked install scripts | [npm and pnpm](/en/blog/npm-vs-pnpm-install-security) |
-| 10. Errors and logs | Internal details in responses and data in logs | A generic response with an identifier | [Seven things to check](/en/blog/seven-things-to-check-in-ai-generated-code), section 7 |
+| 10. Errors and logs | Internal details in responses and data in logs | A generic response with an identifier | [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code), section 7 |
 
 Each layer is explained with what happens without it in a sample application and with the command that checks it. The linked articles show the same failure seen in the code, with its fix.
 
 ## 2. How to prepare the environment before writing code
 
-If a coding agent writes part of the application, the environment it works in comes before the layers. [First steps with AI coding](/en/blog/first-steps-with-ai-coding) explains how to prepare it. The agent cannot read `.env`, asks permission before dangerous commands and a security reviewer reviews every change. [How to ask an AI for secure code](/en/blog/ask-ai-for-secure-code) explains how to turn these layers into rules the agent loads and checks on every change.
+If a coding agent writes part of the application, two settings in its environment reduce the risk from the start. The agent must not be able to read `.env`, and every change has to go through a review. [First steps with AI coding](/en/blog/first-steps-with-ai-coding) explains both. [How to ask an AI for secure code](/en/blog/ask-ai-for-secure-code) explains what to put in the request and what to check with the compiler, the linter and the tests.
 
-**How to do it.** Set up the environment with the first steps prompt before asking for the first feature. Then add to the project's instructions file the layers from the table in section 1 that your application needs.
+**How to do it.** Before asking for the first feature, add to the project's instructions file the layers from the table in section 1 that your application needs.
 
 ## 3. How to serve the application over HTTPS and enable HSTS
 
@@ -129,6 +129,12 @@ For a script of your own to run, move it to a `.js` file or allow it with the ha
 
 The `helmet` 8.3.0 package sets thirteen headers with a single line, `app.use(helmet())`: it sends twelve and removes `X-Powered-By`<Cite n={6} />. Three of its defaults differ from the example's: `Referrer-Policy: no-referrer`, `frame-ancestors 'self'` and a one-year `max-age`. Adjust them with its options if you want the example's.
 
+<Callout kind="riesgo" title="Test the CSP before enforcing it">
+	`default-src 'self'` also blocks styles written in the HTML, both `<style>` elements and `style=` attributes, because `style-src` falls back to `default-src` when it is not declared<Cite n={7} />. In an existing application, that can break styles, external fonts, analytics and the scripts the framework adds. First deploy the same policy with the `Content-Security-Policy-Report-Only` header, which reports each block without enforcing it<Cite n={8} />. When the console no longer shows warnings, switch to the `Content-Security-Policy` name.
+
+	helmet 8.3.0's default CSP is less strict: its `style-src` is `'self' https: 'unsafe-inline'`. In Next.js, the official guide generates a different *nonce* on every request from `proxy.ts`<Cite n={9} />.
+</Callout>
+
 **How to check it.** Request the headers of the home page:
 
 ```text
@@ -138,7 +144,7 @@ X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
 ```
 
-`X-Powered-By` does not appear. Open the page with the browser console open and check that the CSP blocks none of your own scripts.
+`X-Powered-By` does not appear. Open each kind of page with the browser console open and check that the CSP blocks none of your own scripts or styles.
 
 ## 5. How to protect the session and the cookies
 
@@ -149,7 +155,7 @@ Set-Cookie: sesion=8f81d9b1-ee09-471d-9134-ac51dd2b3c08; Path=/
 document.cookie = "sesion=a093f210-c912-4b0b-9afe-23761b9c2a2f"
 ```
 
-OWASP considers `Secure` and `HttpOnly` mandatory on the session cookie. It also asks you to set `SameSite` explicitly, preferably `Strict`, without relying on the browser's default<Cite n={7} />:
+OWASP considers `Secure` and `HttpOnly` mandatory on the session cookie. It also asks you to set `SameSite` explicitly, preferably `Strict`, without relying on the browser's default<Cite n={10} />:
 
 ```js
 res.cookie('__Host-sesion', id, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' });
@@ -157,10 +163,10 @@ res.cookie('__Host-sesion', id, { httpOnly: true, secure: true, sameSite: 'lax',
 
 The example uses `Lax` so that a link from another site arrives with the session started. Use `Strict` if the application does not need that.
 
-- **`HttpOnly`** stops JavaScript from reading the cookie. An XSS can no longer copy it<Cite n={8} />.
+- **`HttpOnly`** stops JavaScript from reading the cookie. An XSS can no longer copy it<Cite n={11} />.
 - **`Secure`** only sends it over HTTPS.
-- **`SameSite=Lax`** does not send it on requests from other sites. The exception is top-level navigation with a safe method such as `GET`, for example a link to the application. `Strict` does not send it in that case either<Cite n={8} repeat />.
-- **The `__Host-` prefix** sets three conditions, or the browser rejects the cookie. It has to be set from an HTTPS origin, carry `Secure` and `Path=/`, and not carry `Domain`<Cite n={8} repeat />. OWASP recommends it for the session<Cite n={7} repeat />.
+- **`SameSite=Lax`** does not send it on requests from other sites. The exception is top-level navigation with a safe method such as `GET`, for example a link to the application. `Strict` does not send it in that case either<Cite n={11} repeat />.
+- **The `__Host-` prefix** sets three conditions, or the browser rejects the cookie. It has to be set from an HTTPS origin, carry `Secure` and `Path=/`, and not carry `Domain`<Cite n={11} repeat />. OWASP recommends it for the session<Cite n={10} repeat />.
 
 With these attributes, the same page no longer sees the session:
 
@@ -171,17 +177,19 @@ document.cookie = ""
 
 **How to do it.**
 
-1. Generate a new session identifier at login, as `randomUUID()` does in the example. OWASP requires renewing it on every privilege change<Cite n={7} repeat />.
+1. Generate a new session identifier at login, as `randomUUID()` does in the example. OWASP requires renewing it on every privilege change<Cite n={10} repeat />.
 2. Set `HttpOnly`, `Secure`, `SameSite` and `Path=/`, and use the `__Host-` prefix.
-3. If the frontend and the API are on different sites and need the cookie, read [how to allow cookies across origins without opening the API](/en/blog/what-is-cors).
+3. Expire the session on the server. OWASP suggests 15 to 30 minutes of inactivity for low-risk applications and 2 to 5 for high-value ones. For the absolute limit, it suggests 4 to 8 hours if the application is used through a working day<Cite n={10} repeat />.
+4. At logout, delete the session on the server as well as the cookie. According to OWASP, invalidation on the server is the mandatory part<Cite n={10} repeat />. If only the cookie is deleted, the identifier stays valid for anyone who copied it.
+5. If the frontend and the API are on different sites and need the cookie, read [how to allow cookies across origins without opening the API](/en/blog/what-is-cors).
 
-**How to check it.** Log in with curl and read the `Set-Cookie` header. Then, with the session started in the browser, type `document.cookie` in the console: the session cookie must not appear.
+**How to check it.** Log in with curl and read the `Set-Cookie` header. Then, with the session started in the browser, type `document.cookie` in the console: the session cookie must not appear. Finally, save the cookie, log out and repeat a request with the saved cookie: the response has to be `401`.
 
 ## 6. How to store passwords and limit attempts
 
-A password is stored as a slow hash, never in plain text or with a fast hash such as SHA-256. OWASP recommends Argon2id. If it is not available, it recommends scrypt; bcrypt only for legacy systems, and PBKDF2 if FIPS-140 is required<Cite n={9} />.
+A password is stored as a slow hash, never in plain text or with a fast hash such as SHA-256. OWASP recommends Argon2id. If it is not available, it recommends scrypt; bcrypt only for legacy systems, and PBKDF2 if FIPS-140 is required<Cite n={12} />.
 
-Node.js includes scrypt in `node:crypto`, with no dependencies. Its default parameters (N = 2<sup>14</sup>, r = 8, p = 1) do not reach any of OWASP's minimum combinations<Cite n={9} repeat /><Cite n={10} />. The example uses the first one, N = 2<sup>17</sup>, r = 8 and p = 1:
+Node.js includes scrypt in `node:crypto`, with no dependencies. Its default parameters (N = 2<sup>14</sup>, r = 8, p = 1) do not reach any of OWASP's minimum combinations<Cite n={12} repeat /><Cite n={13} />. The example uses the first one, N = 2<sup>17</sup>, r = 8 and p = 1:
 
 ```js
 // Parámetros de scrypt: N = 2^17, r = 8, p = 1.
@@ -201,16 +209,20 @@ export async function verificarContrasena(contrasena, guardado) {
 }
 ```
 
-These parameters need about 128 MiB. With scrypt's default limit in Node.js (`maxmem`, 32 MiB), the call fails<Cite n={10} repeat />:
+These parameters need about 128 MiB. With scrypt's default limit in Node.js (`maxmem`, 32 MiB), the call fails<Cite n={13} repeat />:
 
 ```text
 ERR_CRYPTO_INVALID_SCRYPT_PARAMS Invalid scrypt params: error:030000AC:digital envelope
 routines::memory limit exceeded
 ```
 
-That is why the example raises `maxmem` to 256 MiB. With these parameters, computing one hash took about 260 ms. `timingSafeEqual` compares the result in a time that does not depend on where the two values differ<Cite n={10} repeat />.
+That is why the example raises `maxmem` to 256 MiB. With these parameters, computing one hash took about 260 ms. `timingSafeEqual` compares the result in a time that does not depend on where the two values differ<Cite n={13} repeat />.
 
-A slow hash does not stop someone trying passwords against the login. That is what an attempt limit is for. OWASP asks you to tie the failed-login counter to the account, not to the IP address<Cite n={11} />. `skipSuccessfulRequests` makes the limit count only failed attempts:
+The server pays that cost too. OWASP warns that a work factor that is too high lets an attacker exhaust the server's CPU with login requests<Cite n={12} repeat />. With these parameters, each computation also reserves about 128 MiB. That is why the attempt limit below is mounted on the login route, ahead of the hash computation: `app.post('/login', limite, iniciarSesion)`.
+
+The per-account limit does not bound that load when many accounts are tried; the second limit, per IP, does. Also measure how many simultaneous logins your server can take before you settle on the parameters.
+
+A slow hash does not stop someone trying passwords against the login. That is what an attempt limit is for. OWASP asks you to tie the failed-login counter to the account, not to the IP address<Cite n={14} />. `skipSuccessfulRequests` makes the limit count only failed attempts:
 
 ```js
 // Cinco intentos por cuenta cada 15 minutos (OWASP asocia el contador a la cuenta, no a la IP).
@@ -224,7 +236,7 @@ const limite = rateLimit({
 });
 ```
 
-After one correct login and five wrong passwords, the sixth failed attempt answers `429`, which means too many requests<Cite n={12} />:
+After one correct login and five wrong passwords, the sixth failed attempt answers `429`, which means too many requests<Cite n={15} />:
 
 ```text
 HTTP/1.1 401 Unauthorized RateLimit: "5-in-15min"; r=0; t=899
@@ -233,11 +245,15 @@ HTTP/1.1 429 Too Many Requests RateLimit: "5-in-15min"; r=0; t=898 Retry-After: 
 
 One account's limit does not affect the others: right afterwards, an attempt with another account answered `401`, not `429`.
 
+For the same reason, the per-account limit does not stop *password spraying*, which OWASP defines as testing a single weak password against a large number of different accounts<Cite n={16} />. Each account receives one attempt, and no counter reaches five. OWASP recommends not relying on a single predictable volume limit<Cite n={16} repeat />. Add a second, higher limit on the failed attempts from each IP, and review the logs when logins fail on many accounts at once.
+
+Two details of the example remain. If the request carries no `email`, the key is an empty string and all those requests share one counter, so reject a request without `email` before the limit. Also, express-rate-limit's default store keeps the counters in the process memory and does not share them between processes or servers<Cite n={17} />. With more than one instance, use a shared store, such as Redis.
+
 <Callout kind="riesgo" title="Behind a proxy, a per-IP limit needs trust proxy">
-	By default, express-rate-limit identifies the client by its IP. With a per-IP limit behind a proxy and without `trust proxy`, every request seems to come from the proxy. The limit becomes global<Cite n={13} />. Set `app.set('trust proxy', 1)` with the number of proxies in front, never `true`, which lets clients fake their IP with `X-Forwarded-For`<Cite n={14} />.
+	By default, express-rate-limit identifies the client by its IP. With a per-IP limit behind a proxy and without `trust proxy`, every request seems to come from the proxy. The limit becomes global<Cite n={18} />. Set `app.set('trust proxy', 1)` with the number of proxies in front, never `true`, which lets clients fake their IP with `X-Forwarded-For`<Cite n={19} />.
 </Callout>
 
-Locking an account also lets an attacker lock out its owner. That is why the limit lasts a few minutes, although an attacker can renew it. OWASP suggests allowing access through password recovery even when the account is locked. The best defence against most password attacks, including brute force, is multi-factor authentication<Cite n={11} repeat />.
+Locking an account also lets an attacker lock out its owner. That is why the limit lasts a few minutes, although an attacker can renew it. OWASP suggests allowing access through password recovery even when the account is locked. The best defence against most password attacks, including brute force, is multi-factor authentication<Cite n={14} repeat />.
 
 **How to check it.** Send six attempts with a wrong password and check that the sixth answers `429`. Then look up a stored password in the database: it must include the salt and look nothing like the password. In the example it has the form `sal:hash`; with Argon2id it starts with `$argon2id$`.
 
@@ -245,7 +261,7 @@ Locking an account also lets an attacker lock out its owner. That is why the lim
 
 Broken access control is the first failure in the OWASP Top 10:2025<Cite n={1} repeat />. A hidden button in the frontend does not prevent the action, because anyone can send the request without the interface. The API has to check on every request who makes it and whether that user may do that action on that resource.
 
-[Seven things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) shows the two most common failures in the code, with their fixes. Section 1 covers the permission that is only checked in the interface. Section 2 covers the resource loaded by id without checking who owns it.
+[Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) shows the two most common failures in the code, with their fixes. Section 1 covers the permission that is only checked in the interface. Section 2 covers the resource loaded by id without checking who owns it.
 
 **How to check it.** Request an admin action with a normal user's session: it must answer `403`. Request a resource from another account by its id: it must answer `404`.
 
@@ -259,7 +275,7 @@ https://localhost:3443/?q=<img src=x onerror="console.log('XSS ejecutado')">
 
 Without protection, Chrome runs the attribute's code and the console shows `XSS ejecutado`. That code could read the session or send requests on the user's behalf. This is a reflected XSS.
 
-The main defence is to encode the output for its context, or to let the framework do it. The CSP from section 4 is an extra layer, not the main defence<Cite n={15} />. In HTML content and quoted attributes, encoding the output means escaping five characters<Cite n={15} repeat />:
+The main defence is to encode the output for its context, or to let the framework do it. The CSP from section 4 is an extra layer, not the main defence<Cite n={20} />. In HTML content and quoted attributes, encoding the output means escaping five characters<Cite n={20} repeat />:
 
 ```js
 export function escaparHtml(texto) {
@@ -278,7 +294,7 @@ With the output escaped, the HTML the browser receives carries the encoded text,
 Resultados para: &lt;img src=x onerror=&quot;console.log(&#39;XSS ejecutado&#39;)&quot;&gt;
 ```
 
-Input is validated on the server, against a list of what is accepted<Cite n={16} />. Validation does not replace parameterised queries or escaped output. [Seven things to check](/en/blog/seven-things-to-check-in-ai-generated-code) shows the query built without concatenating text (section 3) and the validation in the endpoint (section 5).
+Input is validated on the server, against a list of what is accepted<Cite n={21} />. Validation does not replace parameterised queries or escaped output. [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code) shows the query built without concatenating text (section 3) and the validation in the endpoint (section 5).
 
 **How to check it.** Type `<img src=x onerror=alert(1)>` into every field that is later shown on the page: it must appear as text. Type a single quote into a search field: it must not produce a `500` error.
 
@@ -286,20 +302,22 @@ Input is validated on the server, against a list of what is accepted<Cite n={16}
 
 Another site open in the user's browser can send requests to your API. CORS decides whether that site can read the response. [What CORS is](/en/blog/what-is-cors) explains how to configure it with an allowlist of origins, and has a simulator to test each configuration.
 
-CORS does not stop the request from arriving. If the API uses cookies, another site can submit a form that changes data with the user's session. That is CSRF (*Cross-Site Request Forgery*). OWASP asks you to use the framework's protection first and, if there is none, an anti-CSRF token on every request that changes data<Cite n={17} />. `SameSite` is an extra layer, and with `Lax` it does not protect an action that changes data with a `GET` request<Cite n={17} repeat />.
+CORS does not stop the request from arriving. If the API uses cookies, another site can submit a form that changes data with the user's session. That is CSRF (*Cross-Site Request Forgery*). OWASP asks you to use the framework's protection first and, if there is none, an anti-CSRF token on every request that changes data<Cite n={22} />.
+
+If the application only supports modern browsers, OWASP also accepts the `Sec-Fetch-Site` header, which the browser sends with the value `cross-site` when the request comes from another site. In that case it requires checking `Origin` or `Referer` too, because some older browsers do not send `Sec-Fetch-Site`<Cite n={22} repeat />. `SameSite` is an extra layer, and with `Lax` it does not protect an action that changes data with a `GET` request<Cite n={22} repeat />.
 
 **How to check it.** Send a request with a foreign origin and check that the response carries no `Access-Control-Allow-Origin`. Then send a request that changes data without the token: it must fail.
 
 ## 10. How to keep secrets out of the code and the browser
 
-A secret is an API key, a database password or any value that grants access to a service. OWASP warns that many end up written in the source code, and recommends detecting them before the commit<Cite n={18} />.
+A secret is an API key, a database password or any value that grants access to a service. OWASP warns that many end up written in the source code, and recommends detecting them before the commit<Cite n={23} />.
 
 **How to do it.**
 
 1. Keep `.env` out of the repository with `.gitignore`.
-2. Store production secrets in the deployment platform's secrets manager. In containers, OWASP does not recommend passing them through environment variables if another method exists<Cite n={18} repeat />.
+2. Store production secrets in the deployment platform's secrets manager. In containers, OWASP does not recommend passing them through environment variables if another method exists<Cite n={23} repeat />.
 3. Add a secret detector to the pre-commit hook and to continuous integration.
-4. Check that no private key reaches the browser's JavaScript. [Seven things to check](/en/blog/seven-things-to-check-in-ai-generated-code), section 4, explains how it happens with Next.js public variables and how to search for it in the *bundle*.
+4. Check that no private key reaches the browser's JavaScript. [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code), section 4, explains how it happens with Next.js public variables and how to search for it in the *bundle*.
 
 **How to check it.** `git ls-files .env` must return nothing. If a secret reached a commit, revoke it and generate another: deleting it from the file does not delete it from the history.
 
@@ -307,7 +325,7 @@ A secret is an API key, a database password or any value that grants access to a
 
 Dependencies are third-party code that runs with the same permissions as the application. The 2025 edition of the OWASP Top 10 covers them in a new category, software supply chain failures. It expands the 2021 category of vulnerable and outdated components<Cite n={1} repeat />.
 
-[npm vs pnpm 11: install script security and allowBuilds](/en/blog/npm-vs-pnpm-install-security) measures which code the install runs and how to configure npm to block it. [Seven things to check](/en/blog/seven-things-to-check-in-ai-generated-code), section 6, explains how to check that a package the AI proposes exists before installing it.
+[npm vs pnpm 11: install script security and allowBuilds](/en/blog/npm-vs-pnpm-install-security) measures which code the install runs and how to configure npm to block it. [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code), section 6, explains how to check that a package the AI proposes exists before installing it.
 
 **How to check it.** Always install with the lockfile and verify the signatures:
 
@@ -332,7 +350,7 @@ Error: connect ECONNREFUSED 10.0.0.12:5432 (usuario tienda_admin)
     at file:///C:/…/tienda-segura/src/index.js:71:9
 ```
 
-The response reveals the database's internal IP, a user name and the code's path on the server. Express's default error handler only hides the stack trace if `NODE_ENV` is `production`<Cite n={19} />. OWASP asks for a generic response, with the details kept on the server<Cite n={20} />:
+The response reveals the database's internal IP, a user name and the code's path on the server. Express's default error handler only hides the stack trace if `NODE_ENV` is `production`<Cite n={24} />. OWASP asks for a generic response, with the details kept on the server<Cite n={25} />:
 
 ```js
 function errorSeguro(err, req, res, _next) {
@@ -351,7 +369,7 @@ HTTP/1.1 500 Internal Server Error
 {"id":"09910789-0f1c-4dc8-914b-fe9a471ca607","ruta":"/api/fallo","error":"connect ECONNREFUSED 10.0.0.12:5432 (usuario tienda_admin)"}
 ```
 
-The log must not store passwords, session identifiers or tokens either<Cite n={21} />.
+The log must not store passwords, session identifiers or tokens either<Cite n={26} />.
 
 **How to check it.** Trigger an error, for example with the database stopped, and check that the response only carries the identifier. Look for that identifier in the server log.
 
@@ -373,9 +391,11 @@ A coding agent can go through the ten layers in your project. Copy the prompt wi
 6. **It repeats the checks** from the checklist and pastes the outputs.
 7. **It delivers a report** with what changed, what it could not check and the article that goes deeper into each pending layer.
 
-The run was measured with Claude Code 2.1.283 on a sample Express shop that was missing almost every layer. It took 10 minutes, not counting the wait for confirmation: 4 up to the proposal and 6 to fix and check.
+The prompt was run once, as a demonstration, with Claude Code 2.1.283 and the previous version of the prompt. The project was a sample Express shop that was missing almost every layer. It took 10 minutes, not counting the wait for confirmation: 4 up to the proposal and 6 to fix and check.
 
 In the diagnosis it found thirteen failures, and one more while fixing. Among them were a payment key written in the code, another user's order readable by its id and SHA-256 passwords. The 13 tests it wrote failed before the fixes, and afterwards they all pass, along with the one that already existed. What depended on the production proxy, such as the number of hops for `trust proxy`, it noted as unverified.
+
+A single run on a prepared project shows how the prompt works, but it does not measure how many failures it finds in a real project. Review the report as you would review one written by a person.
 
 <Callout kind="riesgo" title="Read the prompt before pasting it">
 	This prompt asks the agent to start the application, run commands and change its configuration. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.
@@ -383,11 +403,22 @@ In the diagnosis it found thirteen failures, and one more while fixing. Among th
 
 **How to check it.** `git status` and `git diff` show only configuration and security changes and the new test files, and the tests pass. The checks in the checklist from section 13 give the expected result.
 
+## What falls outside the ten layers
+
+The ten layers cover the most common failures of an application with users, but not all of them. The OWASP Top 10:2025 includes others that are not developed here<Cite n={1} repeat />:
+
+- **Logging and alerting** (A09:2025). Storing errors is not enough: someone has to be alerted when failed logins or `403` responses repeat.
+- **Requests the server makes to addresses the user chooses**, or SSRF. In the 2025 edition it is part of broken access control, A01<Cite n={27} />. It affects any feature that downloads a URL, such as a link preview or an import.
+- **Exceptional conditions** (A10:2025): errors that leave the application in an open state, such as a `catch` that carries on. Section 12 only covers the response the browser receives.
+- **File uploads**: the type, the size, the name and where they are served from. OWASP covers it in its *File Upload Cheat Sheet*<Cite n={28} />.
+- **Multi-factor authentication**: section 6 cites it as the best defence against password attacks, but does not explain how to implement it.
+- **Backups and recovery**, which do not depend on the application's code.
+
 ## Where to go next
 
 If you are starting from scratch, first prepare the environment with [First steps with AI coding](/en/blog/first-steps-with-ai-coding). Then use the table in section 1 to decide which layers your application needs.
 
-To review the code layer by layer, read [Seven things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code). For requests across origins, read [What CORS is](/en/blog/what-is-cors), and for dependencies, [npm vs pnpm](/en/blog/npm-vs-pnpm-install-security).
+To review the code layer by layer, read [Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code). For requests across origins, read [What CORS is](/en/blog/what-is-cors), and for dependencies, [npm vs pnpm](/en/blog/npm-vs-pnpm-install-security).
 
 <References
 	title="References"
@@ -424,6 +455,21 @@ To review the code layer by layer, read [Seven things to check in the code your 
 		url: 'https://www.npmjs.com/package/helmet'
 	},
 	{
+		source: 'MDN',
+		title: 'Content-Security-Policy, style-src',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src'
+	},
+	{
+		source: 'MDN',
+		title: 'Content-Security-Policy-Report-Only',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy-Report-Only'
+	},
+	{
+		source: 'Next.js',
+		title: 'How to set a Content Security Policy (CSP) for your Next.js application',
+		url: 'https://nextjs.org/docs/app/guides/content-security-policy'
+	},
+	{
 		source: 'OWASP',
 		title: 'Session Management Cheat Sheet',
 		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html'
@@ -452,6 +498,16 @@ To review the code layer by layer, read [Seven things to check in the code your 
 		source: 'IETF',
 		title: 'RFC 6585, Additional HTTP Status Codes, 429 Too Many Requests',
 		url: 'https://www.rfc-editor.org/rfc/rfc6585.html#section-4'
+	},
+	{
+		source: 'OWASP',
+		title: 'Credential Stuffing Prevention Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html'
+	},
+	{
+		source: 'express-rate-limit',
+		title: 'Data stores',
+		url: 'https://express-rate-limit.mintlify.app/reference/stores'
 	},
 	{
 		source: 'express-rate-limit',
@@ -497,6 +553,16 @@ To review the code layer by layer, read [Seven things to check in the code your 
 		source: 'OWASP',
 		title: 'Logging Cheat Sheet',
 		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'A01:2025 Broken Access Control',
+		url: 'https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/'
+	},
+	{
+		source: 'OWASP',
+		title: 'File Upload Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html'
 	}
 	]}
 />

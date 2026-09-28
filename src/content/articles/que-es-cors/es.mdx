@@ -5,7 +5,7 @@ tagline: Por qué el navegador bloquea una respuesta que curl sí lee, qué prot
 description: "Qué es CORS, por qué Chrome muestra «has been blocked by CORS policy» y cómo configurar el servidor con una lista de orígenes permitidos."
 areas: [seguridad]
 published: '2026-09-27'
-updated: null
+updated: '2026-09-27'
 draft: false
 path: null
 repo: null
@@ -31,7 +31,7 @@ resource.
 
 El log de la API registra la petición en los dos casos. El servidor respondió, y fue el navegador el que no entregó la respuesta a la página. Ese bloqueo lo impone la política de mismo origen, y CORS es el protocolo con el que el servidor la relaja.
 
-Las mediciones se hicieron el 27 de septiembre de 2026 con Chrome 153.0.8010.54 en modo *headless*, Node.js 24.19.0, curl 8.12.1 y Express 5.2.1. Todo el código está reconstruido para el artículo.
+Las mediciones se hicieron el 27 de septiembre de 2026 con Chrome 153.0.8010.54 en modo *headless*, Node.js 24.19.0, curl 8.12.1, Express 5.2.1 y Vite 8.3.1. Todo el código está reconstruido para el artículo.
 
 ## 1. Qué es el mismo origen y qué relaja CORS
 
@@ -130,7 +130,27 @@ POST /pedido Origin=http://localhost:5173 Cookie=-
 
 ## 4. Cómo resolver el error en el servidor
 
-El error se resuelve en el servidor que responde, no en la página que pregunta. `Access-Control-Allow-Origin` admite un solo origen, `*` o `null`, pero no una lista<Cite n={2} repeat />. Para aceptar varios orígenes, el servidor compara el `Origin` de cada petición con su propia lista y devuelve el que coincide.
+El error desaparece si la página y la API comparten origen, porque entonces no hay ninguna petición a otro origen. En desarrollo, el servidor de Vite puede reenviar a la API las peticiones que empiezan por `/api`<Cite n={5} />:
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
+});
+```
+
+La página pide `/api/...` a su propio origen, `http://localhost:5173`, y Vite reenvía la petición a `http://localhost:3000`. En la medición, la API sin ninguna cabecera CORS respondió `200` y la página recibió la respuesta sin errores de CORS. El proxy de Vite funciona en el servidor de desarrollo y en `vite preview`, no en el resultado de la compilación. En producción se consigue lo mismo sirviendo la página y la API desde el mismo dominio, detrás de un proxy inverso.
+
+Cuando la página y la API tienen que estar en orígenes distintos, el error se resuelve en el servidor que responde, no en la página que pregunta. `Access-Control-Allow-Origin` admite un solo origen, `*` o `null`, pero no una lista<Cite n={2} repeat />. Para aceptar varios orígenes, el servidor compara el `Origin` de cada petición con su propia lista y devuelve el que coincide.
 
 ```js
 // api.mjs, con lista de orígenes permitidos
@@ -179,13 +199,31 @@ curl -s -i -H "Origin: https://atacante.example" http://localhost:3000/
 
 La primera respuesta trae `Access-Control-Allow-Origin: http://localhost:5173` y `Vary: Origin`. La segunda trae solo `Vary: Origin`.
 
+**Cuando el error no está en la configuración CORS.** El mismo mensaje aparece cuando la respuesta sale sin las cabeceras CORS, aunque la configuración sea correcta. En la medición, con la lista de orígenes activa, dos casos dieron el error:
+
+- Una ruta que falla y responde `500` antes de añadir las cabeceras. Chrome mostró «No 'Access-Control-Allow-Origin' header is present on the requested resource», el mismo texto que sin configurar CORS.
+- Una comprobación de autenticación que se ejecuta antes que CORS. La petición previa nunca lleva credenciales<Cite n={4} repeat />, así que la comprobación respondió `401`. Chrome indicó «Response to preflight request doesn't pass access control check».
+
+El navegador no da al script el detalle de una petición bloqueada por CORS<Cite n={6} />. Para ver el estado real, repita la petición con curl y la misma cabecera `Origin`:
+
+```bash
+curl -s -i -H "Origin: http://localhost:5173" http://localhost:3000/falla
+# HTTP/1.1 500 Internal Server Error
+curl -s -i -X OPTIONS -H "Origin: http://localhost:5173" \
+  -H "Access-Control-Request-Method: GET" \
+  -H "Access-Control-Request-Headers: authorization" http://localhost:3000/privado
+# HTTP/1.1 401 Unauthorized
+```
+
+Si curl muestra un error, corríjalo antes de tocar CORS. En el caso de la autenticación, deje pasar las peticiones `OPTIONS` antes de comprobar la sesión. En Express, eso equivale a registrar `app.use(cors(...))` antes que el *middleware* de autenticación.
+
 <Callout kind="nota" title="Fije CORS en un solo sitio">
 	Si el código y el proxy añaden cada uno su cabecera, la respuesta lleva dos `Access-Control-Allow-Origin`. Chrome la rechaza: «The 'Access-Control-Allow-Origin' header contains multiple values…, but only one is allowed». Configure CORS en el código o en el proxy, no en los dos.
 </Callout>
 
 ## 5. Qué no resuelve `mode: 'no-cors'`
 
-`mode: 'no-cors'` hace desaparecer el error, pero no da acceso a la respuesta. La petición se envía y el navegador entrega a la página una respuesta opaca<Cite n={5} />:
+`mode: 'no-cors'` hace desaparecer el error, pero no da acceso a la respuesta. La petición se envía y el navegador entrega a la página una respuesta opaca<Cite n={7} />:
 
 ```js
 const r = await fetch('http://localhost:3000/', { mode: 'no-cors' });
@@ -224,15 +262,15 @@ await r.text();
 // {"email":"ana@example.com","saldo":1200}
 ```
 
-La página de otro origen leyó los datos de la víctima con la sesión de la víctima. PortSwigger lo describió en 2016 como la vulnerabilidad de CORS más común, y documentó en aplicaciones reales otros dos fallos parecidos<Cite n={6} />.
+La página de otro origen leyó los datos de la víctima con la sesión de la víctima. PortSwigger lo describió en 2016 como la vulnerabilidad de CORS más común, y documentó en aplicaciones reales otros dos fallos parecidos<Cite n={8} />.
 
 El primero es aceptar el origen `null`. Un documento en un `iframe` con `sandbox` envía `Origin: null`. En la medición, un `iframe` con `sandbox="allow-scripts"` leyó la respuesta de la API que reflejaba el origen.
 
 El segundo es comparar el origen solo por el principio o por el final. Una comprobación con `endsWith('ejemplo.com')` acepta `https://atacante-ejemplo.com`, y una con `startsWith('https://ejemplo.com')` acepta `https://ejemplo.com.atacante.example`.
 
-Los tres encajan en CWE-942 de MITRE, una política entre dominios que incluye dominios no fiables<Cite n={7} />.
+Los tres encajan en CWE-942 de MITRE, una política entre dominios que incluye dominios no fiables<Cite n={9} />.
 
-El atributo `SameSite` de la cookie decide si esta llega en un `fetch` desde otro sitio<Cite n={8} />. Un sitio es el esquema más el dominio registrable, sin el puerto<Cite n={9} />. Por eso `localhost:8080` y `localhost:3000` son el mismo sitio, y `127.0.0.1:8080` es otro. Con la API que refleja el origen:
+El atributo `SameSite` de la cookie decide si esta llega en un `fetch` desde otro sitio<Cite n={10} />. Un sitio es el esquema más el dominio registrable, sin el puerto<Cite n={11} />. Por eso `localhost:8080` y `localhost:3000` son el mismo sitio, y `127.0.0.1:8080` es otro. Con la API que refleja el origen:
 
 | Página | ¿Mismo sitio que la API? | Cookie | Resultado |
 |---|---|---|---|
@@ -243,7 +281,7 @@ El atributo `SameSite` de la cookie decide si esta llega en un `fetch` desde otr
 
 La última fila depende de que el navegador admita cookies de terceros, como Chrome 153 en su configuración por defecto.
 
-Chrome trata como `Lax` una cookie sin `SameSite` desde la versión 80<Cite n={10} />. `SameSite=Lax` limita el ataque a páginas del mismo sitio, como otro subdominio. Una API que necesita cookies entre sitios usa `SameSite=None`, y entonces solo la lista de orígenes permitidos la protege.
+Chrome trata como `Lax` una cookie sin `SameSite` desde la versión 80<Cite n={12} />. `SameSite=Lax` limita el ataque a páginas del mismo sitio, como otro subdominio. Una API que necesita cookies entre sitios usa `SameSite=None`, y entonces solo la lista de orígenes permitidos la protege.
 
 **Cómo hacerlo.**
 
@@ -266,11 +304,11 @@ Los clientes que no son navegadores no aplican CORS. curl, un *script* o el serv
 
 Las peticiones simples, además, llegan al servidor igualmente. Con la lista del punto 4 activa, la página de `localhost:8080` no pudo leer `/perfil`. Aun así, el log registró la petición con la cookie de la víctima: `GET /perfil Origin=http://localhost:8080 Cookie=sesion=abc123`.
 
-En eso se basa CSRF (*Cross-Site Request Forgery*). Otra web envía una petición con efecto usando la sesión de la víctima, aunque no pueda leer la respuesta. CORS no la impide. La defensa es un token anti-CSRF en las rutas que cambian datos, o la protección que ya traiga el *framework*. `SameSite` en la cookie de sesión añade una capa más, pero no sustituye al token<Cite n={11} />.
+En eso se basa CSRF (*Cross-Site Request Forgery*). Otra web envía una petición con efecto usando la sesión de la víctima, aunque no pueda leer la respuesta. CORS no la impide. La defensa es un token anti-CSRF en las rutas que cambian datos, o la protección que ya traiga el *framework*. Si la aplicación solo admite navegadores modernos, OWASP acepta también rechazar las peticiones que llegan con `Sec-Fetch-Site: cross-site`, comprobando además `Origin` o `Referer` para los navegadores que no la envían. `SameSite` en la cookie de sesión añade una capa más, pero no sustituye al token<Cite n={13} />.
 
 ## 8. Cómo comprobar la configuración CORS de un proyecto
 
-La guía de pruebas de OWASP pide localizar las rutas que responden con CORS y marcar el comodín y el origen devuelto sin comprobar<Cite n={12} />. Estas cuatro peticiones cubren los fallos de los puntos 4 a 6. Envíelas contra cada ruta que devuelva datos de un usuario:
+La guía de pruebas de OWASP pide localizar las rutas que responden con CORS y marcar el comodín y el origen devuelto sin comprobar<Cite n={14} />. Estas cuatro peticiones cubren los fallos de los puntos 4 a 6. Envíelas contra cada ruta que devuelva datos de un usuario:
 
 ```bash
 curl -s -i -H "Origin: https://atacante.example" <url>
@@ -313,9 +351,11 @@ Los puntos anteriores se pueden aplicar a mano. También puede hacerlo un agente
 6. **Repite las peticiones** del punto 8 y pega las cabeceras de antes y de después.
 7. **Entrega un informe** con lo que cambió, lo que no pudo comprobar y lo que CORS no cubre, como CSRF.
 
-La ejecución se midió con Claude Code 2.1.283 y la versión española del prompt. El proyecto de ejemplo era una API con Express 5.2.1 y `cors({ origin: true, credentials: true })`. Tardó 6 minutos sin contar la espera de la confirmación: 3 hasta la propuesta y 3 para aplicar, probar y comprobar.
+El prompt se ejecutó una vez, como demostración, con Claude Code 2.1.283 y la versión española del prompt. El proyecto de ejemplo era una API con Express 5.2.1 y `cors({ origin: true, credentials: true })`. Tardó 6 minutos sin contar la espera de la confirmación: 3 hasta la propuesta y 3 para aplicar, probar y comprobar.
 
 El agente encontró cuatro fallos: el origen reflejado con credenciales, el origen `null`, un origen con otro dominio detrás y una petición previa sin límites. La prueba nueva falló en 2 de sus 3 casos con la configuración anterior y pasó con el cambio. También avisó de que `npm start` no cargaba la variable de entorno, y no tocó `package.json` sin confirmación.
+
+Una ejecución sobre un proyecto preparado muestra cómo trabaja el prompt, pero no mide cuántos fallos encuentra en un proyecto real. Revise el informe como revisaría el de una persona.
 
 <Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
 	Este prompt pide al agente que arranque el servidor, ejecute órdenes y cambie la configuración de CORS. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 3 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo.
@@ -325,7 +365,7 @@ El agente encontró cuatro fallos: el origen reflejado con credenciales, el orig
 
 ## Por dónde seguir
 
-CORS decide quién lee una respuesta en el navegador, y el servidor sigue teniendo que decidir quién puede hacer cada cosa. [Siete cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) recoge esas comprobaciones de permisos, con su corrección.
+CORS decide quién lee una respuesta en el navegador, y el servidor sigue teniendo que decidir quién puede hacer cada cosa. [Ocho cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) recoge esas comprobaciones de permisos, con su corrección.
 
 Para que un agente aplique estas reglas en cada cambio sin depender de que alguien las recuerde, lea [cómo pedirle a la IA código seguro](/es/blog/codigo-seguro-con-ia).
 
@@ -354,6 +394,16 @@ CORS es una de las diez capas de [Cómo proteger una página web](/es/blog/como-
 		source: 'MDN',
 		title: 'Cross-Origin Resource Sharing (CORS)',
 		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS'
+	},
+	{
+		source: 'Vite',
+		title: 'Server Options, server.proxy',
+		url: 'https://vite.dev/config/server-options'
+	},
+	{
+		source: 'MDN',
+		title: 'CORS errors',
+		url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors'
 	},
 	{
 		source: 'MDN',

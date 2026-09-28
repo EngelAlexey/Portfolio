@@ -36,8 +36,8 @@ Start the application locally. Go through the layers in this order and, for each
 
 1. **HTTPS.** `curl -sI http://<host>` redirects with 301 or 308 to HTTPS. The HTTPS response carries `Strict-Transport-Security` with a `max-age` of at least one year (OWASP recommends two, 63072000), and the HTTP response does not carry it. If a proxy terminates HTTPS, the application has to trust it (`trust proxy` or equivalent) to know the request arrived encrypted.
 2. **Security headers.** `Content-Security-Policy` without `'unsafe-inline'` for scripts and with `frame-ancestors`; `X-Content-Type-Options: nosniff`; `Referrer-Policy`; no `X-Powered-By`. Open the page in a browser if you can and note the scripts a new CSP would block.
-3. **Session and cookies.** The session cookie carries `HttpOnly`, `Secure` and an explicit `SameSite`; ideally with the `__Host-` prefix. The session identifier changes at login and on every privilege change.
-4. **Passwords and attempts.** They are stored with Argon2id or scrypt with OWASP's minimum parameters (bcrypt only for legacy systems, PBKDF2 if FIPS-140 is required), never in plain text or with SHA-256 or MD5. The login has a limit that counts each account's failed attempts, and answers 429 when it is exceeded. If there is a proxy in front, the limit does not use the proxy's IP.
+3. **Session and cookies.** The session cookie carries `HttpOnly`, `Secure` and an explicit `SameSite`; ideally with the `__Host-` prefix. The session identifier changes at login and on every privilege change. The session expires on the server after inactivity and after an absolute time, and logout deletes it on the server, not only the cookie.
+4. **Passwords and attempts.** They are stored with Argon2id or scrypt with OWASP's minimum parameters (bcrypt only for legacy systems, PBKDF2 if FIPS-140 is required), never in plain text or with SHA-256 or MD5. The login has a limit that counts each account's failed attempts, and answers 429 when it is exceeded. A second, higher limit counts the failed attempts from each IP, to stop one password tried against many accounts. If there is a proxy in front, the limit does not use the proxy's IP, and if there are several instances, the counters live in a shared store.
 5. **Permissions.** Every route that reads or changes data checks on the server who makes the request and whether they may do that action on that resource. Try an action from another role and a resource from another account by its id.
 6. **Input and output.** Queries use parameters, without concatenating text. Input is validated on the server. Output is escaped for its context; look for HTML built with unescaped user text and for `innerHTML` or equivalents.
 7. **Other origins (CORS and CSRF).** A request with `Origin: https://atacante.example` gets no `Access-Control-Allow-Origin`. If there are session cookies, routes that change data require an anti-CSRF token or the *framework*'s protection, and no action that changes data answers to `GET`.
@@ -59,7 +59,7 @@ Before writing anything, present to the user:
 
 ## Phase 4. Fix layer by layer
 
-Apply the confirmed changes in the order of phase 2, with one small change per layer. Use the protection the *framework* already provides before writing your own. If you change the CSP, check that the application still works.
+Apply the confirmed changes in the order of phase 2, with one small change per layer. Use the protection the *framework* already provides before writing your own. If you change the CSP, propose deploying it first with `Content-Security-Policy-Report-Only` and check that the application still works, including its styles.
 
 ## Phase 5. Test
 

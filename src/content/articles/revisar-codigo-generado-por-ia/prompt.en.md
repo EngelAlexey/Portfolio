@@ -1,9 +1,9 @@
 # Review the security of the generated code in this project
 
-You are the coding agent running in this repository. You are going to review the code, especially the code an AI generated, looking for the seven security failures that repeat most in that code. Then you will propose the fix for each one, apply it with confirmation and check it:
+You are the coding agent running in this repository. You are going to review the code, especially the code an AI generated, looking for eight security failures that are common in that code. Then you will propose the fix for each one, apply it with confirmation and check it:
 
 - scope which code to review;
-- review the seven sections and confirm each failure with a check;
+- review the eight sections and confirm each failure with a check;
 - propose the fixes and wait for the user's confirmation;
 - fix, test and check again;
 - deliver a report.
@@ -25,7 +25,7 @@ This text works for any tool and any *framework*. If you are not sure how someth
 
 Ask the user what to review if they did not say: a range of commits, a branch or the whole repository. If the repository is small and there is no answer, review all of it. Find out the language, the *framework*, how it starts locally, how the tests run and how the application authenticates.
 
-## Phase 2. Review the seven sections
+## Phase 2. Review the eight sections
 
 For each section, look for the pattern, note the file and line, and run the check:
 
@@ -36,6 +36,7 @@ For each section, look for the pattern, note the file and line, and run the chec
 5. **Input not validated on the server.** An endpoint trusts the form's limits. Check: send, outside the form, a value the form does not allow; it must answer 400.
 6. **Package that does not exist or was just created.** A dependency in `package.json` (or the equivalent) that is not in the registry, or was published a few days ago. Check: `npm view <package> time.created maintainers repository.url`; an `E404`, a recent date or a missing repository argue against installing it.
 7. **Error that exposes internal detail.** A handler that returns the error's message or stack trace to the client. Check: trigger an error and read the response; no path, table, IP or stack trace may appear.
+8. **User HTML inserted without sanitising.** `dangerouslySetInnerHTML`, `v-html`, `innerHTML` or a template that concatenates HTML with a value the user wrote, and links whose `href` accepts any scheme. Check: save `<img src=x onerror="console.log('XSS')">` in that field and request the page; the served HTML must not contain the `onerror` attribute. Save `javascript:console.log('XSS')` in a field that ends up in an `href`; it must not reach the attribute.
 
 Rank each failure as critical, high, medium or low, by what it lets an attacker do. Also note any place where the code fails open: an empty `catch`, a `?? 0` or a `return next()` that lets the request through when a check cannot decide.
 
@@ -61,7 +62,7 @@ Repeat the checks from phase 2 and paste the output from before and after each f
 
 Finish with a short report:
 
-- a table with the seven sections: found or not, file, fix and test;
+- a table with the eight sections: found or not, file, fix and test;
 - what you could not check and why;
 - the secrets that have to be revoked, without their value;
-- the layer of the layer-by-layer guide each failure belongs to, to keep reviewing from the outside: sections 1 and 2, permissions; sections 3 and 5, input and output; section 4, secrets; section 6, dependencies; section 7, errors and logs. The guide is at https://www.alexherrera.dev/en/blog/how-to-secure-a-web-application; you do not need to open it for the report.
+- the layer of the layer-by-layer guide each failure belongs to, to keep reviewing from the outside: sections 1 and 2, permissions; sections 3, 5 and 8, input and output; section 4, secrets; section 6, dependencies; section 7, errors and logs. The guide is at https://www.alexherrera.dev/en/blog/how-to-secure-a-web-application; you do not need to open it for the report.

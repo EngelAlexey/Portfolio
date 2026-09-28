@@ -4,7 +4,7 @@ title: '¿Se aprende a programar si la IA escribe el código?'
 tagline: Qué midieron los experimentos que retiraron la IA antes del examen y qué formas de pedir conservan el aprendizaje.
 areas: [ia]
 published: '2026-09-08'
-updated: '2026-09-26'
+updated: '2026-09-27'
 draft: false
 path: null
 repo: null
@@ -25,9 +25,9 @@ En programación, un experimento con 69 principiantes no encontró pérdida. La 
 
 Recibir el código escrito no enseña por sí solo, y tampoco impide aprender por sí solo. El resultado depende de lo que usted haga después de recibirlo, y esa parte se puede configurar.
 
-Ninguno de los estudios citados midió a programadores profesionales en un repositorio en producción. Cada cifra describe solo a la población en la que se midió. A otros casos se puede trasladar el mecanismo que produjo el resultado, pero no el tamaño del efecto.
+Solo uno de los estudios de aprendizaje citados midió a ingenieros de software, y ninguno en un repositorio en producción. Cada cifra describe solo a la población en la que se midió. A otros casos se puede trasladar el mecanismo que produjo el resultado, pero no el tamaño del efecto.
 
-Las mediciones se hicieron con Claude Code 2.1.263 y git 2.49.0. La documentación de Cursor se consultó el 8 de septiembre de 2026. Todo el código está reconstruido para el artículo.
+Las mediciones se hicieron el 27 de septiembre de 2026 con Claude Code 2.1.283 y git 2.49.0. La documentación de Cursor se consultó ese mismo día. Todo el código está reconstruido para el artículo.
 
 ## 1. Qué pasó cuando se retiró la IA antes del examen
 
@@ -117,51 +117,59 @@ Las dos piezas van en este orden. El ejemplo resuelto sirve para recibir el esqu
 
 ## 8. Cómo configurar un agente para que dé pistas y no soluciones
 
-El grupo que no perdió nada en el estudio de matemáticas usaba el mismo modelo con otras instrucciones del sistema. Esas instrucciones contenían la solución y la instrucción de no entregarla<Cite n={1} repeat />. En un agente de programación, esa configuración se reproduce con el archivo de instrucciones del proyecto, que Claude Code lee al empezar cada sesión<Cite n={6} />.
+El grupo que no perdió nada en el estudio de matemáticas usaba el mismo modelo con otras instrucciones del sistema. Esas instrucciones contenían la solución y la instrucción de no entregarla<Cite n={1} repeat />. En un agente de programación, esa configuración se reproduce con una regla del proyecto. Claude Code carga los archivos de `.claude/rules/` que llevan la cabecera `paths` solo cuando trabaja con un archivo que coincide con esas rutas<Cite n={6} />. Así, la regla se aplica a la parte del código que usted quiere aprender y no al resto del repositorio.
 
-Cree en la raíz del repositorio un `CLAUDE.md` con estas cinco líneas:
+Cree `.claude/rules/aprender.md` y escriba en `paths` los archivos que quiere aprender:
 
 ```markdown
+---
+paths:
+  - "src/carrito.js"
+---
+
 # Regla de aprendizaje
 
-No escribas el código de la tarea. Responde con la pista siguiente:
-qué archivo tocar, qué concepto aplica y una pregunta que dirija al
+No escribas el código de la tarea en este archivo. Responde con la pista siguiente:
+qué función tocar, qué concepto aplica y una pregunta que dirija al
 siguiente paso. Si pido explícitamente el código, entonces sí lo escribes.
 ```
 
-En la medición, `carrito.js` tenía una sola función y Claude Code tenía permiso para editar archivos. La petición «añade a `carrito.js` una función que aplique un descuento porcentual al total» devolvió esto:
+En la medición, `src/carrito.js` tenía una sola función y Claude Code tenía permiso para editar archivos. La petición «añade a `src/carrito.js` una función que aplique un descuento porcentual al total» devolvió esto:
 
 ```text
-Regla del proyecto: pista, no código.
+Modo aprendizaje activo (`.claude/rules/aprender.md`), así que no escribo el
+código. Te dejo una pista:
 
-**Archivo:** `carrito.js` — nueva función exportada junto a `total`.
+**Dónde:** `src/carrito.js`. Crea una función nueva junto a `total(items)`
+(`src/carrito.js:1`) y exporta con `export`, igual que ella. No hace falta
+modificar `total`. Mejor reutilizarla.
 
-**Concepto:** composición de funciones puras. Ya tienes `total(items)`; el
-descuento no debe recorrer los items otra vez, debe consumir el resultado de
-`total`. Firma tipo `totalConDescuento(items, porcentaje)` o
-`aplicarDescuento(monto, porcentaje)` — la segunda es más pura y testeable.
+**Concepto:** composición de funciones. Un descuento porcentual consiste en
+multiplicar el total por la fracción que queda después de restar el
+porcentaje. Por ejemplo, un 20 % de descuento equivale a pagar el 80 %.
+Conviene también validar la entrada, porque un porcentaje negativo o mayor que
+100 no tiene sentido.
 
-**Cuidado:** el porcentaje llega como `15` (entero) o `0.15` (fracción)?
-Decide y documenta. Y `precio * cantidad` en floats acumula error binario.
+**Pregunta:** si `total(items)` devuelve `50` y el descuento es `20`, ¿qué
+operación con `50` y `20` te da `40`? Y cuando la tengas, ¿qué parámetros
+debería recibir tu nueva función: los `items` o el total ya calculado?
 
-**Pregunta que dirige:** si alguien llama tu función con `porcentaje = 150`
-o `-20`, ¿qué devuelve? Define ese contrato antes de escribir la primera
-línea — ¿clamp, throw, o confiar en quien llama?
+Si prefieres que te escriba el código directamente, pídemelo.
 ```
 
-El archivo quedó sin tocar. La última línea de la regla permite pedir el código cuando haga falta. Funciona: al pedirlo de forma explícita, Claude Code lo escribió y modificó el archivo.
+El archivo quedó sin tocar. Una petición parecida sobre `src/fechas.js`, que no está en `paths`, escribió la función en ese archivo. La última línea de la regla permite pedir el código cuando haga falta: al pedirlo de forma explícita, Claude Code lo escribió en `src/carrito.js`.
 
-En Cursor, la misma configuración es un archivo `.mdc` en `.cursor/rules` con `alwaysApply: true` en la cabecera. Cursor inserta su contenido al principio del contexto del modelo<Cite n={7} />.
+En Cursor, la misma configuración es un archivo `.mdc` en `.cursor/rules` con `globs: src/carrito.js` y `alwaysApply: false` en la cabecera. Cursor añade la regla cuando un archivo que coincide está en el contexto<Cite n={7} />.
 
 Claude Code incluye además dos estilos de salida con el mismo fin. Según su documentación, *Explanatory* intercala explicaciones de las decisiones de implementación mientras trabaja. *Learning* le pide a usted que escriba pequeñas partes del código y las marca con `TODO(human)` en el archivo<Cite n={8} />.
 
-En una sola petición no interactiva sobre el archivo de ejemplo, el estilo *Learning* devolvió las explicaciones y escribió la función entera. Elija el estilo con `/config`, en la entrada de estilo de salida, o con el campo `outputStyle` de un archivo de configuración. La orden `/output-style` se retiró en la versión 2.1.91<Cite n={8} repeat />.
+En una sola petición no interactiva, el estilo *Learning* devolvió las explicaciones y escribió la función entera, sin dejar ninguna parte para usted. Elija el estilo con `/output-style learning`, que requiere la versión 2.1.269 o posterior, con `/config`, en la entrada de estilo de salida, o con el campo `outputStyle` de un archivo de configuración<Cite n={8} repeat />.
 
 <Callout kind="nota" title="Esta configuración evita la pérdida, pero no añade ganancia">
-En el experimento, la versión con pistas evitó casi toda la pérdida, sin ninguna ganancia frente a no usar la IA<Cite n={1} repeat />. Actívela para la parte del código que quiere aprender, no para todo el repositorio.
+En el experimento, la versión con pistas evitó casi toda la pérdida, sin ninguna ganancia frente a no usar la IA<Cite n={1} repeat />. Actívela para la parte del código que quiere aprender, no para todo el repositorio. Para eso sirve `paths`.
 </Callout>
 
-**Cómo comprobarlo.** Escriba la regla, pida un cambio pequeño y ejecute `git status --short`. En la medición no devolvió ninguna línea, ni antes ni después de la petición. Si aparece un archivo modificado, la regla no se está aplicando.
+**Cómo comprobarlo.** Escriba la regla, pida un cambio pequeño en un archivo de `paths` y ejecute `git status --short`. En la medición no devolvió ninguna línea, ni antes ni después de la petición. Si aparece ese archivo modificado, la regla no se está aplicando.
 
 ## 9. Qué formas de pedir conservan el aprendizaje
 
@@ -175,7 +183,7 @@ El punto 7 de [primeros pasos para programar con IA](/es/blog/primeros-pasos-pro
 | Situación | Forma de pedir | Comprobación |
 |---|---|---|
 | Lenguaje o biblioteca desconocidos | Que escriba el código y explique cada decisión | Modificar el resultado a mano sin el agente |
-| Dominio propio que se quiere conservar | Regla de pistas, sin código | `git status` sin archivos modificados |
+| Dominio propio que se quiere conservar | Regla de pistas, sin código | Escribir usted el cambio y hacer pasar las pruebas sin el agente |
 | Concepto que se acaba de estudiar | Escribir primero la propia versión, después pedir revisión | Contrastar las dos versiones línea a línea |
 | Código generado hace días | Reescribir la función de memoria | `git diff` contra la versión guardada |
 | Explicación recibida del agente | Explicarla sin abrir el archivo | Pedirle que compare la explicación con el archivo |
@@ -208,7 +216,13 @@ La cuarta es cerrar la sesión y reconstruir lo explicado sin ella, que es la co
 
 ## 11. Qué cambia si usted ya sabe programar
 
-Los estudios citados midieron a estudiantes y aprendices: de secundaria, de campamentos de programación, de grado y de oficios mecánicos. Ninguno midió a un profesional en un repositorio de trabajo.
+Casi todos los estudios citados midieron a estudiantes y aprendices: de secundaria, de campamentos de programación, de grado y de oficios mecánicos.
+
+El más cercano a un puesto de trabajo lo publicó Anthropic en enero de 2026. Participaron 52 ingenieros de software, en su mayoría junior, que aprendieron Trio, una biblioteca de Python, con o sin un asistente de IA. Después hicieron un examen sin él. El grupo con IA sacó una media del 50 %, frente al 67 % del grupo que escribió el código a mano, y no terminó significativamente antes<Cite n={10} />.
+
+El resultado dependió de cómo usaron el asistente. Quienes le delegaron el código, o le pasaron los errores uno tras otro, sacaron menos de un 40 % de media. Quienes le hicieron preguntas conceptuales, o pidieron el código y después lo explicaron, sacaron un 65 % o más<Cite n={10} repeat />. Es el mismo patrón de los puntos 1 y 3. Los autores advierten de que la muestra es pequeña y de que el examen se hizo justo después de la tarea<Cite n={10} repeat />.
+
+Ninguno de estos estudios midió a un profesional en un repositorio de trabajo.
 
 De los mecanismos anteriores salen dos consecuencias, que son un razonamiento y no un resultado medido:
 
@@ -219,17 +233,19 @@ Queda un caso que ninguno de los estudios cubre y que aparece cuando el proyecto
 
 ## 12. Qué sigue sin medirse
 
-La búsqueda de estudios para el artículo no encontró ningún ensayo aleatorizado que retire la IA a programadores profesionales tras meses de uso. Tampoco encontró una medición de lo que saben hacer sin ella en esa población. Todo lo que se afirme sobre eso es una extrapolación.
+La búsqueda de estudios para el artículo no encontró ningún ensayo aleatorizado que retire la IA a programadores profesionales tras meses de uso. El estudio de Anthropic del punto 11 midió una sola sesión. Tampoco encontró una medición de lo que saben hacer sin ella en esa población. Todo lo que se afirme sobre eso es una extrapolación.
 
-Lo más cercano en población profesional mide velocidad, no aprendizaje, y aun así repite el desajuste del punto 4. METR repartió al azar 246 tareas entre permitir y prohibir la IA a 16 desarrolladores de proyectos maduros de código abierto. Antes de empezar, los desarrolladores esperaban tardar un 24 % menos. Al terminar, creían haber tardado un 20 % menos, y la medición dio un 19 % más de tiempo<Cite n={10} />.
+Lo más cercano en población profesional mide velocidad, no aprendizaje, y aun así repite el desajuste del punto 4. METR repartió al azar 246 tareas entre permitir y prohibir la IA a 16 desarrolladores de proyectos maduros de código abierto. Antes de empezar, los desarrolladores esperaban tardar un 24 % menos. Al terminar, creían haber tardado un 20 % menos, y la medición dio un 19 % más de tiempo<Cite n={11} />.
 
-Ese resultado describe a expertos que trabajaban con código que ya conocían, con la IA del primer semestre de 2025. Coincide con los estudios de aprendizaje en la distancia entre lo que los participantes creían y lo que se midió. En las dos poblaciones, la autoevaluación apuntó en la dirección equivocada.
+METR repitió el experimento a partir de agosto de 2025, con 57 desarrolladores y más de 800 tareas. Entre quienes ya habían participado, la estimación pasó a un 18 % menos de tiempo con IA, con un intervalo de confianza de −38 % a +9 %. METR advierte de que esos datos son una prueba muy débil. Muchos desarrolladores ya no aceptaban trabajar sin IA, y evitaban enviar tareas que no querían hacer sin ella<Cite n={12} />.
+
+El primer resultado describe a expertos que trabajaban con código que ya conocían, con la IA del primer semestre de 2025. Coincide con los estudios de aprendizaje en la distancia entre lo que los participantes creían y lo que se midió. En las dos poblaciones, la autoevaluación apuntó en la dirección equivocada.
 
 El diseño que resolvería la pregunta consiste en retirar la IA y medir. Las comprobaciones del punto 10 son la versión individual de ese diseño.
 
 ## Por dónde seguir
 
-Revise el código generado aunque haya aprendido de él. [Siete cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) recoge los fallos de seguridad que más se repiten. Cada punto trae el código que falla, la corrección y la orden que la comprueba.
+Revise el código generado aunque haya aprendido de él. [Ocho cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) recoge ocho fallos de seguridad frecuentes. Cada punto trae el código que falla, la corrección y la orden que la comprueba.
 
 Para que la revisión se ejecute en cada cambio sin depender de nadie, siga con [cómo pedirle a la IA código seguro](/es/blog/codigo-seguro-con-ia).
 
@@ -272,19 +288,19 @@ Si le falta el principio, [primeros pasos para programar con IA](/es/blog/primer
 		{
 			source: 'Claude Code',
 			title: 'How Claude remembers your project',
-			note: 'CLAUDE.md se lee en cada sesión',
+			note: 'reglas de .claude/rules con la cabecera paths',
 			url: 'https://code.claude.com/docs/en/memory'
 		},
 		{
 			source: 'Cursor',
 			title: 'Rules',
-			note: 'consultado el 8 de septiembre de 2026; .cursor/rules, extensión .mdc y alwaysApply',
+			note: 'consultado el 27 de septiembre de 2026; .cursor/rules, extensión .mdc, globs y alwaysApply',
 			url: 'https://cursor.com/docs/context/rules'
 		},
 		{
 			source: 'Claude Code',
 			title: 'Output styles',
-			note: 'estilos Explanatory y Learning, marcadores TODO(human) y retirada de /output-style en la 2.1.91',
+			note: 'estilos Explanatory y Learning, marcadores TODO(human) y /output-style desde la 2.1.269',
 			url: 'https://code.claude.com/docs/en/output-styles'
 		},
 		{
@@ -293,10 +309,22 @@ Si le falta el principio, [primeros pasos para programar con IA](/es/blog/primer
 			url: 'https://git-scm.com/docs/git-diff'
 		},
 		{
+			source: 'Shen, J. H. y Tamkin, A.',
+			title: 'How AI assistance impacts the formation of coding skills',
+			note: 'Anthropic, 29 de enero de 2026; 52 ingenieros, en su mayoría junior, y la biblioteca Trio',
+			url: 'https://www.anthropic.com/research/AI-assistance-coding-skills'
+		},
+		{
 			source: 'Becker, J., Rush, N., Barnes, E. y Rein, D.',
 			title: 'Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity',
 			note: 'METR, julio de 2025; ensayo aleatorizado, 16 desarrolladores y 246 tareas',
 			url: 'https://arxiv.org/abs/2507.09089'
+		},
+		{
+			source: 'METR',
+			title: 'We are Changing our Developer Productivity Experiment Design',
+			note: '24 de febrero de 2026; 57 desarrolladores y más de 800 tareas',
+			url: 'https://metr.org/blog/2026-02-24-uplift-update/'
 		}
 	]}
 />

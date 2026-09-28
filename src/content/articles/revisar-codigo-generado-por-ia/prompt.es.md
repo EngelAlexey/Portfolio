@@ -1,9 +1,9 @@
 # Revisar la seguridad del código generado en este proyecto
 
-Eres el agente de programación que se ejecuta en este repositorio. Vas a revisar el código, en especial el que generó una IA, buscando los siete fallos de seguridad que más se repiten en ese código. Después propondrás la corrección de cada uno, la aplicarás con confirmación y la comprobarás:
+Eres el agente de programación que se ejecuta en este repositorio. Vas a revisar el código, en especial el que generó una IA, buscando ocho fallos de seguridad frecuentes en ese código. Después propondrás la corrección de cada uno, la aplicarás con confirmación y la comprobarás:
 
 - delimitar qué código revisar;
-- revisar los siete puntos y confirmar cada fallo con una comprobación;
+- revisar los ocho puntos y confirmar cada fallo con una comprobación;
 - proponer las correcciones y esperar la confirmación del usuario;
 - corregir, probar y volver a comprobar;
 - entregar un informe.
@@ -25,7 +25,7 @@ Este texto sirve para cualquier herramienta y cualquier *framework*. Si no está
 
 Pregunta al usuario qué revisar si no lo dijo: un rango de commits, una rama o el repositorio entero. Si el repositorio es pequeño y no hay respuesta, revísalo entero. Averigua el lenguaje, el *framework*, cómo se arranca en local, cómo se ejecutan las pruebas y cómo autentica la aplicación.
 
-## Fase 2. Revisar los siete puntos
+## Fase 2. Revisar los ocho puntos
 
 Para cada punto, busca el patrón, anota el archivo y la línea, y ejecuta la comprobación:
 
@@ -36,6 +36,7 @@ Para cada punto, busca el patrón, anota el archivo y la línea, y ejecuta la co
 5. **Entrada sin validar en el servidor.** Un *endpoint* confía en los límites del formulario. Comprobación: envía fuera del formulario un valor que el formulario no permite; debe responder 400.
 6. **Paquete que no existe o recién creado.** Una dependencia de `package.json` (o el equivalente) que no está en el registro, o que se publicó hace pocos días. Comprobación: `npm view <paquete> time.created maintainers repository.url`; un `E404`, una fecha reciente o un repositorio ausente desaconsejan instalarlo.
 7. **Error que expone el detalle interno.** Un manejador que devuelve el mensaje o la traza del error al cliente. Comprobación: provoca un error y lee la respuesta; no puede aparecer ninguna ruta, tabla, IP ni traza.
+8. **HTML del usuario insertado sin sanear.** `dangerouslySetInnerHTML`, `v-html`, `innerHTML` o una plantilla que concatena HTML con un valor que escribió el usuario, y enlaces cuyo `href` acepta cualquier esquema. Comprobación: guarda `<img src=x onerror="console.log('XSS')">` en ese campo y pide la página; el HTML servido no debe contener el atributo `onerror`. Guarda `javascript:console.log('XSS')` en un campo que acabe en un `href`; no debe llegar al atributo.
 
 Clasifica cada fallo como crítico, alto, medio o bajo, según lo que permite a un atacante. Anota también cualquier punto donde el código falla abierto: un `catch` vacío, un `?? 0` o un `return next()` que deja pasar la petición cuando una comprobación no puede decidir.
 
@@ -61,7 +62,7 @@ Repite las comprobaciones de la fase 2 y pega la salida de antes y de después d
 
 Termina con un informe breve:
 
-- una tabla con los siete puntos: encontrado o no, archivo, corrección y prueba;
+- una tabla con los ocho puntos: encontrado o no, archivo, corrección y prueba;
 - lo que no pudiste comprobar y por qué;
 - los secretos que hay que revocar, sin su valor;
-- la capa de la guía por capas a la que pertenece cada fallo, para seguir revisando desde fuera: puntos 1 y 2, permisos; puntos 3 y 5, entrada y salida; punto 4, secretos; punto 6, dependencias; punto 7, errores y registros. La guía está en https://www.alexherrera.dev/es/blog/como-proteger-una-pagina-web; no hace falta abrirla para el informe.
+- la capa de la guía por capas a la que pertenece cada fallo, para seguir revisando desde fuera: puntos 1 y 2, permisos; puntos 3, 5 y 8, entrada y salida; punto 4, secretos; punto 6, dependencias; punto 7, errores y registros. La guía está en https://www.alexherrera.dev/es/blog/como-proteger-una-pagina-web; no hace falta abrirla para el informe.

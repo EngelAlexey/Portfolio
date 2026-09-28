@@ -1,7 +1,7 @@
 ---
 slug: revisar-codigo-generado-por-ia
-title: Siete cosas que revisar en el código que genera la IA
-tagline: Siete fallos de seguridad frecuentes en el código generado por IA, con su corrección y la orden que la comprueba.
+title: Ocho cosas que revisar en el código que genera la IA
+tagline: Ocho fallos de seguridad frecuentes en el código generado por IA, con su corrección y la orden que la comprueba.
 areas: [seguridad]
 published: '2026-09-07'
 updated: '2026-09-27'
@@ -20,19 +20,21 @@ import References from '../../../components/References.astro';
 
 El código que genera un modelo de lenguaje, desde un chat o desde un agente, compila, pasa las pruebas y cumple el enunciado que recibió. Ese enunciado no suele incluir los requisitos de seguridad, como quién puede ver o cambiar cada dato. Por eso el resultado tampoco los cumple.
 
-Veracode probó más de cien modelos con tareas de programación en cuatro lenguajes. El 45 % de las muestras de código generadas falló las pruebas de seguridad. Los modelos más nuevos y más grandes no obtuvieron mejores resultados que los pequeños<Cite n={1} />. El resultado depende, por tanto, del método con el que se genera el código y no del modelo que lo escribe.
+Veracode probó más de cien modelos con tareas de programación en cuatro lenguajes. El 45 % de las muestras de código generadas falló las pruebas de seguridad. Los modelos más nuevos y más grandes no obtuvieron mejores resultados que los pequeños<Cite n={1} />.
 
-Los siete fallos que siguen son los que más se repiten en el código generado. Cada uno pertenece a una capa de [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web). Esa guía explica cómo aplicar cada capa y cómo comprobarla. Aquí aparece el mismo fallo visto en el código, con su corrección y la orden que la comprueba.
+En su actualización de marzo de 2026, con más de 150 modelos, la tasa de código seguro seguía en torno al 55 %. El XSS quedó entre los dos fallos que menos evitaron: solo el 15 % de las muestras lo evitaba, frente al 13 % de la inyección en los registros<Cite n={2} />. Cambiar de modelo no basta, así que la revisión tiene que buscar esos fallos en el código.
+
+Los ocho fallos que siguen son frecuentes en el código generado. Cada uno pertenece a una capa de [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web). Esa guía explica cómo aplicar cada capa y cómo comprobarla. Aquí aparece el mismo fallo visto en el código, con su corrección y la orden que la comprueba.
 
 | Punto | Capa de la guía |
 |---|---|
 | 1 y 2 | Permisos |
-| 3 y 5 | Entrada y salida |
+| 3, 5 y 8 | Entrada y salida |
 | 4 | Secretos |
 | 6 | Dependencias |
 | 7 | Errores y registros |
 
-Todos los ejemplos están reconstruidos para el artículo y no salen de ningún sistema en producción.
+Todos los ejemplos están reconstruidos para el artículo y no salen de ningún sistema en producción. Las rutas de los puntos 1, 2, 5 y 8 se ejecutaron el 27 de septiembre de 2026 sobre una base de datos simulada en memoria. Las versiones fueron Next.js 16.3.6, React 19.3.0, Zod 4.6.5 e isomorphic-dompurify 4.4.0.
 
 ## 1. Cómo comprobar el permiso en el servidor
 
@@ -44,22 +46,26 @@ El componente oculta el botón según el rol, y el endpoint borra la factura sin
 
 ```ts
 // app/api/facturas/[id]/route.ts
-export async function DELETE(req: Request, { params }: Ctx) {
-  await db.invoice.delete({ where: { id: params.id } });
+export async function DELETE(req: Request, ctx: RouteContext<'/api/facturas/[id]'>) {
+  const { id } = await ctx.params;
+  await db.invoice.delete({ where: { id } });
   return Response.json({ ok: true });
 }
 ```
 
-Ocultar el botón es una decisión de presentación, no un permiso. El endpoint sigue aceptando la petición de cualquiera que conozca la dirección, y esa dirección está en el código que el navegador ya descargó. El API Security Top 10 de OWASP recoge este fallo como API5:2023, *Broken Function Level Authorization*. Consiste en que una función del servidor no comprueba el permiso de quien la llama. OWASP señala además que la autorización se gestiona en la configuración o en el código<Cite n={2} />.
+Desde Next.js 15, `params` es una promesa y hay que esperarla con `await`. Next.js 16 retiró el acceso síncrono<Cite n={3} /><Cite n={4} />. `RouteContext` es un tipo que Next.js genera para cada ruta y que no hace falta importar.
+
+Ocultar el botón es una decisión de presentación, no un permiso. El endpoint sigue aceptando la petición de cualquiera que conozca la dirección, y esa dirección está en el código que el navegador ya descargó. El API Security Top 10 de OWASP recoge este fallo como API5:2023, *Broken Function Level Authorization*. Consiste en que una función del servidor no comprueba el permiso de quien la llama. OWASP señala además que la autorización se gestiona en la configuración o en el código<Cite n={5} />.
 
 Repita la comprobación en el servidor, que es el único sitio que el usuario no puede modificar:
 
 ```ts
-export async function DELETE(req: Request, { params }: Ctx) {
+export async function DELETE(req: Request, ctx: RouteContext<'/api/facturas/[id]'>) {
+  const { id } = await ctx.params;
   const session = await auth();
   if (session?.user.role !== 'admin') return new Response(null, { status: 403 });
 
-  await db.invoice.delete({ where: { id: params.id } });
+  await db.invoice.delete({ where: { id } });
   return Response.json({ ok: true });
 }
 ```
@@ -82,29 +88,34 @@ Sin la corrección, la respuesta es `200 OK` y la factura desaparece. Con la cor
 La consulta busca la factura por el identificador que llega en la URL y por nada más.
 
 ```ts
-export async function GET(req: Request, { params }: Ctx) {
-  const invoice = await db.invoice.findUnique({ where: { id: params.id } });
+export async function GET(req: Request, ctx: RouteContext<'/api/facturas/[id]'>) {
+  const { id } = await ctx.params;
+  const invoice = await db.invoice.findUnique({ where: { id } });
   return Response.json(invoice);
 }
 ```
 
-Este endpoint sí exige una sesión, así que parece correcto. Sin embargo, cualquier usuario con sesión puede leer las facturas de otra empresa cambiando el número de la dirección. La misma lista de OWASP pone este fallo en el primer puesto, como API1:2023. Lo describe como la manipulación del identificador que se envía dentro de la petición<Cite n={3} />.
+Este endpoint sí exige una sesión, así que parece correcto. Sin embargo, cualquier usuario con sesión puede leer las facturas de otra empresa cambiando el número de la dirección. La misma lista de OWASP pone este fallo en el primer puesto, como API1:2023. Lo describe como la manipulación del identificador que se envía dentro de la petición<Cite n={6} />.
 
 Para corregir este caso y todos los de su tipo, incluya al dueño en la condición de la consulta. Una comprobación posterior se puede olvidar en el siguiente endpoint. Una condición dentro del `where` se aplica cada vez que se ejecuta la consulta.
 
 ```ts
-const session = await auth();
-const invoice = await db.invoice.findFirst({
-  where: { id: params.id, companyId: session.user.companyId }
-});
+export async function GET(req: Request, ctx: RouteContext<'/api/facturas/[id]'>) {
+  const { id } = await ctx.params;
+  const session = await auth();
+  if (!session) return new Response(null, { status: 401 });
 
-if (!invoice) return new Response(null, { status: 404 });
-return Response.json(invoice);
+  const invoice = await db.invoice.findFirst({
+    where: { id, companyId: session.user.companyId }
+  });
+  if (!invoice) return new Response(null, { status: 404 });
+  return Response.json(invoice);
+}
 ```
 
-La corrección responde `404` y no `403` a propósito. Un `403` confirma que la factura existe, y esa confirmación ya es información sobre otra empresa.
+La corrección responde `404` y no `403` a propósito. Un `403` confirma que la factura existe, y esa confirmación ya es información sobre otra empresa. La sesión se comprueba antes de la consulta. Sin esa línea, una petición sin sesión provoca un error al leer `session.user` y el servidor responde `500`.
 
-**Cómo comprobarlo.** Use dos sesiones. Inicie sesión como la empresa A, pida un id que pertenezca a la empresa B y compruebe que la respuesta es `404`.
+**Cómo comprobarlo.** Use dos sesiones. Inicie sesión como la empresa A, pida un id que pertenezca a la empresa B y compruebe que la respuesta es `404`. En la medición, sin la corrección, la misma petición devolvió `200` con la factura de la otra empresa. Repita la petición sin sesión: la respuesta tiene que ser `401`.
 
 <span id="3-la-consulta-se-arma-concatenando" style="scroll-margin-top: 5rem"></span>
 
@@ -113,17 +124,18 @@ La corrección responde `404` y no `403` a propósito. Un `403` confirma que la 
 El filtro llega desde un formulario de búsqueda y entra en la sentencia SQL como texto.
 
 ```ts
+const client = new URL(req.url).searchParams.get('client');
 const rows = await db.$queryRawUnsafe(
-  `SELECT * FROM invoices WHERE client = '${req.nextUrl.searchParams.get('client')}'`
+  `SELECT * FROM invoices WHERE client = '${client}'`
 );
 ```
 
-El valor queda dentro de las comillas y puede cerrarlas. Con `x' OR '1'='1`, la condición siempre se cumple y la consulta devuelve la tabla entera. OWASP recomienda no pasar el valor al intérprete de SQL como texto, sino usar una interfaz con parámetros o un ORM<Cite n={4} />.
+El valor queda dentro de las comillas y puede cerrarlas. Con `x' OR '1'='1`, la condición siempre se cumple y la consulta devuelve la tabla entera. OWASP recomienda no pasar el valor al intérprete de SQL como texto, sino usar una interfaz con parámetros o un ORM<Cite n={7} />.
 
 La versión corregida usa `$queryRaw` con una plantilla etiquetada, que es una cadena con `${}` que se pasa a una función. La función recibe el valor aparte y lo envía como parámetro, no como parte de la sentencia:
 
 ```ts
-const client = req.nextUrl.searchParams.get('client') ?? '';
+const client = new URL(req.url).searchParams.get('client') ?? '';
 const rows = await db.$queryRaw`SELECT * FROM invoices WHERE client = ${client}`;
 ```
 
@@ -133,8 +145,6 @@ Queda un caso que el parámetro no cubre: el nombre de la columna por la que se 
 const COLUMNS = { fecha: 'issued_at', monto: 'total' } as const;
 const column = COLUMNS[sort as keyof typeof COLUMNS] ?? 'issued_at';
 ```
-
-Si un modelo escribe la consulta mientras la aplicación se ejecuta, la comprobación tiene que hacerse sobre la sentencia analizada. Una expresión regular sobre el texto no sirve, porque basta un comentario, un espacio o un alias para que no reconozca la consulta. Analice la sentencia para obtener su árbol sintáctico, añada ahí los filtros de seguridad y ejecute solo la sentencia que resulta.
 
 **Cómo comprobarlo.** Envíe el valor con la comilla:
 
@@ -154,7 +164,7 @@ La variable tiene que estar disponible dentro del componente, así que el modelo
 const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!);
 ```
 
-Según la documentación de Next.js, el valor de una variable con el prefijo `NEXT_PUBLIC_` se incrusta en el *bundle* durante la compilación. El *bundle* es el JavaScript que descarga el navegador, y en él cada referencia a la variable se sustituye por su valor<Cite n={5} />. Lo mismo ocurre con `VITE_` y con `PUBLIC_` en Astro.
+Según la documentación de Next.js, el valor de una variable con el prefijo `NEXT_PUBLIC_` se incrusta en el *bundle* durante la compilación. El *bundle* es el JavaScript que descarga el navegador, y en él cada referencia a la variable se sustituye por su valor<Cite n={8} />. Lo mismo ocurre con `VITE_` y con `PUBLIC_` en Astro.
 
 La corrección es que la clave no salga del servidor. El componente llama a una ruta propia, y esa ruta llama a Stripe con la clave:
 
@@ -170,10 +180,10 @@ export async function POST(req: Request) {
 
 Una protección que depende de recordar el prefijo falla el día que alguien lo olvida. [La capa de secretos de la guía](/es/blog/como-proteger-una-pagina-web#10-cómo-mantener-los-secretos-fuera-del-código-y-del-navegador) explica cómo detectarlos antes del commit y dónde guardarlos.
 
-**Cómo comprobarlo.** Busque en el resultado de la compilación, no en el código fuente. Next.js deja el *bundle* en `.next/static`. Busque el comienzo del valor de la clave, `sk_live`, y no el nombre de la variable, porque la compilación ya sustituyó uno por otro:
+**Cómo comprobarlo.** Busque en el resultado de la compilación, no en el código fuente. Next.js deja el *bundle* en `.next/static`. Busque el comienzo del valor de la clave y no el nombre de la variable, porque la compilación ya sustituyó uno por otro. Las claves de Stripe empiezan por `sk_live_` en modo real y por `sk_test_` en modo de prueba:
 
 ```bash
-pnpm build && grep -r "sk_live" .next/static | head
+pnpm build && grep -rE "sk_(live|test)_" .next/static | head
 ```
 
 La salida tiene que estar vacía.
@@ -193,11 +203,12 @@ El formulario limita el campo, y el endpoint da por hecho que el valor llegó li
 ```ts
 export async function POST(req: Request) {
   const { cantidad } = await req.json();
-  await db.order.create({ data: { cantidad, total: cantidad * PRECIO } });
+  const pedido = await db.order.create({ data: { cantidad, total: cantidad * PRECIO } });
+  return Response.json(pedido, { status: 201 });
 }
 ```
 
-Los atributos `min`, `max` y `required` ayudan a la persona que rellena el formulario, pero una petición enviada fuera del formulario no pasa por ellos. Con una cantidad negativa, el total que se guarda sale negativo. El catálogo CWE lo recoge como CWE-602: aplicar en el cliente una protección que corresponde al servidor<Cite n={6} />.
+Los atributos `min`, `max` y `required` ayudan a la persona que rellena el formulario, pero una petición enviada fuera del formulario no pasa por ellos. Con una cantidad negativa, el total que se guarda sale negativo. El catálogo CWE lo recoge como CWE-602: aplicar en el cliente una protección que corresponde al servidor<Cite n={9} />.
 
 Valide en cada límite de confianza, el punto donde un dato pasa de algo que el usuario controla a algo que no controla. Un endpoint es uno de esos límites, y también lo son una cola de mensajes y un webhook. La corrección valida el cuerpo con un esquema de Zod antes de crear el pedido:
 
@@ -209,11 +220,12 @@ export async function POST(req: Request) {
   if (!parsed.success) return new Response(null, { status: 400 });
 
   const { cantidad } = parsed.data;
-  await db.order.create({ data: { cantidad, total: cantidad * PRECIO } });
+  const pedido = await db.order.create({ data: { cantidad, total: cantidad * PRECIO } });
+  return Response.json(pedido, { status: 201 });
 }
 ```
 
-`safeParse` devuelve el resultado de la validación en lugar de lanzar una excepción, y el endpoint responde `400` cuando falla.
+`safeParse` devuelve el resultado de la validación en lugar de lanzar una excepción, y el endpoint responde `400` cuando falla. Cada rama del *handler* devuelve una respuesta. Si una rama termina sin `return`, Next.js responde `500` y registra «No response is returned from route handler».
 
 **Cómo comprobarlo.** Envíe un valor que el formulario no deja escribir:
 
@@ -223,7 +235,7 @@ curl -i -X POST http://localhost:3000/api/pedidos \
   -d '{"cantidad": -3}'
 ```
 
-Sin la corrección, la respuesta es `200` y el pedido se crea. Con la corrección, la respuesta es `400` y no se crea nada.
+Sin la corrección, la respuesta es `201` y el pedido se guarda con `"total":-3000`. Con la corrección, la respuesta es `400` y no se crea nada.
 
 ## 6. Cómo comprobar que un paquete existe antes de instalarlo
 
@@ -235,7 +247,7 @@ Este fallo no está en el código, sino en `package.json`. El modelo propone un 
 }
 ```
 
-Un **paquete alucinado** es un nombre de paquete que el modelo inventa. Un estudio publicado en USENIX Security 2025 generó 576 000 muestras de código con 16 modelos y encontró 205 474 nombres alucinados distintos. Al menos un 5,2 % de los paquetes que citaban los modelos comerciales no existía, y un 21,7 % en los modelos abiertos<Cite n={7} />.
+Un **paquete alucinado** es un nombre de paquete que el modelo inventa. Un estudio publicado en USENIX Security 2025 generó 576 000 muestras de código con 16 modelos y encontró 205 474 nombres alucinados distintos. Al menos un 5,2 % de los paquetes que citaban los modelos comerciales no existía, y un 21,7 % en los modelos abiertos<Cite n={10} />.
 
 El nombre inventado es predecible, así que cualquiera puede publicarlo en el registro con su propio código. Desde ese momento, ese código se instala en todos los proyectos que siguen la sugerencia. Además, un paquete puede declarar scripts de instalación, que son órdenes que el gestor de paquetes ejecuta al instalarlo. Si el gestor los ejecuta, el código de quien publicó el paquete se ejecuta antes de que nadie lo importe.
 
@@ -254,7 +266,7 @@ Tres respuestas desaconsejan instalar:
 3. Un repositorio ausente, o que no corresponde al nombre, significa que no hay nada que auditar.
 
 <Callout kind="nota" title="Fije la versión y confirme el archivo de bloqueo">
-El archivo de bloqueo, `package-lock.json` en npm, guarda la versión exacta de cada dependencia. Un rango como `^2.1.0` acepta versiones que todavía no existen cuando se escribe. `npm ci` instala lo que dice el archivo de bloqueo y falla si no coincide con `package.json`, en lugar de actualizarlo<Cite n={8} />. Con ese archivo en el repositorio, una versión nueva no entra sin que alguien la revise.
+El archivo de bloqueo, `package-lock.json` en npm, guarda la versión exacta de cada dependencia. Un rango como `^2.1.0` acepta versiones que todavía no existen cuando se escribe. `npm ci` instala lo que dice el archivo de bloqueo y falla si no coincide con `package.json`, en lugar de actualizarlo<Cite n={11} />. Con ese archivo en el repositorio, una versión nueva no entra sin que alguien la revise.
 </Callout>
 
 ## 7. Cómo devolver un error sin exponer el detalle interno
@@ -267,7 +279,7 @@ catch (error) {
 }
 ```
 
-El mensaje de un error de base de datos nombra la tabla, la columna y la restricción que falló. La traza (*stack trace*), que es la lista de llamadas que llevaron al error, nombra las rutas del servidor y las versiones de las dependencias. Es CWE-209: un mensaje de error que revela información del entorno o de sus datos<Cite n={9} />. Esa información reduce el trabajo de quien busca una vulnerabilidad.
+El mensaje de un error de base de datos nombra la tabla, la columna y la restricción que falló. La traza (*stack trace*), que es la lista de llamadas que llevaron al error, nombra las rutas del servidor y las versiones de las dependencias. Es CWE-209: un mensaje de error que revela información del entorno o de sus datos<Cite n={12} />. Esa información reduce el trabajo de quien busca una vulnerabilidad.
 
 Guarde el detalle en el log del servidor, que solo lee el equipo, y devuelva un identificador para encontrarlo después:
 
@@ -283,21 +295,56 @@ El log tampoco es un sitio privado: se exporta, se envía a un proveedor y lo le
 
 **Cómo comprobarlo.** Provoque el fallo: detenga la base de datos, envíe la petición y lea el cuerpo de la respuesta. No puede aparecer ningún nombre de tabla ni ninguna ruta del servidor.
 
-## 8. Cómo revisar el código generado con un prompt
+## 8. Cómo mostrar el HTML que escribe un usuario
 
-Los siete puntos se pueden revisar a mano. También puede hacerlo un agente de programación con un prompt, sobre los cambios recientes o sobre el repositorio entero. Cópielo con el botón «Copiar prompt» del panel «Revisar el código» y péguelo en una sesión abierta en la raíz del proyecto. El agente sigue siete fases:
+El perfil muestra la biografía que escribió el usuario y un enlace a su web. Para conservar el formato de la biografía, el modelo usa `dangerouslySetInnerHTML`.
+
+```tsx
+// app/perfil/page.tsx
+<div dangerouslySetInnerHTML={{ __html: perfil.bio }} />
+<a href={perfil.web}>Mi web</a>
+```
+
+React escapa el texto que se escribe entre llaves, pero `dangerouslySetInnerHTML` desactiva ese escape y el valor llega al navegador como HTML. Con la biografía `<img src=x onerror="console.log('XSS ejecutado')">`, el HTML que devuelve el servidor contiene la etiqueta tal cual. El navegador no puede cargar la imagen y ejecuta el atributo `onerror`. Es un XSS almacenado, CWE-79<Cite n={13} />.
+
+El enlace es el segundo caso. Un `href` que empieza por `javascript:` ejecuta código al pulsarlo. React 19 ya lo bloquea: en la medición sustituyó el valor por `javascript:throw new Error('React has blocked a javascript: URL as a security precaution.')`. El mismo valor en una plantilla de texto, en `v-html` de Vue o en una versión anterior de React no tiene esa protección.
+
+Si el texto no necesita formato, muéstrelo entre llaves y deje que React lo escape. Si lo necesita, pase el HTML por un sanitizador antes de insertarlo. OWASP recomienda DOMPurify, que quita las etiquetas de script y los atributos de evento<Cite n={14} />. Para los enlaces, acepte solo `http` y `https`:
+
+```tsx
+import DOMPurify from 'isomorphic-dompurify';
+
+const web = /^https?:\/\//i.test(perfil.web) ? perfil.web : undefined;
+
+<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(perfil.bio) }} />
+<a href={web}>Mi web</a>
+```
+
+**Cómo comprobarlo.** Guarde la biografía de prueba en el perfil y pida la página:
+
+```bash
+curl -s http://localhost:3000/perfil | grep -o '<img[^>]*>'
+```
+
+Sin la corrección, la salida es `<img src=x onerror="console.log('XSS ejecutado')">`. Con la corrección, es `<img src="x">`, sin el atributo `onerror`.
+
+## 9. Cómo revisar el código generado con un prompt
+
+Los ocho puntos se pueden revisar a mano. También puede hacerlo un agente de programación con un prompt, sobre los cambios recientes o sobre el repositorio entero. Cópielo con el botón «Copiar prompt» del panel «Revisar el código» y péguelo en una sesión abierta en la raíz del proyecto. El agente sigue siete fases:
 
 1. **Pregunta qué revisar:** un rango de commits, una rama o todo el repositorio si es pequeño.
-2. **Revisa los siete puntos** con su comprobación, y confirma cada fallo ejecutándola cuando puede.
+2. **Revisa los ocho puntos** con su comprobación, y confirma cada fallo ejecutándola cuando puede.
 3. **Propone y espera.** Presenta los fallos, del más grave al más leve, y la corrección de cada uno, y se detiene hasta que usted confirma.
 4. **Corrige** con el cambio más pequeño que cierra cada fallo.
 5. **Añade una prueba** por fallo y comprueba que falla antes de la corrección.
 6. **Repite las comprobaciones** y pega las salidas de antes y de después.
 7. **Entrega un informe** con lo que cambió, lo que no pudo comprobar y la capa de la guía a la que pertenece cada fallo.
 
-La ejecución se midió con Claude Code 2.1.283 sobre una API de facturas en Express con los siete fallos. Tardó 6 minutos sin contar la espera de la confirmación: 3 hasta la propuesta y 3 para corregir y comprobar.
+El prompt se ejecutó una vez, como demostración, con Claude Code 2.1.283 y la versión anterior del prompt, que revisaba siete puntos sin el XSS. El proyecto era una API de facturas en Express preparada con esos siete fallos. Tardó 6 minutos sin contar la espera de la confirmación: 3 hasta la propuesta y 3 para corregir y comprobar.
 
-El agente encontró los siete fallos, confirmó cada uno con una comprobación y los asignó a su capa. Encontró además un octavo que falla abierto: con el token `__proto__`, la búsqueda de la sesión devolvía el prototipo del objeto y la petición pasaba. Las nueve pruebas que añadió fallaban antes de las correcciones, y después pasan todas. También avisó de que la clave expuesta seguía en el historial de git.
+El agente señaló los siete fallos sembrados. Encontró además uno que no estaba sembrado. Con el token `__proto__`, la búsqueda de la sesión devolvía el prototipo del objeto y la petición pasaba. Las nueve pruebas que añadió fallaban antes de las correcciones y pasaron después. También avisó de que la clave expuesta seguía en el historial de git.
+
+Una ejecución sobre un proyecto preparado muestra cómo trabaja el prompt, pero no mide cuántos fallos encuentra en un proyecto real. Tampoco mide los fallos que el prompt no nombra. Revise el informe como revisaría el de una persona.
 
 <Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
 	Este prompt pide al agente que ejecute órdenes del proyecto y que cambie el código. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. La fase 3 obliga al agente a detenerse antes de escribir; si continúa sin preguntar, interrúmpalo.
@@ -307,11 +354,11 @@ El agente encontró los siete fallos, confirmó cada uno con una comprobación y
 
 ## Qué corregir primero
 
-Los siete fallos no tienen la misma urgencia. Los puntos 1, 2 y 4 se pueden explotar desde fuera sin ningún otro fallo y sin preparar ningún valor, así que van primero. Los puntos 3 y 5 necesitan que alguien envíe un valor preparado a propósito, como una comilla o una cantidad negativa. Eso cuesta poco, pero es deliberado. El punto 6 se revisa al instalar una dependencia, y el 7 se corrige una sola vez en el manejador de errores común.
+Los ocho fallos no tienen la misma urgencia. Los puntos 1, 2 y 4 se pueden explotar desde fuera sin ningún otro fallo y sin preparar ningún valor, así que van primero. Los puntos 3, 5 y 8 necesitan que alguien envíe un valor preparado a propósito, como una comilla, una cantidad negativa o una etiqueta HTML. Eso cuesta poco, pero es deliberado. El punto 6 se revisa al instalar una dependencia, y el 7 se corrige una sola vez en el manejador de errores común.
 
-**Fallar cerrado** significa negar la petición cuando una comprobación no puede decidir. Esa regla vale para los siete casos. Por ejemplo, la petición se rechaza si la sesión no se resuelve, si la validación lanza una excepción o si el permiso no aparece. El código generado suele hacer lo contrario. Un `?? 0`, un `catch` vacío o un `if (!user) return next()` dejan que la petición siga su curso normal, y el fallo no se nota.
+**Fallar cerrado** significa negar la petición cuando una comprobación no puede decidir. Esa regla vale para los ocho casos. Por ejemplo, la petición se rechaza si la sesión no se resuelve, si la validación lanza una excepción o si el permiso no aparece. El código generado suele hacer lo contrario. Un `?? 0`, un `catch` vacío o un `if (!user) return next()` dejan que la petición siga su curso normal, y el fallo no se nota.
 
-Quedan fuera de la lista el HTML sin escapar, [una configuración de CORS abierta](/es/blog/que-es-cors) y la falta de un límite de peticiones. Son fallos frecuentes, pero no se repiten tanto en el código generado. [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) los trata en sus capas de entrada y salida, otros orígenes, y contraseñas e intentos. Esta última incluye el límite de intentos de inicio de sesión.
+Quedan fuera de la lista [una configuración de CORS abierta](/es/blog/que-es-cors) y la falta de un límite de peticiones. [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) los trata en sus capas de otros orígenes y de contraseñas e intentos. Esta última incluye el límite de intentos de inicio de sesión.
 
 <References
 	title="Referencias"
@@ -321,6 +368,24 @@ Quedan fuera de la lista el HTML sin escapar, [una configuración de CORS abiert
 		source: 'Veracode',
 		title: '2025 GenAI Code Security Report',
 		url: 'https://www.veracode.com/resources/analyst-reports/2025-genai-code-security-report/'
+	},
+	{
+		source: 'Veracode',
+		title: 'Spring 2026 GenAI Code Security Update',
+		note: '24 de marzo de 2026; más de 150 modelos, XSS evitado en el 15 % de las muestras',
+		url: 'https://www.veracode.com/blog/spring-2026-genai-code-security/'
+	},
+	{
+		source: 'Next.js',
+		title: 'route.js, Version History',
+		note: 'params es una promesa desde la 15.0.0-RC; acceso síncrono retirado en la 16',
+		url: 'https://nextjs.org/docs/app/api-reference/file-conventions/route'
+	},
+	{
+		source: 'Next.js',
+		title: 'How to upgrade to version 16',
+		note: 'params: acceso síncrono retirado en Next.js 16',
+		url: 'https://nextjs.org/docs/app/guides/upgrading/version-16'
 	},
 	{
 		source: 'OWASP',
@@ -362,6 +427,16 @@ Quedan fuera de la lista el HTML sin escapar, [una configuración de CORS abiert
 		source: 'MITRE',
 		title: 'CWE-209: Generation of Error Message Containing Sensitive Information',
 		url: 'https://cwe.mitre.org/data/definitions/209.html'
+	},
+	{
+		source: 'MITRE',
+		title: "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+		url: 'https://cwe.mitre.org/data/definitions/79.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'Cross Site Scripting Prevention Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html'
 	}
 ]}
 />
