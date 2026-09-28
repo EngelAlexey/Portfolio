@@ -185,7 +185,7 @@ for (const [red, bits] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], 
   BLOQUEADAS.addSubnet(red, bits, 'ipv4');
 }
 // Las reglas IPv4 cubren también las direcciones IPv4 escritas en IPv6 (::ffff:127.0.0.1).
-for (const [red, bits] of [['::', 128], ['::1', 128], ['64:ff9b::', 96], ['fc00::', 7], ['fe80::', 10], ['ff00::', 8]]) {
+for (const [red, bits] of [['::', 128], ['::1', 128], ['64:ff9b::', 96], ['fc00::', 7], ['fe80::', 10], ['fec0::', 10], ['ff00::', 8]]) {
   BLOQUEADAS.addSubnet(red, bits, 'ipv6');
 }
 const privada = (ip) => BLOQUEADAS.check(ip, isIP(ip) === 6 ? 'ipv6' : 'ipv4');
@@ -210,18 +210,28 @@ app.get('/f/vista-previa', (req, res) => {
   if (url.protocol !== 'https:' || !PERMITIDOS.has(url.hostname)) {
     return res.status(400).send('destino no permitido');
   }
-  const peticion = https.get(url, { lookup: busquedaSegura, timeout: 5000 }, (r) => {
+  const peticion = https.get(url, { lookup: busquedaSegura }, (r) => {
     if (r.statusCode >= 300 && r.statusCode < 400) {
-      r.resume();
+      clearTimeout(limite);
+      r.destroy();
       return res.status(502).send('redirección no seguida');
     }
     let cuerpo = '';
     r.setEncoding('utf8');
-    r.on('data', (trozo) => (cuerpo += trozo));
-    r.on('end', () => res.type('text').send(cuerpo.slice(0, 300)));
+    r.on('data', (trozo) => {
+      cuerpo += trozo;
+      if (cuerpo.length >= 300) r.destroy(); // no lee más de lo que va a mostrar
+    });
+    r.on('close', () => {
+      clearTimeout(limite);
+      if (!res.headersSent) res.type('text').send(cuerpo.slice(0, 300));
+    });
   });
-  peticion.on('timeout', () => peticion.destroy(new Error('tiempo agotado')));
+  // Límite para la petición entera, no solo para el tiempo sin datos.
+  const limite = setTimeout(() => peticion.destroy(new Error('tiempo agotado')), 5000);
   peticion.on('error', (err) => {
+    clearTimeout(limite);
+    if (res.headersSent) return;
     if (err.message === 'destino no permitido') return res.status(400).send(err.message);
     res.status(502).send('no se pudo descargar');
   });

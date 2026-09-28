@@ -1,2 +1,2 @@
-exit=0 segundos=203
-fase4-5 exit=0 segundos=596
+fase1-3 exit=0 segundos=152
+fase4-5 exit=0 segundos=368

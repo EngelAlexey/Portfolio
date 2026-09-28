@@ -17,7 +17,8 @@ Desde `/mnt/c` el servidor tarda unos segundos en arrancar, así que los scripts
 
 - `fuentes.md`: comprobación de fuentes antes de escribir, por subagente.
 - `auditoria.md`: auditoría del texto terminado, por subagente, con 107 afirmaciones. Fue la que encontró el fallo de la corrección de CSRF (`undefined !== undefined`).
-- `prompt-*.txt`: la ejecución de demostración del prompt con `claude -p`: 203 s hasta la fase 3 y 596 s después de la confirmación.
+- `auditoria.md` tiene una segunda pasada en `auditoria2.md`, sobre el texto corregido. La segunda pasada encontró que la primera ejecución del prompt usaba una versión anterior, y se repitió.
+- `prompt-*`: la ejecución de demostración con el prompt definitivo, `claude -p` en Windows: 152 s hasta la fase 3 y 368 s después de la confirmación, con 19 pruebas (18 fallan antes y 19 pasan después). `prompt-informe-final.txt` es su informe de la fase 5 y `prompt-pruebas-generadas.test.mjs.txt` las pruebas que escribió.
 
 ## Decisión sobre las categorías de OWASP
 

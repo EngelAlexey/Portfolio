@@ -19,4 +19,4 @@ t "SSRF corregido, nombre permitido que resuelve a 127.0.0.1" "curl -s -w ' [%{h
 t "SSRF corregido, destino permitido" "curl -s -w ' [%{http_code}]' -G $B/f/vista-previa --data-urlencode 'url=https://example.com/' | head -c 100"
 t "SSRF corregido, redirección" "curl -s -w ' [%{http_code}]' -G $B/f/vista-previa --data-urlencode 'url=https://www.iana.org/domains/example'"
 t "fuerza bruta: Retry-After" "for i in \$(seq 1 5); do curl -s -o /dev/null -X POST $B/f/login -d nombre=luis -d clave=x\$i; done; curl -s -i -X POST $B/f/login -d nombre=luis -d clave=luis-clave-larga | grep -iE '^HTTP|retry-after'"
-t "SSRF corregido, IPv4 escrita en IPv6" "curl -s -w ' [%{http_code}]' -G $B/f/vista-previa --data-urlencode 'url=http://[::ffff:127.0.0.1]:4001/admin'"
+t "SSRF corregido, cuerpo grande (se corta a 300)" "curl -s -G $B/f/vista-previa --data-urlencode 'url=https://www.iana.org/' | wc -c"

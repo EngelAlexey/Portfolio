@@ -14,7 +14,7 @@ related: []
 cover: null
 instagram: null
 promptTitle: Revisar ataques comunes
-promptMinutes: [10, 20]
+promptMinutes: [5, 15]
 ---
 
 import Callout from '../../../components/Callout.astro';
@@ -27,7 +27,7 @@ Cada punto explica el ataque, la corrección y cómo comprobarla. Cuando el ataq
 
 ## 1. Qué ataques son los más comunes
 
-La tabla agrupa los ataques en cuatro familias, en el orden de sus categorías del OWASP Top 10:2025<Cite n={1} repeat />. La última columna indica dónde se desarrolla el ataque con más detalle. OWASP describe también la cuenta de fábrica en A07 y el error detallado en A10.
+La tabla agrupa los ataques en cuatro familias, en el orden de sus categorías del OWASP Top 10:2025<Cite n={1} repeat />. La última columna indica dónde se desarrolla el ataque con más detalle. OWASP describe también la cuenta de fábrica en A07<Cite n={3} /> y el error detallado en A10<Cite n={4} />.
 
 | Familia | Ataque | Qué consigue | Cómo se evita | Más detalle |
 |---|---|---|---|---|
@@ -60,7 +60,7 @@ curl -s -c /tmp/lab-cookies -X POST http://127.0.0.1:3000/v/login -d nombre=ana 
 
 ## 3. Qué es un IDOR y cómo evitarlo
 
-Un IDOR (*insecure direct object reference*) ocurre cuando el servidor devuelve un recurso por su id sin comprobar que pertenece a quien lo pide<Cite n={3} />.
+Un IDOR (*insecure direct object reference*) ocurre cuando el servidor devuelve un recurso por su id sin comprobar que pertenece a quien lo pide<Cite n={5} />.
 
 ```js
 app.get('/v/facturas/:id', (req, res) => {
@@ -89,7 +89,7 @@ const f = db
 
 ## 4. Qué es CSRF y cómo evitarlo
 
-En un ataque CSRF (*cross-site request forgery*), una web ajena hace que el navegador del usuario envíe una petición a su aplicación. El navegador adjunta la cookie de sesión<Cite n={4} />. La aplicación recibe una petición autenticada que el usuario no ha pedido.
+En un ataque CSRF (*cross-site request forgery*), una web ajena hace que el navegador del usuario envíe una petición a su aplicación. El navegador adjunta la cookie de sesión<Cite n={6} />. La aplicación recibe una petición autenticada que el usuario no ha pedido.
 
 ```js
 app.post('/v/email', (req, res) => {
@@ -106,7 +106,7 @@ $ curl -s -b /tmp/lab-cookies -H 'Sec-Fetch-Site: cross-site' \
 {"cambiado":true,"email":"atacante@ejemplo.test"}
 ```
 
-La guía de OWASP pide un token anti-CSRF en las rutas que cambian datos y trata `SameSite` como una defensa adicional. En navegadores modernos admite `Sec-Fetch-Site` como señal principal, siempre con la comprobación de la cabecera `Origin` como respaldo<Cite n={5} />. La ruta corregida rechaza las peticiones de otro sitio, usa `Origin` cuando falta `Sec-Fetch-Site` y exige el token:
+La guía de OWASP pide un token anti-CSRF en las rutas que cambian datos y trata `SameSite` como una defensa adicional. En navegadores modernos admite `Sec-Fetch-Site` como señal principal, siempre con la comprobación de la cabecera `Origin` como respaldo<Cite n={7} />. La ruta corregida rechaza las peticiones de otro sitio, usa `Origin` cuando falta `Sec-Fetch-Site` y exige el token:
 
 ```js
 const ORIGEN = 'http://127.0.0.1:3000';
@@ -134,7 +134,7 @@ El token se genera al iniciar la sesión y la página lo envía en la cabecera `
 
 ## 5. Qué es un ataque SSRF y cómo evitarlo
 
-Un SSRF (*server-side request forgery*) ocurre cuando el servidor descarga una URL que elige el usuario. El atacante le pide una dirección a la que solo llega el servidor<Cite n={6} />. El caso típico es una vista previa de enlaces:
+Un SSRF (*server-side request forgery*) ocurre cuando el servidor descarga una URL que elige el usuario. El atacante le pide una dirección a la que solo llega el servidor<Cite n={8} />. El caso típico es una vista previa de enlaces:
 
 ```js
 app.get('/v/vista-previa', async (req, res) => {
@@ -150,7 +150,7 @@ $ curl -s -G http://127.0.0.1:3000/v/vista-previa --data-urlencode 'url=http://1
 servicio interno: clave-de-base-de-datos=NO-DEBERIA-SALIR
 ```
 
-En AWS, el objetivo habitual es el servicio de metadatos de la instancia, en `169.254.169.254`. Por defecto acepta IMDSv1, que responde a un `GET` sin token. IMDSv2 exige un token que se pide con `PUT`, y solo protege si se configura como obligatorio<Cite n={7} />.
+En AWS, el objetivo habitual es el servicio de metadatos de la instancia, en `169.254.169.254`. Por defecto acepta IMDSv1, que responde a un `GET` sin token. IMDSv2 exige un token que se pide con `PUT`, y solo protege si se configura como obligatorio<Cite n={9} />.
 
 Bloquear direcciones por texto no basta. Esta versión rechaza las URL que contienen `localhost`, `127.0.0.1` o `169.254.`:
 
@@ -161,9 +161,9 @@ $ curl -s -G http://127.0.0.1:3000/v2/vista-previa --data-urlencode 'url=http://
 servicio interno: clave-de-base-de-datos=NO-DEBERIA-SALIR
 ```
 
-`2130706433` es `127.0.0.1` escrito como un solo número decimal, y el analizador de URL de Node lo acepta. La corrección que propone OWASP combina una lista de destinos permitidos, la comprobación de todas las direcciones IP del nombre y no seguir redirecciones<Cite n={8} />.
+`2130706433` es `127.0.0.1` escrito como un solo número decimal, y el analizador de URL de Node lo acepta. La corrección que propone OWASP combina una lista de destinos permitidos, la comprobación de todas las direcciones IP del nombre y no seguir redirecciones<Cite n={10} />.
 
-Comprobar la IP con `dns.lookup` y después llamar a `fetch` no basta, porque `fetch` vuelve a resolver el nombre. Un DNS controlado por el atacante puede responder otra dirección la segunda vez. OWASP llama a este ataque *DNS pinning*<Cite n={8} repeat />. La corrección comprueba las direcciones en la misma búsqueda que usa la conexión. `BlockList` de Node reúne los rangos privados, de bucle local, de enlace local y de multidifusión<Cite n={9} />:
+Comprobar la IP con `dns.lookup` y después llamar a `fetch` no basta, porque `fetch` vuelve a resolver el nombre. Un DNS controlado por el atacante puede responder otra dirección la segunda vez. OWASP lo describe como *DNS pinning*<Cite n={10} repeat />; también se conoce como *DNS rebinding*. La corrección comprueba las direcciones en la misma búsqueda que usa la conexión. `BlockList` de Node reúne los rangos privados, de bucle local, de enlace local y de multidifusión<Cite n={11} />:
 
 ```js
 const BLOQUEADAS = new BlockList();
@@ -172,7 +172,7 @@ for (const [red, bits] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], 
   BLOQUEADAS.addSubnet(red, bits, 'ipv4');
 }
 // Las reglas IPv4 cubren también las direcciones IPv4 escritas en IPv6 (::ffff:127.0.0.1).
-for (const [red, bits] of [['::', 128], ['::1', 128], ['64:ff9b::', 96], ['fc00::', 7], ['fe80::', 10], ['ff00::', 8]]) {
+for (const [red, bits] of [['::', 128], ['::1', 128], ['64:ff9b::', 96], ['fc00::', 7], ['fe80::', 10], ['fec0::', 10], ['ff00::', 8]]) {
   BLOQUEADAS.addSubnet(red, bits, 'ipv6');
 }
 const privada = (ip) => BLOQUEADAS.check(ip, isIP(ip) === 6 ? 'ipv6' : 'ipv4');
@@ -188,7 +188,7 @@ function busquedaSegura(host, opciones, cb) {
 }
 ```
 
-La ruta usa `https.get` en lugar de `fetch` porque acepta una función `lookup` propia<Cite n={10} />:
+La ruta usa `https.get` en lugar de `fetch` porque acepta una función `lookup` propia<Cite n={12} />:
 
 ```js
 const PERMITIDOS = new Set(['example.com', 'www.iana.org']);
@@ -203,31 +203,41 @@ app.get('/f/vista-previa', (req, res) => {
   if (url.protocol !== 'https:' || !PERMITIDOS.has(url.hostname)) {
     return res.status(400).send('destino no permitido');
   }
-  const peticion = https.get(url, { lookup: busquedaSegura, timeout: 5000 }, (r) => {
+  const peticion = https.get(url, { lookup: busquedaSegura }, (r) => {
     if (r.statusCode >= 300 && r.statusCode < 400) {
-      r.resume();
+      clearTimeout(limite);
+      r.destroy();
       return res.status(502).send('redirección no seguida');
     }
     let cuerpo = '';
     r.setEncoding('utf8');
-    r.on('data', (trozo) => (cuerpo += trozo));
-    r.on('end', () => res.type('text').send(cuerpo.slice(0, 300)));
+    r.on('data', (trozo) => {
+      cuerpo += trozo;
+      if (cuerpo.length >= 300) r.destroy(); // no lee más de lo que va a mostrar
+    });
+    r.on('close', () => {
+      clearTimeout(limite);
+      if (!res.headersSent) res.type('text').send(cuerpo.slice(0, 300));
+    });
   });
-  peticion.on('timeout', () => peticion.destroy(new Error('tiempo agotado')));
+  // Límite para la petición entera, no solo para el tiempo sin datos.
+  const limite = setTimeout(() => peticion.destroy(new Error('tiempo agotado')), 5000);
   peticion.on('error', (err) => {
+    clearTimeout(limite);
+    if (res.headersSent) return;
     if (err.message === 'destino no permitido') return res.status(400).send(err.message);
     res.status(502).send('no se pudo descargar');
   });
 });
 ```
 
-`https.get` no sigue redirecciones, así que un destino permitido no puede enviar la petición a una dirección interna.
+`https.get` no sigue redirecciones, así que un destino permitido no puede enviar la petición a una dirección interna. El temporizador limita la petición entera a 5 segundos. La ruta deja de leer al llegar a 300 caracteres, para que un destino lento o una respuesta enorme no ocupen el servidor.
 
 **Cómo comprobarlo.** `url=http://2130706433:4001/admin` contra `/f/vista-previa` devuelve `400` con `destino no permitido`, y `url=https://example.com/` devuelve la página. En el laboratorio, la lista se lee de la variable de entorno `PERMITIDOS`. Para probar la comprobación de la IP, añada `localhost` a esa lista y pida `https://localhost:4001/admin`: la respuesta es `400` antes de abrir la conexión. `https://www.iana.org/domains/example` redirige, y la ruta responde `502` con `redirección no seguida`.
 
 ## 6. Qué es el recorrido de rutas y cómo evitarlo
 
-El recorrido de rutas (*path traversal*) usa `../` en un nombre de archivo para salir de la carpeta que el servidor pretendía servir<Cite n={11} />.
+El recorrido de rutas (*path traversal*) usa `../` en un nombre de archivo para salir de la carpeta que el servidor pretendía servir<Cite n={13} />.
 
 ```js
 app.get('/v/docs', async (req, res) => {
@@ -242,7 +252,7 @@ $ curl -s -G http://127.0.0.1:3000/v/docs --data-urlencode 'nombre=../.env'
 DB_PASSWORD=super-secreta
 ```
 
-En Express, `res.sendFile` con la opción `root` responde `403` a las rutas que salen de esa carpeta<Cite n={12} />:
+En Express, `res.sendFile` con la opción `root` responde `403` a las rutas que salen de esa carpeta<Cite n={14} />:
 
 ```js
 app.get('/f/docs', (req, res) => {
@@ -256,7 +266,7 @@ app.get('/f/docs', (req, res) => {
 
 ## 7. Qué es un paquete malicioso y cómo evitarlo
 
-Un paquete malicioso es una dependencia publicada con código dañino, que puede ejecutarse en un script de instalación como `postinstall`<Cite n={13} />. OWASP cita en A03 un gusano de 2025 que se propagaba con un script de ese tipo<Cite n={14} />. Se ejecuta en `npm install`, antes de que la aplicación arranque, con los permisos de quien instala.
+Un paquete malicioso es una dependencia publicada con código dañino, que puede ejecutarse en un script de instalación como `postinstall`<Cite n={15} />. OWASP cita en A03 un gusano de 2025 que se propagaba con un script de ese tipo<Cite n={16} />. Se ejecuta en `npm install`, antes de que la aplicación arranque, con los permisos de quien instala.
 
 La defensa tiene tres partes. Ejecute los scripts de instalación solo en los paquetes que apruebe uno a uno, instale desde el archivo de bloqueo con `npm ci` y compruebe las firmas del registro:
 
@@ -273,9 +283,9 @@ Las firmas confirman que el paquete salió del registro, pero no detectan una ve
 
 ## 8. Qué es una dependencia vulnerable y cómo evitarla
 
-Una dependencia vulnerable es una versión con un fallo ya publicado, que cualquiera puede buscar en una base de avisos<Cite n={15} />. El fallo puede publicarse después de instalar la versión, sin que el proyecto cambie nada.
+Una dependencia vulnerable es una versión con un fallo ya publicado, que cualquiera puede buscar en una base de avisos<Cite n={17} />. El fallo puede publicarse después de instalar la versión, sin que el proyecto cambie nada.
 
-`npm audit` envía la lista de dependencias instaladas al registro y recibe los avisos conocidos<Cite n={16} />. En un proyecto con Express 4.17.1 da este resultado:
+`npm audit` envía la lista de dependencias instaladas al registro y recibe los avisos conocidos<Cite n={18} />. En un proyecto con Express 4.17.1 da este resultado:
 
 ```bash
 $ npm audit
@@ -287,13 +297,13 @@ qs vulnerable to Prototype Pollution - https://github.com/advisories/GHSA-hrpp-h
 7 vulnerabilities (3 low, 4 high)
 ```
 
-La orden termina con código de salida `1` cuando encuentra avisos, y `--audit-level` fija la gravedad mínima que produce ese código<Cite n={16} repeat />. Añada `npm audit --audit-level=high` a la integración continua para que un aviso alto o crítico detenga el cambio.
+La orden termina con código de salida `1` cuando encuentra avisos, y `--audit-level` fija la gravedad mínima que produce ese código<Cite n={18} repeat />. Añada `npm audit --audit-level=high` a la integración continua para que un aviso alto o crítico detenga el cambio.
 
 **Cómo comprobarlo.** Ejecute `npm audit` y `echo $?`. Con el árbol limpio, la salida es `found 0 vulnerabilities` y el código es `0`.
 
 ## 9. Qué es una cuenta de fábrica y cómo evitarla
 
-Una cuenta de fábrica es un usuario con una contraseña conocida que la aplicación crea sola, como `admin`/`admin`<Cite n={17} />. Aparece cuando el código usa un valor por defecto si falta la variable de entorno:
+Una cuenta de fábrica es un usuario con una contraseña conocida que la aplicación crea sola, como `admin`/`admin`<Cite n={19} />. Aparece cuando el código usa un valor por defecto si falta la variable de entorno:
 
 ```js
 const ADMIN_PASS = process.env.ADMIN_PASSWORD ?? 'admin';
@@ -317,7 +327,7 @@ if (!ADMIN_PASS || ADMIN_PASS.length < 16) {
 
 ## 10. Qué es un error detallado y cómo evitarlo
 
-Un error detallado devuelve al cliente el mensaje interno, la traza o la consulta que falló<Cite n={18} />. Le dice al atacante qué base de datos se usa, qué tablas existen y en qué rutas está el código.
+Un error detallado devuelve al cliente el mensaje interno, la traza o la consulta que falló<Cite n={20} />. Le dice al atacante qué base de datos se usa, qué tablas existen y en qué rutas está el código.
 
 ```js
 app.get('/v/ordenar', (req, res) => {
@@ -331,7 +341,7 @@ app.get('/v/ordenar', (req, res) => {
 
 ```bash
 $ curl -s -G http://127.0.0.1:3000/v/ordenar --data-urlencode 'campo=nada'
-{"error":"no such column: nada","stack":"Error: no such column: nada\n    at file:///.../lab.mjs:110:17\n ..."}
+{"error":"no such column: nada","stack":"Error: no such column: nada\n    at file:///.../lab.mjs:111:17\n ..."}
 ```
 
 La respuesta confirma además que el parámetro llega a la consulta sin filtrar, que es la pista para el ataque del punto 11. La corrección valida el campo contra una lista y, si algo falla, registra el detalle en el servidor y devuelve un identificador:
@@ -352,7 +362,7 @@ if (!CAMPOS.has(campo)) return res.status(400).json({ error: 'campo no válido' 
 
 ## 11. Qué es la inyección SQL y cómo evitarla
 
-La inyección SQL ocurre cuando el texto que envía el usuario se concatena en una consulta. La base de datos lo interpreta entonces como parte del SQL<Cite n={19} />.
+La inyección SQL ocurre cuando el texto que envía el usuario se concatena en una consulta. La base de datos lo interpreta entonces como parte del SQL<Cite n={21} />.
 
 ```js
 const sql = `SELECT id, concepto, total FROM facturas
@@ -377,7 +387,7 @@ db.prepare("SELECT id, concepto, total FROM facturas WHERE duenio = ? AND concep
 
 ## 12. Qué es un ataque XSS y cómo evitarlo
 
-Un XSS (*cross-site scripting*) ocurre cuando la página incluye texto del usuario como HTML, y el navegador ejecuta el script que contiene<Cite n={20} />. El script se ejecuta con la sesión de quien ve la página.
+Un XSS (*cross-site scripting*) ocurre cuando la página incluye texto del usuario como HTML, y el navegador ejecuta el script que contiene<Cite n={22} />. El script se ejecuta con la sesión de quien ve la página.
 
 ```js
 app.get('/v/saludo', (req, res) => {
@@ -402,7 +412,7 @@ const escapar = (s) =>
 
 ## 13. Qué es la inyección de órdenes y cómo evitarla
 
-La inyección de órdenes ocurre cuando el texto del usuario se concatena en una orden que ejecuta la shell del sistema<Cite n={21} />. En Node.js, `exec` pasa la orden completa a una shell, `/bin/sh` en Linux, que interpreta `;`, `&&`, `|` y `$()`<Cite n={22} />.
+La inyección de órdenes ocurre cuando el texto del usuario se concatena en una orden que ejecuta la shell del sistema<Cite n={23} />. En Node.js, `exec` pasa la orden completa a una shell, `/bin/sh` en Linux, que interpreta `;`, `&&`, `|` y `$()`<Cite n={24} />.
 
 ```js
 app.get('/v/dns', (req, res) => {
@@ -434,7 +444,7 @@ app.get('/f/dns', (req, res) => {
 
 ## 14. Qué es un ataque de fuerza bruta y cómo evitarlo
 
-Un ataque de fuerza bruta prueba contraseñas contra una cuenta hasta acertar<Cite n={23} />. Sin límite, el servidor responde a todos los intentos:
+Un ataque de fuerza bruta prueba contraseñas contra una cuenta hasta acertar<Cite n={25} />. Sin límite, el servidor responde a todos los intentos:
 
 ```bash
 $ for i in $(seq 1 20); do curl -s -o /dev/null -w '%{http_code} ' \
@@ -450,15 +460,15 @@ $ for i in $(seq 1 8); do curl -s -o /dev/null -w '%{http_code} ' \
 401 401 401 401 401 429 429 429
 ```
 
-Mientras dura el bloqueo, la contraseña correcta también recibe `429`. Eso impide que el atacante sepa cuándo acierta, pero permite a cualquiera bloquear la cuenta de otro con cinco intentos. OWASP asocia el contador a la cuenta y no a la IP, y considera la verificación en dos pasos la mejor defensa contra la mayoría de los ataques a contraseñas<Cite n={24} />. NIST fija como máximo 100 intentos fallidos consecutivos por cuenta<Cite n={25} />. El punto 6 de [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) explica el código completo y el hash de las contraseñas.
+Mientras dura el bloqueo, la contraseña correcta también recibe `429`. Eso impide que el atacante sepa cuándo acierta, pero permite a cualquiera bloquear la cuenta de otro con cinco intentos. OWASP asocia el contador a la cuenta y no a la IP, y considera la verificación en dos pasos la mejor defensa contra la mayoría de los ataques a contraseñas<Cite n={26} />. NIST fija como máximo 100 intentos fallidos consecutivos por cuenta<Cite n={27} />. El punto 6 de [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) explica el código completo y el hash de las contraseñas.
 
 **Cómo comprobarlo.** Repita el bucle contra `/f/login` y compruebe que el sexto intento devuelve `429` con la cabecera `Retry-After`, que indica los segundos que faltan para el desbloqueo.
 
 ## 15. Qué es la suplantación de cuentas y cómo evitarla
 
-En la suplantación por relleno de credenciales (*credential stuffing*), el atacante prueba pares de usuario y contraseña filtrados en otro sitio<Cite n={26} />. Funciona con quien repite la misma contraseña en varios servicios. Cada par se prueba una sola vez, así que el límite por cuenta del punto 14 no llega a activarse. Las herramientas reparten además las peticiones entre muchas direcciones IP para que un límite por IP tampoco las detenga<Cite n={27} />.
+En la suplantación por relleno de credenciales (*credential stuffing*), el atacante prueba pares de usuario y contraseña filtrados en otro sitio<Cite n={28} />. Funciona con quien repite la misma contraseña en varios servicios. Cada par se prueba una sola vez, así que el límite por cuenta del punto 14 no llega a activarse. Las herramientas reparten además las peticiones entre muchas direcciones IP para que un límite por IP tampoco las detenga<Cite n={29} />.
 
-OWASP propone la verificación en dos pasos y comprobar que las contraseñas nuevas no aparecen en filtraciones anteriores, por ejemplo con Pwned Passwords<Cite n={27} repeat />. Su API permite esa comprobación sin enviar la contraseña. La aplicación envía los cinco primeros caracteres de su hash SHA-1 y compara el resto en local<Cite n={28} />.
+OWASP propone la verificación en dos pasos y comprobar que las contraseñas nuevas no aparecen en filtraciones anteriores, por ejemplo con Pwned Passwords<Cite n={29} repeat />. Su API permite esa comprobación sin enviar la contraseña. La aplicación envía los cinco primeros caracteres de su hash SHA-1 y compara el resto en local<Cite n={30} />.
 
 ```bash
 $ printf 'password' | sha1sum | cut -c1-5
@@ -477,10 +487,10 @@ El robo de sesión consiste en obtener el identificador de sesión de otro usuar
 
 ```bash
 $ curl -s -i -X POST http://127.0.0.1:3000/v/login -d nombre=ana -d clave=ana-clave-larga | grep -i set-cookie
-Set-Cookie: sid=2e0e57499ec584bb0c4ac596c2efdc0b; Path=/
+Set-Cookie: sid=74ece7c45098fc51dc0b198b6aac4012; Path=/
 ```
 
-La corrección añade los atributos que limitan quién puede leer y enviar la cookie. MITRE registra la cookie sin `HttpOnly` y la sesión que no caduca como dos debilidades distintas<Cite n={29} /><Cite n={30} />:
+La corrección añade los atributos que limitan quién puede leer y enviar la cookie. MITRE registra la cookie sin `HttpOnly` y la sesión que no caduca como dos debilidades distintas<Cite n={31} /><Cite n={32} />:
 
 ```js
 res.cookie('sid', sid, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 2 * 60 * 60 * 1000 });
@@ -489,17 +499,17 @@ res.cookie('sid', sid, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 
 - `HttpOnly` impide que JavaScript lea la cookie, así que un XSS no puede copiarla.
 - `Secure` hace que el navegador solo la envíe por HTTPS.
 - `SameSite=Lax` evita que se envíe en las peticiones `POST` que llegan desde otro sitio.
-- `Max-Age` indica al navegador cuándo borrar la cookie. Una cookie robada sigue sirviendo mientras el servidor no caduque la sesión, así que la caducidad se aplica también en el servidor.
+- `Max-Age` indica al navegador cuándo borrar la cookie. Una cookie robada sigue sirviendo mientras el servidor no caduque la sesión, así que aplique la caducidad también en el servidor.
 
 **Cómo comprobarlo.** La cabecera del inicio de sesión corregido es `Set-Cookie: sid=…; Max-Age=7200; Path=/; Expires=…; HttpOnly; Secure; SameSite=Lax`. El punto 5 de [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) explica cómo renovar el identificador y caducar la sesión en el servidor.
 
 ## 17. Qué es un JWT y cómo evitar que lo falsifiquen
 
-Un JWT (*JSON Web Token*) es un token con tres partes separadas por puntos: una cabecera, los datos y una firma. Las dos primeras están codificadas en Base64url, no cifradas<Cite n={31} />, así que cualquiera que tenga el token puede leerlas:
+Un JWT (*JSON Web Token*) es un token con tres partes separadas por puntos: una cabecera, los datos y una firma. Las dos primeras están codificadas en Base64url, no cifradas<Cite n={33} />, así que cualquiera que tenga el token puede leerlas:
 
 ```bash
 $ curl -s http://127.0.0.1:3000/f/token | cut -d. -f2 | base64 -d
-{"sub":"ana","rol":"usuario","iat":1790558539,"exp":1790559439,"aud":"app-web","iss":"https://api.ejemplo.test"}
+{"sub":"ana","rol":"usuario","iat":1790560542,"exp":1790561442,"aud":"app-web","iss":"https://api.ejemplo.test"}
 ```
 
 No guarde en un JWT nada que el usuario no deba ver. La firma solo garantiza que nadie cambió los datos, y solo si el servidor la comprueba. El laboratorio mide tres errores con dos tokens fabricados a mano, ambos con `"rol":"admin"`:
@@ -519,7 +529,7 @@ $ curl -s -H "Authorization: Bearer $NONE" http://127.0.0.1:3000/v/perfil
 {"hola":"ana","rol":"admin"}
 ```
 
-Con `jwt.verify`, jsonwebtoken 9.0.3 rechaza ese mismo token con `{"error":"jwt signature is required"}`. Desde la versión 9.0.0, `verify` solo acepta tokens sin firma si `none` figura en la opción `algorithms`<Cite n={32} />. El RFC 8725 exige que la biblioteca permita fijar los algoritmos aceptados y no use ningún otro<Cite n={33} />.
+Con `jwt.verify`, jsonwebtoken 9.0.3 rechaza ese mismo token con `{"error":"jwt signature is required"}`. Desde la versión 9.0.0, `verify` solo acepta tokens sin firma si `none` figura en la opción `algorithms`<Cite n={34} />. El RFC 8725 exige que la biblioteca permita fijar los algoritmos aceptados y no use ningún otro<Cite n={35} />.
 
 **Firmar con un secreto débil.** Si el servidor usa `secret`, el token `DEBIL` pasa la verificación:
 
@@ -528,9 +538,9 @@ $ curl -s -H "Authorization: Bearer $DEBIL" http://127.0.0.1:3000/v2/perfil
 {"hola":"ana","rol":"admin"}
 ```
 
-Según el RFC 8725, una contraseña que una persona puede recordar no debe usarse como clave HMAC, porque se encuentra fuera de línea por fuerza bruta o con un diccionario<Cite n={33} repeat />. La biblioteca jsonwebtoken 9.0.3 no comprueba la longitud del secreto: el ejemplo firmó con `secret` sin ningún aviso. Genere el secreto con 32 bytes aleatorios, como `openssl rand -base64 32`, y guárdelo en una variable de entorno.
+Según el RFC 8725, una contraseña que una persona puede recordar no debe usarse como clave HMAC, porque se encuentra fuera de línea por fuerza bruta o con un diccionario<Cite n={35} repeat />. La biblioteca jsonwebtoken 9.0.3 no comprueba la longitud del secreto: el ejemplo firmó con `secret` sin ningún aviso. Genere el secreto con 32 bytes aleatorios, como `openssl rand -base64 32`, y guárdelo en una variable de entorno.
 
-**No limitar la validez.** `exp` es el momento a partir del cual el token no se debe aceptar<Cite n={31} repeat />. Un token sin `exp` sirve para siempre si se filtra. La corrección fija el algoritmo, el emisor, la audiencia y la antigüedad máxima:
+**No limitar la validez.** `exp` es el momento a partir del cual el token no se debe aceptar<Cite n={33} repeat />. Un token sin `exp` sirve para siempre si se filtra. La corrección fija el algoritmo, el emisor, la audiencia y la antigüedad máxima:
 
 ```js
 const datos = jwt.verify(token, process.env.JWT_SECRET, {
@@ -547,7 +557,7 @@ const datos = jwt.verify(token, process.env.JWT_SECRET, {
 
 El prompt del botón «Copiar prompt» pide a un agente de programación que busque en su proyecto estos catorce ataques y los fallos de JWT. Primero reconoce el proyecto sin cambiar nada. Después entrega un informe con cada hallazgo en `archivo:línea`, espera su confirmación y corrige cada fallo con una prueba que primero falla y después pasa. La fase 3 hace que el agente se detenga antes de escribir; si sigue sin preguntar, interrúmpalo.
 
-En una ejecución de demostración sobre el laboratorio del artículo, el agente tardó 3 minutos en llegar a la fase 3, con 13 fallos confirmados y 1 posible. Después de la confirmación, tardó 10 minutos más en escribir 17 pruebas, verlas fallar, corregir 12 fallos y ver pasar 16 de ellas. Dejó pendientes la verificación en dos pasos, que es una decisión del proyecto, y el archivo `.npmrc`, que la sesión no le permitió escribir y cuya prueba sigue fallando.
+En una ejecución de demostración con `claude -p` en Windows, sobre una copia del laboratorio del artículo, el agente tardó 2,5 minutos en llegar a la fase 3 y se detuvo. Después de la confirmación tardó 6 minutos más en escribir 19 pruebas, ver fallar 18 antes de corregir y pasar las 19 después. Para el recorrido de rutas pidió `../package.json`, como indica el prompt. Dejó pendientes la verificación en dos pasos y el hash de las contraseñas, que cambian la lógica del inicio de sesión.
 
 <Callout kind="riesgo" title="Lea el prompt antes de pegarlo">
 	Este prompt pide al agente que arranque la aplicación, ejecute órdenes y cambie código. El texto completo se abre con «Ver el prompt completo», bajo el botón, y es exactamente lo que se copia. Ejecútelo en una rama aparte.
@@ -576,6 +586,16 @@ Empiece por los fallos que exponen datos de todos los usuarios con una sola peti
 		source: 'OWASP',
 		title: 'A01:2025 Broken Access Control',
 		url: 'https://top10.owasp.org/2025/A01_2025-Broken_Access_Control/'
+	},
+	{
+		source: 'OWASP',
+		title: 'A07:2025 Authentication Failures',
+		url: 'https://top10.owasp.org/2025/A07_2025-Authentication_Failures/'
+	},
+	{
+		source: 'OWASP',
+		title: 'A10:2025 Mishandling of Exceptional Conditions',
+		url: 'https://top10.owasp.org/2025/A10_2025-Mishandling_of_Exceptional_Conditions/'
 	},
 	{
 		source: 'MITRE',

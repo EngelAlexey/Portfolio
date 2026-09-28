@@ -1,0 +1,284 @@
+// Pruebas de seguridad: cada una envía la petición de ataque y espera la respuesta segura.
+// Arrancan lab.mjs como proceso aparte; los puertos 3000 y 4001 tienen que estar libres.
+import { describe, test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import jwt from 'jsonwebtoken';
+
+const RAIZ = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const B = 'http://127.0.0.1:3000';
+const ADMIN_PASSWORD = crypto.randomBytes(18).toString('base64url');
+const JWT_SECRET = crypto.randomBytes(32).toString('base64url');
+
+function entorno(cambios) {
+  const env = { ...process.env, ADMIN_PASSWORD, JWT_SECRET, ...cambios };
+  for (const [k, v] of Object.entries(env)) if (v === undefined) delete env[k];
+  return env;
+}
+
+// Arranca la aplicación y resuelve con { proceso, arrancada, codigo }.
+function arrancar(env, esperaMs = 5000) {
+  return new Promise((resolve) => {
+    const proceso = spawn(process.execPath, ['lab.mjs'], { cwd: RAIZ, env });
+    let fin = false;
+    const terminar = (valor) => {
+      if (fin) return;
+      fin = true;
+      clearTimeout(reloj);
+      resolve({ proceso, ...valor });
+    };
+    const reloj = setTimeout(() => terminar({ arrancada: false, codigo: null }), esperaMs);
+    proceso.stdout.on('data', (d) => {
+      if (String(d).includes('lab en')) terminar({ arrancada: true, codigo: null });
+    });
+    proceso.on('exit', (codigo) => terminar({ arrancada: false, codigo }));
+  });
+}
+
+async function parar(proceso) {
+  if (proceso.exitCode !== null || proceso.signalCode !== null) return;
+  const salida = new Promise((r) => proceso.once('exit', r));
+  proceso.kill();
+  await salida;
+}
+
+async function entrar(nombre, clave, { ruta = '/f/login', cookie } = {}) {
+  const r = await fetch(B + ruta, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}) },
+    body: JSON.stringify({ nombre, clave })
+  });
+  const setCookie = r.headers.get('set-cookie') ?? '';
+  const sid = /sid=([^;]+)/.exec(setCookie)?.[1];
+  const cuerpo = await r.json().catch(() => ({}));
+  return { r, setCookie, cookie: sid && `sid=${sid}`, csrf: cuerpo.csrf };
+}
+
+const get = (ruta, opciones = {}) => fetch(B + ruta, opciones);
+
+// ---- arranque (sin servidor principal en marcha) ----
+
+describe('arranque', () => {
+  test('cuenta de fábrica: no arranca sin ADMIN_PASSWORD', async () => {
+    const { proceso, arrancada, codigo } = await arrancar(entorno({ ADMIN_PASSWORD: undefined }));
+    await parar(proceso);
+    assert.equal(arrancada, false, 'la aplicación arrancó sin ADMIN_PASSWORD');
+    assert.notEqual(codigo, 0);
+  });
+
+  test('JWT: no arranca sin JWT_SECRET o con uno de menos de 32 bytes', async () => {
+    for (const valor of [undefined, 'secret']) {
+      const { proceso, arrancada } = await arrancar(entorno({ JWT_SECRET: valor }));
+      await parar(proceso);
+      assert.equal(arrancada, false, `la aplicación arrancó con JWT_SECRET=${valor === undefined ? '(sin definir)' : '(corto)'}`);
+    }
+  });
+});
+
+// ---- rutas ----
+
+describe('rutas', () => {
+  let servidor;
+  let ana;
+
+  before(async () => {
+    const { proceso, arrancada } = await arrancar(entorno({}));
+    servidor = proceso;
+    assert.ok(arrancada, 'el servidor de pruebas no arrancó');
+    ana = await entrar('ana', 'ana-clave-larga');
+    assert.equal(ana.r.status, 200);
+  });
+
+  after(async () => {
+    if (servidor) await parar(servidor);
+  });
+
+  test('inyección SQL: /v/buscar no devuelve facturas de otro usuario', async () => {
+    const r = await get(`/v/buscar?q=${encodeURIComponent("' OR 1=1 --")}`, { headers: { cookie: ana.cookie } });
+    const filas = r.ok ? await r.json() : [];
+    assert.ok(!filas.some((f) => f.id === 2 || f.id === 3), 'aparecen facturas de luis');
+  });
+
+  test('inyección SQL: ordenar solo acepta columnas de la lista', async () => {
+    for (const ruta of ['/v/ordenar', '/f/ordenar']) {
+      const r = await get(`${ruta}?campo=${encodeURIComponent('(SELECT clave FROM usuarios LIMIT 1)')}`, {
+        headers: { cookie: ana.cookie }
+      });
+      assert.equal(r.status, 400, ruta);
+    }
+  });
+
+  test('ordenar: pide sesión y solo muestra las facturas propias', async () => {
+    for (const ruta of ['/v/ordenar', '/f/ordenar']) {
+      assert.equal((await get(`${ruta}?campo=id`)).status, 401, `${ruta} sin sesión`);
+      const r = await get(`${ruta}?campo=id`, { headers: { cookie: ana.cookie } });
+      assert.equal(r.status, 200);
+      assert.deepEqual((await r.json()).map((f) => f.id), [1], ruta);
+    }
+  });
+
+  test('IDOR: una factura ajena da el mismo 404 que una inexistente', async () => {
+    const ajena = await get('/v/facturas/2', { headers: { cookie: ana.cookie } });
+    const inexistente = await get('/v/facturas/999', { headers: { cookie: ana.cookie } });
+    assert.equal(ajena.status, 404);
+    assert.equal(inexistente.status, 404);
+    assert.equal(await ajena.text(), await inexistente.text());
+    assert.equal((await get('/v/facturas/1', { headers: { cookie: ana.cookie } })).status, 200);
+  });
+
+  test('órdenes del sistema: /v/dns no ejecuta lo que va detrás de & o ;', async () => {
+    for (const host of ['x & whoami', 'x; id', 'x | whoami']) {
+      const r = await get(`/v/dns?host=${encodeURIComponent(host)}`);
+      assert.equal(r.status, 400, host);
+    }
+    const r = await get('/v/dns?host=localhost');
+    assert.equal(r.status, 200);
+    assert.match(await r.text(), /127\.0\.0\.1|::1/);
+  });
+
+  test('cuenta de fábrica: admin/admin no entra', async () => {
+    const { r } = await entrar('admin', 'admin', { ruta: '/v/login' });
+    assert.equal(r.status, 401);
+  });
+
+  test('JWT: se rechazan tokens sin firma, con secreto débil o sin emisor', async () => {
+    const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+    const tokens = {
+      sinFirma: `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ sub: 'admin', rol: 'admin' })}.`,
+      secretoDebil: jwt.sign({ sub: 'admin', rol: 'admin' }, 'secret'),
+      sinEmisor: jwt.sign({ sub: 'admin', rol: 'admin' }, JWT_SECRET, { expiresIn: '15m' })
+    };
+    for (const ruta of ['/v/perfil', '/v2/perfil', '/f/perfil']) {
+      for (const [nombre, token] of Object.entries(tokens)) {
+        const r = await get(ruta, { headers: { authorization: `Bearer ${token}` } });
+        assert.equal(r.status, 401, `${ruta} ${nombre}`);
+        assert.doesNotMatch(await r.text(), /signature|malformed|jwt/i, `${ruta} ${nombre}: detalle del error`);
+      }
+    }
+  });
+
+  test('JWT: /f/token pide sesión y el token vale en todas las rutas de perfil', async () => {
+    assert.equal((await get('/f/token')).status, 401);
+    const token = await (await get('/f/token', { headers: { cookie: ana.cookie } })).text();
+    const datos = jwt.decode(token);
+    assert.equal(datos.sub, 'ana');
+    assert.ok(datos.exp, 'el token no lleva exp');
+    for (const ruta of ['/v/perfil', '/v2/perfil', '/f/perfil']) {
+      const r = await get(ruta, { headers: { authorization: `Bearer ${token}` } });
+      assert.equal(r.status, 200, ruta);
+    }
+  });
+
+  test('SSRF: no se descargan direcciones internas', async () => {
+    const urls = ['http://127.0.0.1:4001/admin', 'http://2130706433:4001/admin', 'http://[::ffff:127.0.0.1]:4001/admin'];
+    for (const ruta of ['/v/vista-previa', '/v2/vista-previa', '/f/vista-previa']) {
+      for (const url of urls) {
+        const r = await get(`${ruta}?url=${encodeURIComponent(url)}`);
+        const cuerpo = await r.text();
+        assert.doesNotMatch(cuerpo, /NO-DEBERIA-SALIR/, `${ruta} ${url}`);
+        assert.equal(r.status, 400, `${ruta} ${url}`);
+      }
+    }
+  });
+
+  test('recorrido de rutas: /v/docs y /f/docs no salen de docs/', async () => {
+    for (const ruta of ['/v/docs', '/f/docs']) {
+      const r = await get(`${ruta}?nombre=${encodeURIComponent('../package.json')}`);
+      assert.notEqual(r.status, 200, ruta);
+      assert.doesNotMatch(await r.text(), /"ataques"/, ruta);
+      const bueno = await get(`${ruta}?nombre=manual.txt`);
+      assert.equal(bueno.status, 200, `${ruta} manual.txt`);
+      assert.match(await bueno.text(), /Manual de uso/);
+    }
+  });
+
+  test('XSS: /v/saludo escapa el nombre', async () => {
+    const r = await get(`/v/saludo?nombre=${encodeURIComponent('<img src=x onerror=alert(1)>')}`);
+    const cuerpo = await r.text();
+    assert.doesNotMatch(cuerpo, /<img/);
+    assert.match(cuerpo, /&lt;img/);
+  });
+
+  test('CSRF: /v/email rechaza peticiones de otro sitio y sin token', async () => {
+    const cuerpo = JSON.stringify({ email: 'x@ataque.test' });
+    const base = { method: 'POST', body: cuerpo };
+    const cross = await fetch(`${B}/v/email`, {
+      ...base,
+      headers: { 'content-type': 'application/json', cookie: ana.cookie, 'sec-fetch-site': 'cross-site', 'x-csrf-token': ana.csrf }
+    });
+    assert.equal(cross.status, 403, 'cross-site');
+    const origen = await fetch(`${B}/v/email`, {
+      ...base,
+      headers: { 'content-type': 'application/json', cookie: ana.cookie, origin: 'https://ataque.test', 'x-csrf-token': ana.csrf }
+    });
+    assert.equal(origen.status, 403, 'Origin ajeno');
+    const sinToken = await fetch(`${B}/v/email`, {
+      ...base,
+      headers: { 'content-type': 'application/json', cookie: ana.cookie, 'sec-fetch-site': 'same-origin' }
+    });
+    assert.equal(sinToken.status, 403, 'sin token');
+    const bueno = await fetch(`${B}/v/email`, {
+      ...base,
+      headers: { 'content-type': 'application/json', cookie: ana.cookie, 'sec-fetch-site': 'same-origin', 'x-csrf-token': ana.csrf }
+    });
+    assert.equal(bueno.status, 200, 'petición legítima');
+  });
+
+  test('sesión: la cookie de /v/login lleva HttpOnly, Secure, SameSite y caducidad', async () => {
+    const { r, setCookie } = await entrar('luis', 'luis-clave-larga', { ruta: '/v/login' });
+    assert.equal(r.status, 200);
+    assert.match(setCookie, /HttpOnly/i);
+    assert.match(setCookie, /Secure/i);
+    assert.match(setCookie, /SameSite=(Lax|Strict)/i);
+    assert.match(setCookie, /Max-Age=\d+/i);
+  });
+
+  test('sesión: al iniciar sesión el identificador anterior deja de valer', async () => {
+    const primera = await entrar('luis', 'luis-clave-larga');
+    const segunda = await entrar('luis', 'luis-clave-larga', { cookie: primera.cookie });
+    assert.notEqual(primera.cookie, segunda.cookie);
+    assert.equal((await get('/f/facturas/2', { headers: { cookie: primera.cookie } })).status, 401);
+    assert.equal((await get('/f/facturas/2', { headers: { cookie: segunda.cookie } })).status, 200);
+  });
+
+  test('errores: las respuestas no incluyen el mensaje ni la pila', async () => {
+    const respuestas = [
+      await get('/v/ordenar?campo=nope', { headers: { cookie: ana.cookie } }),
+      await get('/v/vista-previa?url=nope'),
+      await fetch(`${B}/f/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{roto' })
+    ];
+    for (const r of respuestas) {
+      const cuerpo = await r.text();
+      assert.doesNotMatch(cuerpo, /no such column|stack|lab\.mjs|node_modules|SyntaxError|TypeError|Failed to parse/i, cuerpo);
+    }
+  });
+
+  // Estas dos van al final: bloquean la cuenta de luis y la IP de las pruebas.
+
+  test('fuerza bruta: 20 intentos seguidos en /v/login acaban en 429 con Retry-After', async () => {
+    const codigos = [];
+    let retryAfter;
+    for (let i = 0; i < 20; i++) {
+      const { r } = await entrar('luis', 'mal', { ruta: '/v/login' });
+      codigos.push(r.status);
+      if (r.status === 429) retryAfter = r.headers.get('retry-after');
+    }
+    assert.ok(codigos.includes(429), `códigos: ${codigos.join(' ')}`);
+    assert.match(String(retryAfter), /^\d+$/);
+  });
+
+  test('fuerza bruta: el límite por IP salta aunque cada intento use otra cuenta', async () => {
+    let bloqueado;
+    for (let i = 0; i < 40 && !bloqueado; i++) {
+      const { r } = await entrar(`cuenta-${i}`, 'mal');
+      if (r.status === 429) bloqueado = r;
+    }
+    assert.ok(bloqueado, 'ningún 429 tras 40 cuentas distintas');
+    assert.match(String(bloqueado.headers.get('retry-after')), /^\d+$/);
+    // Con la IP bloqueada tampoco entra una cuenta con la clave correcta.
+    assert.equal((await entrar('ana', 'ana-clave-larga')).r.status, 429);
+  });
+});
