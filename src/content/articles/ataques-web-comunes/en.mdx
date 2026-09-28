@@ -1,0 +1,736 @@
+---
+slug: ataques-web-comunes
+title: 'The most common web attacks and how to prevent them'
+tagline: The fourteen most frequent attacks on a web application, with the code that allows each one and its fix.
+description: 'SQL injection, XSS, CSRF, SSRF, JWT and nine more attacks: what each one does, the vulnerable code, the fix and how to check it.'
+areas: [seguridad]
+category: seguridad-web
+published: '2026-09-27'
+updated: null
+draft: true
+path: common-web-attacks
+repo: null
+related: []
+cover: null
+instagram: null
+promptTitle: Check for common attacks
+promptMinutes: [10, 20]
+---
+
+import Callout from '../../../components/Callout.astro';
+import Cite from '../../../components/Cite.astro';
+import References from '../../../components/References.astro';
+
+The OWASP Top 10:2025 ranks web application security failures using data from more than 2.8 million applications<Cite n={1} />. First place goes to broken access control, with 1,839,701 recorded occurrences<Cite n={2} />. The fourteen attacks below belong to five of the ten categories, and each one is prevented by a specific change to the code or the configuration.
+
+Each section shows the vulnerable code, the request that exploits it, the fix, and the same request against the fixed code. The measurements were taken on 27 September 2026 with Node.js 24.19.0, Express 5.2.1, jsonwebtoken 9.0.3, npm 11.17.0 and curl 8.18.0 on Ubuntu 26.04. All the code was rebuilt for the article.
+
+## 1. What the most common attacks are
+
+The table groups the attacks into four families, in the order of their OWASP Top 10:2025 categories<Cite n={1} repeat />. The last column says where the attack is covered in more depth. OWASP also describes the default account under A07 and the detailed error under A10.
+
+| Family | Attack | What it achieves | How to prevent it | More detail |
+|---|---|---|---|---|
+| Access (A01) | IDOR | Reading another user's data by changing an id | Filter by owner in the query | [Eight things](/en/blog/seven-things-to-check-in-ai-generated-code), section 2 |
+| | CSRF | Acting with the user's session from another site | `SameSite`, anti-CSRF token and `Sec-Fetch-Site` | [CORS](/en/blog/what-is-cors), section 7 |
+| | SSRF | Making the server request an internal address | Allowlist of destinations and a check on the IP | Section 5 |
+| | Path traversal | Reading files outside the intended folder with `../` | `res.sendFile` with `root` | Section 6 |
+| Install and configure (A02 and A03) | Malicious package | Running code at install time | Install scripts blocked | [npm and pnpm](/en/blog/npm-vs-pnpm-install-security) |
+| | Vulnerable version | Exploiting a flaw that is already public | `npm audit` on every change | Section 8 |
+| | Default account | Logging in with `admin`/`admin` | Refuse to start without a configured password | Section 9 |
+| | Detailed error | Learning tables, paths and versions | Generic response with an identifier | [Eight things](/en/blog/seven-things-to-check-in-ai-generated-code), section 7 |
+| Injection (A05) | SQL injection | Reading or changing the whole database | Parameterised queries | [Eight things](/en/blog/seven-things-to-check-in-ai-generated-code), section 3 |
+| | XSS | Running a script in another user's browser | Escape the output | [Eight things](/en/blog/seven-things-to-check-in-ai-generated-code), section 8 |
+| | OS commands | Running commands on the server | `execFile` without a shell, and validated input | Section 13 |
+| Accounts (A07) | Brute force | Guessing a password by trying many | Limit on failed attempts per account | [How to secure a web application](/en/blog/how-to-secure-a-web-application), section 6 |
+| | Account takeover | Logging in with passwords leaked from another site | Two-step verification | Section 15 |
+| | Session theft | Using another user's session cookie | `HttpOnly`, `Secure`, `SameSite` and expiry | Section 16 |
+
+JSON Web Tokens, covered separately in section 17, do the same job as the session cookie: a forged token is the same as a stolen session. OWASP maps improperly verified signatures (CWE-347) to a different category, A04, cryptographic failures.
+
+## 2. How to set up an environment to test them
+
+Send these requests only to an application of your own running on your machine. Sending them to someone else's system without permission can be a crime, even if the system is vulnerable.
+
+The article's lab is an Express 5 application with two routes per attack: `/v/...` is the vulnerable version and `/f/...` the fixed one. It listens on `127.0.0.1:3000`, and a second service on `127.0.0.1:4001` plays the internal service for section 5. The data is two users, ana and luis, and three invoices (`facturas`): invoice 1 belongs to ana, and invoices 2 and 3 belong to luis. The requests use ana's session, stored in `/tmp/lab-cookies`:
+
+```bash
+curl -s -c /tmp/lab-cookies -X POST http://127.0.0.1:3000/v/login -d nombre=ana -d clave=ana-clave-larga
+```
+
+## 3. What an IDOR is and how to prevent it
+
+An IDOR (insecure direct object reference) happens when the server returns a resource by its id without checking that it belongs to whoever asks for it<Cite n={3} />.
+
+```js
+app.get('/v/facturas/:id', (req, res) => {
+  if (!usuario(req)) return res.sendStatus(401);
+  const f = db.prepare('SELECT * FROM facturas WHERE id = ?').get(req.params.id);
+  return f ? res.json(f) : res.sendStatus(404);
+});
+```
+
+The route checks that there is a session, but not whose invoice it is. Ana asks for invoice 3, which belongs to luis:
+
+```bash
+$ curl -s -b /tmp/lab-cookies http://127.0.0.1:3000/v/facturas/3
+{"id":3,"duenio":2,"concepto":"Consultoría de luis","total":900}
+```
+
+The fix adds the owner to the query, so a foreign invoice and a missing one get the same response:
+
+```js
+const f = db
+  .prepare('SELECT * FROM facturas WHERE id = ? AND duenio = ?')
+  .get(req.params.id, usuario(req).id);
+```
+
+**How to check it.** The same request against `/f/facturas/3` returns `404`. Returning `404` instead of `403` avoids confirming that the invoice exists. Section 2 of [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code) covers the same case in Next.js.
+
+## 4. What CSRF is and how to prevent it
+
+In a CSRF attack (cross-site request forgery), another site makes the user's browser send a request to your application. The browser attaches the session cookie<Cite n={4} />. The application receives an authenticated request that the user never asked for.
+
+```js
+app.post('/v/email', (req, res) => {
+  if (!usuario(req)) return res.sendStatus(401);
+  res.json({ cambiado: true, email: req.body.email });
+});
+```
+
+A modern browser sends the `Sec-Fetch-Site` header, which says whether the request comes from the same origin, the same site or another site. With curl you can simulate the request that would arrive from another site:
+
+```bash
+$ curl -s -b /tmp/lab-cookies -H 'Sec-Fetch-Site: cross-site' \
+    -X POST http://127.0.0.1:3000/v/email -d email=atacante@ejemplo.test
+{"cambiado":true,"email":"atacante@ejemplo.test"}
+```
+
+The OWASP guide asks for an anti-CSRF token on routes that change data and treats `SameSite` as an additional defence. For modern browsers it accepts `Sec-Fetch-Site` as the main signal, always with a check on the `Origin` header as a fallback<Cite n={5} />. The fixed route rejects requests from another site, falls back to `Origin` when `Sec-Fetch-Site` is missing, and requires the token:
+
+```js
+const ORIGEN = 'http://127.0.0.1:3000';
+
+app.post('/f/email', (req, res) => {
+  const u = usuario(req);
+  if (!u) return res.sendStatus(401);
+  const sitio = req.get('Sec-Fetch-Site');
+  const origen = req.get('Origin');
+  if (sitio ? sitio !== 'same-origin' : origen && origen !== ORIGEN) {
+    return res.status(403).json({ error: 'origen no permitido' });
+  }
+  const recibido = Buffer.from(String(req.get('X-CSRF-Token') ?? ''));
+  const esperado = Buffer.from(u.csrf ?? '');
+  if (!u.csrf || recibido.length !== esperado.length || !crypto.timingSafeEqual(recibido, esperado)) {
+    return res.status(403).json({ error: 'token CSRF' });
+  }
+  res.json({ cambiado: true, email: req.body.email });
+});
+```
+
+The token is generated at login and the page sends it in the `X-CSRF-Token` header. Another site cannot read it, because the same-origin policy stops it from reading your API's responses. The comparison requires both values to exist: without that condition, a session with no token and a request with no header would match, because `undefined !== undefined` is false. `timingSafeEqual` compares in a time that does not depend on how many characters match.
+
+**How to check it.** The same request against `/f/email` returns `403` with `{"error":"origen no permitido"}`. With no `Sec-Fetch-Site` and no token, it returns `403` with `{"error":"token CSRF"}`. In the browser, the "CORS does not stop CSRF" case in the simulator in [What CORS is](/en/blog/what-is-cors) shows the attack from another page.
+
+## 5. What an SSRF attack is and how to prevent it
+
+An SSRF (server-side request forgery) happens when the server downloads a URL chosen by the user. The attacker asks it for an address that only the server can reach<Cite n={6} />. The typical case is a link preview:
+
+```js
+app.get('/v/vista-previa', async (req, res) => {
+  const r = await fetch(req.query.url);
+  res.type('text').send((await r.text()).slice(0, 300));
+});
+```
+
+The lab's internal service does not accept connections from outside the machine, but the server can reach it:
+
+```bash
+$ curl -s -G http://127.0.0.1:3000/v/vista-previa --data-urlencode 'url=http://127.0.0.1:4001/admin'
+servicio interno: clave-de-base-de-datos=NO-DEBERIA-SALIR
+```
+
+On AWS, the usual target is the instance metadata service at `169.254.169.254`. By default it accepts IMDSv1, which answers a `GET` with no token. IMDSv2 requires a token obtained with `PUT`, and it only protects you if it is configured as required<Cite n={7} />.
+
+Blocking addresses by their text is not enough. This version rejects URLs that contain `localhost`, `127.0.0.1` or `169.254.`:
+
+```bash
+$ curl -s -G http://127.0.0.1:3000/v2/vista-previa --data-urlencode 'url=http://127.0.0.1:4001/admin'
+bloqueado
+$ curl -s -G http://127.0.0.1:3000/v2/vista-previa --data-urlencode 'url=http://2130706433:4001/admin'
+servicio interno: clave-de-base-de-datos=NO-DEBERIA-SALIR
+```
+
+`2130706433` is `127.0.0.1` written as a single decimal number, and Node's URL parser accepts it. The fix OWASP proposes combines an allowlist of destinations, a check on every IP address behind the name, and not following redirects<Cite n={8} />.
+
+Checking the IP with `dns.lookup` and then calling `fetch` is not enough, because `fetch` resolves the name again. A DNS server the attacker controls can answer with a different address the second time. OWASP calls this attack DNS pinning<Cite n={8} repeat />. The fix checks the addresses in the same lookup the connection uses. Node's `BlockList` holds the private, loopback, link-local and multicast ranges<Cite n={9} />:
+
+```js
+const BLOQUEADAS = new BlockList();
+for (const [red, bits] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8],
+  ['169.254.0.0', 16], ['172.16.0.0', 12], ['192.168.0.0', 16], ['224.0.0.0', 4], ['240.0.0.0', 4]]) {
+  BLOQUEADAS.addSubnet(red, bits, 'ipv4');
+}
+// Las reglas IPv4 cubren también las direcciones IPv4 escritas en IPv6 (::ffff:127.0.0.1).
+for (const [red, bits] of [['::', 128], ['::1', 128], ['64:ff9b::', 96], ['fc00::', 7], ['fe80::', 10], ['ff00::', 8]]) {
+  BLOQUEADAS.addSubnet(red, bits, 'ipv6');
+}
+const privada = (ip) => BLOQUEADAS.check(ip, isIP(ip) === 6 ? 'ipv6' : 'ipv4');
+
+// Comprueba todas las direcciones resueltas, y la conexión usa esas mismas.
+function busquedaSegura(host, opciones, cb) {
+  dns.lookup(host, { all: true }, (err, dirs) => {
+    if (err) return cb(err);
+    if (dirs.some((d) => privada(d.address))) return cb(new Error('destino no permitido'));
+    if (opciones.all) return cb(null, dirs);
+    cb(null, dirs[0].address, dirs[0].family);
+  });
+}
+```
+
+The route uses `https.get` instead of `fetch` because it accepts a custom `lookup` function<Cite n={10} />:
+
+```js
+const PERMITIDOS = new Set(['example.com', 'www.iana.org']);
+
+app.get('/f/vista-previa', (req, res) => {
+  let url;
+  try {
+    url = new URL(String(req.query.url));
+  } catch {
+    return res.status(400).send('url no válida');
+  }
+  if (url.protocol !== 'https:' || !PERMITIDOS.has(url.hostname)) {
+    return res.status(400).send('destino no permitido');
+  }
+  const peticion = https.get(url, { lookup: busquedaSegura, timeout: 5000 }, (r) => {
+    if (r.statusCode >= 300 && r.statusCode < 400) {
+      r.resume();
+      return res.status(502).send('redirección no seguida');
+    }
+    let cuerpo = '';
+    r.setEncoding('utf8');
+    r.on('data', (trozo) => (cuerpo += trozo));
+    r.on('end', () => res.type('text').send(cuerpo.slice(0, 300)));
+  });
+  peticion.on('timeout', () => peticion.destroy(new Error('tiempo agotado')));
+  peticion.on('error', (err) => {
+    if (err.message === 'destino no permitido') return res.status(400).send(err.message);
+    res.status(502).send('no se pudo descargar');
+  });
+});
+```
+
+`https.get` does not follow redirects, so an allowed destination cannot send the request on to an internal address.
+
+**How to check it.** `url=http://2130706433:4001/admin` against `/f/vista-previa` returns `400` with `destino no permitido`, and `url=https://example.com/` returns the page. To test the IP check, add `localhost` to `PERMITIDOS` and request `https://localhost:4001/admin`: the answer is `400` before any connection opens. `https://www.iana.org/domains/example` redirects, and the route answers `502` with `redirección no seguida`.
+
+## 6. What path traversal is and how to prevent it
+
+Path traversal uses `../` in a file name to leave the folder the server meant to serve<Cite n={11} />.
+
+```js
+app.get('/v/docs', async (req, res) => {
+  res.type('text').send(await readFile(path.join(DOCS, req.query.nombre), 'utf8'));
+});
+```
+
+`path.join` resolves `../` instead of rejecting it, so the name `../.env` points at the application's environment file:
+
+```bash
+$ curl -s -G http://127.0.0.1:3000/v/docs --data-urlencode 'nombre=../.env'
+DB_PASSWORD=super-secreta
+```
+
+In Express, `res.sendFile` with the `root` option answers `403` to paths that leave that folder<Cite n={12} />:
+
+```js
+app.get('/f/docs', (req, res) => {
+  res.sendFile(String(req.query.nombre), { root: DOCS, dotfiles: 'deny' }, (err) => {
+    if (err) res.sendStatus(err.status ?? 404);
+  });
+});
+```
+
+**How to check it.** `nombre=../.env` against `/f/docs` returns `403`, and `nombre=manual.txt` returns the file. If the code does not use Express, resolve the path with `path.resolve` and check that it starts with the allowed folder followed by `path.sep`.
+
+## 7. What a malicious package is and how to prevent it
+
+A malicious package is a published dependency that contains harmful code, which can run in an install script such as `postinstall`<Cite n={13} />. Under A03, OWASP cites a 2025 worm that spread through a script of that kind<Cite n={14} />. It runs during `npm install`, before the application starts, with the permissions of whoever installs it.
+
+The defence has three parts. Run install scripts only for packages you approve one by one, install from the lockfile with `npm ci`, and verify the registry signatures:
+
+```bash
+$ npm audit signatures
+50 packages have verified registry signatures
+
+1 package has a verified attestation
+```
+
+Signatures confirm that the package came from the registry, but they do not catch a malicious version published with its author's stolen token. Waiting a few days before installing a newly published version helps against that case.
+
+**How to check it.** [npm vs pnpm 11: install script security](/en/blog/npm-vs-pnpm-install-security) measures each setting version by version. It also explains how to approve the scripts of a specific package, and how to set the waiting period in its section 5.
+
+## 8. What a vulnerable dependency is and how to prevent it
+
+A vulnerable dependency is a version with a flaw that is already public, which anyone can look up in an advisory database<Cite n={15} />. The flaw can be published after the version is installed, without the project changing anything.
+
+`npm audit` sends the list of installed dependencies to the registry and gets back the known advisories<Cite n={16} />. In a project with Express 4.17.1 it gives this result:
+
+```bash
+$ npm audit
+...
+qs  <=6.15.3
+Severity: high
+qs vulnerable to Prototype Pollution - https://github.com/advisories/GHSA-hrpp-h998-j3pp
+...
+7 vulnerabilities (3 low, 4 high)
+```
+
+The command exits with code `1` when it finds advisories, and `--audit-level` sets the minimum severity that produces that code<Cite n={16} repeat />. Add `npm audit --audit-level=high` to continuous integration so that a high or critical advisory stops the change.
+
+**How to check it.** Run `npm audit` and `echo $?`. With a clean tree, the output is `found 0 vulnerabilities` and the code is `0`.
+
+## 9. What a default account is and how to prevent it
+
+A default account is a user with a known password that the application creates by itself, such as `admin`/`admin`<Cite n={17} />. It appears when the code falls back to a default value if the environment variable is missing:
+
+```js
+const ADMIN_PASS = process.env.ADMIN_PASSWORD ?? 'admin';
+```
+
+```bash
+$ curl -s -X POST http://127.0.0.1:3000/v/login -d nombre=admin -d clave=admin
+{"ok":true}
+```
+
+The fix makes the application refuse to start without the variable, instead of starting with a value that anyone who reads the code knows:
+
+```js
+const ADMIN_PASS = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASS || ADMIN_PASS.length < 16) {
+  throw new Error('Defina ADMIN_PASSWORD con 16 caracteres o más');
+}
+```
+
+**How to check it.** Start the application without `ADMIN_PASSWORD`: it must exit with the error. Also search the repository for test passwords in seed data and in `docker-compose.yml`, which reach production the same way.
+
+## 10. What a detailed error is and how to prevent it
+
+A detailed error returns the internal message, the stack trace or the failed query to the client<Cite n={18} />. It tells the attacker which database is in use, which tables exist and where the code lives on disk.
+
+```js
+app.get('/v/ordenar', (req, res) => {
+  try {
+    res.json(db.prepare(`SELECT id, total FROM facturas ORDER BY ${req.query.campo}`).all());
+  } catch (err) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+```
+
+```bash
+$ curl -s -G http://127.0.0.1:3000/v/ordenar --data-urlencode 'campo=nada'
+{"error":"no such column: nada","stack":"Error: no such column: nada\n    at file:///.../lab.mjs:110:17\n ..."}
+```
+
+The response also confirms that the parameter reaches the query unfiltered, which is the lead for the attack in section 11. The fix validates the field against a list and, if something fails, logs the detail on the server and returns an identifier:
+
+```js
+const CAMPOS = new Set(['id', 'total']);
+// ...
+if (!CAMPOS.has(campo)) return res.status(400).json({ error: 'campo no válido' });
+// ...
+} catch (err) {
+  const id = crypto.randomUUID();
+  console.error(id, err);
+  res.status(500).json({ error: 'Error interno', id });
+}
+```
+
+**How to check it.** `campo=nada` against `/f/ordenar` returns `400` with `{"error":"campo no válido"}`. Section 7 of [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code) covers the same case in Next.js.
+
+## 11. What SQL injection is and how to prevent it
+
+SQL injection happens when text sent by the user is concatenated into a query. The database then reads it as part of the SQL<Cite n={19} />.
+
+```js
+const sql = `SELECT id, concepto, total FROM facturas
+  WHERE duenio = ${u.id} AND concepto LIKE '%${req.query.q}%'`;
+```
+
+With `' OR 1=1 --`, the quote closes the string, `OR 1=1` makes the condition true and `--` turns the rest into a comment. Ana also receives luis's invoices:
+
+```bash
+$ curl -s -b /tmp/lab-cookies -G http://127.0.0.1:3000/v/buscar --data-urlencode "q=' OR 1=1 --"
+[{"id":1,"concepto":"Hosting de ana","total":120},{"id":2,"concepto":"Dominio de luis","total":15},{"id":3,"concepto":"Consultoría de luis","total":900}]
+```
+
+A parameterised query sends the text as a value, separate from the SQL, so the database never reads it as code:
+
+```js
+db.prepare("SELECT id, concepto, total FROM facturas WHERE duenio = ? AND concepto LIKE '%' || ? || '%'")
+  .all(u.id, q);
+```
+
+**How to check it.** The same request against `/f/buscar` returns `[]`, because no description contains that text. Section 3 of [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code) covers column names, which cannot be parameterised.
+
+## 12. What an XSS attack is and how to prevent it
+
+XSS (cross-site scripting) happens when the page includes user text as HTML and the browser runs the script inside it<Cite n={20} />. The script runs with the session of whoever views the page.
+
+```js
+app.get('/v/saludo', (req, res) => {
+  res.send(`<p>Hola, ${req.query.nombre}</p>`);
+});
+```
+
+```bash
+$ curl -s -G http://127.0.0.1:3000/v/saludo --data-urlencode 'nombre=<img src=x onerror=alert(document.cookie)>'
+<p>Hola, <img src=x onerror=alert(document.cookie)></p>
+```
+
+The browser tries to load the image `x`, fails and runs the `onerror` handler. The fix escapes the five characters that have meaning in HTML before inserting the text:
+
+```js
+const escapar = (s) =>
+  String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+```
+
+**How to check it.** The same request against `/f/saludo` returns `&lt;img src=x onerror=alert(document.cookie)&gt;`, which the browser shows as text. Templates such as React, Astro or EJS with `<%= %>` escape by default; the risk comes back with `dangerouslySetInnerHTML`, `set:html` or `innerHTML`. Section 8 of [Eight things to check](/en/blog/seven-things-to-check-in-ai-generated-code) covers HTML that users are allowed to write.
+
+## 13. What command injection is and how to prevent it
+
+Command injection happens when user text is concatenated into a command that the system shell runs<Cite n={21} />. In Node.js, `exec` passes the whole command to a shell, `/bin/sh` on Linux, which interprets `;`, `&&`, `|` and `$()`<Cite n={22} />.
+
+```js
+app.get('/v/dns', (req, res) => {
+  exec(`getent hosts ${req.query.host}`, (err, stdout, stderr) => {
+    res.type('text').send(stdout + stderr);
+  });
+});
+```
+
+```bash
+$ curl -s -G http://127.0.0.1:3000/v/dns --data-urlencode 'host=localhost; id'
+::1             localhost
+uid=1000(alexh) gid=1000(alexh) groups=1000(alexh),4(adm),24(cdrom),27(sudo),...
+```
+
+The shell ran `getent` and then `id`, as the user of the Node process. `execFile` runs the program directly, without a shell, and passes each argument separately. The fix combines it with validation of the host name:
+
+```js
+const HOST = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i;
+
+app.get('/f/dns', (req, res) => {
+  const host = String(req.query.host ?? '');
+  if (!HOST.test(host)) return res.status(400).type('text').send('host no válido');
+  execFile('getent', ['hosts', host], (err, stdout) => res.type('text').send(stdout));
+});
+```
+
+**How to check it.** `host=localhost; id` against `/f/dns` returns `400` with `host no válido`, and `host=localhost` still works. If the platform has a function that does the same job, such as `dns.lookup` in this case, use it and run no program at all.
+
+## 14. What a brute-force attack is and how to prevent it
+
+A brute-force attack tries passwords against an account until one works<Cite n={23} />. Without a limit, the server answers every attempt:
+
+```bash
+$ for i in $(seq 1 20); do curl -s -o /dev/null -w '%{http_code} ' \
+    -X POST http://127.0.0.1:3000/v/login -d nombre=luis -d clave=intento$i; done
+401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401 401
+```
+
+The fixed route counts failures per account for 15 minutes. After the fifth failure it answers `429 Too Many Requests` with a `Retry-After` header:
+
+```bash
+$ for i in $(seq 1 8); do curl -s -o /dev/null -w '%{http_code} ' \
+    -X POST http://127.0.0.1:3000/f/login -d nombre=luis -d clave=intento$i; done
+401 401 401 401 401 429 429 429
+```
+
+While the lock lasts, the correct password also gets `429`. That stops the attacker from learning when a guess is right, but it lets anyone lock someone else's account with five attempts. OWASP ties the counter to the account rather than the IP address, and considers two-step verification the best defence against the majority of password attacks<Cite n={24} />. NIST sets an upper bound of 100 consecutive failed attempts per account<Cite n={25} />. Section 6 of [How to secure a web application](/en/blog/how-to-secure-a-web-application) explains the full code and password hashing.
+
+**How to check it.** Repeat the loop against `/f/login` and check that the sixth attempt returns `429` with the `Retry-After` header, which gives the seconds left until the lock ends.
+
+## 15. What account takeover is and how to prevent it
+
+In credential stuffing, the attacker tries username and password pairs leaked from another site<Cite n={26} />. It works against anyone who reuses the same password across services. Each pair is tried only once, so the per-account limit in section 14 never triggers. The tools also spread requests across many IP addresses so that a per-IP limit does not stop them either<Cite n={27} />.
+
+OWASP proposes two-step verification and checking that new passwords do not appear in earlier breaches, for example with Pwned Passwords<Cite n={27} repeat />. Its API allows that check without sending the password. The application sends the first five characters of its SHA-1 hash and compares the rest locally<Cite n={28} />.
+
+```bash
+$ printf 'password' | sha1sum | cut -c1-5
+5baa6
+$ curl -s https://api.pwnedpasswords.com/range/5baa6 | grep -i 1E4C9B93F3F0682250B6CF8331B7EE68FD8
+1E4C9B93F3F0682250B6CF8331B7EE68FD8:52372427
+```
+
+The number after the colon is how many times that password appears in the breaches in the database. On 27 September 2026 it was more than 52 million.
+
+**How to check it.** Try to sign up with `password`: the application must reject it. Log in with an account that has two-step verification turned on and check that the password alone is not enough.
+
+## 16. What session theft is and how to prevent it
+
+Session theft means obtaining another user's session identifier and sending it as your own. One route is an XSS that reads `document.cookie`, like the one in section 12. The cookie from the vulnerable login has no attributes:
+
+```bash
+$ curl -s -i -X POST http://127.0.0.1:3000/v/login -d nombre=ana -d clave=ana-clave-larga | grep -i set-cookie
+Set-Cookie: sid=2e0e57499ec584bb0c4ac596c2efdc0b; Path=/
+```
+
+The fix adds the attributes that limit who can read and send the cookie. MITRE lists a cookie without `HttpOnly` and a session that never expires as two separate weaknesses<Cite n={29} /><Cite n={30} />:
+
+```js
+res.cookie('sid', sid, { httpOnly: true, secure: true, sameSite: 'lax', maxAge: 2 * 60 * 60 * 1000 });
+```
+
+- `HttpOnly` stops JavaScript from reading the cookie, so an XSS cannot copy it.
+- `Secure` makes the browser send it only over HTTPS.
+- `SameSite=Lax` keeps it out of `POST` requests that come from another site.
+- `Max-Age` tells the browser when to delete the cookie. A stolen cookie keeps working until the server expires the session, so expiry is also enforced on the server.
+
+**How to check it.** The header from the fixed login is `Set-Cookie: sid=…; Max-Age=7200; Path=/; Expires=…; HttpOnly; Secure; SameSite=Lax`. Section 5 of [How to secure a web application](/en/blog/how-to-secure-a-web-application) explains how to renew the identifier and expire the session on the server.
+
+## 17. What a JWT is and how to stop it being forged
+
+A JWT (JSON Web Token) is a token with three parts separated by dots: a header, the data and a signature. The first two are Base64url-encoded, not encrypted<Cite n={31} />, so anyone who holds the token can read them:
+
+```bash
+$ curl -s http://127.0.0.1:3000/f/token | cut -d. -f2 | base64 -d
+{"sub":"ana","rol":"usuario","iat":1790558539,"exp":1790559439,"aud":"app-web","iss":"https://api.ejemplo.test"}
+```
+
+Do not put anything in a JWT that the user must not see. The signature only guarantees that nobody changed the data, and only if the server checks it. The lab measures three mistakes with two hand-made tokens, both carrying `"rol":"admin"`:
+
+```bash
+# Token sin firma, con "alg":"none"
+NONE=$(node -e "const b=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
+  console.log(b({alg:'none',typ:'JWT'})+'.'+b({sub:'ana',rol:'admin'})+'.')")
+# Token firmado con el secreto «secret»
+DEBIL=$(node -e "console.log(require('jsonwebtoken').sign({sub:'ana',rol:'admin'},'secret'))")
+```
+
+**Reading the token without checking the signature.** `jwt.decode` returns the data without verifying anything. The `NONE` token gets through:
+
+```bash
+$ curl -s -H "Authorization: Bearer $NONE" http://127.0.0.1:3000/v/perfil
+{"hola":"ana","rol":"admin"}
+```
+
+With `jwt.verify`, jsonwebtoken 9.0.3 rejects that same token with `{"error":"jwt signature is required"}`. Since version 9.0.0, `verify` only accepts unsigned tokens if `none` is listed in the `algorithms` option<Cite n={32} />. RFC 8725 requires libraries to let the caller fix the accepted algorithms and to use no others<Cite n={33} />.
+
+**Signing with a weak secret.** If the server uses `secret`, the `DEBIL` token passes verification:
+
+```bash
+$ curl -s -H "Authorization: Bearer $DEBIL" http://127.0.0.1:3000/v2/perfil
+{"hola":"ana","rol":"admin"}
+```
+
+According to RFC 8725, a password a person can remember must not be used as an HMAC key, because it can be found offline by brute force or with a dictionary<Cite n={33} repeat />. The jsonwebtoken 9.0.3 library does not check the length of the secret: the example signed with `secret` without any warning. Generate the secret from 32 random bytes, for example with `openssl rand -base64 32`, and keep it in an environment variable.
+
+**Not limiting validity.** `exp` is the time on or after which the token must not be accepted<Cite n={31} repeat />. A token without `exp` works forever if it leaks. The fix sets the algorithm, the issuer, the audience and the maximum age:
+
+```js
+const datos = jwt.verify(token, process.env.JWT_SECRET, {
+  algorithms: ['HS256'],
+  issuer: 'https://api.ejemplo.test',
+  audience: 'app-web',
+  maxAge: '15m'
+});
+```
+
+**How to check it.** The token signed with `secret` against `/f/perfil` returns `{"error":"invalid signature"}`, and a token issued by `/f/token` returns `{"hola":"ana","rol":"usuario"}`. Search the code for `jwt.decode`: no access decision should depend on its result.
+
+## 18. How to check your project with a prompt
+
+The prompt behind the **Copy prompt** button asks a coding agent to look for these fourteen attacks and the JWT mistakes in your project. First it surveys the project without changing anything. Then it delivers a report with each finding as `file:line`, waits for your confirmation, and fixes each flaw with a test that fails first and then passes. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.
+
+In a demonstration run on the article's lab, the agent took 3 minutes to reach phase 3, with 13 confirmed flaws and 1 possible one. After confirmation, it took 10 more minutes to write 17 tests, see them fail, fix 12 flaws and see 16 of the tests pass. It left two items pending: two-step verification, which is a decision for the project, and the `.npmrc` file, which the session did not allow it to write and whose test still fails.
+
+<Callout kind="riesgo" title="Read the prompt before you paste it">
+	This prompt asks the agent to start the application, run commands and change code. The full text opens with **Show the full prompt**, under the button, and it is exactly what gets copied. Run it on a separate branch.
+</Callout>
+
+**How to check it.** `git diff` shows only the confirmed fixes and their tests. Each new test fails if you revert the fix it goes with.
+
+## What to fix first
+
+Start with the flaws that expose every user's data with a single request. Those are SQL injection (section 11), IDOR (section 3) and command injection (section 13). Continue with default accounts and weak secrets (sections 9 and 17), which take minutes to fix. Then add `npm audit` to continuous integration (section 8). The rest depends on whether the application downloads URLs, serves files or uses JWTs.
+
+## Where to go next
+
+[How to secure a web application](/en/blog/how-to-secure-a-web-application) organises these defences into ten layers and explains how to check each one with the application running. [Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) covers IDOR, SQL injection and XSS in Next.js.
+
+<References
+	title="References"
+	back="Back to citation"
+	items={[
+	{
+		source: 'OWASP',
+		title: 'OWASP Top 10:2025, Introduction',
+		url: 'https://top10.owasp.org/2025/0x00_2025-Introduction/'
+	},
+	{
+		source: 'OWASP',
+		title: 'A01:2025 Broken Access Control',
+		url: 'https://top10.owasp.org/2025/A01_2025-Broken_Access_Control/'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-639: Authorization Bypass Through User-Controlled Key',
+		url: 'https://cwe.mitre.org/data/definitions/639.html'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-352: Cross-Site Request Forgery (CSRF)',
+		url: 'https://cwe.mitre.org/data/definitions/352.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'Cross-Site Request Forgery Prevention Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-918: Server-Side Request Forgery (SSRF)',
+		url: 'https://cwe.mitre.org/data/definitions/918.html'
+	},
+	{
+		source: 'AWS',
+		title: 'Use the Instance Metadata Service to access instance metadata',
+		url: 'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'Server-Side Request Forgery Prevention Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html'
+	},
+	{
+		source: 'Node.js',
+		title: 'Net, Class: net.BlockList',
+		url: 'https://nodejs.org/api/net.html#class-netblocklist'
+	},
+	{
+		source: 'Node.js',
+		title: 'HTTP, http.request(options)',
+		url: 'https://nodejs.org/api/http.html#httprequestoptions-callback'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-22: Improper Limitation of a Pathname to a Restricted Directory (\'Path Traversal\')',
+		url: 'https://cwe.mitre.org/data/definitions/22.html'
+	},
+	{
+		source: 'Express',
+		title: '5.x API Reference, res.sendFile()',
+		url: 'https://expressjs.com/en/5x/api/'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-506: Embedded Malicious Code',
+		url: 'https://cwe.mitre.org/data/definitions/506.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'A03:2025 Software Supply Chain Failures',
+		url: 'https://top10.owasp.org/2025/A03_2025-Software_Supply_Chain_Failures/'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-1395: Dependency on Vulnerable Third-Party Component',
+		url: 'https://cwe.mitre.org/data/definitions/1395.html'
+	},
+	{
+		source: 'npm',
+		title: 'npm audit',
+		url: 'https://docs.npmjs.com/cli/v11/commands/npm-audit'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-1392: Use of Default Credentials',
+		url: 'https://cwe.mitre.org/data/definitions/1392.html'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-209: Generation of Error Message Containing Sensitive Information',
+		url: 'https://cwe.mitre.org/data/definitions/209.html'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-89: Improper Neutralization of Special Elements used in an SQL Command (\'SQL Injection\')',
+		url: 'https://cwe.mitre.org/data/definitions/89.html'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-79: Improper Neutralization of Input During Web Page Generation (\'Cross-site Scripting\')',
+		url: 'https://cwe.mitre.org/data/definitions/79.html'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-78: Improper Neutralization of Special Elements used in an OS Command (\'OS Command Injection\')',
+		url: 'https://cwe.mitre.org/data/definitions/78.html'
+	},
+	{
+		source: 'Node.js',
+		title: 'Child process',
+		url: 'https://nodejs.org/api/child_process.html'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-307: Improper Restriction of Excessive Authentication Attempts',
+		url: 'https://cwe.mitre.org/data/definitions/307.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'Authentication Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html'
+	},
+	{
+		source: 'NIST',
+		title: 'SP 800-63B-4, Authentication and Authenticator Management, 3.2.2',
+		url: 'https://pages.nist.gov/800-63-4/sp800-63b.html'
+	},
+	{
+		source: 'MITRE',
+		title: 'CAPEC-600: Credential Stuffing',
+		url: 'https://capec.mitre.org/data/definitions/600.html'
+	},
+	{
+		source: 'OWASP',
+		title: 'Credential Stuffing Prevention Cheat Sheet',
+		url: 'https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html'
+	},
+	{
+		source: 'Have I Been Pwned',
+		title: 'API v3, Pwned Passwords',
+		url: 'https://haveibeenpwned.com/API/v3#PwnedPasswords'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-1004: Sensitive Cookie Without \'HttpOnly\' Flag',
+		url: 'https://cwe.mitre.org/data/definitions/1004.html'
+	},
+	{
+		source: 'MITRE',
+		title: 'CWE-613: Insufficient Session Expiration',
+		url: 'https://cwe.mitre.org/data/definitions/613.html'
+	},
+	{
+		source: 'IETF',
+		title: 'RFC 7519: JSON Web Token (JWT)',
+		url: 'https://www.rfc-editor.org/rfc/rfc7519'
+	},
+	{
+		source: 'Auth0',
+		title: 'node-jsonwebtoken, Migration Notes: v8 to v9',
+		url: 'https://github.com/auth0/node-jsonwebtoken/wiki/Migration-Notes:-v8-to-v9'
+	},
+	{
+		source: 'IETF',
+		title: 'RFC 8725: JSON Web Token Best Current Practices',
+		url: 'https://www.rfc-editor.org/rfc/rfc8725'
+	}
+	]}
+/>
