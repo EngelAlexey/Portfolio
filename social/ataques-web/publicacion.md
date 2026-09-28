@@ -28,7 +28,7 @@ En este carrusel te comparto 14 ataques en cuatro familias, qué hace cada uno y
 ⚠️ Un detalle de seguridad: según NordPass, «123456» fue otra vez la contraseña más común del mundo en 2025. La verificación en dos pasos frena la fuerza bruta aunque la contraseña sea débil.
 
 👉 ¡Desliza y guarda la última lámina!
-🔗 Cómo se ve una inyección SQL en el código, en alexherrera.dev/es/blog/revisar-codigo-generado-por-ia (link en bio).
+🔗 Cómo se ve cada ataque en el código y cómo se corrige, en alexherrera.dev/es/blog/ataques-web-comunes (link en bio).
 
 ¿Cuál de estos ataques no conocías? ¡Te leo en los comentarios! 👇💬
 
@@ -40,11 +40,11 @@ Sigue el estilo de las publicaciones anteriores de la cuenta: pregunta de gancho
 ## Historia del mismo día
 
 - **Qué se publica.** La publicación compartida en la historia, con el texto «¿Cómo se ve una inyección SQL?».
-- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta al punto 3, «Cómo construir una consulta sin concatenar texto» (ancla comprobada el 2026-09-26):
-  `https://www.alexherrera.dev/es/blog/revisar-codigo-generado-por-ia?utm_source=instagram&utm_medium=story&utm_campaign=ataques-web#3-c%C3%B3mo-construir-una-consulta-sin-concatenar-texto`
+- **Adhesivo de enlace.** Con el texto «Leer el artículo» y esta dirección, que apunta al punto 11, «Qué es la inyección SQL y cómo evitarla», de «¿Cuáles son los ataques web más comunes y cómo evitarlos?» (ancla comprobada en producción el 2026-09-27):
+  `https://www.alexherrera.dev/es/blog/ataques-web-comunes?utm_source=instagram&utm_medium=story&utm_campaign=ataques-web#11-qu%C3%A9-es-la-inyecci%C3%B3n-sql-y-c%C3%B3mo-evitarla`
 - **Después.** Guardar la historia en la destacada del artículo.
 
-El temario enlaza este carrusel con «¿Cómo funcionan las cookies?», que está sin escribir. La sección 3 de «Siete cosas que revisar» enseña la consulta armada concatenando, que es la inyección SQL de la lámina 4.
+Desde el 2026-09-27 el carrusel enlaza a «¿Cuáles son los ataques web más comunes y cómo evitarlos?», que es su versión larga: los mismos catorce ataques en las mismas cuatro familias, cada uno con el código, la petición que lo aprovecha y la corrección. Antes enlazaba al punto 3 de «Ocho cosas que revisar». **El texto ya programado en Business Suite lleva todavía la dirección anterior en la línea 🔗: hay que editarlo allí.**
 
 ## Programación
 
