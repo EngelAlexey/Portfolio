@@ -48,6 +48,7 @@ const PAGES = {
 	blog: ['src/components/pages/Blog.astro', ARTICLES, ...I18N],
 	about: ['src/components/pages/About.astro', 'src/lib/about.ts', ...I18N],
 	contact: ['src/components/pages/Contact.astro', 'src/lib/site.ts', ...I18N],
+	scanner: ['src/components/pages/Scanner.astro', 'src/components/scanner/ScannerResult.astro', ...I18N],
 	scannerAbout: ['src/components/pages/ScannerAbout.astro', ...I18N]
 };
 

@@ -7,7 +7,7 @@ export const en: Dict = {
 		blog: 'Blog',
 		about: 'About',
 		contact: 'Contact',
-		scanner: 'Scanner',
+		scanner: 'Tools',
 		menu: 'Menu'
 	},
 	a11y: {

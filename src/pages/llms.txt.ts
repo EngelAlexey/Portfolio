@@ -68,6 +68,7 @@ export const GET: APIRoute = async () => {
 		line(strings.projects.title, absolute(routePath(lang, 'projects')), strings.projects.lead),
 		line(strings.about.title, absolute(routePath(lang, 'about')), strings.about.lead),
 		line(strings.contact.title, absolute(routePath(lang, 'contact')), strings.contact.lead),
+		line(strings.scanner.title, absolute(routePath(lang, 'scanner')), strings.scanner.lead),
 		'',
 		'## Opcional',
 		'',

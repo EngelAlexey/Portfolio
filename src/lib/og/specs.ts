@@ -80,6 +80,18 @@ function fixedCards(lang: Lang): CardSpec[] {
 			footer: PERSON.name
 		},
 		{
+			route: routeOf(lang, 'scanner'),
+			lang,
+			eyebrow,
+			heading: strings.scanner.title,
+			meta: strings.scanner.lead,
+			areas: ['seguridad'],
+			accent: 'seguridad',
+			portrait: false,
+			theme: 'light',
+			footer: PERSON.name
+		},
+		{
 			route: routeOf(lang, 'scannerAbout'),
 			lang,
 			eyebrow,

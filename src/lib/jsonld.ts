@@ -155,12 +155,12 @@ function breadcrumbNode(input: GraphInput, key: RouteKey): Node | null {
 		trail.push({
 			'@type': 'ListItem',
 			position: 2,
-			name: strings.nav[parent],
+			name: parent === 'scanner' ? strings.scanner.title : strings.nav[parent],
 			item: absolute(routePath(input.lang, parent))
 		});
 		trail.push({ '@type': 'ListItem', position: 3, name });
 	} else {
-		trail.push({ '@type': 'ListItem', position: 2, name: strings.nav[key] });
+		trail.push({ '@type': 'ListItem', position: 2, name: key === 'scanner' ? strings.scanner.title : strings.nav[key] });
 	}
 
 	return {

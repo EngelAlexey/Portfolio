@@ -23,7 +23,7 @@ if (siteKey === undefined) {
 const clientStrings = await scannerClientStrings(lang);
 ---
 
-<Layout {lang} key="scanner" title={strings.meta.titleTemplate(text.title)} description={text.lead} noindex>
+<Layout {lang} key="scanner" title={strings.meta.titleTemplate(text.title)} description={text.lead}>
 	<Container as="header" size="text">
 		<div class="head">
 			<h1>{text.title}</h1>

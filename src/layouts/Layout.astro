@@ -95,6 +95,7 @@ const links = [
 	{ key: 'home', href: path(lang, 'home'), label: strings.nav.home },
 	{ key: 'projects', href: path(lang, 'projects'), label: strings.nav.projects },
 	...(showBlog ? [{ key: 'blog', href: path(lang, 'blog'), label: strings.nav.blog }] : []),
+	{ key: 'scanner', href: path(lang, 'scanner'), label: strings.nav.scanner },
 	{ key: 'about', href: path(lang, 'about'), label: strings.nav.about },
 	{ key: 'contact', href: path(lang, 'contact'), label: strings.nav.contact }
 ] as { key: RouteKey; href: string; label: string }[];

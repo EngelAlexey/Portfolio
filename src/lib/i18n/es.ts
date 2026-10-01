@@ -5,7 +5,7 @@ export const es = {
 		blog: 'Blog',
 		about: 'Sobre mí',
 		contact: 'Contacto',
-		scanner: 'Revisor',
+		scanner: 'Herramientas',
 		menu: 'Menú'
 	},
 	a11y: {
