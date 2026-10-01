@@ -19,10 +19,10 @@ export const es = {
 	},
 	home: {
 		badge: 'Disponible para práctica profesional, enero a abril de 2027',
-		role: 'Desarrollador de Software · Enfoque en Ciberseguridad',
+		role: 'Desarrollador de software · Enfoque en ciberseguridad',
 		headline: 'Desarrollo software y comparto lo que aprendo sobre seguridad y programación con IA.',
 		pitch:
-			'Desarrollador de software en Puntarenas, Costa Rica. Trabajo en plataformas corporativas, herramientas internas y aplicaciones móviles para empresas de logística y de recursos humanos en Costa Rica y Panamá. Cada proyecto de este sitio explica por qué se hizo, qué se decidió y qué quedó funcionando.',
+			'Soy desarrollador de software en Puntarenas, Costa Rica. Trabajo en plataformas corporativas, herramientas internas y aplicaciones móviles para empresas de logística y de recursos humanos en Costa Rica y Panamá.',
 		ctaProjects: 'Ver proyectos',
 		ctaCv: 'Descargar CV',
 		heroStackLabel: 'Herramientas principales',
@@ -30,11 +30,11 @@ export const es = {
 		orgsLabel: 'Mi experiencia',
 		orgsLede: 'Trabajo con tres empresas en paralelo: logística en Costa Rica y Panamá, y software de recursos humanos.',
 		workTitle: 'Proyectos destacados',
-		workLede: 'Cuatro sistemas en uso. Cada ficha describe por qué se hizo, las decisiones técnicas y el resultado.',
+		workLede: 'Estos cuatro sistemas están en uso. Cada ficha explica por qué se hizo, qué se decidió y qué quedó funcionando.',
 		workAll: 'Ver los demás proyectos',
 		articlesTitle: 'Últimos artículos',
 		articlesLede:
-			'Escribo sobre las decisiones de seguridad que aparecen al construir software, y sobre qué las impone cuando nadie las revisa.',
+			'Cada artículo explica un problema de seguridad web o de programación con IA, con las comprobaciones que puede ejecutar en su proyecto.',
 		articlesAll: 'Ver todos los artículos',
 		stackLabel: 'Herramientas'
 	},
@@ -44,7 +44,7 @@ export const es = {
 	},
 	projects: {
 		title: 'Proyectos',
-		lead: 'Trabajo profesional y académico, hecho desde Costa Rica para empresas de Costa Rica y Panamá. Filtra por área.',
+		lead: 'Trabajo profesional y académico, hecho desde Costa Rica para empresas de Costa Rica y Panamá. Filtre la lista por área.',
 		filterLegend: 'Filtrar por área',
 		filterAll: 'Todas',
 		resultsOne: '1 proyecto',
@@ -60,7 +60,7 @@ export const es = {
 		org: 'Organización',
 		role: 'Rol',
 		period: 'Periodo',
-		present: 'Actualidad',
+		present: 'actualidad',
 		stack: 'Stack',
 		repo: 'Repositorio',
 		site: 'Sitio en producción',
@@ -109,7 +109,7 @@ export const es = {
 		promptCopy: 'Copiar prompt',
 		promptCopied: 'Copiado',
 		promptCopiedStatus: 'Prompt copiado al portapapeles.',
-		promptError: 'No se pudo copiar. El texto está seleccionado: Ctrl+C o Cmd+C.',
+		promptError: 'No se pudo copiar. El texto está seleccionado: cópielo con Ctrl+C o Cmd+C.',
 		promptView: 'Ver el prompt completo',
 		promptClose: 'Cerrar',
 		promptTime: (min: number, max: number) => `De ${min} a ${max} minutos`,
@@ -119,7 +119,7 @@ export const es = {
 		repo: 'Código de ejemplo',
 		headInstagram: 'Versión corta en Instagram',
 		relatedTitle: 'Proyectos relacionados',
-		followTitle: 'Sigue el trabajo',
+		followTitle: 'Siga el trabajo',
 		followBody:
 			'Publico en Instagram la versión corta de cada artículo, en carruseles y en vídeo.',
 		followCta: 'Ver en Instagram',
@@ -135,7 +135,7 @@ export const es = {
 		title: 'Sobre mí',
 		lead: 'Formación, experiencia y las herramientas con las que trabajo.',
 		intro:
-			'Desarrollador de software en Puntarenas, Costa Rica, con enfoque en ciberseguridad. Cubro el ciclo completo: levanto el requerimiento, diseño la solución, la construyo y la mantengo en producción. Trabajo en web con TypeScript, Next.js y Node.js, en móvil con React Native, y en datos e infraestructura con PostgreSQL, Docker y Linux. La parte que más me ocupa es el modelo de seguridad de lo que construyo.',
+			'Soy desarrollador de software en Puntarenas, Costa Rica, con enfoque en ciberseguridad. Cubro el ciclo completo: levanto el requerimiento, diseño la solución, la construyo y la mantengo en producción. Trabajo en web con TypeScript, Next.js y Node.js, y en móvil con React Native. En datos e infraestructura uso PostgreSQL, Docker y Linux. La parte que más me ocupa es el modelo de seguridad de lo que construyo.',
 		education: 'Educación',
 		certifications: 'Certificaciones',
 		languages: 'Idiomas',
@@ -153,7 +153,7 @@ export const es = {
 		location: 'Ubicación',
 		availability: 'Disponibilidad',
 		cv: 'Descargar CV',
-		cvNote: 'PDF de 2 páginas. Elige la versión que corresponda al puesto.',
+		cvNote: 'PDF de 2 páginas. Elija la versión que corresponda al puesto.',
 		cvVariants: {
 			ciberseguridad: 'Ciberseguridad',
 			desarrollo: 'Desarrollo',
@@ -171,7 +171,7 @@ export const es = {
 	meta: {
 		siteName: 'Alex Herrera Manzanares',
 		defaultTitle:
-			'Alex Herrera Manzanares | Desarrollador de Software con enfoque en ciberseguridad',
+			'Alex Herrera Manzanares | Desarrollador de software con enfoque en ciberseguridad',
 		defaultDescription:
 			'Portafolio de Alex Herrera Manzanares: desarrollador de software con enfoque en ciberseguridad. Modelo de seguridad de una plataforma corporativa, pruebas de ataque, redes e infraestructura. Costa Rica.',
 		titleTemplate: (page: string) => `${page} | Alex Herrera Manzanares`

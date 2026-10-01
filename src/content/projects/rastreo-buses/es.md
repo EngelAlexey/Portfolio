@@ -27,17 +27,17 @@ stack:
 cover: null
 shots:
   - src: /img/shots/bus-api-docs.jpg
-    alt: "Swagger UI del API de rastreo, con los módulos del sistema listados: autenticación, incidentes, rutas, viajes, conductores y telemetría"
-    caption: "El contrato del API en Swagger. Cada módulo del sistema es un grupo de rutas documentado."
+    alt: "Swagger UI de la API de rastreo, con los módulos del sistema listados: autenticación, incidentes, rutas, viajes, conductores y telemetría"
+    caption: "El contrato de la API en Swagger. Cada módulo del sistema es un grupo de rutas documentado."
   - src: /img/shots/bus-api-incidente.jpg
     alt: "Detalle de una ruta en Swagger: el reporte de incidentes, con el cuerpo de la solicitud y las respuestas 201 y 400 con sus ejemplos"
     caption: "Una ruta por dentro: el reporte de incidentes, con su solicitud y las respuestas de éxito y de validación."
   - src: /img/shots/bus-app-pasajero.jpg
     alt: "App móvil del pasajero: pantalla de inicio con viajes disponibles San José–Alajuela y San José–Puntarenas, marcados en ruta y en vivo"
-    caption: "La app del pasajero (cliente móvil del equipo) sobre el API: los viajes en vivo con su estado en ruta."
+    caption: "La app del pasajero (cliente móvil del equipo) sobre la API: los viajes en vivo con su estado en ruta."
   - src: /img/shots/bus-login-admin.jpg
     alt: "Pantalla de acceso de la consola de administración, con el panel de marca y el formulario de inicio de sesión restringido a administradores"
-    caption: "La consola de administración, la entrada al panel que consume el mismo API."
+    caption: "La consola de administración, la entrada al panel que consume la misma API."
 order: null
 ---
 
@@ -45,7 +45,7 @@ order: null
 
 Es el Proyecto Integrador III, hecho en un equipo de cinco. El sistema sigue autobuses en vivo y atiende a tres roles: el pasajero que espera, el conductor al volante y la administración que supervisa la flota.
 
-Aporté la mayor parte del API y diseñé la interfaz del cliente móvil y del panel web. Mis compañeros los construyeron sobre ese diseño y lo fueron modificando.
+Aporté la mayor parte de la API y diseñé la interfaz del cliente móvil y del panel web. Mis compañeros los construyeron sobre ese diseño y lo fueron modificando.
 
 ## Problema
 
@@ -75,7 +75,7 @@ Nadie introduce a mano el estado del viaje. Se deriva de la posición en vivo co
 
 ## Resultado
 
-El API sirve a los tres roles desde el mismo modelo de datos. El pasajero sigue su unidad, el conductor emite su posición sin operar nada y la administración ve la flota completa.
+La API sirve a los tres roles desde el mismo modelo de datos. El pasajero sigue su unidad, el conductor emite su posición sin operar nada y la administración ve la flota completa.
 
 Dos comprobaciones automáticas protegen el repositorio. Una regla propia del analizador estático rechaza los comentarios en el código. Otra comprobación falla si alguna variable de entorno usada en el código no está declarada en el archivo de ejemplo. Sin ella, ese fallo solo aparece cuando alguien clona el repositorio por primera vez.
 

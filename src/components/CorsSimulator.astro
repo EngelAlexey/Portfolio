@@ -64,7 +64,7 @@ const T = {
 		si: 'Sí.',
 		no: 'No.',
 		opacaRes: 'No. Recibe una respuesta opaca: sin estado ni cuerpo.',
-		detalle: 'Qué viaja entre el navegador y el servidor',
+		detalle: 'Qué se envían el navegador y el servidor',
 		codigo: 'Código de la página',
 		previa: '1. Petición previa (OPTIONS)',
 		previaNo: 'No hace falta: es una petición simple (punto 3).',
@@ -123,7 +123,7 @@ const T = {
 			{
 				id: 'lax',
 				nombre: 'SameSite=Lax lo frena',
-				mirar: 'El mismo servidor inseguro, pero la cookie es SameSite=Lax. Desde otro sitio la cookie no viaja y la API responde 401.',
+				mirar: 'El mismo servidor inseguro, pero la cookie es SameSite=Lax. Desde otro sitio la cookie no se envía y la API responde 401.',
 				valores: { pagina: 'http://127.0.0.1:8080', peticion: 'get', credenciales: 'include', modo: 'cors', config: 'reflejo', cookie: 'lax' }
 			},
 			{
@@ -181,7 +181,7 @@ const T = {
 		si: 'Yes.',
 		no: 'No.',
 		opacaRes: 'No. It gets an opaque response: no status and no body.',
-		detalle: 'What travels between the browser and the server',
+		detalle: 'What the browser and the server exchange',
 		codigo: 'Page code',
 		previa: '1. Preflight request (OPTIONS)',
 		previaNo: 'Not needed: it is a simple request (section 3).',

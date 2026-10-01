@@ -49,7 +49,7 @@ export async function feed(lang: Lang): Promise<string> {
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${escape(`${PERSON.name} — ${strings.blog.title}`)}</title>
+    <title>${escape(`${PERSON.name} | ${strings.blog.title}`)}</title>
     <link>${home}</link>
     <description>${escape(strings.blog.lead)}</description>
     <language>${lang}</language>${built}

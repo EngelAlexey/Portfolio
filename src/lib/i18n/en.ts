@@ -21,10 +21,10 @@ export const en: Dict = {
 	},
 	home: {
 		badge: 'Available for a professional internship, January to April 2027',
-		role: 'Software Developer · Cybersecurity focus',
+		role: 'Software developer · Cybersecurity focus',
 		headline: 'I build software and share what I learn about security and coding with AI.',
 		pitch:
-			'Software developer based in Puntarenas, Costa Rica. I work on corporate platforms, internal tools and mobile apps for logistics and HR software companies in Costa Rica and Panama. Every project on this site sets out why it was built, what was decided, and what now runs.',
+			'I am a software developer based in Puntarenas, Costa Rica. I work on corporate platforms, internal tools and mobile apps for logistics and HR software companies in Costa Rica and Panama.',
 		ctaProjects: 'View projects',
 		ctaCv: 'Download CV',
 		heroStackLabel: 'Core tools',
@@ -32,11 +32,11 @@ export const en: Dict = {
 		orgsLabel: 'My experience',
 		orgsLede: 'I work with three companies in parallel: logistics in Costa Rica and Panama, and HR software.',
 		workTitle: 'Featured projects',
-		workLede: 'Four systems in use. Each write-up covers why it was built, the technical decisions and the outcome.',
+		workLede: 'These four systems are in use. Each write-up explains why it was built, what was decided and what now runs.',
 		workAll: 'See the rest of the projects',
 		articlesTitle: 'Latest articles',
 		articlesLede:
-			'I write about the security decisions that come up while building software, and about what enforces them when nobody is reviewing.',
+			'Each article explains a problem in web security or in coding with AI, with checks you can run on your own project.',
 		articlesAll: 'See every article',
 		stackLabel: 'Tools'
 	},
@@ -62,7 +62,7 @@ export const en: Dict = {
 		org: 'Organisation',
 		role: 'Role',
 		period: 'Period',
-		present: 'Present',
+		present: 'present',
 		stack: 'Stack',
 		repo: 'Repository',
 		site: 'Live site',
@@ -100,7 +100,7 @@ export const en: Dict = {
 			},
 			'programar-con-ia': {
 				label: 'Coding with AI',
-				lede: 'How to set up a project to work with an agent, how to review what it produces, and how it affects learning.'
+				lede: 'How to set up a project to work with an agent, how to review what it produces and how it affects learning.'
 			}
 		}
 	},
@@ -111,7 +111,7 @@ export const en: Dict = {
 		promptCopy: 'Copy prompt',
 		promptCopied: 'Copied',
 		promptCopiedStatus: 'Prompt copied to the clipboard.',
-		promptError: 'Could not copy. The text is selected: Ctrl+C or Cmd+C.',
+		promptError: 'Could not copy. The text is selected: copy it with Ctrl+C or Cmd+C.',
 		promptView: 'Show the full prompt',
 		promptClose: 'Close',
 		promptTime: (min: number, max: number) => `${min} to ${max} minutes`,
@@ -134,7 +134,7 @@ export const en: Dict = {
 	about: {
 		title: 'About me',
 		intro:
-			'Software developer in Puntarenas, Costa Rica, with a cybersecurity focus. I cover the full cycle: I gather the requirement, design the solution, build it and keep it running in production. I work on the web with TypeScript, Next.js and Node.js, on mobile with React Native, and on data and infrastructure with PostgreSQL, Docker and Linux. The part I spend most time on is the security model of what I build.',
+			'I am a software developer in Puntarenas, Costa Rica, with a cybersecurity focus. I cover the full cycle: I gather the requirement, design the solution, build it and keep it running in production. I work on the web with TypeScript, Next.js and Node.js and on mobile with React Native. For data and infrastructure I use PostgreSQL, Docker and Linux. The part I spend most time on is the security model of what I build.',
 		lead: 'Education, experience and the tools I work with.',
 		education: 'Education',
 		certifications: 'Certifications',

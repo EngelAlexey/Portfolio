@@ -69,7 +69,7 @@ El registro de la jornada no puede depender de que un servicio de apoyo esté di
 
 ## Arquitectura
 
-El teléfono escribe primero en su base local y pone la marca en una cola. Una tarea en segundo plano envía la cola al API cuando hay red. El token se guarda en el almacén seguro del sistema.
+El teléfono escribe primero en su base local y pone la marca en una cola. Una tarea en segundo plano envía la cola a la API cuando hay red. El token se guarda en el almacén seguro del sistema.
 
 Las cuatro reglas que deciden si la marca entra se aplican en el servidor, dentro de la misma transacción.
 

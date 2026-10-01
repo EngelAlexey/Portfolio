@@ -4,7 +4,7 @@ title: Guides and Scouts | Site and enrolment
 tagline: A bilingual site with forms and a board portal, built for a team that does not code to maintain.
 areas: [fullstack]
 kind: academico
-org: Universidad Técnica Nacional — TCU
+org: Universidad Técnica Nacional, TCU
 role: Architecture and development
 period:
   start: '2026-05'

@@ -10,7 +10,7 @@ type AreaMeta = {
 export const AREAS: Record<AreaId, AreaMeta> = {
 	fullstack: {
 		token: 'fullstack',
-		label: { es: 'Full Stack', en: 'Full Stack' }
+		label: { es: 'Full stack', en: 'Full stack' }
 	},
 	ia: {
 		token: 'ia',

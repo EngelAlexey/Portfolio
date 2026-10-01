@@ -4,7 +4,7 @@ title: Guías y Scouts | Sitio e inscripciones
 tagline: Sitio bilingüe con formularios y un portal para la junta, pensado para que lo mantenga un equipo que no programa.
 areas: [fullstack]
 kind: academico
-org: Universidad Técnica Nacional — TCU
+org: Universidad Técnica Nacional, TCU
 role: Arquitectura y desarrollo
 period:
   start: '2026-05'

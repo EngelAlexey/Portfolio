@@ -36,11 +36,11 @@ export const ORG_LINKS: Partial<Record<OrgMark, string>> = {
 
 export const EXPERIENCE: Role[] = [
 	{
-		period: { es: 'Jul 2026 — Actualidad', en: 'Jul 2026 — Present' },
+		period: { es: 'Jul 2026 – actualidad', en: 'Jul 2026 – present' },
 		engagement: { es: 'Cliente de Kaizen Apps CR', en: 'Client of Kaizen Apps CR' },
 		range: { start: '2026-07', end: null },
-		title: { es: 'Desarrollador de Software', en: 'Software Developer' },
-		org: { es: 'Intercargo Panamá — vía Kaizen Apps CR', en: 'Intercargo Panamá — via Kaizen Apps CR' },
+		title: { es: 'Desarrollador de software', en: 'Software developer' },
+		org: { es: 'Intercargo Panamá, vía Kaizen Apps CR', en: 'Intercargo Panamá, via Kaizen Apps CR' },
 		shortOrg: 'Intercargo Panamá',
 		mark: 'intercargo',
 		current: true,
@@ -50,7 +50,7 @@ export const EXPERIENCE: Role[] = [
 				'Construyo el asistente de cobranza por WhatsApp: identifica al cliente, le muestra su saldo, recibe su comprobante y registra su promesa de pago.',
 				'Definí el modelo de seguridad: dos instancias separadas por criticidad de secretos, identidad por invitación y sesiones revocables.',
 				'Automaticé la debida diligencia, con extracción por modelo y validación contra esquema en el código.',
-				'Cubrí el sistema con 2 243 pruebas unitarias y 27 suites end to end.',
+				'Cubrí el sistema con 2 243 pruebas unitarias y 27 suites de extremo a extremo.',
 				'Desplegué la infraestructura en contenedores sobre Google Cloud Run.'
 			],
 			en: [
@@ -64,10 +64,10 @@ export const EXPERIENCE: Role[] = [
 		}
 	},
 	{
-		period: { es: 'Ene 2026 — Actualidad', en: 'Jan 2026 — Present' },
+		period: { es: 'Ene 2026 – actualidad', en: 'Jan 2026 – present' },
 		engagement: { es: 'Contratado por proyecto', en: 'Contracted per project' },
 		range: { start: '2026-01', end: null },
-		title: { es: 'Desarrollador Web', en: 'Web Developer' },
+		title: { es: 'Desarrollador web', en: 'Web developer' },
 		org: 'Star Cargo Service',
 		mark: 'starcargo',
 		current: true,
@@ -75,21 +75,21 @@ export const EXPERIENCE: Role[] = [
 			es: [
 				'Construí el CRM comercial que sustituyó la gestión en hojas de cálculo.',
 				'Amplié el sitio y sus trámites en línea a lo largo del año, hasta rediseñarlo por completo como un proyecto aparte dentro del mismo repositorio, con build y dependencias propias.',
-				'Levanté el portal con sesión donde el cliente sigue sus solicitudes, con los permisos resueltos contra el ERP en cada petición.',
-				'Di mantenimiento y corregí defectos del API de bodega y de la app de rastreo de viajes, probándolas contra el sistema real.'
+				'Construí el portal con sesión donde el cliente sigue sus solicitudes, con los permisos resueltos contra el ERP en cada petición.',
+				'Di mantenimiento y corregí defectos de la API de bodega y de la app de rastreo de viajes, probándolas contra el sistema real.'
 			],
 			en: [
 				'Built the sales CRM that replaced the spreadsheet workflow.',
 				'Extended the site and its online forms through the year, then rebuilt it entirely as a separate project inside the same repository, with its own build and dependencies.',
-				'Stood up the portal where clients follow their requests behind a session, with permissions resolved against the ERP on every request.',
+				'Built the portal where clients follow their requests behind a session, with permissions resolved against the ERP on every request.',
 				'Maintained and fixed defects in the warehouse API and the trip-tracking app, testing them against the real system.'
 			]
 		}
 	},
 	{
-		period: { es: 'Ene 2025 — Ene 2026', en: 'Jan 2025 — Jan 2026' },
+		period: { es: 'Ene 2025 – Ene 2026', en: 'Jan 2025 – Jan 2026' },
 		range: { start: '2025-01', end: '2026-01' },
-		title: { es: 'Soporte Técnico N1', en: 'N1 Technical Support' },
+		title: { es: 'Soporte técnico N1', en: 'N1 technical support' },
 		org: 'Star Cargo Service',
 		detail: {
 			es: [
@@ -101,12 +101,12 @@ export const EXPERIENCE: Role[] = [
 		}
 	},
 	{
-		period: { es: 'Ene 2024 — Actualidad', en: 'Jan 2024 — Present' },
+		period: { es: 'Ene 2024 – actualidad', en: 'Jan 2024 – present' },
 		engagement: { es: 'Empleado, tiempo completo', en: 'Employee, full-time' },
 		range: { start: '2024-01', end: null },
 		title: {
-			es: 'Desarrollador de Software y Soporte Técnico N2',
-			en: 'Software Developer & N2 Technical Support'
+			es: 'Desarrollador de software y soporte técnico N2',
+			en: 'Software developer and N2 technical support'
 		},
 		org: 'Kaizen Apps CR',
 		mark: 'kaizen',
@@ -122,7 +122,7 @@ export const EXPERIENCE: Role[] = [
 			],
 			en: [
 				'Design and build the new systems the team delivers, from requirements through to production and maintenance.',
-				'Delivered four bespoke systems, built or rebuilt from the inside, among them Kaizen AI and Seiri.',
+				'Delivered four bespoke systems, built from scratch or completely rebuilt, among them Kaizen AI and Seiri.',
 				'Rebuilt the company site, kaizenapps.net, with Spanish and English from a single source and the SEO it previously lacked.',
 				'Fix and update the ERP the company licenses when the task falls to me; its development and its day-to-day support sit with the rest of the team.',
 				'Provide level 2 support, tracing a fault down to the code behind it.',
@@ -134,8 +134,8 @@ export const EXPERIENCE: Role[] = [
 
 export function postAt(key: string, lang: Lang): { title: string; mark?: Role['mark'] } | null {
 	const named = (role: Role) =>
-		text(role.org, lang).split(' — ')[0].trim() === key ||
-		(typeof role.org === 'string' ? role.org : role.org.es).split(' — ')[0].trim() === key;
+		text(role.org, lang).split(', ')[0].trim() === key ||
+		(typeof role.org === 'string' ? role.org : role.org.es).split(', ')[0].trim() === key;
 
 	const match = EXPERIENCE.find(named) ?? EDUCATION.find(named);
 	return match ? { title: (match.post ?? match.title)[lang], mark: match.mark } : null;
@@ -143,25 +143,25 @@ export function postAt(key: string, lang: Lang): { title: string; mark?: Role['m
 
 export const EDUCATION: Role[] = [
 	{
-		period: { es: 'Ene 2024 — Actualidad', en: 'Jan 2024 — Present' },
+		period: { es: 'Ene 2024 – actualidad', en: 'Jan 2024 – present' },
 		engagement: { es: 'Sede Pacífico, El Roble', en: 'Pacífico campus, El Roble' },
 		range: { start: '2024-01', end: null },
 		title: {
 			es: 'Bachillerato en Ingeniería en Tecnologías de la Información',
 			en: 'BSc in Information Technology Engineering'
 		},
-		org: 'Universidad Técnica Nacional — Sede Pacífico, El Roble',
+		org: 'Universidad Técnica Nacional, Sede Pacífico, El Roble',
 		mark: 'utn',
 		current: true,
 		post: { es: 'Ingeniería en Tecnologías de la Información', en: 'Information Technology Engineering' },
 		detail: {
 			es: [
-				'Levanté la base analítica, el ETL y el informe de un almacén de 8,6 millones de filas, y llevé su migración a la nube.',
-				'Entregué dos proyectos en el curso de metodologías ágiles, uno bajo Scrum y otro bajo Programación Extrema, con backlog priorizado, roles rotando, ramas por historia y definición de Terminado.',
+				'Construí la base analítica, el ETL y el informe de un almacén de 8,6 millones de filas, y llevé su migración a la nube.',
+				'Entregué dos proyectos en el curso de metodologías ágiles, uno bajo Scrum y otro bajo Programación Extrema, con backlog priorizado, roles que rotan, ramas por historia y definición de Terminado.',
 				'Construí en Seguridad de TI I un detector que contiene un cifrado masivo sin firmas, a partir de tres señales del sistema.',
 				'Documenté, en ese mismo curso, el rastro que dejan la captura y la exfiltración dentro de un laboratorio aislado, y derivé de ahí el inventario de contramedidas.',
-				'Aporté la mayor parte del API de seguimiento de flota en tiempo real de Proyecto Integrador III, en equipo de cinco.',
-				'Llevé la arquitectura, los datos y la seguridad del sitio del Grupo 35 de Guías y Scouts en el trabajo comunal universitario, y construí la mayor parte: dos idiomas, inscripciones en línea y un portal interno para la junta.',
+				'Aporté la mayor parte de la API de seguimiento de flota en tiempo real de Proyecto Integrador III, en equipo de cinco.',
+				'Llevé la arquitectura, los datos y la seguridad del sitio del Grupo 35 de Guías y Scouts en el trabajo comunal universitario. Construí la mayor parte: dos idiomas, inscripciones en línea y un portal interno para la junta.',
 				'Construí en equipo un juego de dados multijugador en tiempo real para Aplicaciones Móviles II, con el contrato de eventos compartido entre el cliente móvil y el web.',
 				'Diseñé la red lógica y el apartado de cumplimiento de una cadena hotelera de cuatro sedes, en Proyecto Integrador II.',
 				'Construí el cliente web del sistema de gestión de obra de Proyecto Integrador I, en equipo de cinco: autenticación, planilla y los formularios de las demás entidades.',
@@ -173,7 +173,7 @@ export const EDUCATION: Role[] = [
 				'Built, in IT Security I, a detector that contains mass encryption without signatures, from three system signals.',
 				'Documented, in that same course, the trace capture and exfiltration leave inside an isolated lab, and derived the countermeasure inventory from it.',
 				'Contributed most of the API behind the real-time fleet tracking of Integrative Project III, in a team of five.',
-				'Led the architecture, data and security of the Group 35 Guides and Scouts site for the community-service requirement, and built most of it: two languages, online enrolment and an internal portal for the board.',
+				'Led the architecture, data and security of the Group 35 Guides and Scouts site for the community-service requirement. Built most of it: two languages, online enrolment and an internal portal for the board.',
 				'Built, as a team, a real-time multiplayer dice game for Mobile Applications II, with the event contract shared between the mobile and the web client.',
 				'Designed the logical network and the compliance section for a four-site hotel chain, in Integrative Project II.',
 				'Built the web client for the construction-management system of Integrative Project I, in a team of five: authentication, payroll and the forms for the remaining entities.',
@@ -202,8 +202,8 @@ export const LANGUAGES: { code: Lang; label: Bilingual; level: Bilingual }[] = [
 		code: 'en',
 		label: { es: 'Inglés', en: 'English' },
 		level: {
-			es: 'Avanzado — certificado PIT-UTN',
-			en: 'Advanced — PIT-UTN certified'
+			es: 'Avanzado, certificado PIT-UTN',
+			en: 'Advanced, PIT-UTN certified'
 		}
 	}
 ];
@@ -255,7 +255,7 @@ export const SKILL_GROUPS: { label: Bilingual; items: Text[] }[] = [
 		items: ['Vitest', 'Playwright', 'Jest']
 	},
 	{
-		label: { es: 'IA Generativa', en: 'Generative AI' },
+		label: { es: 'IA generativa', en: 'Generative AI' },
 		items: [
 			'RAG',
 			{ es: 'APIs de LLM', en: 'LLM APIs' },

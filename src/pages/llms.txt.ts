@@ -24,7 +24,7 @@ export const GET: APIRoute = async () => {
 		'',
 		strings.home.pitch,
 		'',
-		`Sitio bilingüe: el árbol en español cuelga de \`/es\` y el inglés de \`/en\`. Cada dirección de esta lista tiene su equivalente cambiando ese prefijo.`,
+		`Sitio bilingüe: las páginas en español están bajo \`/es\` y las inglesas bajo \`/en\`. Cada dirección de esta lista tiene su equivalente en inglés al cambiar ese prefijo.`,
 		''
 	];
 

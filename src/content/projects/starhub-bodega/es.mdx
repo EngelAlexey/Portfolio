@@ -37,7 +37,7 @@ diagram:
     - name: "Dos límites de frecuencia"
       body: "La ruta de alta es pública, así que está acotada por origen y por dispositivo. Un intento repetido de adivinar el código se detiene antes de recorrer el espacio de posibilidades."
     - name: "Lectura y escritura separadas"
-      body: "El token da lectura por SQL y escritura solo a través del API del ERP. En la superficie del servicio no existe una operación de escritura directa contra la base."
+      body: "El token da lectura por SQL y escritura solo a través de la API del ERP. En la superficie del servicio no existe una operación de escritura directa contra la base."
     - name: "Acotación por bodega"
       body: "Cada consulta se limita a la bodega del dispositivo dado de alta. Un teléfono dado de alta en una bodega no alcanza el inventario de otra."
   caption: "Cuatro reglas protegen el alta, que es donde el dispositivo todavía no tiene credencial."
@@ -69,7 +69,7 @@ Un campo que la base deja de ofrecer se devuelve nulo, no relleno. Si eso quita 
 
 ## Arquitectura
 
-El servicio lee con SQL directo contra la base del ERP y escribe solo a través del API del ERP. La lectura directa es el camino rápido. La escritura pasa por el API porque respeta las fórmulas de consecutivo y los disparadores que una escritura directa no activaría. Esa separación ya existía, y el mantenimiento tenía que respetarla.
+El servicio lee con SQL directo contra la base del ERP y escribe solo a través de la API del ERP. La lectura directa es el camino rápido. La escritura pasa por la API porque respeta las fórmulas de consecutivo y los disparadores que una escritura directa no activaría. Esa separación ya existía, y el mantenimiento tenía que respetarla.
 
 Un teléfono no puede autenticarse con la identidad de la plataforma, porque el alta ocurre antes de que el aparato tenga ninguna credencial. Por eso el alta es el punto de control del servicio, con cuatro reglas aplicadas a la vez.
 

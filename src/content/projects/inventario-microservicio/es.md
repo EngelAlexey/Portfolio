@@ -52,7 +52,7 @@ Con la cascada, un proveedor nuevo pasó a ser una entrada, no un módulo nuevo.
 
 La imagen se tomaba de la vista previa que declara la propia página, y en varias tiendas esa vista previa es el logotipo de la tienda. El catálogo acumuló logotipos donde debía haber productos. Ahora se elige con reglas deterministas por dominio.
 
-El catálogo se escribe a través del API de la plataforma, no directamente en la base. Así el artículo se crea dentro de la aplicación con sus referencias resueltas. Las demás escrituras van directas, porque no dependen de eso.
+El catálogo se escribe a través de la API de la plataforma, no directamente en la base. Así el artículo se crea dentro de la aplicación con sus referencias resueltas. Las demás escrituras van directas, porque no dependen de eso.
 
 El procesamiento de un movimiento de inventario es idempotente. Bloquea la fila, omite lo que ya está contabilizado y se ejecuta de forma síncrona a propósito. Así la aplicación espera a que termine, en lugar de dar por hecho el resultado.
 
@@ -62,7 +62,7 @@ La resolución por código de barras se ejecuta en segundo plano. Con la búsque
 
 ## Arquitectura
 
-El servicio separa el trabajo externo de la lógica de negocio. Las rutas del API reciben la llamada y pasan a un grupo de hilos todo lo que bloquea: la descarga, el renderizado, el modelo y la comprobación de duplicados. Así el resto de las peticiones no se detiene.
+El servicio separa el trabajo externo de la lógica de negocio. Las rutas de la API reciben la llamada y pasan a un grupo de hilos todo lo que bloquea: la descarga, el renderizado, el modelo y la comprobación de duplicados. Así el resto de las peticiones no se detiene.
 
 Detrás hay un solo módulo con la lógica de negocio y las escrituras. Dentro de él, una única función procesa todo movimiento de stock. El neto por recinto, los tramos de valuación y la cantidad global se actualizan juntos o no se actualizan.
 
@@ -78,6 +78,6 @@ Una sola implementación cubre a los proveedores que comparten plataforma, y las
 
 ## Lo que aprendí
 
-Escribir a través del API de una plataforma no garantiza que el cambio llegue al dispositivo. El artículo se crea bien, pero la plataforma no envía los cambios a los dispositivos. El cliente solo actualiza los datos cuando sincroniza, y la resolución tarda tanto que el resultado llega después de esa sincronización. Se probaron las opciones que ofrece la propia plataforma, y ninguna da tiempo real.
+Escribir a través de la API de una plataforma no garantiza que el cambio llegue al dispositivo. El artículo se crea bien, pero la plataforma no envía los cambios a los dispositivos. El cliente solo actualiza los datos cuando sincroniza, y la resolución tarda tanto que el resultado llega después de esa sincronización. Se probaron las opciones que ofrece la propia plataforma, y ninguna da tiempo real.
 
 La decisión fue aceptar la limitación y documentar el motivo, junto con la alternativa y lo que habría que medir antes de intentarla. Documentarlo llevó una tarde, mientras que buscar un tiempo real que la plataforma no ofrece habría ocupado el resto del proyecto.

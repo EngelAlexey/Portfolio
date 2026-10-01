@@ -4,9 +4,9 @@ import { LANGS } from './i18n';
 const ROLES: Role[] = [...EXPERIENCE, ...EDUCATION];
 
 export function splitOrg(org: string): { name: string; qualifier: string | null } {
-	const parts = org.split(' — ');
-	const name = (parts.shift() ?? org).trim();
-	return { name, qualifier: parts.length ? parts.join(' — ').trim() : null };
+	const cut = org.indexOf(', ');
+	if (cut === -1) return { name: org.trim(), qualifier: null };
+	return { name: org.slice(0, cut).trim(), qualifier: org.slice(cut + 2).trim() || null };
 }
 
 export function orgMark(org: string | null): OrgMark | null {

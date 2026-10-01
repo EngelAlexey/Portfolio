@@ -10,10 +10,10 @@ export function formatPeriod(
 	const cut = (value: string) => (precision === 'year' ? value.slice(0, 4) : value);
 
 	const start = cut(period.start);
-	if (period.end === null) return `${start} — ${present}`;
+	if (period.end === null) return `${start} – ${present}`;
 
 	const end = cut(period.end);
-	return start === end ? start : `${start} — ${end}`;
+	return start === end ? start : `${start} – ${end}`;
 }
 
 const LOCALE: Record<Lang, string> = { es: 'es-CR', en: 'en-US' };

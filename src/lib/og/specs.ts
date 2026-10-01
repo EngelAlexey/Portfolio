@@ -3,6 +3,7 @@ import { areaLabel, type AreaId } from '../areas';
 import { fichas } from '../content';
 import { formatDate, formatPeriod } from '../format';
 import { LANGS, t, type Lang, type RouteKey } from '../i18n';
+import { splitOrg } from '../org';
 import { PERSON } from '../site';
 import type { Mode } from './palette';
 import { ogCardPath } from './paths';
@@ -86,7 +87,7 @@ async function fichaCards(lang: Lang): Promise<CardSpec[]> {
 
 	return (await fichas(lang)).map(({ meta }) => {
 		const period = formatPeriod(meta.period, strings.project.present, 'year');
-		const org = meta.org ? meta.org.split(' — ')[0].trim() : null;
+		const org = meta.org ? splitOrg(meta.org).name : null;
 
 		return {
 			route: routeOf(lang, 'project', meta.slug),

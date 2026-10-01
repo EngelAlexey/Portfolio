@@ -42,7 +42,7 @@ La misma información se escribía varias veces, y la consolidación dependía d
 
 Centralizar el registro convierte el permiso de lectura en una regla que hay que aplicar en cada consulta. Además, esa regla cambia cada vez que la empresa reorganiza un rol.
 
-Por eso los permisos están en una tabla y no en el código. Un decorador marca lo que exige cada ruta del API, y un *guard* (la clase de NestJS que autoriza una petición) lo comprueba antes de ejecutar nada. Cambiar lo que puede hacer un rol es editar una fila, no desplegar una versión.
+Por eso los permisos están en una tabla y no en el código. Un decorador marca lo que exige cada ruta de la API, y un *guard* (la clase de NestJS que autoriza una petición) lo comprueba antes de ejecutar nada. Cambiar lo que puede hacer un rol es editar una fila, no desplegar una versión.
 
 A mitad del proyecto se retiró el ORM. Los servicios pasaron a consultar la base con el cliente de Supabase, que lleva la identidad del usuario y queda sujeto a las políticas de fila. Un ORM con su propia conexión las habría dejado fuera, y el aislamiento entre sucursales habría dependido solo del código de aplicación.
 

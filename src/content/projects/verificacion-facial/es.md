@@ -67,7 +67,7 @@ Desde ahí, el recorrido es el mismo:
 
 El vector de referencia se calcula al dar de alta a la persona, así que en el marcaje ya está guardado.
 
-La instancia que carga el modelo se suspende y se reanuda por horario, con dos tareas programadas que llaman al API del alojamiento. Un servicio que mantiene un modelo en memoria cuesta lo mismo ocupado que inactivo.
+La instancia que carga el modelo se suspende y se reanuda por horario, con dos tareas programadas que llaman a la API del alojamiento. Un servicio que mantiene un modelo en memoria cuesta lo mismo ocupado que inactivo.
 
 ## Resultado
 

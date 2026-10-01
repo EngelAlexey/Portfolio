@@ -49,7 +49,7 @@ La interfaz es adaptable y la barra lateral se pliega, porque la obra se consult
 
 ## Arquitectura
 
-El cliente y el servidor están separados. El cliente es una aplicación React que consume un API en ASP.NET Core, con un controlador por entidad. Hay controladores para clientes, contactos, empleados, planilla y su detalle, presupuestos, subcontratos, pagos, materia prima, gastos adicionales y actividades.
+El cliente y el servidor están separados. El cliente es una aplicación React que consume una API en ASP.NET Core, con un controlador por entidad. Hay controladores para clientes, contactos, empleados, planilla y su detalle, presupuestos, subcontratos, pagos, materia prima, gastos adicionales y actividades.
 
 El acceso a datos usa Dapper sobre SQL Server, con las consultas escritas a mano en lugar de un mapeo automático. Los modelos del servidor están divididos por área, y el cliente sigue esa misma división en su navegación.
 
