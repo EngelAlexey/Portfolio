@@ -1,0 +1,73 @@
+---
+code: cookie-no-httponly
+title: Su sitio crea una cookie sin el atributo HttpOnly
+difficulty: medium
+minutes: 30
+platforms: [nginx]
+sources:
+  - text: 'MDN: Set-Cookie'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie
+  - text: 'RFC 6265: HTTP State Management Mechanism'
+    url: https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.6
+  - text: 'Laravel: CSRF Protection'
+    url: https://laravel.com/framework/docs/13.x/csrf#csrf-x-xsrf-token
+---
+
+## Qué significa
+
+Una cabecera `Set-Cookie` de su página principal crea una cookie sin el atributo `HttpOnly`, así que cualquier script de la página puede leerla con `document.cookie`. El revisor lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
+
+Este hallazgo, de severidad informativa y sin restar puntos, cubre las cookies que no son de sesión. El revisor considera de sesión los nombres conocidos, como `PHPSESSID` o `wordpress_logged_in_…`, y los que contienen `sess`, `sid`, `auth`, `token` o `jwt`. Las demás cookies entran aquí, igual que las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`.
+
+## Qué riesgo tiene
+
+Si un atacante consigue ejecutar un script en su página, ese script puede leer la cookie. El daño depende del contenido de la cookie: una preferencia de idioma expone poco; un identificador de la persona permite actuar en su nombre.
+
+El revisor decide solo por el nombre, así que no reconoce una cookie de sesión llamada `sesion` o `usuario`. Si esta cookie identifica a la persona, corríjala igual que una cookie de sesión: el riesgo es el mismo.
+
+## Cómo corregirlo
+
+Antes de añadir `HttpOnly`, compruebe si algún script de su sitio lee la cookie. Busque su nombre en su código JavaScript y en los scripts de terceros que carga la página. Con `HttpOnly`, ese código deja de encontrar la cookie.
+
+Una cookie que existe para que JavaScript la lea debe quedarse sin `HttpOnly`. Por ejemplo, [Laravel envía la cookie `XSRF-TOKEN`](https://laravel.com/framework/docs/13.x/csrf#csrf-x-xsrf-token) para que Axios o Angular copien su valor en la cabecera `X-XSRF-TOKEN`. Si su cookie es de ese tipo, déjela como está.
+
+Si ningún script la lee, añada el atributo donde la aplicación crea la cookie:
+
+```text
+Set-Cookie: idioma=es; Path=/; Secure; HttpOnly
+```
+
+En PHP, use la opción `httponly` de [`setcookie()`](https://www.php.net/manual/en/function.setcookie.php), con la firma que acepta un array de opciones desde PHP 7.3:
+
+```php
+setcookie('idioma', 'es', ['path' => '/', 'secure' => true, 'httponly' => true]);
+```
+
+En Express, use la opción `httpOnly` de [`res.cookie()`](https://expressjs.com/en/5x/api/response/#rescookie):
+
+```js
+res.cookie('idioma', 'es', { secure: true, httpOnly: true });
+```
+
+### Nginx
+
+Si Nginx reenvía las peticiones a su aplicación con `proxy_pass`, el propio Nginx puede añadir el atributo. Use [`proxy_cookie_flags`](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cookie_flags), disponible desde Nginx 1.19.3, en el bloque `location` que contiene `proxy_pass`, con el nombre de la cookie:
+
+```nginx
+proxy_cookie_flags idioma httponly;
+```
+
+Indique el nombre en lugar de `~`, que añadiría `HttpOnly` a todas las cookies, también a las que su JavaScript necesita leer.
+
+## Cómo comprobarlo
+
+La cabecera `Set-Cookie` de la cookie debe incluir `HttpOnly`. La orden pide la página principal con GET y sigue las redirecciones, como el revisor:
+
+```text
+$ curl -sL -o /dev/null -D - https://su-dominio.example/ | grep -i '^set-cookie'
+set-cookie: idioma=es; path=/; secure; HttpOnly
+```
+
+Con la página abierta, escriba `document.cookie` en la consola del navegador: la cookie no debe aparecer. Pruebe también las funciones del sitio que dependen de JavaScript, como un formulario que se envía sin recargar la página.
+
+Después, vuelva a analizar el sitio: el hallazgo ya no aparece. Cuando ninguna cookie tiene hallazgos, «Comprobaciones superadas» muestra «Ninguna cookie carece de los atributos Secure, HttpOnly o SameSite que necesita». El punto 5 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#5-cómo-proteger-la-sesión-y-las-cookies) explica qué atributos necesita la cookie de sesión.

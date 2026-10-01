@@ -1,0 +1,67 @@
+---
+code: tls-legacy
+title: Su servidor todavía acepta TLS 1.0 o TLS 1.1
+difficulty: easy
+minutes: 15
+platforms: [nginx, apache, cloudflare]
+sources:
+  - text: 'RFC 8996: Deprecating TLS 1.0 and TLS 1.1'
+    url: https://www.rfc-editor.org/rfc/rfc8996
+  - text: 'OWASP: Transport Layer Security Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html
+  - text: 'Cloudflare: Minimum TLS Version'
+    url: https://developers.cloudflare.com/ssl/edge-certificates/additional-options/minimum-tls/
+---
+
+## Qué significa
+
+Además de la conexión normal, el revisor intentó una conexión que solo admite TLS 1.0 y otra que solo admite TLS 1.1. Su servidor aceptó al menos una de las dos.
+
+## Qué riesgo tiene
+
+TLS 1.0 y TLS 1.1 protegen la integridad de la negociación con SHA-1 y no admiten los cifrados autenticados (AEAD) que llegaron con TLS 1.2. Por eso la RFC 8996 las declaró obsoletas en 2021.
+
+Los navegadores principales ya no las admiten, según [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html). Solo las usan clientes antiguos, cuyas conexiones con su servidor dependen de esos algoritmos obsoletos.
+
+## Cómo corregirlo
+
+Acepte solo TLS 1.2 y TLS 1.3. El cambio deja fuera únicamente a esos clientes antiguos.
+
+### Nginx
+
+Escriba la directiva en el bloque `http`, para que valga en todos los bloques `server`:
+
+```nginx
+ssl_protocols TLSv1.2 TLSv1.3;
+```
+
+Desde la versión 1.27.3, ese es el valor por defecto de Nginx; en versiones anteriores, el valor por defecto incluye TLS 1.0 y TLS 1.1. Revise también los bloques `server`, porque una línea `ssl_protocols` dentro de uno de ellos sustituye a la del bloque `http`.
+
+### Apache
+
+Escriba la directiva en la configuración global de `mod_ssl`, fuera de los `VirtualHost`:
+
+```apache
+SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
+```
+
+El valor por defecto, `all -SSLv3`, incluye TLS 1.0 y TLS 1.1. Si un `VirtualHost` tiene su propia línea `SSLProtocol`, cámbiela de la misma forma.
+
+### Cloudflare
+
+La observación «El sitio se sirve a través de la red de Cloudflare» indica que el revisor negoció con Cloudflare, no con su servidor. Cloudflare acepta TLS 1.0 por defecto, según su [documentación](https://developers.cloudflare.com/ssl/reference/protocols/), así que ese valor basta para que aparezca este hallazgo. En **SSL/TLS > Edge Certificates**, cambie **Minimum TLS Version** a TLS 1.2.
+
+## Cómo comprobarlo
+
+Intente una conexión con cada versión antigua. OpenSSL 3 solo usa TLS 1.0 y TLS 1.1 con el nivel de seguridad 0. Por eso la orden lo fija con `-cipher`, como hace el revisor:
+
+```text
+$ openssl s_client -connect su-dominio.example:443 -servername su-dominio.example -tls1 -cipher 'DEFAULT:@SECLEVEL=0' </dev/null 2>&1 | grep -E 'Cipher is|no protocols'
+New, (NONE), Cipher is (NONE)
+$ openssl s_client -connect su-dominio.example:443 -servername su-dominio.example -tls1_1 -cipher 'DEFAULT:@SECLEVEL=0' </dev/null 2>&1 | grep -E 'Cipher is|no protocols'
+New, (NONE), Cipher is (NONE)
+```
+
+`(NONE)` indica que el servidor rechazó la versión. Si en su lugar aparece el nombre de un cifrado, el servidor todavía la acepta. Si aparece `no protocols available`, el OpenSSL de su equipo no puede usar esa versión y el resultado no dice nada del servidor.
+
+Después, vuelva a analizar el sitio: «El servidor rechaza TLS 1.0 y TLS 1.1» aparece en «Comprobaciones superadas».

@@ -1,0 +1,58 @@
+---
+code: spf-invalid
+title: Su registro SPF tiene un error que impide evaluarlo
+difficulty: medium
+minutes: 45
+platforms: [dns, cloudflare]
+sources:
+  - text: 'RFC 7208: Sender Policy Framework (SPF)'
+    url: https://www.rfc-editor.org/rfc/rfc7208
+  - text: 'Microsoft: Set up SPF to identify valid email sources for your Microsoft 365 domain'
+    url: https://learn.microsoft.com/en-us/defender-office-365/email-authentication-spf-configure
+  - text: 'Cloudflare Email Service: Troubleshooting'
+    url: https://developers.cloudflare.com/email-service/reference/troubleshooting/
+---
+
+## Qué significa
+
+Los servidores de correo no pueden evaluar el registro SPF de su dominio, un caso para el que la RFC 7208 define el resultado `permerror`. El revisor lo marca si hay más de un registro SPF, si la evaluación supera un límite o si el registro tiene un error.
+
+## Qué riesgo tiene
+
+Un servidor de destino que llega a ese error no da el mensaje por autenticado con SPF, aunque sea legítimo. Según [Microsoft](https://learn.microsoft.com/en-us/defender-office-365/email-authentication-spf-configure#troubleshooting-spf-txt-records), si la evaluación necesita más de 10 consultas DNS, el mensaje falla SPF y el servidor de destino puede rechazarlo. SPF tampoco ayuda entonces a rechazar el correo falsificado con su dominio.
+
+## Cómo corregirlo
+
+Corrija la causa que corresponda al registro que muestra el hallazgo. Si el dominio publica más de un registro que empieza por `v=spf1`, únalos en uno, con todos los mecanismos y un solo `all` al final. Por ejemplo, si publica `v=spf1 include:_spf.google.com ~all` y `v=spf1 include:mailgun.org ~all`, sustitúyalos por este registro:
+
+```text
+v=spf1 include:_spf.google.com include:mailgun.org ~all
+```
+
+Las demás causas son límites de la RFC 7208 o errores en el registro:
+
+- Si la evaluación necesita más de 10 consultas DNS, reduzca los mecanismos que las hacen: `include`, `a`, `mx`, `ptr`, `exists` y `redirect`. Cuentan también los de los registros incluidos. Quite los `include` de servicios que ya no usa. Cambie `a` y `mx` por las direcciones `ip4` o `ip6` de sus servidores, que no consultan el DNS. Quite también `ptr`, que la RFC pide no publicar. Un `mx` que devuelve más de 10 servidores también supera el límite: cámbielo por direcciones.
+- Si más de 2 mecanismos `a`, `mx` o `exists` apuntan a nombres sin ese tipo de registro, quítelos. La RFC admite como máximo 2 consultas vacías.
+- Si un `include` o un `redirect=` apunta a un dominio sin registro SPF o con más de uno, corrija el nombre o quite el mecanismo. Haga lo mismo si apunta a un dominio que ya apareció en la cadena, porque forma un bucle.
+- Si el registro tiene un mecanismo mal escrito, un `redirect=` o un `exp=` repetido, un rango imposible como `ip4:192.0.2.0/33` o un dominio inválido, corríjalo.
+
+### DNS
+
+Edite el registro en el panel de su proveedor de DNS. Si había dos, conserve uno con todos los mecanismos y borre el que sobra.
+
+### Cloudflare
+
+En **DNS** > **Records**, busque los registros TXT que empiezan por `v=spf1`. Seleccione **Edit** en el que conserva, corrija **Content** y seleccione **Save**. Para borrar el que sobra, seleccione **Edit**, después **Delete**, y confirme con **Delete**.
+
+Si activó Email Routing y ya tenía un registro SPF, no mantenga dos: añada `include:_spf.mx.cloudflare.net` al suyo, como indica [Cloudflare](https://developers.cloudflare.com/email-service/reference/troubleshooting/).
+
+## Cómo comprobarlo
+
+Debe aparecer una sola línea que empiece por `"v=spf1`:
+
+```text
+$ dig +short TXT su-dominio.example
+"v=spf1 include:_spf.google.com include:mailgun.org ~all"
+```
+
+Para contar las consultas, ejecute la misma orden con el dominio de cada `include` y sume los mecanismos que consultan en todos los niveles. En Windows, ejecute `nslookup -type=TXT su-dominio.example`. Si todavía ve el valor anterior, espere a que venza su TTL y repita la consulta. Después, vuelva a analizar el sitio: SPF aparece en «Comprobaciones superadas».

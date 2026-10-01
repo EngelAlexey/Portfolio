@@ -1,0 +1,80 @@
+---
+code: session-cookie-no-secure
+title: Su sitio crea una cookie de sesión sin el atributo Secure
+difficulty: medium
+minutes: 30
+platforms: [nginx, wordpress]
+sources:
+  - text: 'RFC 6265: HTTP State Management Mechanism'
+    url: https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.5
+  - text: 'MDN: Set-Cookie'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie
+  - text: 'OWASP: Session Management Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
+---
+
+## Qué significa
+
+Una cabecera `Set-Cookie` de su página principal crea una cookie de sesión sin el atributo `Secure`. Ese atributo indica al navegador que envíe la cookie solo por HTTPS. El revisor lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
+
+El revisor reconoce una cookie de sesión por su nombre. Cuenta los nombres conocidos, como `PHPSESSID`, `JSESSIONID`, `connect.sid`, `laravel_session` o `wordpress_logged_in_…`, y cualquier nombre que contenga `sess`, `sid`, `auth`, `token` o `jwt`. Excluye las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`.
+
+Una cookie con `SameSite=None` y sin `Secure` no cuenta en este hallazgo. Chrome, Edge y Firefox la rechazan, así que el análisis la señala en «Observaciones».
+
+## Qué riesgo tiene
+
+Sin `Secure`, el navegador envía la cookie en cualquier petición a su dominio, también por `http://`. Basta con que la persona abra un enlace antiguo con `http://` en una red wifi pública. La petición sale sin cifrar. Quien comparte la red puede copiar la cookie y usar la sesión desde otro equipo.
+
+Redirigir HTTP a HTTPS no lo evita, porque el navegador envía la cookie en la primera petición, antes de la redirección. OWASP considera `Secure` obligatorio en la cookie de sesión, aunque el sitio solo funcione por HTTPS.
+
+## Cómo corregirlo
+
+Añada `Secure` a la cabecera `Set-Cookie` que crea la cookie de sesión. Antes, compruebe que todo el sitio funciona por HTTPS: con `Secure`, el navegador deja de enviar la cookie a las páginas servidas por HTTP.
+
+```text
+Set-Cookie: PHPSESSID=2c7d9e4f1a8b6e3d; Path=/; Secure; HttpOnly; SameSite=Lax
+```
+
+El ejemplo incluye también `HttpOnly` y `SameSite=Lax`, que el revisor comprueba en otros hallazgos. El atributo se fija donde la aplicación crea la cookie.
+
+En PHP, active [`session.cookie_secure`](https://www.php.net/manual/en/session.configuration.php#ini.session.cookie-secure) en `php.ini`. Su valor por defecto es `0`:
+
+```ini
+session.cookie_secure = 1
+```
+
+Si no puede editar `php.ini` y PHP se ejecuta como CGI o FastCGI, escriba esa línea en un archivo [`.user.ini`](https://www.php.net/manual/en/configuration.file.per-user.php) en la raíz del sitio. PHP vuelve a leer ese archivo cada 300 segundos por defecto, así que el cambio puede tardar 5 minutos.
+
+En Express, añada `secure: true` al objeto `cookie` de [`express-session`](https://expressjs.com/en/resources/middleware/session.html#cookiesecure). Si Node.js está detrás de un proxy, la línea `trust proxy` es obligatoria: sin ella, `express-session` no crea la cookie.
+
+```js
+app.set('trust proxy', 1);
+app.use(session({ secret: process.env.SESSION_SECRET, cookie: { secure: true } }));
+```
+
+### Nginx
+
+Si Nginx reenvía las peticiones a su aplicación con `proxy_pass`, el propio Nginx puede añadir el atributo. Use [`proxy_cookie_flags`](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cookie_flags), disponible desde Nginx 1.19.3, en el bloque `location` que contiene `proxy_pass`:
+
+```nginx
+proxy_cookie_flags ~ secure;
+```
+
+El símbolo `~` sin expresión regular aplica la regla a todas las cookies.
+
+### WordPress
+
+Según su [documentación](https://developer.wordpress.org/advanced-administration/wordpress/cookies/), WordPress crea cookies para quien inicia sesión y para quien comenta. El revisor no hace ninguna de las dos cosas, así que esta cookie la crea un plugin, el tema o el alojamiento.
+
+Si la cookie es `PHPSESSID`, la crea la sesión de PHP y el ajuste de arriba se aplica también a ella. La excepción es un plugin que fije otros valores en su código. Si tiene otro nombre, búsquelo en el código de los plugins y del tema para saber cuál la crea. Después, pida la corrección a su autor.
+
+## Cómo comprobarlo
+
+La cabecera `Set-Cookie` de la cookie de sesión debe incluir `secure`, en mayúsculas o en minúsculas. La orden pide la página principal con GET y sigue las redirecciones, como el revisor:
+
+```text
+$ curl -sL -o /dev/null -D - https://su-dominio.example/ | grep -i '^set-cookie'
+set-cookie: PHPSESSID=2c7d9e4f1a8b6e3d; path=/; secure; HttpOnly; SameSite=Lax
+```
+
+Después, vuelva a analizar el sitio: el hallazgo ya no aparece. Cuando ninguna cookie tiene hallazgos, «Comprobaciones superadas» muestra «Ninguna cookie carece de los atributos Secure, HttpOnly o SameSite que necesita». El punto 5 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#5-cómo-proteger-la-sesión-y-las-cookies) explica los demás atributos de la cookie de sesión, como el prefijo `__Host-`.

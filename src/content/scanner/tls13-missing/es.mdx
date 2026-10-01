@@ -1,0 +1,63 @@
+---
+code: tls13-missing
+title: Su servidor no admite TLS 1.3
+difficulty: easy
+minutes: 15
+platforms: [nginx, apache, cloudflare]
+sources:
+  - text: 'RFC 9325: Recommendations for Secure Use of TLS and DTLS'
+    url: https://www.rfc-editor.org/rfc/rfc9325
+  - text: 'RFC 9846: The Transport Layer Security (TLS) Protocol Version 1.3'
+    url: https://www.rfc-editor.org/rfc/rfc9846
+  - text: 'Cloudflare: TLS 1.3'
+    url: https://developers.cloudflare.com/ssl/edge-certificates/additional-options/tls-13/
+---
+
+## Qué significa
+
+El revisor ofreció TLS 1.2 y TLS 1.3 al conectarse a su servidor, que eligió TLS 1.2. Su severidad es informativa, así que no resta puntos.
+
+## Qué riesgo tiene
+
+El riesgo directo es bajo. En TLS 1.2, que la conexión tenga secreto hacia delante (*forward secrecy*) depende de los cifrados que acepte su servidor. Sin esa propiedad, quien obtenga más tarde la clave privada del certificado puede descifrar el tráfico que haya grabado antes.
+
+TLS 1.3 retiró los cifrados sin esa propiedad. Según la [RFC 9846](https://www.rfc-editor.org/rfc/rfc9846), todo intercambio de claves basado en clave pública la tiene. La RFC 9325 pide admitir TLS 1.3 y preferirlo cuando el cliente lo ofrece.
+
+## Cómo corregirlo
+
+Active TLS 1.3 junto a TLS 1.2. TLS 1.3 necesita OpenSSL 1.1.1 o posterior en el servidor; con una versión anterior, actualice primero el sistema o el paquete de OpenSSL.
+
+### Nginx
+
+Escriba la directiva en el bloque `http`, para que valga en todos los bloques `server`:
+
+```nginx
+ssl_protocols TLSv1.2 TLSv1.3;
+```
+
+Nginx incluye TLS 1.3 por defecto desde la versión 1.23.4. Si su configuración tiene una línea `ssl_protocols` sin `TLSv1.3`, añádalo.
+
+### Apache
+
+Con OpenSSL 1.1.1 o posterior, el valor `all` de `SSLProtocol` ya incluye TLS 1.3. Si su configuración enumera las versiones, por ejemplo con `SSLProtocol TLSv1.2`, use esta línea en la configuración global de `mod_ssl`:
+
+```apache
+SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
+```
+
+Si un `VirtualHost` tiene su propia línea `SSLProtocol`, cámbiela de la misma forma.
+
+### Cloudflare
+
+La observación «El sitio se sirve a través de la red de Cloudflare» indica que el revisor negoció con Cloudflare, no con su servidor. En **SSL/TLS > Edge Certificates**, active **TLS 1.3**.
+
+## Cómo comprobarlo
+
+Abra una conexión TLS normal, como hace el revisor. La línea `Protocol version` debe mostrar `TLSv1.3`:
+
+```text
+$ openssl s_client -brief -connect su-dominio.example:443 -servername su-dominio.example </dev/null 2>&1 | grep 'Protocol version'
+Protocol version: TLSv1.3
+```
+
+Después, vuelva a analizar el sitio: «El servidor admite TLS 1.3» aparece en «Comprobaciones superadas».

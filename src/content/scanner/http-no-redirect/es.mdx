@@ -1,0 +1,79 @@
+---
+code: http-no-redirect
+title: Su sitio sirve la página principal por HTTP sin redirigir a HTTPS
+difficulty: easy
+minutes: 15
+platforms: [nginx, apache, cloudflare]
+sources:
+  - text: 'RFC 6797: HTTP Strict Transport Security (HSTS)'
+    url: https://www.rfc-editor.org/rfc/rfc6797#section-7.2
+  - text: 'Apache HTTP Server: Forcing HTTPS'
+    url: https://httpd.apache.org/docs/2.4/rewrite/remapping.html#https-redirect
+  - text: 'Cloudflare: Always Use HTTPS'
+    url: https://developers.cloudflare.com/ssl/edge-certificates/additional-options/always-use-https/
+---
+
+## Qué significa
+
+El revisor pidió `http://su-dominio.example/` y siguió las redirecciones. La cadena terminó en una página servida por HTTP, con una respuesta 2xx, sin pasar por ninguna dirección `https://`.
+
+## Qué riesgo tiene
+
+Un navegador que abre `http://su-dominio.example/`, por un enlace o un marcador antiguo, recibe la página sin cifrar. En una red wifi pública, un atacante puede cambiar esa página antes de que llegue. Por ejemplo, puede hacer que un formulario envíe los datos a otro servidor.
+
+Ese navegador tampoco aprende la política HSTS, porque ignora la cabecera si llega por HTTP, según la [RFC 6797](https://www.rfc-editor.org/rfc/rfc6797#section-8.1).
+
+## Cómo corregirlo
+
+Responda a toda petición HTTP con una redirección permanente, como 301, a la misma dirección en HTTPS. Vercel ya lo hace con un 308 y no permite desactivarlo, según su [documentación](https://vercel.com/docs/cdn-security/encryption). Si su sitio está en Vercel y ve este hallazgo, revise el DNS del dominio, porque la respuesta por HTTP sale de otro servidor.
+
+### Nginx
+
+Añada un bloque `server` para el puerto 80 que solo redirija:
+
+```nginx
+server {
+    listen 80;
+    server_name su-dominio.example;
+    return 301 https://$host$request_uri;
+}
+```
+
+`$host` conserva el dominio pedido, y `$request_uri`, la ruta con sus parámetros. Si su bloque `server` de HTTPS también escucha en el puerto 80, quite de él `listen 80`.
+
+### Apache
+
+Dedique al puerto 80 un `VirtualHost` que solo redirija:
+
+```apache
+<VirtualHost *:80>
+    ServerName su-dominio.example
+    Redirect permanent "/" "https://su-dominio.example/"
+</VirtualHost>
+```
+
+`Redirect` conserva la ruta, así que `/contacto` pasa a `https://su-dominio.example/contacto`. Sin `permanent`, Apache responde con un 302 temporal.
+
+Si solo puede editar el archivo `.htaccess` de la raíz del sitio, use `mod_rewrite`:
+
+```apache
+RewriteEngine On
+RewriteCond "%{HTTPS}" !=on
+RewriteRule "^/?(.*)" "https://%{SERVER_NAME}/$1" [R=301,L]
+```
+
+### Cloudflare
+
+En **SSL/TLS > Edge Certificates**, active **Always Use HTTPS**. La opción no aparece si el modo de cifrado de **SSL/TLS > Overview** es **Off**. Con el modo **Flexible**, no redirija también en su servidor, porque Cloudflare le pide la página por HTTP y la redirección se repetiría sin fin.
+
+## Cómo comprobarlo
+
+La respuesta por HTTP debe ser una redirección a HTTPS:
+
+```text
+$ curl -sI http://su-dominio.example/ | grep -iE '^(http|location)'
+HTTP/1.1 301 Moved Permanently
+Location: https://su-dominio.example/
+```
+
+Después, vuelva a analizar el sitio: «El sitio no sirve contenido por HTTP sin cifrar» aparece en «Comprobaciones superadas». El punto 3 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#3-cómo-servir-la-aplicación-por-https-y-activar-hsts) muestra la misma redirección en una aplicación de Node.

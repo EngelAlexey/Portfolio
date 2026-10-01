@@ -1,0 +1,69 @@
+---
+code: hsts-short
+title: Su política HSTS dura menos de un año
+difficulty: easy
+minutes: 10
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'RFC 6797: HTTP Strict Transport Security (HSTS)'
+    url: https://www.rfc-editor.org/rfc/rfc6797
+  - text: 'OWASP: HTTP Strict Transport Security Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html
+  - text: 'HSTS Preload List Submission'
+    url: https://hstspreload.org/
+---
+
+## Qué significa
+
+Su sitio envía la cabecera `Strict-Transport-Security`, conocida como HSTS, con un `max-age` menor de 31536000 segundos, un año. El navegador aplica la política durante ese plazo, contado desde que recibió la cabecera.
+
+El revisor pide al menos un año, el mínimo que exige la [lista de precarga HSTS](https://hstspreload.org/) de los navegadores.
+
+## Qué riesgo tiene
+
+Si una persona no vuelve a su sitio dentro de ese plazo, el navegador de esa persona olvida la política. Cuando vuelve y escribe la dirección sin `https://`, la primera petición sale por HTTP, sin cifrar. En una red wifi pública, un atacante puede responderla antes que su servidor y mantener la visita en HTTP.
+
+## Cómo corregirlo
+
+Suba `max-age` a un año como mínimo. OWASP recomienda dos años, 63072000 segundos:
+
+```text
+Strict-Transport-Security: max-age=63072000; includeSubDomains
+```
+
+Si su cabecera ya lleva `includeSubDomains` o `preload`, consérvelos y cambie solo el número. Si la respuesta lleva dos cabeceras `Strict-Transport-Security`, el navegador y el revisor solo leen la primera, así que deje una.
+
+### Nginx
+
+Cambie el valor en la directiva `add_header` del bloque `server` que escucha en el puerto 443:
+
+```nginx
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+```
+
+### Apache
+
+Cambie el valor en la directiva `Header` del bloque `<VirtualHost *:443>`:
+
+```apache
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+```
+
+### Cloudflare
+
+En **SSL/TLS > Edge Certificates**, abra **HTTP Strict Transport Security (HSTS)**. En **Max Age Header (max-age)**, elija 12 meses, el valor más alto de la lista.
+
+### Vercel y Netlify
+
+Vercel envía `max-age=63072000` por defecto en los dominios propios, según su [documentación](https://vercel.com/docs/cdn-security/encryption). Una cabecera propia sustituye ese valor. En Netlify, la cabecera se define en `_headers` o en `netlify.toml`, como muestra su [documentación de HTTPS](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/). Busque el `max-age` corto en esos archivos o en el código de la aplicación y súbalo ahí.
+
+## Cómo comprobarlo
+
+La respuesta HTTPS de la página principal debe traer un `max-age` de 31536000 o más:
+
+```text
+$ curl -sI https://su-dominio.example/ | grep -i strict-transport-security
+strict-transport-security: max-age=63072000; includeSubDomains
+```
+
+Después, vuelva a analizar el sitio: «HSTS exige HTTPS durante un año o más» aparece en «Comprobaciones superadas». El punto 3 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#3-cómo-servir-la-aplicación-por-https-y-activar-hsts) explica la recomendación de dos años y la lista de precarga.

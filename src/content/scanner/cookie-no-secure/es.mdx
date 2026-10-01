@@ -1,0 +1,67 @@
+---
+code: cookie-no-secure
+title: Su sitio crea una cookie sin el atributo Secure
+difficulty: medium
+minutes: 30
+platforms: [nginx]
+sources:
+  - text: 'RFC 6265: HTTP State Management Mechanism'
+    url: https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.5
+  - text: 'MDN: Set-Cookie'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie
+---
+
+## Qué significa
+
+Una cabecera `Set-Cookie` de su página principal crea una cookie sin el atributo `Secure`. Ese atributo indica al navegador que envíe la cookie solo por HTTPS. El revisor lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
+
+Este hallazgo cubre las cookies que no son de sesión. El revisor considera de sesión los nombres conocidos, como `PHPSESSID` o `wordpress_logged_in_…`, y los que contienen `sess`, `sid`, `auth`, `token` o `jwt`. Las demás cookies entran aquí, igual que las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`.
+
+Una cookie con `SameSite=None` y sin `Secure` no cuenta en este hallazgo. Chrome, Edge y Firefox la rechazan, así que el análisis la señala en «Observaciones».
+
+## Qué riesgo tiene
+
+Sin `Secure`, el navegador envía la cookie en cualquier petición a su dominio, también por `http://`. En una red wifi pública, quien comparte la red puede leer esa petición sin cifrar. El daño depende del contenido de la cookie: una preferencia de idioma expone poco; un identificador de la persona permite actuar en su nombre.
+
+El revisor decide solo por el nombre, así que no reconoce una cookie de sesión llamada `sesion` o `usuario`. Si esta cookie identifica a la persona, corríjala igual que una cookie de sesión: el riesgo es el mismo.
+
+## Cómo corregirlo
+
+Añada `Secure` a cada cookie que crea su sitio. Antes, compruebe que todo el sitio funciona por HTTPS: con `Secure`, el navegador deja de enviar la cookie a las páginas servidas por HTTP.
+
+```text
+Set-Cookie: idioma=es; Path=/; Secure
+```
+
+El atributo se fija donde la aplicación crea la cookie. En PHP, use la opción `secure` de [`setcookie()`](https://www.php.net/manual/en/function.setcookie.php), con la firma que acepta un array de opciones desde PHP 7.3:
+
+```php
+setcookie('idioma', 'es', ['path' => '/', 'secure' => true]);
+```
+
+En Express, use la opción `secure` de [`res.cookie()`](https://expressjs.com/en/5x/api/response/#rescookie):
+
+```js
+res.cookie('idioma', 'es', { secure: true });
+```
+
+### Nginx
+
+Si Nginx reenvía las peticiones a su aplicación con `proxy_pass`, el propio Nginx puede añadir el atributo a todas las cookies. Use [`proxy_cookie_flags`](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cookie_flags), disponible desde Nginx 1.19.3, en el bloque `location` que contiene `proxy_pass`:
+
+```nginx
+proxy_cookie_flags ~ secure;
+```
+
+El símbolo `~` sin expresión regular aplica la regla a todas las cookies.
+
+## Cómo comprobarlo
+
+Cada cabecera `Set-Cookie` debe incluir `secure`, en mayúsculas o en minúsculas. La orden pide la página principal con GET y sigue las redirecciones, como el revisor:
+
+```text
+$ curl -sL -o /dev/null -D - https://su-dominio.example/ | grep -i '^set-cookie'
+set-cookie: idioma=es; path=/; secure
+```
+
+Después, vuelva a analizar el sitio: el hallazgo ya no aparece. Cuando ninguna cookie tiene hallazgos, «Comprobaciones superadas» muestra «Ninguna cookie carece de los atributos Secure, HttpOnly o SameSite que necesita». El punto 5 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#5-cómo-proteger-la-sesión-y-las-cookies) explica qué atributos necesita la cookie de sesión.

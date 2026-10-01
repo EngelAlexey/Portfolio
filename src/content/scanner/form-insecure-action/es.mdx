@@ -1,0 +1,52 @@
+---
+code: form-insecure-action
+title: Un formulario de su página principal envía los datos sin cifrar
+difficulty: easy
+minutes: 15
+platforms: []
+sources:
+  - text: 'MDN: <form>: The Form element'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/form
+  - text: 'W3C: Upgrade Insecure Requests'
+    url: https://www.w3.org/TR/upgrade-insecure-requests/
+  - text: 'OWASP: Transport Layer Security Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html
+---
+
+## Qué significa
+
+Un formulario de la página principal envía lo que escribe la persona a una dirección `http:`, aunque la página se sirva por HTTPS. El revisor lee el atributo `action` de cada `<form>` y el atributo `formaction` de los botones, que sustituye al `action` cuando se pulsa ese botón.
+
+Una ruta relativa, como `/contacto`, usa el `https:` de la página y no cuenta. Si la página tiene una etiqueta `<base>` con una dirección `http:`, las rutas relativas también pasan a `http:`.
+
+## Qué riesgo tiene
+
+El navegador envía sin cifrar todo lo que contiene el formulario: nombres, correos y, en un formulario de acceso, contraseñas. En una red wifi pública, un atacante puede leer esos datos o cambiarlos antes de que lleguen a su destino.
+
+Una redirección de HTTP a HTTPS en el servidor no lo evita, porque los datos ya salieron sin cifrar en la primera petición.
+
+## Cómo corregirlo
+
+Cambie la dirección del atributo `action` o `formaction` a `https://`. Si el formulario envía a su propio dominio, una ruta relativa también sirve:
+
+```html
+<form action="/contacto" method="post">
+```
+
+Si la página tiene una etiqueta `<base>` con una dirección `http:`, cámbiela también a `https://`. Si el formulario envía los datos a otro servicio, como uno de boletines, use la dirección `https://` que indica su documentación.
+
+Busque el formulario en la plantilla o en el contenido de la página. El revisor solo lee la página principal, así que revise también los formularios del resto del sitio.
+
+Una política de seguridad de contenido (CSP) con la directiva `upgrade-insecure-requests` también pasa el envío a HTTPS, según la [especificación de la directiva](https://www.w3.org/TR/upgrade-insecure-requests/). Aun así, el revisor lee el atributo y mantiene el hallazgo mientras la dirección empiece por `http:`.
+
+## Cómo comprobarlo
+
+Las direcciones de los formularios de la página principal deben empezar por `https://` o ser rutas relativas:
+
+```text
+$ curl -s https://su-dominio.example/ | grep -Eio '(form)?action="[^"]*"'
+action="https://su-dominio.example/buscar"
+action="/contacto"
+```
+
+Después, vuelva a analizar el sitio: «Ningún formulario envía sus datos por HTTP» aparece en «Comprobaciones superadas». El punto 3 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#3-cómo-servir-la-aplicación-por-https-y-activar-hsts) explica cómo servir toda la aplicación por HTTPS.

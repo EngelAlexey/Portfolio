@@ -1,0 +1,60 @@
+---
+code: spf-permissive
+title: Su registro SPF no impide que cualquier servidor envíe correo con su dominio
+difficulty: medium
+minutes: 30
+platforms: [dns, cloudflare]
+sources:
+  - text: 'RFC 7208: Sender Policy Framework (SPF)'
+    url: https://www.rfc-editor.org/rfc/rfc7208
+  - text: 'RFC 9989: Domain-Based Message Authentication, Reporting, and Conformance (DMARC)'
+    url: https://www.rfc-editor.org/rfc/rfc9989
+  - text: 'Microsoft: Set up SPF to identify valid email sources for your Microsoft 365 domain'
+    url: https://learn.microsoft.com/en-us/defender-office-365/email-authentication-spf-configure
+---
+
+## Qué significa
+
+Su dominio publica un registro SPF, pero ese registro autoriza a todos los servidores o no se pronuncia sobre los que no lista. El revisor marca este hallazgo en cuatro casos:
+
+- el `all` que se aplica, también el que llega a través de `redirect=`, es `+all`, `?all` o `all` sin calificador, que equivale a `+all`;
+- el registro no tiene `all` ni `redirect=`, un final que la RFC 7208 trata como `?all`;
+- un `ip4` o un `ip6` con prefijo `/0`, como `ip4:0.0.0.0/0`, autoriza todas las direcciones;
+- un `include` apunta a un registro que termina en `+all`.
+
+## Qué riesgo tiene
+
+Cuando el registro autoriza a todos, cualquier servidor supera SPF para su dominio. Un atacante puede poner su dominio en el remitente del sobre (`MAIL FROM`), el que comprueba SPF, y en el remitente visible (`From`). Ese correo falsificado supera SPF y también DMARC, aunque su política DMARC sea `p=reject`.
+
+Con `?all`, el resultado de SPF es neutral, así que el registro no ayuda a rechazar el correo falsificado con su dominio.
+
+## Cómo corregirlo
+
+Termine el registro en `-all` o `~all` y quite cualquier `ip4` o `ip6` con prefijo `/0`. Si el registro no tiene `all`, añádalo al final. Si usa `redirect=`, haga el cambio en el registro al que apunta. Un registro de Google Workspace queda así:
+
+```text
+v=spf1 include:_spf.google.com ~all
+```
+
+`-all` pide rechazar el correo de los servidores que no aparecen en el registro, y `~all` pide marcarlo como sospechoso. El revisor acepta los dos. Antes del cambio, compruebe que el registro incluye todos los servicios que envían con su dominio, porque el que falte dejará de superar SPF.
+
+Si el final ya es correcto y el hallazgo continúa, el `+all` viene de un `include`. Consulte cada uno con `dig +short TXT`, seguido del dominio que aparece tras `include:`. Quite el que termine en `+all` o pida a ese proveedor el valor correcto.
+
+### DNS
+
+Edite el registro TXT que empieza por `v=spf1` en el panel de su proveedor de DNS. No cree un segundo registro, porque con dos los servidores de correo no pueden evaluar ninguno.
+
+### Cloudflare
+
+En **DNS** > **Records**, seleccione **Edit** en el registro TXT que empieza por `v=spf1`. Cambie el texto de **Content** y seleccione **Save**.
+
+## Cómo comprobarlo
+
+La línea que empieza por `"v=spf1` debe terminar en `-all` o `~all`:
+
+```text
+$ dig +short TXT su-dominio.example
+"v=spf1 include:_spf.google.com ~all"
+```
+
+En Windows, ejecute `nslookup -type=TXT su-dominio.example`. Si todavía ve el valor anterior, espere a que venza su TTL y repita la consulta. Después, vuelva a analizar el sitio: SPF aparece en «Comprobaciones superadas».

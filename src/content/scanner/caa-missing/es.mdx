@@ -1,0 +1,65 @@
+---
+code: caa-missing
+title: Su dominio no limita qué autoridades pueden emitir sus certificados
+difficulty: medium
+minutes: 30
+platforms: [dns, cloudflare, vercel, netlify]
+sources:
+  - text: 'RFC 8659: DNS Certification Authority Authorization (CAA) Resource Record'
+    url: https://www.rfc-editor.org/rfc/rfc8659
+  - text: "Let's Encrypt: Certificate Authority Authorization (CAA)"
+    url: https://letsencrypt.org/docs/caa/
+  - text: 'Cloudflare: Add CAA records'
+    url: https://developers.cloudflare.com/ssl/edge-certificates/caa-records/
+---
+
+## Qué significa
+
+CAA es un registro DNS que indica qué autoridades de certificación pueden emitir certificados para su dominio. Ni el dominio analizado ni sus dominios padre publican uno.
+
+El revisor consulta el dominio analizado y sube por sus dominios padre, sin llegar al dominio de nivel superior. Para `www.su-dominio.example`, consulta `www.su-dominio.example` y `su-dominio.example`.
+
+## Qué riesgo tiene
+
+Sin CAA, cualquier autoridad de certificación pública puede emitir un certificado para su dominio si comprueba que usted lo controla, como explica [Let's Encrypt](https://letsencrypt.org/docs/caa/). Si un atacante consigue que una de ellas acepte una solicitud falsa, obtiene un certificado que los navegadores aceptan para su dominio.
+
+Con CAA, las autoridades que no están en la lista deben negarse a emitirlo, según la RFC 8659.
+
+## Cómo corregirlo
+
+Publique en la raíz del dominio un registro CAA `issue` por cada autoridad que emite sus certificados. El registro vale también para los subdominios que no tengan uno propio, así que incluya las autoridades de todos los servicios que usan su dominio. Si falta una, esa autoridad no podrá emitir ni renovar el certificado de ese servicio.
+
+```text
+su-dominio.example. CAA 0 issue "letsencrypt.org"
+```
+
+En el registro, `0` es el campo de marcas, `issue` es la etiqueta que autoriza a emitir y `letsencrypt.org` es el identificador de Let's Encrypt. Cada autoridad publica el suyo.
+
+### DNS
+
+En el panel de su proveedor de DNS, cree un registro de tipo `CAA` en la raíz del dominio. Use `0` como marcas, `issue` como etiqueta y el identificador de la autoridad como valor. Repita el registro para cada autoridad.
+
+### Cloudflare
+
+Cloudflare emite los certificados de Universal SSL con varias autoridades, como Let's Encrypt, Google Trust Services y SSL.com. Cuando la zona usa Universal SSL y usted crea cualquier registro CAA, Cloudflare añade los de las autoridades que usa. Esos registros no aparecen en el panel, pero sí en `dig`.
+
+Cree uno por cada autoridad que emita certificados para su dominio fuera de Cloudflare, como la del certificado de su servidor de origen. Si no hay ninguna, cree uno para `letsencrypt.org`, que Cloudflare también usa. En **DNS** > **Records**, seleccione **Add record** y elija `CAA` en **Type**. Escriba su dominio en **Name**, elija en **Tag** la opción que autoriza a emitir certificados, escriba el identificador en **CA domain name** y seleccione **Save**.
+
+### Vercel y Netlify
+
+Las dos plataformas emiten sus certificados con Let's Encrypt: [Vercel](https://vercel.com/docs/domains/working-with-ssl) y [Netlify](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/). Publique `0 issue "letsencrypt.org"` en el DNS del dominio. Netlify documenta además un valor que solo permite emitir a la cuenta de Netlify en Let's Encrypt:
+
+```text
+0 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/54403714"
+```
+
+## Cómo comprobarlo
+
+Consulte el dominio donde publicó el registro, porque `dig`, a diferencia del revisor, no sube por los dominios padre:
+
+```text
+$ dig +short CAA su-dominio.example
+0 issue "letsencrypt.org"
+```
+
+En Cloudflare, la salida incluye también los registros que añade la plataforma. `nslookup` de Windows no admite el tipo CAA. Si el registro todavía no aparece, espere y repita la consulta: los resolutores DNS guardan la respuesta anterior hasta que vence su TTL. Después, vuelva a analizar el sitio: CAA aparece en «Comprobaciones superadas».

@@ -1,0 +1,80 @@
+---
+code: cert-name-mismatch
+title: Su certificado no corresponde a este dominio
+difficulty: medium
+minutes: 30
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'RFC 9525: Service Identity in TLS'
+    url: https://www.rfc-editor.org/rfc/rfc9525#section-6.3
+  - text: 'Nginx: Configuring HTTPS servers'
+    url: https://nginx.org/en/docs/http/configuring_https_servers.html#sni
+  - text: 'Cloudflare: Universal SSL limitations'
+    url: https://developers.cloudflare.com/ssl/edge-certificates/universal-ssl/limitations/
+---
+
+## Qué significa
+
+Un certificado declara los nombres de dominio que protege en la extensión *Subject Alternative Name* (SAN), con entradas de tipo DNS. El nombre que usted analizó no está en esa lista, ni lo cubre un comodín. Un comodín como `*.su-dominio.example` cubre un solo nivel, como `www.su-dominio.example`. No cubre `su-dominio.example` ni `a.b.su-dominio.example`.
+
+El revisor también marca este hallazgo si el certificado no tiene ninguna entrada DNS en esa extensión. Chrome, desde la versión 58, y Firefox, desde la 101, no usan el campo *Common Name* (CN) para comprobar el nombre. El revisor comprueba el nombre aunque el certificado falle por otro motivo, así que este hallazgo puede aparecer junto a otro del certificado.
+
+## Qué riesgo tiene
+
+Los navegadores muestran una página de advertencia en lugar de su sitio. En Chrome, esa página se titula «La conexión no es privada». Si su sitio envía HSTS, el navegador de quien ya lo visitó ni siquiera ofrece continuar.
+
+## Cómo corregirlo
+
+Obtenga un certificado que incluya todos los nombres con los que se visita el sitio, por ejemplo el dominio y su variante con `www`. Con Certbot, pase cada nombre con `-d`:
+
+```bash
+sudo certbot --nginx -d su-dominio.example -d www.su-dominio.example
+```
+
+En Apache, cambie `--nginx` por `--apache`. Si ya existe un certificado con parte de esos nombres, Certbot pregunta si quiere ampliarlo. Si su certificado ya incluye el nombre, el servidor está enviando otro certificado, por ejemplo el de otro sitio del mismo servidor.
+
+### Nginx
+
+Nginx elige el bloque `server` por el nombre que pide el navegador. Si ningún bloque lo declara en `server_name`, responde con el servidor por defecto del puerto y con su certificado. Declare todos los nombres en el bloque que tiene el certificado correcto:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name su-dominio.example www.su-dominio.example;
+    ssl_certificate     /etc/letsencrypt/live/su-dominio.example/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/su-dominio.example/privkey.pem;
+}
+```
+
+Recargue la configuración con `sudo nginx -s reload`.
+
+### Apache
+
+Apache elige el `<VirtualHost>` por el nombre que pide el navegador. Si ninguno lo declara en `ServerName` o `ServerAlias`, usa el primer `VirtualHost` del puerto y su certificado. Declare los nombres en el `<VirtualHost *:443>` que tiene el certificado correcto:
+
+```apache
+ServerName su-dominio.example
+ServerAlias www.su-dominio.example
+```
+
+Reinicie Apache con `sudo apachectl -k graceful`.
+
+### Cloudflare
+
+Universal SSL cubre el dominio y sus subdominios de primer nivel, como `www.su-dominio.example`. Un subdominio más profundo, como `a.b.su-dominio.example`, necesita Advanced Certificate Manager con Total TLS, o un certificado propio que lo incluya. Si el registro DNS está en **DNS only**, los visitantes reciben el certificado de su servidor: corríjalo allí.
+
+### Vercel y Netlify
+
+Las dos emiten el certificado para los dominios que usted añade al proyecto ([Vercel](https://vercel.com/docs/domains/working-with-ssl), [Netlify](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/)). Compruebe que el nombre analizado esté en **Settings > Domains** (Vercel) o en **Domain management** (Netlify). Netlify solo incluye un alias de dominio en el certificado si el DNS del alias ya estaba configurado al emitirlo. Revise el certificado en **Domain management > HTTPS**.
+
+## Cómo comprobarlo
+
+Lea los nombres del certificado que presenta el servidor. Use en `-connect` y en `-servername` el nombre que analizó:
+
+```text
+$ openssl s_client -connect su-dominio.example:443 -servername su-dominio.example </dev/null 2>/dev/null | openssl x509 -noout -ext subjectAltName
+X509v3 Subject Alternative Name:
+    DNS:su-dominio.example, DNS:www.su-dominio.example
+```
+
+El nombre que analizó debe aparecer tras `DNS:` o estar cubierto por un comodín de un solo nivel. Después, vuelva a analizar el sitio: el certificado aparece en «Comprobaciones superadas».

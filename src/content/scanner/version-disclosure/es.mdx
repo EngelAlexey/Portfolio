@@ -1,0 +1,75 @@
+---
+code: version-disclosure
+title: Su servidor publica en las cabeceras la versión exacta de su software
+difficulty: easy
+minutes: 15
+platforms: [nginx, apache, cloudflare]
+sources:
+  - text: 'OWASP: HTTP Security Response Headers Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html
+  - text: 'nginx: server_tokens'
+    url: https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens
+  - text: 'Apache HTTP Server: ServerTokens'
+    url: https://httpd.apache.org/docs/2.4/mod/core.html#servertokens
+---
+
+## Qué significa
+
+Una cabecera de la respuesta de su página principal incluye el número de versión del software del servidor, como `Server: nginx/1.24.0` o `X-Powered-By: PHP/8.2.12`. El revisor lee `Server`, `X-Powered-By`, `X-AspNet-Version`, `X-AspNetMvc-Version` y `X-Generator`.
+
+El nombre del producto sin número no cuenta, así que `Server: nginx` aprueba la comprobación.
+
+## Qué riesgo tiene
+
+Con la versión exacta, un atacante busca los fallos de seguridad publicados para esa versión sin probar nada contra su servidor. OWASP recomienda quitar ese dato, aunque advierte que hay otras formas de identificar el software.
+
+Ocultar la versión no corrige esos fallos, así que mantenga también el software actualizado.
+
+## Cómo corregirlo
+
+Quite el número de versión de cada cabecera, o la cabecera entera si no la necesita. El ajuste está en el programa que la añade:
+
+| Cabecera | Programa | Cambio |
+|---|---|---|
+| `X-Powered-By: PHP/…` | PHP | `expose_php = Off` en `php.ini` |
+| `Server: Microsoft-IIS/…` | IIS 10 | `removeServerHeader="true"` en `<requestFiltering>` de `web.config` |
+| `X-AspNet-Version` | ASP.NET | `<httpRuntime enableVersionHeader="false" />` en `<system.web>` de `web.config` |
+| `X-AspNetMvc-Version` | ASP.NET MVC | `MvcHandler.DisableMvcResponseHeader = true;` en `Global.asax` |
+
+Por defecto, PHP añade `X-Powered-By` en cualquier aplicación PHP, como WordPress. `expose_php` solo se cambia en `php.ini`, que PHP lee al arrancar, así que reinicie después PHP-FPM o el servidor web. Si su alojamiento no le da acceso a ese archivo, pida el cambio al proveedor.
+
+### Nginx
+
+En el bloque `http` de `nginx.conf`:
+
+```nginx
+server_tokens off;
+```
+
+La cabecera queda como `Server: nginx`, sin versión. Si PHP-FPM añade `X-Powered-By`, quítela en el mismo bloque con `fastcgi_hide_header X-Powered-By;`. Si Nginx reenvía las peticiones a otra aplicación, use `proxy_hide_header X-Powered-By;`.
+
+### Apache
+
+En la configuración principal del servidor, porque `ServerTokens` no funciona en un `<VirtualHost>` ni en un `.htaccess`:
+
+```apache
+ServerTokens Prod
+ServerSignature Off
+```
+
+`ServerTokens Prod` deja la cabecera en `Server: Apache`, y `ServerSignature Off` quita la versión del pie de las páginas de error. En Debian y Ubuntu, el paquete fija `ServerTokens OS` y `ServerSignature On` en `/etc/apache2/conf-available/security.conf`, así que cambie esas dos líneas en ese archivo. Después, reinicie Apache.
+
+### Cloudflare
+
+En **Rules > Settings**, abra la pestaña **Managed Transforms** y active `Remove "X-Powered-By" headers`. Cloudflare quita entonces esa cabecera de las respuestas de su sitio.
+
+## Cómo comprobarlo
+
+Ninguna de las cabeceras que lee el revisor debe llevar un número de versión:
+
+```text
+$ curl -sI https://su-dominio.example/ | grep -iE '^(server|x-powered-by|x-aspnet-version|x-aspnetmvc-version|x-generator):'
+server: nginx
+```
+
+Después, vuelva a analizar el sitio: la comprobación de la versión aparece en «Comprobaciones superadas».

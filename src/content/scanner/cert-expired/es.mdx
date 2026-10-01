@@ -1,0 +1,74 @@
+---
+code: cert-expired
+title: Su certificado está vencido o todavía no es válido
+difficulty: medium
+minutes: 30
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'RFC 5280: Internet X.509 PKI Certificate and CRL Profile'
+    url: https://www.rfc-editor.org/rfc/rfc5280#section-4.1.2.5
+  - text: 'RFC 6797: HTTP Strict Transport Security (HSTS)'
+    url: https://www.rfc-editor.org/rfc/rfc6797#section-12.1
+  - text: 'Certbot: Renewing certificates'
+    url: https://eff-certbot.readthedocs.io/en/stable/using.html#renewing-certificates
+---
+
+## Qué significa
+
+Un certificado solo es válido entre su fecha de inicio, `notBefore`, y su fecha de vencimiento, `notAfter`. El certificado que su servidor presenta para este dominio ya venció, o su fecha de inicio todavía no ha llegado.
+
+## Qué riesgo tiene
+
+Los navegadores muestran una página de advertencia en lugar de su sitio. En Chrome, esa página se titula «La conexión no es privada». Si su sitio envía HSTS, el navegador de quien ya lo visitó ni siquiera ofrece continuar.
+
+## Cómo corregirlo
+
+Obtenga un certificado nuevo, instálelo y reinicie o recargue el servidor web para que lo use. Si el certificado es de Let's Encrypt y lo gestiona Certbot, renuévelo con esta orden:
+
+```bash
+sudo certbot renew
+```
+
+`certbot renew` solo renueva los certificados próximos a vencer, y uno vencido cuenta como tal. Después, compruebe que la renovación automática funcione para que no vuelva a pasar:
+
+```bash
+sudo certbot renew --dry-run
+```
+
+La opción `--dry-run` simula la renovación con el servidor de pruebas de Let's Encrypt y no guarda ningún certificado. Para que el servidor web cargue cada certificado renovado, guarde la orden de recarga de abajo en un script ejecutable dentro de `/etc/letsencrypt/renewal-hooks/deploy/`. Certbot ejecuta esos scripts después de cada renovación correcta.
+
+### Nginx
+
+Recargue Nginx para que use el certificado nuevo:
+
+```bash
+sudo nginx -s reload
+```
+
+### Apache
+
+Apache lee el certificado al arrancar y no vuelve a leerlo mientras funciona. Reinícielo con `graceful`, que deja terminar las peticiones en curso:
+
+```bash
+sudo apachectl -k graceful
+```
+
+### Cloudflare
+
+Si el registro DNS del dominio está en **DNS only**, los visitantes reciben el certificado de su servidor: renuévelo allí. Con el registro en **Proxied**, Cloudflare renueva automáticamente sus certificados Universal SSL, pero no los que usted subió ([documentación de Cloudflare](https://developers.cloudflare.com/ssl/edge-certificates/custom-certificates/renewing/)). Sustituya un certificado propio vencido en **SSL/TLS > Edge Certificates**.
+
+### Vercel y Netlify
+
+Las dos plataformas emiten y renuevan automáticamente certificados de Let's Encrypt para los dominios que usted añade ([Vercel](https://vercel.com/docs/domains/working-with-ssl), [Netlify](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/)). Ninguna de las dos renueva un certificado que usted haya subido. Si venció uno emitido por la plataforma, la renovación falló: revise el dominio en **Settings > Domains** (Vercel) o en **Domain management > HTTPS** (Netlify). El DNS debe apuntar a la plataforma, y un registro CAA, si existe, debe autorizar a Let's Encrypt.
+
+## Cómo comprobarlo
+
+Pida el certificado que presenta el servidor y lea sus fechas:
+
+```text
+$ openssl s_client -connect su-dominio.example:443 -servername su-dominio.example </dev/null 2>/dev/null | openssl x509 -noout -dates
+notBefore=Oct  1 08:00:00 2026 GMT
+notAfter=Dec 30 07:59:59 2026 GMT
+```
+
+La fecha de hoy debe quedar entre `notBefore` y `notAfter`. Después, vuelva a analizar el sitio: el certificado aparece en «Comprobaciones superadas».

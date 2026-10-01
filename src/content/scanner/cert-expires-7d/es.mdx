@@ -1,0 +1,69 @@
+---
+code: cert-expires-7d
+title: Su certificado vence en menos de 7 días
+difficulty: medium
+minutes: 30
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'Certbot: Renewing certificates'
+    url: https://eff-certbot.readthedocs.io/en/stable/using.html#renewing-certificates
+  - text: "Let's Encrypt: Profiles"
+    url: https://letsencrypt.org/docs/profiles/
+  - text: 'Vercel: Working with SSL Certificates'
+    url: https://vercel.com/docs/domains/working-with-ssl
+---
+
+## Qué significa
+
+Al certificado que presenta su servidor le quedan menos de 7 días de validez. Certbot renueva un certificado de 90 días cuando le quedan 30, y Vercel renueva los suyos entre 30 y 14 días antes del vencimiento. Por eso este hallazgo suele indicar que la renovación automática falló o que el servidor web sigue usando el certificado anterior.
+
+En los certificados de vida corta, el revisor usa como umbral la sexta parte de la vigencia. En uno de 160 horas de Let's Encrypt (perfil `shortlived`), el hallazgo aparece cuando quedan unas 27 horas.
+
+## Qué riesgo tiene
+
+En menos de una semana, los navegadores mostrarán una página de advertencia en lugar de su sitio. Si su sitio envía HSTS, el navegador de quien ya lo visitó ni siquiera ofrecerá continuar.
+
+## Cómo corregirlo
+
+Renueve el certificado ahora y después averigüe por qué falló la renovación automática. Si lo gestiona Certbot, ejecute:
+
+```bash
+sudo certbot renew
+```
+
+Si la orden falla, lea el error que muestra Certbot. Si Certbot responde que el certificado todavía no necesita renovarse, ya lo renovó antes. El servidor web sigue con el anterior: recárguelo como se indica abajo. Después, compruebe que una tarea programada ejecute `certbot renew`: búsquela en `/etc/crontab`, en `/etc/cron.*/*` o con `systemctl list-timers`.
+
+### Nginx y Apache
+
+Para que el servidor use el certificado renovado, recargue Nginx con `sudo nginx -s reload` o reinicie Apache con `sudo apachectl -k graceful`. Compruebe también que `ssl_certificate` o `SSLCertificateFile` apunten a `/etc/letsencrypt/live/`, como pide Certbot, y no a una copia: Certbot actualiza esa carpeta en cada renovación.
+
+Para que Certbot lo haga tras cada renovación correcta, cree un *hook* de despliegue, que es un script ejecutable en `/etc/letsencrypt/renewal-hooks/deploy/`. Este es el de Nginx; en Apache, cambie `nginx -s reload` por `apachectl -k graceful`:
+
+```bash
+sudo sh -c 'printf "#!/bin/sh\nnginx -s reload\n" > /etc/letsencrypt/renewal-hooks/deploy/reload.sh'
+sudo chmod 755 /etc/letsencrypt/renewal-hooks/deploy/reload.sh
+```
+
+### Cloudflare
+
+Según la [documentación de Cloudflare](https://developers.cloudflare.com/ssl/reference/certificate-validity-periods/), la plataforma intenta renovar los certificados Universal SSL desde 30 días antes del vencimiento hasta 24 horas antes. Revise su estado en **SSL/TLS > Edge Certificates**. Si el registro DNS está en **DNS only**, los visitantes reciben el certificado de su servidor: renuévelo allí. Los certificados que usted subió no se renuevan solos; sustitúyalos en esa misma página.
+
+### Vercel
+
+Según la [documentación de Vercel](https://vercel.com/docs/domains/working-with-ssl), la plataforma renueva los certificados que emite entre 30 y 14 días antes del vencimiento. Con menos de 7 días, la renovación falló. Abra **Settings > Domains** en el proyecto y corrija los errores que muestre el dominio. Un registro CAA, si existe, debe autorizar a Let's Encrypt con `0 issue "letsencrypt.org"`. Vercel avisa de estos fallos a los propietarios del equipo con la notificación **Configuration - Certificate renewal failed**.
+
+### Netlify
+
+Según la [documentación de Netlify](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/), la plataforma renueva sus certificados automáticamente. Si no lo hizo, revise el estado en **Domain management > HTTPS**. La emisión falla si el dominio conserva un registro `AAAA` antiguo o un registro `A` de más. También falla si un registro CAA no incluye a Let's Encrypt, como explica la [guía de errores de certificado de Netlify](https://docs.netlify.com/manage/domains/troubleshooting/troubleshoot-ssl-and-https/).
+
+## Cómo comprobarlo
+
+Pida el certificado que presenta el servidor y compruebe si vence en los próximos 30 días:
+
+```text
+$ openssl s_client -connect su-dominio.example:443 -servername su-dominio.example </dev/null 2>/dev/null | openssl x509 -noout -enddate -checkend 2592000
+notAfter=Dec 30 07:59:59 2026 GMT
+Certificate will not expire
+```
+
+`-checkend 2592000` cuenta 30 días en segundos, y `Certificate will not expire` indica que el certificado no vence en ese plazo. Después, vuelva a analizar el sitio: «Comprobaciones superadas» indica que al certificado le quedan más de 30 días.

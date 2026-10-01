@@ -1,0 +1,117 @@
+---
+code: csp-missing
+title: Su sitio no indica al navegador qué scripts puede ejecutar la página
+difficulty: hard
+minutes: 120
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'MDN: Content Security Policy (CSP)'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP
+  - text: 'MDN: Content-Security-Policy-Report-Only'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy-Report-Only
+  - text: 'OWASP: Content Security Policy Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html
+---
+
+## Qué significa
+
+La política de seguridad de contenido (CSP) indica al navegador desde qué orígenes puede cargar la página scripts, estilos y marcos. La respuesta de su página principal no trae la cabecera `Content-Security-Policy` ni una etiqueta `<meta http-equiv="Content-Security-Policy">` dentro de `<head>`.
+
+La cabecera `Content-Security-Policy-Report-Only` no cuenta, porque con ella el navegador informa de lo que bloquearía, pero no bloquea nada. Si su sitio ya la envía, el resultado lo indica en «Observaciones».
+
+## Qué riesgo tiene
+
+Un atacante puede insertar un `<script>` en su página si el sitio muestra sin escapar un texto que él controla, como un comentario. Sin CSP, el navegador ejecuta ese script como parte de su página. El script puede leer lo que la persona escribe en un formulario y enviarlo a otro servidor.
+
+La CSP no corrige el fallo que deja insertar el script, pero impide que el navegador lo ejecute. Por eso complementa el escape de la salida y no lo sustituye.
+
+## Cómo corregirlo
+
+Una CSP aplicada de una vez puede bloquear scripts propios, estilos, fuentes o la analítica. Despliéguela primero en modo de solo informe, con la cabecera `Content-Security-Policy-Report-Only`. En ese modo, el navegador carga todo y muestra en la consola un aviso por cada recurso que la política bloquearía.
+
+Empiece por esta política, basada en la política básica de OWASP:
+
+```text
+Content-Security-Policy-Report-Only: default-src 'self'; frame-ancestors 'none'; form-action 'self'
+```
+
+`default-src 'self'` solo permite recursos de su propio origen, es decir, del mismo esquema, dominio y puerto. También bloquea los scripts escritos dentro del HTML y los atributos como `onclick`. `frame-ancestors 'none'` impide que otro sitio muestre la página en un marco. `form-action 'self'` limita adónde envían sus datos los formularios.
+
+Abra cada tipo de página con la consola del navegador abierta y resuelva cada aviso:
+
+1. Mueva a un archivo `.js` cada script escrito en el HTML. Si no puede moverlo, autorícelo añadiendo a `script-src` el *hash* que Chrome muestra en el aviso de la consola. Cambie los atributos como `onclick` por `addEventListener`.
+2. Añada a `script-src` el origen exacto de cada script externo que necesite, junto a `'self'`, como en `script-src 'self' https://www.googletagmanager.com`.
+3. Para fuentes, imágenes o conexiones a otros servicios, añada su origen a `font-src`, `img-src` o `connect-src`.
+4. Si el sitio usa estilos en línea que no puede mover a un archivo, añada `style-src 'self' 'unsafe-inline'`. Esa excepción no afecta a los scripts, que son lo que mira esta comprobación.
+
+No resuelva un aviso con `'unsafe-inline'`, `*` o `https:` en `script-src`, porque entonces la política ya no restringe los scripts. Cuando la consola no muestre avisos, cambie el nombre de la cabecera a `Content-Security-Policy`.
+
+Si no puede enviar cabeceras, el revisor también acepta la política en una etiqueta `<meta http-equiv="Content-Security-Policy">` al principio de `<head>`. Ahí no funcionan `frame-ancestors` ni el modo de solo informe.
+
+### Nginx
+
+En el bloque `server` que escucha en el puerto 443:
+
+```nginx
+add_header Content-Security-Policy-Report-Only "default-src 'self'; frame-ancestors 'none'; form-action 'self'" always;
+```
+
+Un bloque `location` con su propio `add_header` no hereda esta línea, así que repítala en él.
+
+### Apache
+
+Con el módulo `mod_headers` activo, en el bloque `<VirtualHost *:443>` o en el `.htaccess` de la raíz del sitio:
+
+```apache
+Header always set Content-Security-Policy-Report-Only "default-src 'self'; frame-ancestors 'none'; form-action 'self'"
+```
+
+### Cloudflare
+
+En **Rules > Overview**, seleccione **Create rule > Response Header Transform Rule** y aplique la regla a todas las peticiones. Elija **Set static**, escriba `Content-Security-Policy-Report-Only` en **Header name** y la política en **Value**. Pulse **Deploy**.
+
+### Vercel
+
+En `vercel.json`:
+
+```json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy-Report-Only",
+          "value": "default-src 'self'; frame-ancestors 'none'; form-action 'self'"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Si el sitio usa Next.js, el propio *framework* escribe scripts dentro del HTML. La [guía de Next.js](https://nextjs.org/docs/app/guides/content-security-policy) los autoriza con un *nonce* que `proxy.ts` genera en cada petición.
+
+### Netlify
+
+En el archivo `_headers` de la carpeta que publica Netlify:
+
+```text
+/*
+  Content-Security-Policy-Report-Only: default-src 'self'; frame-ancestors 'none'; form-action 'self'
+```
+
+[Netlify](https://docs.netlify.com/manage/routing/headers/) no añade estas cabeceras a las respuestas de una función, como una página generada en el servidor. En ese caso, debe enviarlas la propia función. Si el sitio tiene scripts en línea que no puede mover, el complemento [`@netlify/plugin-csp-nonce`](https://github.com/netlify/plugin-csp-nonce) les añade un *nonce* en cada respuesta. El complemento empieza en modo de solo informe, y `reportOnly = false` en `netlify.toml` lo aplica.
+
+## Cómo comprobarlo
+
+Con la política ya aplicada, la respuesta de la página principal trae la cabecera:
+
+```text
+$ curl -sI https://su-dominio.example/ | grep -i content-security-policy
+content-security-policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'
+```
+
+Mientras la política siga en modo de solo informe, la línea empieza por `content-security-policy-report-only` y el revisor mantiene el hallazgo. Si usó la etiqueta `<meta>`, compruébela con `curl -s https://su-dominio.example/ | grep -io '<meta http-equiv[^>]*>'`.
+
+Después, vuelva a analizar el sitio: la CSP aparece en «Comprobaciones superadas». El punto 4 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#4-qué-cabeceras-de-seguridad-enviar) muestra el aviso que escribe Chrome y cómo autorizar un script propio.

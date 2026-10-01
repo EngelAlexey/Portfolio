@@ -1,0 +1,97 @@
+---
+code: framing-allowed
+title: Cualquier sitio puede mostrar su página dentro de un marco
+difficulty: easy
+minutes: 10
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'MDN: X-Frame-Options'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options
+  - text: 'MDN: CSP frame-ancestors'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/frame-ancestors
+  - text: 'OWASP: Clickjacking Defense Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html
+---
+
+## Qué significa
+
+La respuesta de su página principal no indica al navegador si otros sitios pueden mostrarla dentro de un marco (`<iframe>`). El revisor acepta `X-Frame-Options` con `DENY` o `SAMEORIGIN`, o la directiva `frame-ancestors` de la cabecera `Content-Security-Policy` sin `*`, `http:` ni `https:`.
+
+Si la CSP tiene `frame-ancestors`, el navegador ignora `X-Frame-Options`, y el revisor también. El valor `ALLOW-FROM` está obsoleto, y los navegadores actuales ignoran la cabecera que lo lleva. Dentro de una etiqueta `<meta>`, ninguna de las dos protecciones tiene efecto.
+
+## Qué riesgo tiene
+
+Otro sitio puede mostrar su página en un marco invisible, encima de un botón propio. La persona cree que pulsa ese botón, pero el clic llega a su página. Así puede confirmar sin saberlo una acción de su sitio, como enviar un formulario. Este engaño se llama *clickjacking*.
+
+## Cómo corregirlo
+
+Si su sitio ya envía una CSP en la cabecera, añada `frame-ancestors 'none'` a esa política. Si todavía no tiene CSP, envíe esta cabecera:
+
+```text
+X-Frame-Options: DENY
+```
+
+Una cabecera `Content-Security-Policy` con solo `frame-ancestors` también protege, pero el revisor la cuenta como una CSP que no restringe los scripts.
+
+`DENY` y `'none'` impiden cualquier marco, también los de su propio sitio. Si una página suya se muestra dentro de otra del mismo sitio, use `SAMEORIGIN` o `frame-ancestors 'self'`. Para permitir un sitio concreto, añada su origen después de `'self'` en `frame-ancestors`.
+
+### Nginx
+
+En el bloque `server` que escucha en el puerto 443:
+
+```nginx
+add_header X-Frame-Options "DENY" always;
+```
+
+Un bloque `location` con su propio `add_header` no hereda esta línea, así que repítala en él.
+
+### Apache
+
+Con el módulo `mod_headers` activo, en el bloque `<VirtualHost *:443>` o en el `.htaccess` de la raíz del sitio:
+
+```apache
+Header always set X-Frame-Options "DENY"
+```
+
+### Cloudflare
+
+En **Rules > Overview**, seleccione **Create rule > Response Header Transform Rule** y aplique la regla a todas las peticiones. Elija **Set static**, escriba `X-Frame-Options` en **Header name** y `DENY` en **Value**. Pulse **Deploy**.
+
+### Vercel
+
+En `vercel.json`:
+
+```json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Frame-Options", "value": "DENY" }]
+    }
+  ]
+}
+```
+
+### Netlify
+
+En el archivo `_headers` de la carpeta que publica Netlify:
+
+```text
+/*
+  X-Frame-Options: DENY
+```
+
+[Netlify](https://docs.netlify.com/manage/routing/headers/) no añade estas cabeceras a las respuestas de una función, como una página generada en el servidor. En ese caso, debe enviarlas la propia función.
+
+## Cómo comprobarlo
+
+La respuesta de la página principal debe traer una de las dos protecciones:
+
+```text
+$ curl -sI https://su-dominio.example/ | grep -iE 'x-frame-options|content-security-policy'
+x-frame-options: DENY
+```
+
+Si usa `frame-ancestors`, la línea `content-security-policy` debe incluir la directiva sin `*`, `http:` ni `https:`.
+
+Después, vuelva a analizar el sitio: la protección contra marcos aparece en «Comprobaciones superadas». El punto 4 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#4-qué-cabeceras-de-seguridad-enviar) explica `frame-ancestors` junto al resto de cabeceras de seguridad.

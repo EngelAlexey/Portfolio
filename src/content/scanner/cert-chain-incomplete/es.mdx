@@ -1,0 +1,75 @@
+---
+code: cert-chain-incomplete
+title: Su servidor no envía el certificado intermedio
+difficulty: easy
+minutes: 15
+platforms: [nginx, apache, cloudflare, netlify]
+sources:
+  - text: 'Nginx: SSL certificate chains'
+    url: https://nginx.org/en/docs/http/configuring_https_servers.html#chains
+  - text: 'Apache: SSLCertificateFile'
+    url: https://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslcertificatefile
+  - text: 'Certbot: Where are my certificates?'
+    url: https://eff-certbot.readthedocs.io/en/stable/using.html#where-are-my-certificates
+---
+
+## Qué significa
+
+Las autoridades de certificación firman los certificados de los sitios con un certificado intermedio. La lista de autoridades de confianza de un navegador no siempre incluye ese intermedio, así que el servidor debe enviarlo después de su certificado. Su servidor envía solo su propio certificado, y sin el intermedio el revisor no puede verificar su firma.
+
+Este hallazgo no afecta a la validez del certificado, que el revisor comprueba aparte.
+
+## Qué riesgo tiene
+
+Algunos navegadores muestran la página y otros muestran un error de certificado, a veces solo en algunas visitas. Por eso puede ver su sitio bien en su navegador mientras otra persona recibe el error. Node.js, con su configuración por defecto, rechaza la conexión, así que también fallan las llamadas a su API desde un servidor en Node.js.
+
+## Cómo corregirlo
+
+Configure el servidor con un archivo que contenga su certificado seguido de los intermedios, en ese orden. Si usa Certbot, ese archivo es `fullchain.pem`; `cert.pem` contiene solo el certificado del servidor. Si su autoridad le entregó el certificado y los intermedios en archivos separados, únalos con el certificado primero:
+
+```bash
+cat su-dominio.example.crt bundle.crt > su-dominio.example.chained.crt
+```
+
+### Nginx
+
+Apunte `ssl_certificate` al archivo con la cadena completa:
+
+```nginx
+ssl_certificate     /etc/letsencrypt/live/su-dominio.example/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/su-dominio.example/privkey.pem;
+```
+
+Si el orden del archivo es incorrecto, Nginx no arranca y muestra el error `key values mismatch`. Compruebe la configuración con `sudo nginx -t` y recárguela con `sudo nginx -s reload`.
+
+### Apache
+
+Desde la versión 2.4.8, `SSLCertificateFile` admite los intermedios en el mismo archivo, después del certificado del servidor, y deja obsoleta `SSLCertificateChainFile`:
+
+```apache
+SSLCertificateFile    /etc/letsencrypt/live/su-dominio.example/fullchain.pem
+SSLCertificateKeyFile /etc/letsencrypt/live/su-dominio.example/privkey.pem
+```
+
+Apache solo lee estos archivos al arrancar, así que reinícielo con `sudo apachectl -k graceful`.
+
+### Cloudflare
+
+Si el registro DNS está en **DNS only**, la cadena que reciben los visitantes es la de su servidor: corríjala allí. Si subió un certificado propio con el [método de agrupación](https://developers.cloudflare.com/ssl/edge-certificates/custom-certificates/bundling-methodologies/) **User-defined**, Cloudflare presenta la cadena que usted pegó, así que debe incluir los intermedios. El método por defecto, **Compatible**, completa la cadena con intermedios conocidos.
+
+### Netlify
+
+Al instalar un certificado propio, Netlify pide, además del certificado y la clave privada, la cadena de certificados intermedios de su autoridad ([documentación de Netlify](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/)). Vuelva a instalarlo con esa cadena completa.
+
+## Cómo comprobarlo
+
+Liste los certificados que envía el servidor:
+
+```text
+$ openssl s_client -connect su-dominio.example:443 -servername su-dominio.example </dev/null 2>/dev/null | grep -E '^ *[0-9]+ s:|^Verification'
+ 0 s:CN=su-dominio.example
+ 1 s:C=US, O=Let's Encrypt, CN=YE2
+Verification: OK
+```
+
+El certificado 0 es el de su servidor, y debe seguirlo al menos un intermedio. Si solo aparece el 0 y la última línea es `Verification error: unable to verify the first certificate`, falta el intermedio. Después, vuelva a analizar el sitio: la cadena de certificados aparece en «Comprobaciones superadas».

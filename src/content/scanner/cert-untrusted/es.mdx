@@ -1,0 +1,71 @@
+---
+code: cert-untrusted
+title: Su certificado no lo emite una autoridad de confianza
+difficulty: medium
+minutes: 30
+platforms: [nginx, apache, cloudflare]
+sources:
+  - text: "Let's Encrypt: Getting Started"
+    url: https://letsencrypt.org/getting-started/
+  - text: 'Certbot: Where are my certificates?'
+    url: https://eff-certbot.readthedocs.io/en/stable/using.html#where-are-my-certificates
+  - text: 'Cloudflare: Origin CA certificates'
+    url: https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/
+---
+
+## Qué significa
+
+Un navegador acepta un certificado si lo firma, directamente o a través de certificados intermedios, una autoridad de certificación de su lista de confianza. El certificado de su servidor no cumple esa condición. Ocurre, por ejemplo, con un certificado autofirmado o con uno emitido por una autoridad privada. También ocurre con un certificado de origen de Cloudflare, que solo vale entre Cloudflare y su servidor.
+
+El revisor también marca este hallazgo si una clave de la cadena es demasiado corta o si una firma es débil o no es válida.
+
+## Qué riesgo tiene
+
+Los navegadores muestran una página de advertencia en lugar de su sitio. En Chrome, esa página se titula «La conexión no es privada». Quien se acostumbra a aceptar la advertencia la aceptará también cuando un atacante de su red wifi presente un certificado falso. El aviso que ve es el mismo.
+
+## Cómo corregirlo
+
+Sustituya el certificado por uno de una autoridad pública. Let's Encrypt los emite gratis, y Certbot los obtiene y los instala en Nginx o Apache con una orden:
+
+```bash
+sudo certbot --nginx -d su-dominio.example -d www.su-dominio.example
+```
+
+En Apache, cambie `--nginx` por `--apache`.
+
+### Nginx
+
+Si instala el certificado a mano, por ejemplo después de `certbot certonly`, apunte las directivas a los archivos de Certbot. `fullchain.pem` contiene su certificado seguido de los intermedios:
+
+```nginx
+ssl_certificate     /etc/letsencrypt/live/su-dominio.example/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/su-dominio.example/privkey.pem;
+```
+
+Recargue la configuración con `sudo nginx -s reload`.
+
+### Apache
+
+Si instala el certificado a mano, use las mismas rutas dentro del `<VirtualHost *:443>`:
+
+```apache
+SSLCertificateFile    /etc/letsencrypt/live/su-dominio.example/fullchain.pem
+SSLCertificateKeyFile /etc/letsencrypt/live/su-dominio.example/privkey.pem
+```
+
+Reinicie Apache con `sudo apachectl -k graceful`.
+
+### Cloudflare
+
+Un certificado de origen de Cloudflare solo cifra el tráfico entre Cloudflare y su servidor. Si el registro DNS está en **DNS only**, o si pausó Cloudflare, los visitantes reciben ese certificado y el navegador lo rechaza. Vuelva a poner el registro en **Proxied**, o instale en su servidor un certificado de una autoridad pública.
+
+## Cómo comprobarlo
+
+Compruebe con OpenSSL si la cadena del certificado termina en una autoridad de confianza:
+
+```text
+$ openssl s_client -connect su-dominio.example:443 -servername su-dominio.example </dev/null 2>/dev/null | grep '^Verification'
+Verification: OK
+```
+
+Si la línea empieza por `Verification error`, el resto indica el motivo, por ejemplo `self-signed certificate`. Después, vuelva a analizar el sitio: el certificado aparece en «Comprobaciones superadas».

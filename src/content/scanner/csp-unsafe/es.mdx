@@ -1,0 +1,79 @@
+---
+code: csp-unsafe
+title: La CSP de su sitio no impide que se ejecute un script inyectado
+difficulty: hard
+minutes: 90
+platforms: [vercel, netlify]
+sources:
+  - text: 'MDN: Content Security Policy (CSP)'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP
+  - text: 'MDN: CSP script-src'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/script-src
+  - text: 'OWASP: Content Security Policy Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html
+---
+
+## Qué significa
+
+Su sitio envía una política de seguridad de contenido (CSP), pero ninguna de sus políticas restringe los scripts. El revisor mira `script-src` o, si falta, `default-src`. Esa directiva restringe los scripts cuando cumple dos condiciones:
+
+1. No admite `'unsafe-inline'`, salvo que lo acompañen un *nonce*, un *hash* o `'strict-dynamic'`. En ese caso, el navegador ignora `'unsafe-inline'`.
+2. No incluye `*`, `http:`, `https:` ni `data:`, salvo junto a `'strict-dynamic'`, que hace que el navegador los ignore.
+
+Una política con otras directivas, como `upgrade-insecure-requests` o `frame-ancestors`, y sin `script-src` ni `default-src`, no restringe los scripts.
+
+## Qué riesgo tiene
+
+Con `'unsafe-inline'`, un `<script>` que un atacante consiga insertar en la página se ejecuta igual que sin CSP. Con `https:` o `*`, un `<script src>` insertado puede cargar código de cualquier dominio que controle el atacante.
+
+En los dos casos, el script puede leer lo que la persona escribe en un formulario y enviarlo a otro servidor. MDN advierte que `'unsafe-inline'` anula gran parte del propósito de una CSP.
+
+## Cómo corregirlo
+
+Pruebe la política nueva sin retirar la actual. Envíela con la cabecera `Content-Security-Policy-Report-Only` junto a la que ya tiene. El navegador sigue aplicando la actual y muestra en la consola lo que bloquearía la nueva.
+
+Después, corrija `script-src` según el caso:
+
+- Si incluye `'unsafe-inline'`, quítelo y mueva cada script del HTML a un archivo `.js`. Si no puede moverlo, autorícelo con el *hash* que Chrome muestra en el aviso de la consola. Cambie los atributos como `onclick` y los enlaces `javascript:` por `addEventListener`.
+- Si incluye `*`, `http:`, `https:` o `data:`, sustitúyalos por el origen exacto de cada script que necesite, como `https://www.googletagmanager.com`.
+- Si la política no tiene `script-src` ni `default-src`, añada `script-src 'self'` y los orígenes de sus scripts externos.
+
+Si su aplicación genera el HTML en cada petición, OWASP recomienda un *nonce*, un valor aleatorio distinto en cada respuesta. El servidor lo escribe en la cabecera y en cada `<script>`:
+
+```text
+Content-Security-Policy: script-src 'nonce-{RANDOM}' 'strict-dynamic'; object-src 'none'; base-uri 'none'
+```
+
+`'strict-dynamic'` extiende la autorización a los scripts que carguen los scripts con *nonce*, así que no hace falta listar sus orígenes. En un sitio estático, que no puede cambiar el *nonce* en cada respuesta, use *hashes*.
+
+Mantenga en la política nueva las demás directivas de la actual, como `frame-ancestors`. Cuando la consola no muestre avisos, sustituya la política actual por la nueva, con el nombre `Content-Security-Policy`. Cámbiela donde la define hoy: `add_header` en Nginx, `Header` en Apache, una regla de Cloudflare, `vercel.json`, `_headers` o la etiqueta `<meta>`.
+
+### Vercel
+
+Si su sitio usa Next.js, la política sin *nonce* de la [guía de Next.js](https://nextjs.org/docs/app/guides/content-security-policy) incluye `'unsafe-inline'` en `script-src`, así que el revisor la marca. La misma guía genera un *nonce* en `proxy.ts`, y Next.js lo añade a sus propios scripts. A cambio, todas las páginas pasan a generarse en cada petición.
+
+### Netlify
+
+El complemento [`@netlify/plugin-csp-nonce`](https://github.com/netlify/plugin-csp-nonce) añade un *nonce* y `'strict-dynamic'` a cada respuesta HTML, y los suma a su CSP actual. Instálelo con `npm i @netlify/plugin-csp-nonce` y declárelo en `netlify.toml`:
+
+```toml
+[[plugins]]
+  package = "@netlify/plugin-csp-nonce"
+  [plugins.inputs]
+    reportOnly = false
+```
+
+Por defecto, `reportOnly` vale `true` y la política solo informa. Despliegue primero sin `[plugins.inputs]` y añada `reportOnly = false` cuando la consola no muestre avisos. Si su CSP actual está en `_headers`, [Netlify](https://docs.netlify.com/manage/routing/headers/) no la aplica a las páginas que genera una función, que deben enviarla ellas mismas.
+
+## Cómo comprobarlo
+
+La respuesta de la página principal debe traer la política corregida:
+
+```text
+$ curl -sI https://su-dominio.example/ | grep -i content-security-policy
+content-security-policy: script-src 'nonce-4AEemGb0xJptoIGFP3Nd' 'strict-dynamic'; object-src 'none'; base-uri 'none'
+```
+
+En `script-src`, o en `default-src` si falta, no debe quedar `'unsafe-inline'` sin un *nonce* o un *hash*, ni `*`, `http:`, `https:` o `data:` sin `'strict-dynamic'`.
+
+Después, vuelva a analizar el sitio: la CSP aparece en «Comprobaciones superadas». El punto 4 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#4-qué-cabeceras-de-seguridad-enviar) muestra el aviso que escribe Chrome y cómo autorizar un script propio.

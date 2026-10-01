@@ -1,0 +1,100 @@
+---
+code: permissions-policy-missing
+title: Su sitio no restringe el acceso a la cámara, el micrófono y la ubicación
+difficulty: easy
+minutes: 15
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'MDN: Permissions-Policy'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy
+  - text: 'W3C: Permissions Policy'
+    url: https://www.w3.org/TR/permissions-policy/
+  - text: 'OWASP: HTTP Security Response Headers Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html
+---
+
+## Qué significa
+
+La cabecera `Permissions-Policy` indica qué funciones del navegador puede usar la página. El revisor comprueba tres: `camera`, `microphone` y `geolocation`. Su página principal no envía la cabecera, omite alguna de las tres o la permite a cualquier origen con `*`.
+
+El revisor también marca la cabecera cuando no puede leerla, por ejemplo si usa la sintaxis de la antigua cabecera `Feature-Policy`, como `camera 'none'`. El navegador ignora entera una cabecera que no puede leer. Tampoco cuenta una cabecera `Feature-Policy`, que el revisor no lee.
+
+## Qué riesgo tiene
+
+Sin la cabecera, cualquier script de su página puede pedir a la persona acceso a la cámara, al micrófono o a su ubicación. OWASP pone como ejemplo un script inyectado en la página (XSS). Un script de terceros comprometido tiene el mismo acceso.
+
+Con la cabecera, el navegador rechaza esas peticiones. Según MDN, Chrome y Edge la aplican, y Firefox y Safari todavía no.
+
+## Cómo corregirlo
+
+Envíe la cabecera con las tres funciones desactivadas, como recomienda OWASP:
+
+```text
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+```
+
+Los paréntesis vacíos desactivan la función en la página y en todos sus marcos. Si su sitio usa una de ellas, como la ubicación en un buscador de tiendas, permítala solo a su propio origen con `geolocation=(self)`. Separe las funciones con comas, como en el ejemplo.
+
+### Nginx
+
+En el bloque `server` que escucha en el puerto 443:
+
+```nginx
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+```
+
+Un bloque `location` con su propio `add_header` no hereda esta línea, así que repítala en él.
+
+### Apache
+
+Con el módulo `mod_headers` activo, en el bloque `<VirtualHost *:443>` o en el `.htaccess` de la raíz del sitio:
+
+```apache
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+```
+
+### Cloudflare
+
+En **Rules > Overview**, seleccione **Create rule > Response Header Transform Rule** y aplique la regla a todas las peticiones. Elija **Set static**, escriba `Permissions-Policy` en **Header name** y `camera=(), microphone=(), geolocation=()` en **Value**. Pulse **Deploy**.
+
+### Vercel
+
+En `vercel.json`:
+
+```json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Netlify
+
+En el archivo `_headers` de la carpeta que publica Netlify:
+
+```text
+/*
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+```
+
+[Netlify](https://docs.netlify.com/manage/routing/headers/) no añade estas cabeceras a las respuestas de una función, como una página generada en el servidor. En ese caso, debe enviarlas la propia función.
+
+## Cómo comprobarlo
+
+La respuesta de la página principal debe traer la cabecera con las tres funciones:
+
+```text
+$ curl -sI https://su-dominio.example/ | grep -i permissions-policy
+permissions-policy: camera=(), microphone=(), geolocation=()
+```
+
+Después, vuelva a analizar el sitio: la restricción de la cámara, el micrófono y la ubicación aparece en «Comprobaciones superadas».

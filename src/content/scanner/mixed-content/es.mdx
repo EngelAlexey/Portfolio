@@ -1,0 +1,76 @@
+---
+code: mixed-content
+title: Su página HTTPS carga scripts, estilos o marcos por HTTP
+difficulty: hard
+minutes: 60
+platforms: [cloudflare, wordpress]
+sources:
+  - text: 'MDN: Mixed content'
+    url: https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Mixed_content
+  - text: 'MDN: Content-Security-Policy: upgrade-insecure-requests directive'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/upgrade-insecure-requests
+  - text: 'Cloudflare: Automatic HTTPS Rewrites'
+    url: https://developers.cloudflare.com/ssl/edge-certificates/additional-options/automatic-https-rewrites/
+---
+
+## Qué significa
+
+Su página principal se sirve por HTTPS, pero carga por HTTP al menos un recurso activo. El revisor lee el HTML que envía el servidor, sin ejecutar JavaScript. Cuenta como activos los scripts, las hojas de estilo, los marcos (`<iframe>`, `<frame>`) y los elementos `<object>` y `<embed>`. Una etiqueta `<base>` con una dirección `http:` convierte en `http:` también las rutas relativas.
+
+Las imágenes, el audio y el vídeo por HTTP no dan este hallazgo, porque los navegadores actuales los piden por HTTPS. El revisor los anota como observación, que no resta puntos.
+
+## Qué riesgo tiene
+
+Los navegadores actuales bloquean los scripts, las hojas de estilo y los marcos que una página HTTPS pide por HTTP. La parte de la página que depende de ellos deja de funcionar: un menú que no se abre o una página sin estilos.
+
+Si un navegador los cargara, llegarían sin cifrar. En una red wifi pública, un atacante podría cambiar el script y, con él, todo lo que la página muestra o envía.
+
+## Cómo corregirlo
+
+Cambie a `https://` la dirección de cada recurso que muestra el hallazgo, después de comprobar que se descarga por HTTPS. Para los recursos de su propio dominio, una ruta relativa como `/js/menu.js` también sirve. Si un recurso no existe por HTTPS, sírvalo desde su dominio o quítelo.
+
+Busque las direcciones en las plantillas y en el contenido guardado. El revisor solo lee la página principal, así que revise también el resto de páginas.
+
+La directiva `upgrade-insecure-requests` de una política de seguridad de contenido (CSP) hace que el navegador pida por HTTPS todos los recursos de la página. El revisor la acepta en la cabecera `Content-Security-Policy` o en esta etiqueta dentro de `<head>`:
+
+```html
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+```
+
+Coloque la etiqueta al principio de `<head>`, porque la política no se aplica a lo que va antes de ella. Si ya envía una CSP, añada la directiva a esa misma política. La directiva no sirve para un recurso que solo existe por HTTP, porque el navegador no vuelve a pedirlo por HTTP.
+
+### Cloudflare
+
+En **SSL/TLS > Edge Certificates**, active **Automatic HTTPS Rewrites**. Cloudflare cambia a `https:` las direcciones de los recursos que comprueba disponibles por HTTPS ([documentación de Cloudflare](https://developers.cloudflare.com/ssl/edge-certificates/additional-options/automatic-https-rewrites/)). Si un recurso no responde por HTTPS, Cloudflare no cambia su dirección.
+
+### WordPress
+
+Compruebe que **WordPress Address (URL)** y **Site Address (URL)**, en **Settings > General**, empiezan por `https://`. Si no puede editarlos, cámbielos en `wp-config.php`, donde los fijan las constantes `WP_SITEURL` y `WP_HOME` ([documentación de WordPress](https://wordpress.org/documentation/article/settings-general-screen/)).
+
+Cambie con WP-CLI las direcciones `http:` de su dominio que quedan en las entradas. Haga antes una copia de la base de datos y pruebe con `--dry-run`, que muestra el informe sin guardar cambios:
+
+```bash
+wp search-replace 'http://su-dominio.example' 'https://su-dominio.example' --skip-columns=guid --dry-run
+```
+
+Si el informe es correcto, repita la orden sin `--dry-run`. La opción `--skip-columns=guid` deja sin cambiar la columna `guid`, como en el ejemplo de la [documentación de WP-CLI](https://developer.wordpress.org/cli/commands/search-replace/). Corrija en su código las direcciones que escribe un tema o un plugin.
+
+## Cómo comprobarlo
+
+La orden cuenta las líneas del HTML de la página principal con un script, una hoja de estilo o un marco por `http:`:
+
+```text
+$ curl -s https://su-dominio.example/ | grep -Eic '<(script|link|iframe|frame|object|embed)[^>]*http:[^>]*>'
+0
+```
+
+Si da más de 0, cambie `-c` por `-o` para ver las etiquetas. Para el revisor, un `<link>` solo cuenta si es una hoja de estilo (`rel="stylesheet"`).
+
+Si eligió `upgrade-insecure-requests`, la orden anterior sigue contando las etiquetas. Compruebe en su lugar que la directiva llega en la cabecera o en la etiqueta `<meta>`:
+
+```text
+$ curl -s -D - https://su-dominio.example/ | grep -io 'upgrade-insecure-requests'
+upgrade-insecure-requests
+```
+
+Después, vuelva a analizar el sitio: «La página no carga scripts, estilos ni marcos por HTTP» aparece en «Comprobaciones superadas». El punto 4 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#4-qué-cabeceras-de-seguridad-enviar) explica cómo probar una CSP antes de aplicarla.

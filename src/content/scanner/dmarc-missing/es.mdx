@@ -1,0 +1,63 @@
+---
+code: dmarc-missing
+title: Su dominio no publica una política DMARC
+difficulty: medium
+minutes: 30
+platforms: [dns, cloudflare]
+sources:
+  - text: 'RFC 9989: Domain-Based Message Authentication, Reporting, and Conformance (DMARC)'
+    url: https://www.rfc-editor.org/rfc/rfc9989
+  - text: 'Microsoft: Set up DMARC to validate email in Microsoft 365'
+    url: https://learn.microsoft.com/en-us/defender-office-365/email-authentication-dmarc-configure
+  - text: 'Cloudflare Email Service: Troubleshooting'
+    url: https://developers.cloudflare.com/email-service/reference/troubleshooting/
+---
+
+## Qué significa
+
+DMARC es un registro TXT que publica la política de su dominio para el remitente visible de un correo, el campo `From`. Indica a los servidores de correo qué hacer con un mensaje que no supera SPF ni DKIM con ese dominio. DKIM es la firma que su proveedor de correo añade a cada mensaje.
+
+El revisor busca un único registro que empiece por `v=DMARC1` en `_dmarc.su-dominio.example`, también cuando analiza un subdominio. No encontró ninguno o encontró varios. Con varios, la RFC 9989 pide a los servidores de correo descartarlos todos.
+
+## Qué riesgo tiene
+
+SPF comprueba el remitente del sobre (`MAIL FROM`), la dirección que los servidores de correo usan para entregar el mensaje. El programa de correo muestra como remitente la del campo `From`, que puede ser distinta. Según la RFC 9989, ni SPF ni DKIM vinculan por sí solos su resultado al dominio de `From`.
+
+Sin DMARC, un atacante puede enviar a sus clientes un correo falsificado con su dominio en `From`, por ejemplo desde `facturas@su-dominio.example`. El servidor que lo recibe no tiene ninguna política suya para rechazarlo.
+
+## Cómo corregirlo
+
+Publique un único registro TXT con el nombre `_dmarc` en el dominio registrado. El valor depende de si el dominio envía correo.
+
+Si no envía correo, publique directamente la política más estricta, la que recomienda [Microsoft](https://learn.microsoft.com/en-us/defender-office-365/email-authentication-dmarc-configure#dmarc-txt-records-for-parked-domains-in-microsoft-365) para los dominios sin correo:
+
+```text
+v=DMARC1; p=reject
+```
+
+Si envía correo, empiece con `p=none` y una dirección para los informes agregados (`rua`), como recomiendan Microsoft y Cloudflare:
+
+```text
+v=DMARC1; p=none; rua=mailto:dmarc@su-dominio.example
+```
+
+`p=none` no pide ningún tratamiento, pero muchos servidores de destino envían a `rua` un resumen diario de los mensajes que usan su dominio. Revíselos durante unas semanas y pase después a `p=quarantine` o `p=reject`. Hasta entonces, el revisor mostrará el hallazgo «La política DMARC no frena los correos falsificados con el dominio».
+
+### DNS
+
+En el panel de su proveedor de DNS, cree un registro de tipo `TXT` con el nombre `_dmarc` y el valor elegido. Escriba solo `_dmarc` si el panel completa el dominio: el nombre final debe ser `_dmarc.su-dominio.example`.
+
+### Cloudflare
+
+En **DNS** > **Records**, seleccione **Add record** y elija `TXT` en **Type**. Escriba `_dmarc` en **Name**, pegue el valor en **Content** y seleccione **Save**. También puede crearlo desde **Email** > **DMARC Management**, que además recibe los informes y los muestra en el panel.
+
+## Cómo comprobarlo
+
+Debe aparecer una sola línea que empiece por `"v=DMARC1`:
+
+```text
+$ dig +short TXT _dmarc.su-dominio.example
+"v=DMARC1; p=reject"
+```
+
+En Windows, ejecute `nslookup -type=TXT _dmarc.su-dominio.example`. Si el registro todavía no aparece, espere y repita la consulta: los resolutores DNS guardan la respuesta anterior hasta que vence su TTL. Después, vuelva a analizar el sitio. Con `p=quarantine` o `p=reject`, DMARC aparece en «Comprobaciones superadas».

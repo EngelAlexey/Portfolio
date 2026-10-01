@@ -1,0 +1,61 @@
+---
+code: dmarc-policy-none
+title: Su política DMARC no pide apartar ni rechazar los correos falsificados con su dominio
+difficulty: medium
+minutes: 60
+platforms: [dns, cloudflare]
+sources:
+  - text: 'RFC 9989: Domain-Based Message Authentication, Reporting, and Conformance (DMARC)'
+    url: https://www.rfc-editor.org/rfc/rfc9989
+  - text: 'Microsoft: Set up DMARC to validate email in Microsoft 365'
+    url: https://learn.microsoft.com/en-us/defender-office-365/email-authentication-dmarc-configure
+  - text: 'Cloudflare: Enable DMARC Management'
+    url: https://developers.cloudflare.com/dmarc-management/enable/
+---
+
+## Qué significa
+
+Su dominio publica una política DMARC, pero la que se aplica es `none`, que no pide ningún tratamiento para los mensajes que fallan DMARC. El revisor la considera `none` si `p` falta o su valor no es `quarantine` ni `reject`, y también si combina `p=quarantine` con `t=y`.
+
+La RFC 9989 define `t=y` como modo de prueba, en el que los servidores aplican la política un nivel por debajo. Así, `quarantine` pasa a `none` y `reject` pasa a `quarantine`.
+
+## Qué riesgo tiene
+
+Con `none`, el servidor que recibe un correo falsificado con su dominio aplica solo sus filtros habituales. Ese correo puede llegar a la bandeja de entrada de sus clientes aunque no supere SPF ni DKIM. Los informes de `rua`, si los configuró, solo le avisan de esos correos al día siguiente.
+
+## Cómo corregirlo
+
+Pase la política a `p=quarantine`, que pide tratar como sospechoso el correo que falla DMARC, y después a `p=reject`, que pide rechazarlo. Quite también `t=y`. El revisor da la comprobación por superada desde `p=quarantine`.
+
+Antes de cada cambio, compruebe en los informes que sus correos legítimos superan DMARC. Cada servicio que envía con su dominio, como su correo, el formulario de contacto o la facturación, debe superar SPF o DKIM con ese dominio. DKIM es la firma que su proveedor de correo añade a cada mensaje.
+
+1. Añada `rua` con una dirección para los informes, si el registro no la tiene.
+2. Revise los informes durante unas semanas.
+3. Corrija el SPF o el DKIM de cada servicio legítimo que falle.
+4. Cambie el registro a `p=quarantine` y siga revisando los informes.
+5. Cuando no aparezcan correos legítimos que fallan, cambie a `p=reject`.
+
+```text
+v=DMARC1; p=reject; rua=mailto:dmarc@su-dominio.example
+```
+
+Si el dominio no envía correo, pase directamente a `p=reject`.
+
+### DNS
+
+Edite el registro TXT `_dmarc` en el panel de su proveedor de DNS, cambie el valor de `p` y quite `t=y` si aparece. No cree un segundo registro: con dos, los servidores de correo descartan los dos.
+
+### Cloudflare
+
+En **DNS** > **Records**, seleccione **Edit** en el registro `_dmarc`, cambie **Content** y seleccione **Save**. Si no tiene un buzón para los informes, abra **Email** > **DMARC Management** y seleccione **Enable DMARC Management**. Cloudflare añade su propia dirección a `rua` y muestra los informes en el panel.
+
+## Cómo comprobarlo
+
+El valor de `p` debe ser `quarantine` o `reject`, sin `t=y` junto a `quarantine`:
+
+```text
+$ dig +short TXT _dmarc.su-dominio.example
+"v=DMARC1; p=reject; rua=mailto:dmarc@su-dominio.example"
+```
+
+En Windows, ejecute `nslookup -type=TXT _dmarc.su-dominio.example`. Si todavía ve el valor anterior, espere a que venza su TTL y repita la consulta. Después, vuelva a analizar el sitio: DMARC aparece en «Comprobaciones superadas».

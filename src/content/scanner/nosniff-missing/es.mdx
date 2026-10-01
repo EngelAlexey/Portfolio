@@ -1,0 +1,93 @@
+---
+code: nosniff-missing
+title: Su sitio deja que el navegador deduzca el tipo de sus archivos
+difficulty: easy
+minutes: 10
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'MDN: X-Content-Type-Options'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Content-Type-Options
+  - text: 'OWASP: HTTP Security Response Headers Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html
+---
+
+## Qué significa
+
+La respuesta de su página principal no trae `X-Content-Type-Options: nosniff`, o la cabecera tiene otro valor. Con `nosniff`, el navegador respeta el tipo que declara la cabecera `Content-Type` y no lo deduce del contenido del archivo.
+
+## Qué riesgo tiene
+
+Si su sitio sirve archivos que suben otras personas, uno declarado como `text/plain` puede contener HTML con un script. Sin `nosniff`, el navegador puede deducir que es HTML y ejecutar ese script en su dominio.
+
+Con `nosniff`, el navegador lo trata como texto. Además, rechaza un script o una hoja de estilo cuyo `Content-Type` no corresponde a su tipo.
+
+## Cómo corregirlo
+
+Envíe la cabecera en todas las respuestas del sitio, incluidos los archivos, que son lo que protege:
+
+```text
+X-Content-Type-Options: nosniff
+```
+
+Antes, compruebe que el servidor declara bien el tipo de cada archivo, como pide OWASP. Con `nosniff`, una hoja de estilo servida con un tipo distinto de `text/css` deja de cargarse.
+
+### Nginx
+
+En el bloque `server` que escucha en el puerto 443:
+
+```nginx
+add_header X-Content-Type-Options "nosniff" always;
+```
+
+Un bloque `location` con su propio `add_header` no hereda esta línea, así que repítala en él.
+
+### Apache
+
+Con el módulo `mod_headers` activo, en el bloque `<VirtualHost *:443>` o en el `.htaccess` de la raíz del sitio:
+
+```apache
+Header always set X-Content-Type-Options "nosniff"
+```
+
+### Cloudflare
+
+En **Rules > Overview**, seleccione **Create rule > Response Header Transform Rule** y aplique la regla a todas las peticiones. Elija **Set static**, escriba `X-Content-Type-Options` en **Header name** y `nosniff` en **Value**. Pulse **Deploy**.
+
+### Vercel
+
+En `vercel.json`:
+
+```json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }]
+    }
+  ]
+}
+```
+
+### Netlify
+
+En el archivo `_headers` de la carpeta que publica Netlify:
+
+```text
+/*
+  X-Content-Type-Options: nosniff
+```
+
+[Netlify](https://docs.netlify.com/manage/routing/headers/) no añade estas cabeceras a las respuestas de una función, como una página generada en el servidor. En ese caso, debe enviarlas la propia función.
+
+## Cómo comprobarlo
+
+La respuesta de la página principal debe traer la cabecera:
+
+```text
+$ curl -sI https://su-dominio.example/ | grep -i x-content-type-options
+x-content-type-options: nosniff
+```
+
+Repita la orden con la dirección de un archivo `.css` o `.js` de su sitio, que también debe traerla.
+
+Después, vuelva a analizar el sitio: `nosniff` aparece en «Comprobaciones superadas». El punto 4 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#4-qué-cabeceras-de-seguridad-enviar) explica esta cabecera junto al resto de cabeceras de seguridad.

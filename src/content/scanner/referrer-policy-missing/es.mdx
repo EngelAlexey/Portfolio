@@ -1,0 +1,72 @@
+---
+code: referrer-policy-missing
+title: Su sitio envía a otros sitios la dirección completa de sus páginas
+difficulty: easy
+minutes: 10
+platforms: [nginx, apache, vercel, netlify]
+sources:
+  - text: 'MDN: Referrer-Policy'
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy
+  - text: 'MDN: Referer header: privacy and security concerns'
+    url: https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Referer_header:_privacy_and_security_concerns
+  - text: 'OWASP: HTTP Security Response Headers Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html
+---
+
+## Qué significa
+
+La cabecera `Referrer-Policy`, o política de referencia, decide qué parte de la dirección de su página recibe otro sitio. El navegador envía esa parte en la cabecera `Referer`. Su página principal fija `unsafe-url` o `no-referrer-when-downgrade`, dos valores que envían la dirección completa, con la ruta y los parámetros.
+
+Si la cabecera trae varios valores, cuenta el último que el navegador reconoce. Una etiqueta `<meta name="referrer">` en el HTML sustituye a la cabecera.
+
+Si su sitio no envía la cabecera, el revisor no marca nada. Los navegadores aplican entonces `strict-origin-when-cross-origin`, que a otro sitio solo le envía el origen, como `https://su-dominio.example/`. `no-referrer-when-downgrade` era el valor por defecto antes de un cambio de la especificación en noviembre de 2020.
+
+## Qué riesgo tiene
+
+Con esa política, la dirección completa de la página llega a cada sitio al que enlaza. También llega a cada servicio externo que la página carga, como la analítica o las fuentes. Si la dirección lleva datos, como el enlace para restablecer una contraseña o una búsqueda, esos datos llegan a esos sitios.
+
+Con `unsafe-url`, la dirección completa se envía también a sitios HTTP, sin cifrar.
+
+## Cómo corregirlo
+
+Busque dónde se fija ese valor: en la configuración del servidor, en el código de la aplicación o en una etiqueta `<meta name="referrer">` del HTML. Cámbielo por el valor por defecto de los navegadores, que OWASP recomienda enviar de forma explícita:
+
+```text
+Referrer-Policy: strict-origin-when-cross-origin
+```
+
+Quitar la cabecera también resuelve el hallazgo, porque el navegador vuelve al valor por defecto. Si el HTML tiene la etiqueta `<meta name="referrer">`, cambie también su `content` o quítela, porque sustituye a la cabecera.
+
+### Nginx
+
+Encuentre la línea que fija el valor actual con `grep -rni referrer-policy /etc/nginx/` y sustitúyala por esta:
+
+```nginx
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+```
+
+### Apache
+
+Con el módulo `mod_headers` activo, busque la directiva `Header` que fija el valor actual, en la configuración del sitio o en un `.htaccess`. Sustitúyala por esta:
+
+```apache
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+```
+
+### Vercel y Netlify
+
+Busque `Referrer-Policy` en `vercel.json`, en `netlify.toml` o en el archivo `_headers`, y cambie su valor por `strict-origin-when-cross-origin`. Si la página principal la genera una función, busque el valor en el código de esa función.
+
+## Cómo comprobarlo
+
+La cabecera debe traer el valor nuevo, y el HTML no debe contener otra política:
+
+```text
+$ curl -sI https://su-dominio.example/ | grep -i referrer-policy
+referrer-policy: strict-origin-when-cross-origin
+$ curl -s https://su-dominio.example/ | grep -io '<meta[^>]*referrer[^>]*>'
+```
+
+La segunda orden busca la etiqueta en el HTML y no debe mostrar nada, salvo una etiqueta con `strict-origin-when-cross-origin`. Si quitó la cabecera, la primera orden tampoco muestra nada, y el resultado también es correcto.
+
+Después, vuelva a analizar el sitio: la política de referencia aparece en «Comprobaciones superadas». El punto 4 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#4-qué-cabeceras-de-seguridad-enviar) incluye esta cabecera entre las que conviene enviar.

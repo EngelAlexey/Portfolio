@@ -59,7 +59,7 @@ En **SSL/TLS > Edge Certificates**, abra **HTTP Strict Transport Security (HSTS)
 
 ### Vercel y Netlify
 
-Las dos plataformas envían HSTS por defecto en los dominios propios: [Vercel](https://vercel.com/docs/encryption) con `max-age=63072000` y [Netlify](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/) con `max-age=31536000`. Si el revisor marca este hallazgo en una de ellas, revise `vercel.json`, `netlify.toml` o `_headers`: una cabecera `Strict-Transport-Security` propia sustituye a la de la plataforma.
+Las dos plataformas envían HSTS por defecto en los dominios propios. [Vercel](https://vercel.com/docs/encryption) documenta `max-age=63072000`. Netlify no lo documenta, pero el 1 de octubre de 2026 respondía con `max-age=31536000` en los sitios que no configuran la cabecera. Si el revisor marca este hallazgo en una de ellas, revise `vercel.json`, `netlify.toml` o `_headers`: una cabecera `Strict-Transport-Security` propia sustituye a la de la plataforma.
 
 ## Cómo comprobarlo
 

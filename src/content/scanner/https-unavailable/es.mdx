@@ -1,0 +1,84 @@
+---
+code: https-unavailable
+title: Su sitio no acepta conexiones HTTPS con TLS 1.2 o TLS 1.3
+difficulty: medium
+minutes: 60
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'RFC 9325: Recommendations for Secure Use of TLS and DTLS'
+    url: https://www.rfc-editor.org/rfc/rfc9325
+  - text: 'OWASP: Transport Layer Security Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html
+  - text: 'Certbot: User Guide'
+    url: https://eff-certbot.readthedocs.io/en/stable/using.html
+---
+
+## Qué significa
+
+El revisor intentó una conexión TLS con su servidor en el puerto 443, el de HTTPS, y no la consiguió. El puerto rechazó la conexión, no respondió en 5 segundos o el servidor no completó la negociación con TLS 1.2 ni con TLS 1.3. Tampoco llegó por HTTPS la página principal.
+
+Un servidor que solo acepta TLS 1.0 o TLS 1.1 también da este hallazgo, junto con «El servidor acepta TLS 1.0 o TLS 1.1».
+
+## Qué riesgo tiene
+
+Sin HTTPS, el navegador y su servidor intercambian las páginas sin cifrar. En una red wifi pública, un atacante puede leer las contraseñas y las cookies de sesión que envían sus visitantes. También puede cambiar las páginas que reciben.
+
+## Cómo corregirlo
+
+Instale un certificado para su dominio y acepte HTTPS en el puerto 443 con TLS 1.2 y TLS 1.3. Certbot obtiene un certificado gratuito de [Let's Encrypt](https://letsencrypt.org/about/) y lo instala en Nginx o Apache. En la mayoría de las instalaciones, también deja programada la renovación.
+
+Si el puerto 443 no responde, compruebe que su proveedor de alojamiento permite conexiones entrantes a ese puerto.
+
+### Nginx
+
+La orden de Certbot para Nginx es esta:
+
+```bash
+sudo certbot --nginx -d su-dominio.example
+```
+
+Si prefiere hacerlo a mano, el bloque `server` del puerto 443 lleva el certificado y las versiones:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name su-dominio.example;
+    ssl_certificate /etc/letsencrypt/live/su-dominio.example/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/su-dominio.example/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+}
+```
+
+### Apache
+
+Con el módulo `mod_ssl` activo, la orden equivalente es `sudo certbot --apache -d su-dominio.example`. A mano, el bloque del puerto 443 queda así:
+
+```apache
+<VirtualHost *:443>
+    ServerName su-dominio.example
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/su-dominio.example/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/su-dominio.example/privkey.pem
+</VirtualHost>
+```
+
+Compruebe también que la configuración incluye `Listen 443`. Usar `fullchain.pem` en `SSLCertificateFile` exige Apache 2.4.8 o posterior. Si una línea `SSLProtocol` solo permite `TLSv1` o `TLSv1.1`, cámbiela por `SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1`.
+
+### Cloudflare
+
+Con el registro DNS del dominio en **Proxied**, Cloudflare sirve HTTPS con un certificado gratuito que emite y renueva por usted, [Universal SSL](https://developers.cloudflare.com/ssl/edge-certificates/universal-ssl/). Con el registro en **DNS only**, las visitas llegan directo a su servidor, que necesita su propio certificado.
+
+### Vercel y Netlify
+
+Las dos plataformas obtienen el certificado de Let's Encrypt por usted cuando el DNS del dominio apunta a ellas: [Vercel](https://vercel.com/docs/domains/working-with-ssl) y [Netlify](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/). Revise el estado del dominio en **Settings > Domains** del proyecto de Vercel, o en **Domain management > HTTPS** en Netlify.
+
+## Cómo comprobarlo
+
+Abra una conexión TLS con el puerto 443, como hace el revisor. La línea `Protocol version` debe mostrar `TLSv1.2` o `TLSv1.3`:
+
+```text
+$ openssl s_client -brief -connect su-dominio.example:443 -servername su-dominio.example </dev/null 2>&1 | grep 'Protocol version'
+Protocol version: TLSv1.3
+```
+
+Después, vuelva a analizar el sitio: «El sitio acepta conexiones HTTPS» aparece en «Comprobaciones superadas». El punto 3 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#3-cómo-servir-la-aplicación-por-https-y-activar-hsts) explica cómo redirigir después HTTP a HTTPS y activar HSTS.

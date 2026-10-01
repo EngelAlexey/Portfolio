@@ -1,0 +1,63 @@
+---
+code: sri-missing
+title: Su página carga un script de una CDN sin verificar su integridad
+difficulty: easy
+minutes: 15
+platforms: []
+sources:
+  - text: 'MDN: Subresource Integrity'
+    url: https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Subresource_Integrity
+  - text: 'W3C: Subresource Integrity'
+    url: https://www.w3.org/TR/sri/
+---
+
+## Qué significa
+
+Su página principal carga un script desde una CDN pública sin el atributo `integrity`. Ese atributo contiene el *hash* del archivo, un resumen calculado a partir de su contenido. Si el archivo que llega no coincide con el *hash*, el navegador no lo ejecuta.
+
+El revisor solo marca los scripts de estas CDN:
+
+- jsDelivr y unpkg, con la versión completa en la dirección, como `@5.3.3`;
+- cdnjs, con la versión en la ruta de `cdnjs.cloudflare.com/ajax/libs/`;
+- `code.jquery.com`, `ajax.googleapis.com`, `stackpath.bootstrapcdn.com` y `ga.jspm.io`.
+
+Una versión abierta, como `@3` o `@latest`, cambia de contenido con cada publicación, así que un *hash* fijo dejaría de coincidir. El revisor no marca esas versiones ni los scripts de servicios como Google Tag Manager.
+
+## Qué riesgo tiene
+
+El navegador ejecuta en su página el código que sirva la CDN, con el mismo acceso que su propio código. Si alguien cambia ese archivo en la CDN, el código nuevo puede leer lo que la persona escribe en los formularios de su página.
+
+Con `integrity`, el navegador rechaza el archivo cambiado y no lo ejecuta.
+
+## Cómo corregirlo
+
+Añada a la etiqueta el atributo `integrity` con el *hash* SHA-384 del archivo y el atributo `crossorigin="anonymous"`. Sin `crossorigin`, el navegador bloquea el script, porque un archivo de otro origen con `integrity` tiene que pedirse con CORS.
+
+Calcule el *hash* con el archivo exacto de la dirección:
+
+```text
+$ curl -s https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js | openssl dgst -sha384 -binary | openssl base64 -A
+YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz
+```
+
+Escriba ese valor en la etiqueta, con el prefijo `sha384-`:
+
+```html
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+  crossorigin="anonymous"></script>
+```
+
+Cada versión tiene su propio *hash*, así que calcule uno nuevo cada vez que cambie la versión de la dirección.
+
+## Cómo comprobarlo
+
+Cada script de CDN de la página principal debe llevar los atributos `integrity` y `crossorigin`:
+
+```text
+$ curl -s https://su-dominio.example/ | grep -Eo '<script[^>]* src="https://[^>]*>'
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+```
+
+Abra después la página en el navegador y compruebe que funciona, porque el navegador bloquea un script cuyo *hash* no coincide. Vuelva a analizar el sitio: «Ningún script de CDN carece de verificación de integridad (SRI)» aparece en «Comprobaciones superadas». El punto 11 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#11-cómo-controlar-las-dependencias) explica cómo controlar las dependencias que instala con npm.
