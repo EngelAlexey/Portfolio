@@ -1,7 +1,7 @@
 ---
 slug: directorio-activo
 title: Dominio Windows Server | Directorio activo y políticas
-tagline: "Una red empresarial de laboratorio con un servidor al centro: dominio, usuarios por departamento, permisos de carpeta y políticas de grupo que gobiernan las estaciones."
+tagline: Red empresarial de laboratorio donde cada departamento recibe sus permisos y su configuración desde un solo servidor.
 areas: [infra]
 kind: academico
 org: Universidad Técnica Nacional
@@ -28,38 +28,43 @@ order: null
 
 ## Contexto
 
-Curso de Plataformas Tecnológicas II. En equipo de cuatro, montamos y documentamos una red empresarial simulada sobre Windows Server: un servidor como controlador de dominio, sus servicios de red y varias estaciones unidas al dominio.
+Es un proyecto en equipo de cuatro del curso Plataformas Tecnológicas II. El equipo montó y documentó una red empresarial simulada sobre Windows Server. Un servidor hace de controlador de dominio y da los servicios de red a varias estaciones unidas al dominio.
 
-Me tocó el directorio activo: promover el servidor a controlador de dominio, la estructura de departamentos, los usuarios y los permisos de carpeta. Mis compañeros llevaron DNS, FTP sobre IIS y DHCP.
+Mi parte fue el directorio activo: promover el servidor a controlador de dominio y crear la estructura de departamentos, los usuarios y los permisos de carpeta. Mis compañeros se encargaron de DNS, FTP sobre IIS y DHCP.
 
 ## Problema
 
-El ejercicio parte de la administración descentralizada: cada equipo con sus propias cuentas, sus propios permisos y sus propias configuraciones, sin un lugar desde el cual definir quién es quién ni qué puede tocar cada quien.
+El ejercicio parte de una administración descentralizada. Cada computadora tiene sus propias cuentas, permisos y configuraciones. No hay un lugar desde el cual definir quién es quién ni qué puede tocar cada persona.
 
-Eso obliga a resolver antes de configurar nada una sola pregunta: cómo se corresponde la estructura de la empresa —sus departamentos y sus personas— con la estructura del dominio, porque de esa correspondencia dependen después los permisos, las políticas y las carpetas.
+Antes de configurar nada hay que decidir cómo se corresponde la estructura de la empresa, con sus departamentos y sus personas, con la estructura del dominio. De esa correspondencia dependen después los permisos, las políticas y las carpetas.
 
 ## Decisiones técnicas
 
-El dominio se organiza en unidades organizativas, una por departamento, y no como una lista plana de usuarios. Esa es la decisión que sostiene el resto: las políticas y los permisos se aplican sobre la unidad, así que agregar a alguien a un departamento le hereda todo lo suyo sin configurar nada caso por caso.
+El dominio se organiza en unidades organizativas, una por departamento, en lugar de una lista plana de usuarios. Las políticas y los permisos se aplican sobre la unidad. Quien entra en un departamento recibe toda su configuración, sin ajustes caso por caso.
 
-Los permisos de carpeta se definen por grupo de departamento, no por usuario, y se desactiva la herencia donde haría falta para que una unidad no alcance las carpetas de otra. Un usuario de un departamento llega a lo suyo y a nada más, y eso se comprueba iniciando sesión con su cuenta desde una estación, no leyendo la configuración del servidor.
+Los permisos de carpeta se asignan por grupo de departamento, no por usuario. Donde hace falta, la herencia está desactivada para que una unidad no alcance las carpetas de otra.
 
-Las políticas de grupo bajan a las estaciones lo que no debería quedar a criterio del usuario: las unidades de red mapeadas, el fondo corporativo sin permiso de cambiarlo y el bloqueo de instalación de software. Todo eso vive en la política de la unidad, de modo que la estación hereda su configuración por el solo hecho de pertenecer al departamento.
+Las políticas de grupo fijan en las estaciones lo que no debe quedar a criterio del usuario. Mapean las unidades de red, ponen el fondo corporativo sin permiso para cambiarlo y bloquean la instalación de software. Todo eso está en la política de la unidad, así que una estación recibe su configuración por pertenecer al departamento.
 
 ## Arquitectura
 
-Un servidor concentra los cuatro roles. Es controlador de dominio con el directorio activo, y servidor DNS para resolver los nombres de la red y los externos. Es también servidor FTP sobre IIS, con acceso por grupos del dominio. Y es servidor DHCP para las estaciones, con un ámbito acotado: un rango con sus exclusiones y su plazo de concesión.
+Un servidor concentra los cuatro roles. Es controlador de dominio con el directorio activo y servidor DNS para resolver los nombres de la red y los externos. También es servidor FTP sobre IIS, con acceso por grupos del dominio, y servidor DHCP para las estaciones. El ámbito del DHCP está acotado: un rango con sus exclusiones y su plazo de concesión.
 
-Las estaciones se unen al dominio y reciben su dirección del DHCP, sus permisos del directorio y su configuración de las políticas de grupo. Ninguna guarda cuentas ni reglas propias: todo se resuelve contra el servidor.
+Las estaciones se unen al dominio y reciben su dirección del DHCP, sus permisos del directorio y su configuración de las políticas de grupo. Ninguna guarda cuentas ni reglas propias, porque todo se resuelve contra el servidor.
 
 ## Resultado
 
-La red quedó montada y probada: usuarios que entran con su cuenta de dominio desde cualquier estación, carpetas que cada departamento alcanza y otros no, estaciones que reciben su dirección y sus políticas al unirse, y resolución de nombres interna y externa.
+La red quedó montada y probada:
 
-La entrega documenta cada rol paso a paso, con el plan de trabajo y el cronograma del equipo, de modo que la configuración se puede reproducir y no solo describir.
+- los usuarios inician sesión con su cuenta de dominio desde cualquier estación;
+- cada departamento llega a sus carpetas y no a las de los demás;
+- las estaciones reciben su dirección y sus políticas al unirse al dominio;
+- la red resuelve nombres internos y externos.
+
+La separación de carpetas se comprobó iniciando sesión con cada cuenta desde una estación, no leyendo la configuración del servidor. La entrega documenta cada rol paso a paso, con el plan de trabajo y el cronograma del equipo, así que la configuración se puede reproducir.
 
 ## Lo que aprendí
 
-La parte larga no fue instalar los roles sino decidir la estructura de unidades organizativas antes de tocarlos. Una vez puesta, los permisos y las políticas caen solos sobre ella; mal puesta, cada permiso se vuelve un caso aparte.
+La parte más larga fue decidir la estructura de unidades organizativas, antes de instalar ningún rol. Con una buena estructura, los permisos y las políticas se aplican sobre ella sin trabajo adicional. Con una mala, cada permiso se convierte en un caso aparte.
 
-Administrar por grupo y no por usuario es lo que hace sostenible una red así. Un permiso escrito sobre el departamento sirve para quien esté hoy y para quien entre mañana; escrito sobre la persona, hay que rehacerlo cada vez que alguien se mueve.
+Por eso los permisos se escribieron sobre el departamento. Un permiso escrito sobre el departamento sirve para quien está hoy y para quien entre mañana. Escrito sobre una persona, hay que rehacerlo cada vez que alguien cambia de puesto.

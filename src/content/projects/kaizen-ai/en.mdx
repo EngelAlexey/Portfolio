@@ -1,7 +1,7 @@
 ---
 slug: kaizen-ai
 title: Kaizen AI | Business intelligence
-tagline: Companies licensing the ERP query their own data by typing the question. The server narrows every query to what that company and that role may see.
+tagline: Companies query their data in plain language, and the server limits every answer to their company and their role.
 areas: [ia, seguridad]
 kind: profesional
 org: Kaizen Apps CR
@@ -50,44 +50,44 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-Kaizen licenses an HR ERP to other companies. Kaizen AI is the tool it puts in those companies' hands. They query their own data by writing the question in plain language, without going through a report or through the support team.
+Kaizen licenses an HR ERP to other companies. Kaizen AI is the tool those companies use to query their own data. They write the question in plain language, without going through a report or through the support team.
 
-The project came out of an operational need, not a product idea: the support team answered every client's questions one by one, and that work grew at the same rate as the client base.
+The project came out of an operational need. The support team answered every client's questions one by one, and that work grew at the same rate as the client base.
 
 ## Problem
 
-Every client question was answered by someone on the support team. As demand for help grows, that team saturates and the client waits.
+Every client question was answered by someone on the support team. When demand for help grew, the team saturated and the client waited.
 
-A large share of those questions repeat: how to do something, what an HR or occupational-health concept means, what labour law says about it. Those were hours of a specialist team spent on questions that already had an answer.
+A large share of those questions repeated: how to do something, what an HR or occupational-health concept means, or what labour law says. Those were hours of a specialist team spent on questions that already had an answer.
 
 ## Technical decisions
 
-Several client companies use the tool on the same installation. That makes access control the central decision of the project: a model querying production data raises a question a prompt cannot settle, which is who may read what. If the restriction depended on the model following instructions, rephrasing the question would be enough to get around it.
+Several client companies use the tool on the same installation, so access control is the central decision of the project. A model querying production data raises a question a prompt cannot settle: who may read what. If the restriction depended on the model following instructions, rephrasing the question would be enough to get around it.
 
-The question is translated into SQL and the server rewrites that query before running it. A rewriter over the syntax tree injects three filters: the client's database, the session role, and the scope of the action.
+The question is translated into SQL and the server rewrites that query before running it. A rewriter over the syntax tree injects three filters: the client's database, the session role and the scope of the action.
 
-A query asking for another company's data does not fail a validation. It runs already narrowed and returns only what is allowed, which is a stronger guarantee than rejecting it.
+A query asking for another company's data does not depend on a validation catching it: it runs already narrowed and returns only what is allowed.
 
-None of the three restrictions is asked of the model. The server injects them whatever happens above, so the reach of an answer does not depend on how the question is worded.
+None of the three restrictions is asked of the model. The server always injects them, so the reach of an answer does not depend on how the question is worded.
 
 ## Architecture
 
-The model does not talk to the database. It proposes SQL, and that text passes through the rewriter before it runs.
+The model does not connect to the database. It proposes SQL, and that text passes through the rewriter before it runs.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-The rewriter is the only point on the path that fixes how much comes back, so the permission tests are written against it rather than against the conversation.
+The rewriter is the only point on the path that sets how much comes back, so the permission tests are written against it rather than against the conversation.
 
 ## Result
 
-The tool is in production for the companies that license the ERP. Each one queries its own data, developers, administrators and users see different sets, sensitive fields are masked, and every executed query is logged.
+The tool is in production for the companies that license the ERP. Each company queries its own data, each role sees its own set, sensitive fields are masked and every executed query is logged.
 
-The questions that used to occupy the support team are now answered by the client, and the team handles what genuinely needs a person.
+The questions that used to occupy the support team are now answered by the client, and the team handles what needs a person.
 
-Retrieval requires a minimum relevance. A question with no backing in the data returns that there is no information, rather than text assembled from loosely related fragments.
+Retrieval requires a minimum relevance. A question with no backing in the data returns that there is no information, instead of text assembled from loosely related fragments.
 
 ## What I learned
 
-Visibility control can live in the wording of the instruction or in the code. The practical difference is that the second can be executed: a test passes a question through the rewriter and checks that the resulting SQL carries all three filters.
+A visibility control can be written in the wording of the instruction or in the code. Only the second can be executed: a test passes a question through the rewriter and checks that the resulting SQL carries all three filters.
 
-There is nothing equivalent to run against a prompt. When a guarantee has to hold up in front of a client, it belongs somewhere a test can check it.
+There is nothing equivalent to run against a prompt. So a guarantee that has to hold up in front of a client goes where a test can check it.

@@ -1,7 +1,7 @@
 ---
 slug: seiri-asistencia
 title: Seiri | Attendance tracking
-tagline: Staff clock in with a photo and a location from a site or a route. The record is kept on the phone and uploads when there is signal, one clock-in a day.
+tagline: Staff clock in with a photo and a location from a site or a route, even without signal.
 areas: [movil]
 kind: profesional
 org: Kaizen Apps CR
@@ -47,29 +47,29 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-Seiri is the attendance clock-in app Kaizen offers to the companies using its systems. Staff clock in and out from their phone, with a photo and a location, and the record feeds the payroll calculation.
+Seiri is the attendance clock-in app Kaizen offers to the companies that use its systems. Staff clock in and out from their phone, with a photo and a location, and that record is used to calculate payroll.
 
-A good share of those staff work on site and on the road, where there is no time clock and no guaranteed signal. That is the reason for the project: take the clock-in point to where the person is, instead of making them travel to a fixed one.
+A good share of those staff work on site and on the road, where there is no time clock and no guaranteed signal. The project takes the clock-in point to where the person is, instead of making them go to a fixed one.
 
 ## Problem
 
-With no system, arrival is written in a notebook or taken down by a supervisor name by name. In sites with a lot of staff that queue eats productive time every morning, before anyone reaches their post.
+With no system, arrivals are written in a notebook or taken down by a supervisor name by name. At sites with a lot of staff, that queue takes productive time every morning, before anyone reaches their post.
 
-The record that comes out of it does not stand on its own either. The time is whatever someone wrote down, there is no evidence of where the person was, and payroll is calculated on data that depends on somebody confirming it later.
+That record is not reliable on its own either. The time is whatever someone wrote down, there is no evidence of where the person was and payroll is calculated on data that somebody has to confirm later.
 
 ## Technical decisions
 
-Offline, two devices can clock in the same person without seeing each other. On reconnecting, both send a clock-in that was valid according to what each one observed. The earlier scheme counted the day's entries and then inserted, which are two steps with no guarantee between them.
+Offline, two devices can clock in the same person without seeing each other. On reconnecting, both send an entry that was valid according to what each one observed. The earlier scheme counted the day's entries and then inserted the new one: two steps with no guarantee between them.
 
-Validation moved inside a database transaction that locks the day's rows before deciding. Two simultaneous syncs can no longer both get through: the second waits for the first to finish.
+Validation moved into a database transaction that locks the day's rows before deciding. The second sync therefore waits for the first to finish.
 
-The entry that loses the conflict is not discarded. It is recorded and flagged for review, with its device and its time, because discarding it silently would leave someone with no shift on record and no way to dispute it.
+The entry that loses the conflict is flagged for review. Discarding it silently would leave someone with no shift on record and no way to dispute it.
 
-Logging a worker's shift cannot be made to depend on a supporting service being available. So the outcome of the identity check rides along with the entry, and later review works from that record.
+Recording a shift cannot depend on a supporting service being available. So every entry stores the outcome of the identity check, and later review works from that record.
 
 ## Architecture
 
-The phone writes to its local database first and queues the entry. A background task drains the queue against the API when there is a connection. The token is kept in the system's secure store.
+The phone writes to its local database first and puts the entry in a queue. A background task sends the queue to the API when there is a connection. The token is kept in the system's secure store.
 
 The four rules that decide whether an entry is accepted are applied on the server, inside the same transaction.
 
@@ -77,14 +77,14 @@ The four rules that decide whether an entry is accepted are applied on the serve
 
 ## Result
 
-Staff clock in within seconds, with a photo and a location, with nobody taking notes and without depending on signal. The entry uploads on its own as soon as there is a connection.
+Staff clock in within seconds, with a photo and a location, with nobody taking notes and without depending on signal. The entry is sent on its own as soon as there is a connection.
 
 Every record arrives with its time, its location and its identity check, so payroll is calculated on data that does not need confirming afterwards.
 
-The geofence formula exists twice, on the server and on the client. There is a test whose only job is to fail if the two versions stop agreeing.
+The geofence formula exists twice, on the server and on the client. One test has the sole job of failing if the two versions stop agreeing.
 
 ## What I learned
 
-Counting the day's entries on the client does not prevent a duplicate: each device keeps its own count and neither sees the other while they are offline.
+Counting the day's entries on the client does not prevent a duplicate, because each device keeps its own count and neither sees the other while offline.
 
-Inside the server transaction the conflict still happens, but it is detected and sent to review instead of being settled by whoever arrives first. When clients can work offline, the check that decides something has to sit at the one point that sees every client at once.
+Inside the server transaction the conflict still happens, but it is detected and sent to review instead of being settled by whoever arrives first. With clients that work offline, the check that decides has to sit on the server, the one point that sees every client.

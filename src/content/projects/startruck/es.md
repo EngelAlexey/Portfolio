@@ -1,7 +1,7 @@
 ---
 slug: startruck
 title: Star Track | Rastreo de viajes
-tagline: El chofer escanea la carta porte y el teléfono envía posiciones hasta cerrar el viaje. También reporta emergencias y localiza servicios en carretera.
+tagline: El teléfono del chofer envía la posición del viaje hasta cerrarlo y le permite reportar emergencias en carretera.
 areas: [movil]
 kind: profesional
 org: Star Cargo Service
@@ -27,42 +27,46 @@ order: null
 
 ## Contexto
 
-Star Track es la aplicación que lleva el chofer durante un viaje de carga. Escanea su credencial para identificarse y después la carta porte del viaje. Desde ese momento el teléfono envía posiciones hasta que el viaje se cierra, sin que él tenga que operar nada. En carretera es además su herramienta para reportar una emergencia y localizar el hospital, la comisaría o la gasolinera más cercana.
+Star Track es la aplicación que lleva el chofer durante un viaje de carga. Escanea su credencial para identificarse y después la carta porte del viaje. Desde ese momento, el teléfono envía posiciones hasta que el viaje se cierra, sin que el chofer tenga que hacer nada. En carretera es también su herramienta para reportar una emergencia y localizar el hospital, la comisaría o la gasolinera más cercanos.
 
-La aplicación la construyó otro desarrollador del equipo. Entré con ella ya en marcha, para corregir los defectos que aparecieron al probarla en dispositivo real y al revisar el servicio en producción.
+La aplicación la construyó otro desarrollador del equipo. Entré con ella ya en marcha, para corregir los defectos que aparecieron al probarla en un dispositivo real y al revisar el servicio en producción.
 
 ## Problema
 
 La empresa necesita la posición de un viaje mientras ocurre, y el chofer necesita pedir ayuda desde la carretera sin buscar un número.
 
-Eso obliga a que el registro salga del propio teléfono y se sostenga solo durante horas. Un viaje que deja de reportar sin que nadie lo note deja la carga sin seguimiento hasta que alguien pregunta por ella.
+Por eso el registro tiene que salir del propio teléfono y funcionar sin intervención durante horas. Un viaje que deja de reportar sin que nadie lo note deja la carga sin seguimiento hasta que alguien pregunta por ella.
 
 ## Decisiones técnicas
 
-Ninguno de los defectos se veía leyendo el código. Aparecieron corriendo la aplicación en un teléfono real y siguiendo el comportamiento del servicio ya desplegado.
+Ninguno de los defectos se veía leyendo el código. Aparecieron al ejecutar la aplicación en un teléfono real y al seguir el comportamiento del servicio ya desplegado.
 
-La cadencia de cinco minutos no existía: el teléfono guardaba un punto cada veintisiete segundos, diez veces las filas presupuestadas. Cuando el rastreo se detenía, rearmar el servicio no lo recuperaba. Y la pantalla de viaje reventaba al cerrar la operación, dejando al chofer ante una pantalla en blanco justo al terminar el viaje.
+La cadencia de cinco minutos no existía: el teléfono guardaba un punto cada veintisiete segundos, diez veces las filas presupuestadas. Cuando el rastreo se detenía, rearmar el servicio no lo recuperaba. Además, la pantalla de viaje fallaba al cerrar la operación y dejaba al chofer ante una pantalla en blanco al terminar el viaje.
 
-El intervalo de posición que se le pide a Android es el deseado, no un mínimo, y la petición quedaba registrada sin piso. Así que la cadencia la impone ahora la aplicación: acepta lo que el sistema entregue y descarta cualquier punto anterior al ochenta por ciento del intervalo vigente.
+Android trata el intervalo de posición pedido como el deseado, no como un mínimo, y la petición se registraba sin un intervalo mínimo. Por eso ahora la cadencia la impone la aplicación. Acepta lo que entregue el sistema y descarta cualquier punto que llegue antes del ochenta por ciento del intervalo vigente.
 
-Rearmar el servicio no basta, así que cada reintento del vigilante captura además un punto suelto. Y como las dos redes de recuperación existentes viven dentro del teléfono, donde con el proceso muerto no corre nuestro código, se añadió una comprobación en el servidor: es la única que no depende de Android.
+Rearmar el servicio no basta, así que cada reintento del vigilante captura además un punto suelto. Los dos mecanismos de recuperación que ya existían están dentro del teléfono, y con el proceso terminado no se ejecuta ningún código de la aplicación. Por eso se añadió una comprobación en el servidor, la única que no depende de Android.
 
-Ese aviso no se habría disparado nunca. El controlador de MySQL devolvía las fechas en la zona del proceso mientras la base las guarda en UTC, de modo que la resta daba negativo, sin error y sin registro. El silencio se calcula ahora en SQL contra la hora UTC del servidor.
+Ese aviso no habría saltado nunca. El controlador de MySQL devolvía las fechas en la zona horaria del proceso, mientras la base las guarda en UTC. La resta daba negativa, sin error y sin registro. Ahora el tiempo sin reportes se calcula en SQL contra la hora UTC del servidor.
 
 ## Arquitectura
 
-El teléfono ejecuta un servicio en primer plano que recoge posiciones. Los puntos no salen directo: entran en una bandeja local y un trabajador la sincroniza cada pocos segundos, con espera creciente ante fallos y sin duplicar un punto ya enviado. Un túnel o una zona sin cobertura retrasan el envío sin perder puntos.
+El teléfono ejecuta un servicio en primer plano que recoge posiciones. Los puntos no se envían directamente. Entran en una bandeja local, y una tarea la sincroniza cada pocos segundos, con una espera creciente ante fallos y sin duplicar puntos ya enviados. Un túnel o una zona sin cobertura retrasan el envío, pero no se pierde ningún punto.
 
-Sobre esa base hay tres redes de recuperación, ordenadas por cuánto dependen del aparato. Dos vigilantes dentro de la aplicación la reinician cuando Android la mata. Una notificación programada salta si el rastreo deja de capturar, y sobrevive a la muerte del proceso. Y una comprobación en el servidor avisa a Operaciones cuando un viaje activo lleva quince minutos sin reportar.
+Sobre esa base hay tres mecanismos de recuperación, ordenados por cuánto dependen del teléfono:
+
+1. Dos vigilantes dentro de la aplicación la reinician cuando Android termina su proceso.
+2. Una notificación programada salta si el rastreo deja de capturar, y sigue activa aunque el proceso termine.
+3. Una comprobación en el servidor avisa a Operaciones cuando un viaje activo lleva quince minutos sin reportar.
 
 ## Resultado
 
-La cadencia pasó de un punto cada veintisiete segundos al intervalo configurado, con la reducción de filas que eso implica en la tabla de rastreo. La pantalla de viaje dejó de reventar al cerrar la operación.
+La cadencia pasó de un punto cada veintisiete segundos al intervalo configurado, con la reducción de filas que eso supone en la tabla de rastreo. La pantalla de viaje dejó de fallar al cerrar la operación.
 
-Un viaje que deja de reportar ya no depende de que alguien lo note. El aviso sale del servidor, que es la única de las tres capas que sigue funcionando con el teléfono apagado.
+Un viaje que deja de reportar ya no depende de que alguien lo note. El aviso sale del servidor, el único de los tres mecanismos que sigue funcionando con el teléfono apagado.
 
 ## Lo que aprendí
 
-La documentación de Android describe el intervalo de posición como una solicitud, no como una garantía. En dispositivo real la diferencia fue de un punto cada veintisiete segundos frente a uno cada cinco minutos, y ninguna lectura del código lo habría mostrado.
+La documentación de Android describe el intervalo de posición como una solicitud, no como una garantía. En un dispositivo real, la diferencia fue de un punto cada veintisiete segundos frente a uno cada cinco minutos, y ninguna lectura del código lo habría mostrado.
 
-Los dos defectos más caros no fallaban de forma visible. El de la zona horaria no producía error ni registro: la condición simplemente no se cumplía nunca. Probar contra el sistema real fue lo que los sacó a la luz.
+Dos de los defectos no producían ningún fallo visible. El de la zona horaria no daba error ni dejaba registro, porque la condición nunca se cumplía. Solo aparecieron al probar contra el sistema real.

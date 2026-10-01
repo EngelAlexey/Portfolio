@@ -1,7 +1,7 @@
 ---
 slug: intercargo-plataforma
 title: Plataforma de Intercargo | ERP interno y sitio público
-tagline: Sitio público, portal interno, debida diligencia de clientes y cuentas por cobrar. El sitio abierto y el portal corren separados, con permisos distintos.
+tagline: Sitio público y portal interno en servicios separados, para que un fallo del sitio no alcance los documentos de clientes.
 areas: [seguridad, fullstack]
 kind: profesional
 org: Intercargo Panamá — vía Kaizen Apps CR
@@ -42,48 +42,48 @@ diagram:
     - name: "Cotas antes del modelo"
       body: "Tamaño de archivo, peticiones por origen y validación de tipo se aplican antes de que nada llegue al modelo. El límite lo fija el servidor; el modelo no decide cuánto puede pedir."
     - name: "Verificación antes de publicar"
-      body: "El pipeline corre tipos y pruebas, construye la imagen y la escanea. Una vulnerabilidad crítica aborta el despliegue antes de que exista un servicio nuevo."
-  caption: "La compuerta la impone el despliegue: dos servicios de la misma imagen, con permisos distintos."
+      body: "La integración continua comprueba los tipos, ejecuta las pruebas, construye la imagen y la escanea. Una vulnerabilidad crítica aborta el despliegue antes de que exista un servicio nuevo."
+  caption: "La separación la impone el despliegue: dos servicios de la misma imagen, con permisos distintos."
 ---
 
 import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-La plataforma reúne el sitio público de Intercargo y el portal donde trabaja su personal: debida diligencia de clientes, cuentas por cobrar, nómina y seguimiento de las solicitudes que entran por el sitio. Está en desarrollo activo y crece por módulos.
+La plataforma reúne el sitio público de Intercargo y el portal donde trabaja su personal. El portal cubre la debida diligencia de clientes, las cuentas por cobrar, la nómina y el seguimiento de las solicitudes que llegan por el sitio. Está en desarrollo activo y crece por módulos.
 
-El encargo original fue el portal interno. La propuesta de rehacer también el sitio público salió del equipo. Mover ambos a una infraestructura propia era la única forma de sostener el portal con las garantías que el cliente pedía. Entré a construir sobre la plataforma y a definir su modelo de seguridad.
+El encargo original era el portal interno. El equipo propuso rehacer también el sitio público. Mover ambos a una infraestructura propia era la única forma de operar el portal con las garantías que pedía el cliente. Mi papel fue construir sobre la plataforma y definir su modelo de seguridad.
 
 ## Problema
 
-El sitio corría sobre un servicio de terceros que el equipo no administraba. Sin control sobre esa infraestructura no había manera de alojar junto a él un portal con documentos de clientes.
+El sitio funcionaba sobre un servicio de terceros que el equipo no administraba. Sin control sobre esa infraestructura, no había forma de alojar junto a él un portal con documentos de clientes.
 
-La debida diligencia se resolvía leyendo esos documentos a mano, expediente por expediente. Cada alta consumía tiempo de una persona antes de que el cliente pudiera operar, y el ritmo de altas dependía de cuánta gente hubiera disponible para revisarlas.
+La debida diligencia se hacía leyendo esos documentos a mano, expediente por expediente. Cada alta ocupaba a una persona antes de que el cliente pudiera operar. El ritmo de altas dependía de cuánta gente hubiera disponible para revisarlas.
 
 ## Decisiones técnicas
 
 Un sitio de marketing y un portal con documentos de clientes tienen exposiciones opuestas. Servirlos desde el mismo proceso convertiría cualquier fallo del primero en un acceso al segundo.
 
-La frontera quedó en el despliegue y no en el código. Una sola imagen se publica como dos servicios con identidades separadas, y al servicio público se le retira el acceso a la base de datos.
+Por eso la frontera está en el despliegue y no en el código. La misma imagen se publica como dos servicios con identidades separadas, y el servicio público no tiene acceso a la base de datos.
 
-La segunda regla es que el código de servidor nunca se importa desde el navegador, ni siquiera para tipos. Una sola constante importada de un módulo de servidor arrastró consigo, por el grafo de dependencias, el SDK del modelo entero: cientos de kilobytes de JavaScript inútil en cada visita. La regla se comprueba ahora con un comando dentro del pipeline.
+La segunda regla es que el código del navegador nunca importa código de servidor, ni siquiera para tipos. Una sola constante importada de un módulo de servidor incluyó en el JavaScript del navegador, a través del grafo de dependencias, el SDK entero del modelo. Eran cientos de kilobytes de JavaScript inútil en cada visita. Ahora una orden de la integración continua comprueba esa regla.
 
 ## Arquitectura
 
-Los dos servicios comparten imagen y binario. Lo que no comparten es la identidad con la que corren, y de ahí sale todo lo demás.
+Los dos servicios comparten imagen y binario. Cada uno se ejecuta con su propia identidad, y de ella dependen todos sus permisos.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-Un documento subido por un cliente pasa por los límites de tamaño, tipo y frecuencia antes de llegar al modelo. Lo que el modelo devuelve se valida contra el esquema antes de escribirse, así que una extracción mal formada no llega a la base.
+Un documento que sube un cliente pasa primero por los límites de tamaño, tipo y frecuencia, y después por el modelo. Lo que el modelo devuelve se valida contra el esquema antes de escribirse, así que una extracción mal formada no llega a la base de datos.
 
 ## Resultado
 
-La plataforma sirve el sitio público, el portal interno, la debida diligencia y las cuentas por cobrar desde dos servicios con permisos distintos. La revisión documental que antes ocupaba a una persona ahora la propone el sistema, y la persona confirma o corrige.
+La plataforma sirve el sitio público, el portal interno, la debida diligencia y las cuentas por cobrar desde dos servicios con permisos distintos. La revisión documental que antes ocupaba a una persona ahora la propone el sistema, y la persona la confirma o la corrige.
 
-La verificación acompaña a cada despliegue: 2 243 pruebas unitarias en 144 archivos y 27 suites end to end, entre ellas suites de ataque dedicadas.
+Cada despliegue pasa por 2 243 pruebas unitarias en 144 archivos y 27 suites de extremo a extremo, entre ellas suites de ataque dedicadas.
 
 ## Lo que aprendí
 
 Separar por despliegue cuesta más que una comprobación dentro del código. Son dos servicios que configurar, dos identidades que mantener y un despliegue que puede quedar a medias entre versiones.
 
-A cambio, la garantía deja de depender de que la aplicación se comporte como se espera: el servicio que sirve el sitio público no tiene credenciales de base de datos, y eso es cierto pase lo que pase por encima. Para un portal que guarda documentos de clientes, esa diferencia justifica el coste de operar dos servicios.
+A cambio, la garantía no depende de que la aplicación se comporte como se espera. El servicio del sitio público no tiene credenciales de base de datos, haga lo que haga su código. Para un portal que guarda documentos de clientes, esa garantía justifica el coste de operar dos servicios.

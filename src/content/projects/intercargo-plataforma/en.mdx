@@ -1,7 +1,7 @@
 ---
 slug: intercargo-plataforma
 title: Intercargo platform | Internal ERP and public site
-tagline: Public site, internal portal, client due diligence and accounts receivable. The open site and the portal run separately, with different permissions.
+tagline: Public site and internal portal on separate services, so a fault on the site cannot reach client documents.
 areas: [seguridad, fullstack]
 kind: profesional
 org: Intercargo Panamá — via Kaizen Apps CR
@@ -38,52 +38,52 @@ diagram:
     - name: "Instance separation"
       body: "The same image is deployed twice under different identities. The public service has its database access removed, so a failure on the open site has no route to what the portal holds."
     - name: "Identity by invitation"
-      body: "There is no open sign-up and no passwords of our own. Entry is by invitation through a single identity provider. Sessions are revoked from the server, not merely expired."
+      body: "There is no open sign-up and no site-specific passwords. Entry is by invitation through a single identity provider. Sessions are revoked from the server, not merely expired."
     - name: "Limits before the model"
       body: "File size, requests per origin and type validation are applied before anything reaches the model. The server sets the limit; the model does not decide how much it may ask for."
     - name: "Verification before publishing"
-      body: "The pipeline runs types and tests, builds the image and scans it. A critical vulnerability aborts the deployment before a new service exists."
-  caption: "The gate is imposed by the deployment: two services from the same image, with different permissions."
+      body: "Continuous integration checks the types, runs the tests, builds the image and scans it. A critical vulnerability aborts the deployment before a new service exists."
+  caption: "The separation is imposed by the deployment: two services from the same image, with different permissions."
 ---
 
 import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-The platform brings together Intercargo's public site and the portal its staff works in: client due diligence, accounts receivable, payroll, and tracking for the enquiries that arrive through the site. It is under active development and grows module by module.
+The platform brings together Intercargo's public site and the portal its staff works in. The portal covers client due diligence, accounts receivable, payroll and the tracking of the enquiries that arrive through the site. It is under active development and grows module by module.
 
-The original brief was the internal portal. Rebuilding the public site as well was the team's proposal, because moving both onto infrastructure we control was the only way to run the portal with the guarantees the client asked for. I came in to build on the platform and to define its security model.
+The original brief was the internal portal. The team proposed rebuilding the public site as well. Moving both onto infrastructure the team controls was the only way to run the portal with the guarantees the client asked for. My role was to build on the platform and define its security model.
 
 ## Problem
 
-The site ran on a third-party service the team did not administer. Without control over that infrastructure there was no way to host a portal holding client documents alongside it.
+The site ran on a third-party service the team did not administer. Without control over that infrastructure, there was no way to host a portal holding client documents alongside it.
 
-Due diligence was done by reading those documents by hand, file by file. Every new client took up a person's time before they could start operating, and the rate of new clients depended on how many people were free to review them.
+Due diligence was done by reading those documents by hand, file by file. Every new client took up a person's time before they could start operating. The rate of new clients depended on how many people were free to review them.
 
 ## Technical decisions
 
 A marketing site and a portal holding client documents have opposite exposure. Serving them from the same process would turn any fault in the first into access to the second.
 
-The boundary went into the deployment rather than the code. A single image is published as two services with separate identities, and the public service has its database access removed.
+So the boundary sits in the deployment, not in the code. The same image is published as two services with separate identities, and the public service has no access to the database.
 
-The second rule is that server code is never imported from the browser, not even for types. A single constant imported from a server module pulled the whole model SDK along the dependency graph with it: hundreds of kilobytes of dead JavaScript on every visit. The rule is now checked by a command inside the pipeline.
+The second rule is that browser code never imports server code, not even for types. A single constant imported from a server module pulled the whole model SDK into the browser's JavaScript through the dependency graph. That was hundreds of kilobytes of dead JavaScript on every visit. A command in continuous integration now checks that rule.
 
 ## Architecture
 
-The two services share an image and a binary. What they do not share is the identity they run as, and everything else follows from that.
+The two services share an image and a binary. Each one runs under its own identity, and all of its permissions depend on that identity.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-A document uploaded by a client passes size, type and rate limits before it reaches the model. What the model returns is validated against the schema before it is written, so a malformed extraction never reaches the database.
+A document uploaded by a client first passes the size, type and rate limits, and then reaches the model. What the model returns is validated against the schema before it is written, so a malformed extraction never reaches the database.
 
 ## Result
 
 The platform serves the public site, the internal portal, due diligence and accounts receivable from two services with different permissions. The document review that used to occupy a person is now proposed by the system, and the person confirms or corrects it.
 
-Verification travels with every deployment: 2,243 unit tests across 144 files and 27 end-to-end suites, among them dedicated attack suites.
+Every deployment goes through 2,243 unit tests across 144 files and 27 end-to-end suites, among them dedicated attack suites.
 
 ## What I learned
 
-Splitting by deployment costs more than a check inside the code. It is two services to configure, two identities to maintain, and a deployment that can end up half-applied between versions.
+Splitting by deployment costs more than a check inside the code. It means two services to configure, two identities to maintain and a deployment that can end up half applied between versions.
 
-In exchange, the guarantee stops depending on the application behaving as expected: the service that serves the public site holds no database credentials, and that stays true whatever happens above it. For a portal that holds client documents, that difference justifies the cost of running two services.
+In exchange, the guarantee does not depend on the application behaving as expected. The service behind the public site holds no database credentials, whatever its code does. For a portal that holds client documents, that guarantee justifies the cost of running two services.

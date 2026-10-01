@@ -1,7 +1,7 @@
 ---
 slug: intercargo-cobranza
 title: Asistente de cobranza | Estados de cuenta y pagos
-tagline: El cliente consulta su saldo, reporta un pago o promete una fecha por WhatsApp. El modelo interpreta; el código decide la acción y qué datos revela.
+tagline: Por WhatsApp, el cliente consulta su saldo y reporta pagos, y el código decide qué datos puede ver.
 areas: [ia, fullstack]
 kind: profesional
 org: Intercargo Panamá — vía Kaizen Apps CR
@@ -49,48 +49,48 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-Asistente de cobranza por WhatsApp para la operación de Intercargo en Panamá. El cliente escribe, consulta su estado de cuenta, reporta un pago o promete una fecha, y todo ocurre dentro de la conversación.
+Es un asistente de cobranza por WhatsApp para la operación de Intercargo en Panamá. El cliente consulta su estado de cuenta, reporta un pago o promete una fecha sin salir de la conversación.
 
-Está en desarrollo. El cliente pidió automatizar ese ciclo. La cobranza ocupaba a su equipo en un trabajo repetitivo de contacto y verificación que crecía con la cartera, y quería que el deudor pudiera resolver lo rutinario por su cuenta.
+Está en desarrollo. Intercargo pidió automatizar ese ciclo, porque la cobranza ocupaba a su equipo en un trabajo repetitivo de contacto y verificación que crecía con la cartera. Quería que el deudor resolviera lo rutinario por su cuenta.
 
 ## Problema
 
 La cobranza se apoyaba en listas de clientes a los que había que contactar uno a uno. Cada recordatorio era una llamada o un mensaje escrito a mano, y el orden dependía de quién revisara la lista ese día.
 
-Cada comprobante de pago lo revisaba una persona antes de que el saldo quedara al día. Hasta que esa revisión ocurría, el estado de cuenta que veía la empresa no correspondía con lo que el cliente ya había pagado.
+Una persona revisaba cada comprobante de pago antes de actualizar el saldo. Hasta esa revisión, el estado de cuenta que veía la empresa no correspondía con lo que el cliente ya había pagado.
 
 ## Decisiones técnicas
 
-Un asistente de cobranza expone saldos de terceros. Si el modelo decidiera a quién se los muestra, cada respuesta dependería de que no se equivoque, y un modelo de lenguaje no da esa garantía.
+Un asistente de cobranza muestra saldos de terceros. Si el modelo decidiera a quién se los muestra, cada respuesta dependería de que no se equivoque, y un modelo de lenguaje no da esa garantía.
 
-Por eso el modelo hace una sola cosa: convertir un mensaje en lenguaje natural en una intención y, cuando aplica, en una fecha.
+Por eso el modelo hace una sola cosa: convertir un mensaje en lenguaje natural en una intención y, cuando corresponde, en una fecha.
 
-Todo lo demás es código: validar identidad, consultar cartera, registrar una promesa de pago y decidir si corresponde enviar un recordatorio. La conversación se resuelve en una máquina de estados que devuelve acciones, y una capa separada las traduce al transporte de WhatsApp.
+Todo lo demás es código: validar la identidad, consultar la cartera, registrar una promesa de pago y decidir si corresponde enviar un recordatorio. La conversación se resuelve en una máquina de estados que devuelve acciones. Una capa separada traduce esas acciones al transporte de WhatsApp.
 
-El servicio no usa framework web. Levanta un servidor con `node:http` y corre como su propio despliegue.
+El servicio no usa ningún framework web. Arranca un servidor con `node:http` y se despliega por separado.
 
-Se empezó antes que [la plataforma corporativa](/es/proyectos/intercargo-plataforma), así que lleva su propio modelo de la cartera: clientes, facturas, promesas y reportes de pago, en nueve tablas propias. Unificarlo con la plataforma es trabajo pendiente y no una separación buscada.
+Se empezó antes que [la plataforma corporativa](/es/proyectos/intercargo-plataforma), así que lleva su propio modelo de la cartera: clientes, facturas, promesas y reportes de pago, en nueve tablas propias. Unificarlo con la plataforma es trabajo pendiente: la separación se debe al orden en que empezaron los dos proyectos.
 
-El proveedor de modelo es intercambiable, con dos implementaciones detrás de la misma interfaz.
+El proveedor del modelo es intercambiable, con dos implementaciones detrás de la misma interfaz.
 
 ## Arquitectura
 
-El modelo ocupa un solo tramo del recorrido. Lo que entra y lo que sale de él son estructuras que el código valida antes de seguir.
+El modelo interviene en un solo paso del recorrido. Lo que recibe y lo que devuelve son estructuras que el código valida antes de continuar.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-La máquina de estados devuelve acciones y una capa aparte las traduce al transporte, así que la conversación se puede ejecutar entera sin credenciales de Meta ni línea de WhatsApp.
+Como el transporte está en una capa aparte, la conversación se puede ejecutar entera sin credenciales de Meta ni línea de WhatsApp.
 
 ## Resultado
 
-El asistente resuelve el ciclo entero dentro de la conversación. El deudor consulta su propio saldo y adjunta su propio comprobante, el recordatorio sale solo un día hábil antes de la fecha que prometió, y el equipo interviene solo donde hace falta criterio.
+El deudor consulta su saldo y adjunta su comprobante sin esperar al equipo, que interviene solo donde hace falta criterio.
 
-Quien pide no recibir más mensajes deja de recibirlos, y los días hábiles y feriados se calculan en el servidor, así que la operación no depende de que alguien vigile el calendario.
+El servidor envía los recordatorios, respeta las bajas y calcula los días hábiles, así que la operación no depende de que alguien vigile el calendario.
 
-Un comando reproduce un diálogo entero contra la lógica real. Con él se prueban los casos difíciles: una promesa con fecha ambigua, un pago reportado dos veces, un cliente que pide dejar de recibir mensajes.
+Una orden reproduce un diálogo entero contra la lógica real. Con ella se prueban los casos difíciles: una promesa con fecha ambigua, un pago reportado dos veces y un cliente que pide dejar de recibir mensajes.
 
 ## Lo que aprendí
 
-Ese simulador recorre la máquina de estados de extremo a extremo, y por eso detecta una regresión de flujo sin poder localizarla: cuando falla, señala el diálogo entero y no el módulo.
+Ese simulador recorre la máquina de estados de extremo a extremo. Por eso detecta una regresión de flujo, pero no la localiza: cuando falla, señala el diálogo entero y no el módulo.
 
-Una prueba que cubre todo el recorrido avisa de que algo se rompió, pero no dice dónde. Las pruebas sobre la capa de acciones son el siguiente paso, precisamente para acortar ese diagnóstico.
+Para localizar el fallo hacen falta pruebas sobre la capa de acciones, que son el siguiente paso.

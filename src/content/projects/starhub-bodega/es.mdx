@@ -1,7 +1,7 @@
 ---
 slug: starhub-bodega
 title: StarHub | Gestión de bodega
-tagline: Recepción de contenedores línea por línea, con la posición de cada tarima y foto de la mercancía dañada. Lee el ERP por SQL y escribe solo por su API.
+tagline: El bodeguero registra desde el teléfono cada línea recibida, la posición de cada tarima y las fotos de los daños.
 areas: [fullstack, movil]
 kind: profesional
 org: Star Cargo Service
@@ -35,7 +35,7 @@ diagram:
     - name: "Código de un solo uso"
       body: "El alta usa un código que caduca y se liga al identificador del dispositivo. El registro guarda su hash, nunca el valor, y el código no vuelve a servir después del primer uso."
     - name: "Dos límites de frecuencia"
-      body: "El endpoint de alta es público, así que está acotado por origen y por dispositivo. Un intento repetido de adivinar el código se detiene antes de recorrer el espacio de posibilidades."
+      body: "La ruta de alta es pública, así que está acotada por origen y por dispositivo. Un intento repetido de adivinar el código se detiene antes de recorrer el espacio de posibilidades."
     - name: "Lectura y escritura separadas"
       body: "El token da lectura por SQL y escritura solo a través del API del ERP. En la superficie del servicio no existe una operación de escritura directa contra la base."
     - name: "Acotación por bodega"
@@ -49,29 +49,29 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 StarHub es la herramienta con la que el bodeguero registra la recepción de un contenedor desde el teléfono. Escanea el código del recibo, anota cada línea que descarga, indica la posición de cada tarima y fotografía la mercancía dañada.
 
-El servicio y la aplicación Android los construyó el equipo. Mi encargo fue el mantenimiento: corregir los defectos que aparecieron con el sistema ya en producción. En la aplicación, iniciada por otro compañero, conecté además las pantallas a los datos reales del servicio y añadí el sellado temporal de las fotos de evidencia.
+El servicio y la aplicación Android los construyó el equipo. Mi encargo fue el mantenimiento: corregir los defectos que aparecieron con el sistema ya en producción. En la aplicación, que había empezado otro compañero, conecté además las pantallas a los datos reales del servicio y añadí el sellado temporal de las fotos de evidencia.
 
 ## Problema
 
-La recepción se anotaba en papel y alguien la transcribía al ERP más tarde. Hasta que eso ocurría, el inventario no correspondía con lo que había en la bodega, y la discrepancia solo aparecía cuando alguien iba a buscar la mercancía y no estaba donde el sistema decía.
+La recepción se anotaba en papel y alguien la transcribía al ERP más tarde. Hasta entonces, el inventario no correspondía con lo que había en la bodega. La discrepancia solo aparecía cuando alguien iba a buscar la mercancía y no estaba donde el sistema decía.
 
-La transcripción además pierde detalle. La posición de cada tarima y el estado de la mercancía dañada rara vez sobreviven al paso del papel al sistema.
+La transcripción, además, pierde detalle. La posición de cada tarima y el estado de la mercancía dañada rara vez llegan completos del papel al sistema.
 
 ## Decisiones técnicas
 
-El esquema de la base no lo controla este servicio. Lo gobierna la herramienta con la que el cliente administra su operación, y puede cambiar sin que el servicio se entere. Todo el mantenimiento parte de ahí.
+Este servicio no controla el esquema de la base. Lo define la herramienta con la que el cliente administra su operación, y puede cambiar sin aviso. Todo el mantenimiento parte de ahí.
 
-Los nombres de la base se traducen con alias de SQL dentro de la capa de acceso a datos, en lugar de propagarlos hasta el contrato que consume Android. Ese contrato queda estable y absorbe un cambio de esquema sin publicar una versión nueva: la que ya está probada en producción sigue sirviendo sin tocarse. La correspondencia entre columnas se verifica contra los datos reales antes de escribirla, porque dos columnas del mismo tipo son fáciles de cruzar.
+Los nombres de la base se traducen con alias de SQL en la capa de acceso a datos. No llegan al contrato que consume la aplicación Android. Así ese contrato se mantiene estable ante un cambio de esquema, y la versión de la aplicación ya probada en producción sigue funcionando sin tocarse. La correspondencia entre columnas se verifica contra los datos reales antes de escribirla, porque dos columnas del mismo tipo son fáciles de cruzar.
 
-La cola de bodega filtra por tipo de documento. La tabla de la que lee mezcla recibos y despachos, y sin ese filtro un bodeguero vería órdenes de salida con aspecto de recibo e intentaría recibir carga contra una de ellas.
+La cola de bodega filtra por tipo de documento. La tabla de la que lee mezcla recibos y despachos. Sin ese filtro, un bodeguero vería órdenes de salida con aspecto de recibo e intentaría recibir carga contra una de ellas.
 
-Un campo que la base deja de ofrecer sale nulo, no relleno. Si eso quita funcionalidad que la operación usaba, se reporta como tal en vez de disimularlo en el mapeo.
+Un campo que la base deja de ofrecer se devuelve nulo, no relleno. Si eso quita una funcionalidad que la operación usaba, se reporta como tal en vez de disimularlo en el mapeo.
 
 ## Arquitectura
 
-El servicio lee por SQL directo contra la base del ERP, que es el camino rápido, y escribe únicamente por el API del ERP, más lento pero que respeta las fórmulas de consecutivo y los disparadores que una escritura directa no activaría. Esa separación ya existía y el mantenimiento tenía que respetarla.
+El servicio lee con SQL directo contra la base del ERP y escribe solo a través del API del ERP. La lectura directa es el camino rápido. La escritura pasa por el API porque respeta las fórmulas de consecutivo y los disparadores que una escritura directa no activaría. Esa separación ya existía, y el mantenimiento tenía que respetarla.
 
-Un teléfono no puede autenticarse con la identidad de la plataforma, porque el alta ocurre antes de que el aparato tenga credencial alguna. Esa es la compuerta del servicio, y lleva cuatro reglas aplicadas a la vez.
+Un teléfono no puede autenticarse con la identidad de la plataforma, porque el alta ocurre antes de que el aparato tenga ninguna credencial. Por eso el alta es el punto de control del servicio, con cuatro reglas aplicadas a la vez.
 
 <ArchDiagram {...frontmatter.diagram} />
 
@@ -79,14 +79,14 @@ Una vez dado de alta, el dispositivo trabaja con un token acotado a su bodega.
 
 ## Resultado
 
-Con StarHub la recepción entra al ERP en el momento en que el bodeguero la anota, con sus líneas, la posición de cada tarima y las fotos de la mercancía dañada. El inventario dejó de depender de una transcripción posterior.
+Con StarHub, la recepción entra al ERP en el momento en que el bodeguero la anota. Llega con sus líneas, la posición de cada tarima y las fotos de la mercancía dañada. El inventario dejó de depender de una transcripción posterior.
 
-Un cambio en el esquema del ERP se absorbe dentro del servicio, sin repartir una versión nueva a los teléfonos que ya están en el almacén. La cola muestra recibos y solo recibos, aunque compartan tabla con los despachos.
+Los cambios de esquema del ERP no obligan a distribuir una versión nueva a los teléfonos, y la cola solo muestra recibos.
 
-Un caso quedó anotado como no verificado, porque comprobarlo crea filas reales en el ERP y requiere autorización del cliente.
+Un caso quedó anotado como no verificado, porque comprobarlo crea filas reales en el ERP y requiere la autorización del cliente.
 
 ## Lo que aprendí
 
-Un servicio que se integra contra una plataforma que gobierna otro equipo no controla su esquema. Poner la traducción en la capa de mapeo, y no en el contrato que consume el cliente móvil, es lo que evita repartir una versión nueva a los teléfonos que ya están en la calle.
+Contra una plataforma que administra otro equipo, la traducción de nombres tiene que estar en la capa de mapeo del servicio, no en el contrato de la aplicación móvil.
 
-La otra mitad es de negocio. Cuando un cambio de esquema se lleva por delante algo que la operación usaba, informarlo es parte del trabajo. Resolverlo en silencio dentro del mapeo deja a quien opera sin saber que perdió algo.
+La otra lección es de negocio. Si un cambio de esquema elimina algo que la operación usaba, informarlo es parte del trabajo. Resolverlo en silencio deja a quien opera sin saber que perdió algo.

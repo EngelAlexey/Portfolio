@@ -1,7 +1,7 @@
 ---
 slug: analisis-spyware
 title: Análisis de spyware | Señales y contramedidas
-tagline: Se construye el spyware para verlo actuar en un laboratorio aislado, y de ese rastro salen las contramedidas, cada una junto al indicador que la dispara.
+tagline: Spyware de laboratorio construido para observar su rastro y derivar de él una contramedida por cada indicador.
 areas: [seguridad]
 kind: academico
 org: Universidad Técnica Nacional
@@ -24,36 +24,36 @@ order: null
 
 ## Contexto
 
-Curso de Seguridad de TI I, el mismo del que salió el [detector de cifrado masivo](/es/proyectos/deteccion-por-umbral). Ejercicio individual: construir una herramienta que reproduzca el ciclo de captura y exfiltración, ejecutarla en un laboratorio aislado y documentar el rastro que deja.
+Es un ejercicio individual del curso Seguridad de TI I, el mismo del que salió el [detector de cifrado masivo](/es/proyectos/deteccion-por-umbral). Consistió en construir una herramienta que reproduce el ciclo de captura y exfiltración, ejecutarla en un laboratorio aislado y documentar el rastro que deja.
 
-El objetivo del ejercicio es derivar las contramedidas de la observación directa y no de un manual, porque una lista memorizada no dice cuál de sus puntos funciona.
+El ejercicio pide derivar las contramedidas de la observación directa, porque una lista memorizada de un manual no dice cuál de sus puntos funciona.
 
 ## Problema
 
-Quien defiende un sistema necesita saber en qué punto mirar. Un inventario de controles copiado de una guía no responde a eso: enumera medidas sin decir qué evidencia produce cada ataque ni dónde queda registrada.
+Quien defiende un sistema necesita saber dónde buscar la evidencia de un ataque. Un inventario de controles copiado de una guía no lo dice: enumera medidas sin decir qué evidencia produce cada ataque ni dónde queda registrada.
 
-Para saber qué observar hay que ver primero qué rastro dejan la captura y la exfiltración cuando ocurren de verdad.
+Para saberlo, primero hay que observar qué rastro dejan la captura y la exfiltración cuando ocurren.
 
 ## Decisiones técnicas
 
-Una herramienta cliente-servidor en Python reproduce a pequeña escala el ciclo de captura y exfiltración, únicamente como generador de actividad para el laboratorio.
+Una herramienta cliente-servidor en Python reproduce a pequeña escala el ciclo de captura y exfiltración. Solo sirve para generar actividad en el laboratorio.
 
-El entregable no es la herramienta sino el inventario que produce: tráfico saliente, accesos a recursos y mecanismos de persistencia, cada uno asociado a un control que lo detiene y a la evidencia que lo respalda.
+El entregable es el inventario que esa actividad produce: tráfico saliente, accesos a recursos y mecanismos de persistencia. Cada entrada lleva el control que la detiene y la evidencia que la respalda.
 
 ## Arquitectura
 
-Laboratorio cerrado, sin salida a internet y con instantánea previa. La máquina observada y la que recibe los datos están en el mismo segmento aislado, así que todo el tráfico entre ambas puede capturarse y leerse.
+El laboratorio está cerrado, sin salida a internet, y se tomó una instantánea antes del ejercicio. La máquina observada y la que recibe los datos están en el mismo segmento aislado, así que todo su tráfico se puede capturar y leer.
 
-Esa disposición es lo que hace medible el ejercicio: qué se toca en el sistema de archivos, qué conexión se abre y en qué momento, y qué queda escrito para sobrevivir a un reinicio.
+Así se mide qué toca la herramienta en el sistema de archivos, qué escribe para seguir activa tras un reinicio y en qué momento abre cada conexión.
 
 ## Resultado
 
-El inventario quedó ordenado por el punto del sistema donde actúa cada control: sistema de archivos, red y mecanismo de arranque. Cada indicador va junto al control que lo corta y junto a la evidencia que lo respalda, tomada del propio laboratorio.
+El inventario quedó ordenado por el punto del sistema donde actúa cada control: el sistema de archivos, la red y el mecanismo de arranque. Cada indicador aparece junto al control que lo detiene y a la evidencia que lo respalda, tomada del propio laboratorio.
 
-Es un documento que se puede contrastar, porque cada línea remite a una observación concreta y no a una recomendación general.
+Cada línea remite a una observación del laboratorio, así que el documento se puede contrastar.
 
 ## Lo que aprendí
 
-Las señales más útiles no fueron las de la red, porque un canal cifrado las oculta. Fueron las del sistema de archivos y las del mecanismo de persistencia.
+Las señales más útiles fueron las del sistema de archivos y las del mecanismo de persistencia. Las de la red sirvieron menos, porque un canal cifrado las oculta.
 
-Un control de red por sí solo no habría detectado el ejercicio. La detección venía de correlacionar accesos locales con una conexión saliente, que es justo lo que un único punto de observación no ve.
+Un control de red por sí solo no habría detectado el ejercicio. La detección salió de correlacionar los accesos locales con una conexión saliente. Un único punto de observación no puede hacer esa correlación.

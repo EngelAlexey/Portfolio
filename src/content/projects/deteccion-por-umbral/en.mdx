@@ -1,7 +1,7 @@
 ---
 slug: deteccion-por-umbral
 title: Mass-encryption detector | Signature-free containment
-tagline: It contains mass encryption without having seen the binary and with nobody in the loop. Three system signals form a score, and only the score decides.
+tagline: Stops an unknown program that encrypts files en masse by combining three operating-system signals.
 areas: [seguridad, infra]
 kind: academico
 org: Universidad Técnica Nacional
@@ -30,13 +30,13 @@ diagram:
   gate: 2
   layers:
     - name: "File events"
-      body: "A watcher records creations, writes and renames into a locked buffer. It says there is activity, not who is producing it."
+      body: "A watcher records creations, writes and renames into a locked buffer. It shows that there is activity, but not which process produces it."
     - name: "Content entropy"
       body: "The entropy of what is written is measured. Content close to random indicates the file has stopped resembling a document, without opening or identifying it."
     - name: "Writes per process"
       body: "Sampling write_bytes per process every 500 ms attributes the volume written to a specific process. It is the only one of the three signals that identifies the responsible party."
     - name: "A single decision"
-      body: "No signal contains on its own. The component that combines them is the only one able to order containment, so thresholds are tuned without touching the sensors."
+      body: "No signal contains on its own. Only the component that combines them can order containment."
   caption: "The three signals only observe; the decision to contain sits at a single point."
 ---
 
@@ -44,46 +44,46 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-An individual final project for IT Security I, the same course as the [spyware analysis](/en/projects/analisis-spyware). The brief asked for a tool that would detect and contain mass encryption on its own, plus a test bench to exercise it on.
+The individual final project for IT Security I, the same course as the [spyware analysis](/en/projects/analisis-spyware). The brief asked for a tool that would detect and contain mass encryption on its own, and a test bench to exercise it on.
 
-The scenario it models is an organisation attacked by a program nobody has seen before. In that case there is no signature to recognise, and containment has to be decided from what the operating system can observe while it happens.
+The scenario is an organisation attacked by a program nobody has seen before. There is no signature to recognise, so containment is decided from what the operating system observes while it happens.
 
-The exercise runs on an ephemeral AWS instance brought up for it. Nothing that executes there touches a system in use.
+The exercise runs on an ephemeral AWS instance created for it, with no access to any system in use.
 
 ## Problem
 
-Signature-based antivirus only recognises what has been seen before. Against a new binary it does not fire, and the encryption advances while somebody identifies it.
+Signature-based antivirus only recognises what it has already seen. A new binary raises no alert, so the encryption advances while somebody identifies it.
 
-Waiting for a person to notice does not work either: by the time someone opens a file and finds it unreadable, the encryption has already crossed the disk.
+Waiting for a person to notice does not work either. By the time someone opens a file and finds it unreadable, the encryption has already reached the rest of the disk.
 
-The question becomes a different one: what does the operating system observe when something encrypts files en masse, and how much of that can be measured without identifying the program.
+The project starts from what the operating system observes when a program encrypts files en masse, and from how much of that can be measured without identifying the program.
 
 ## Technical decisions
 
-Three independent signals, none conclusive on its own.
+The detector uses three independent signals: activity on the filesystem, the entropy of what is written and the volume each process writes. None is conclusive on its own.
 
-Filesystem events say there is activity. The entropy of what is being written says the content has stopped looking like a document. Sampling `write_bytes` per process, every 500 ms, says who is doing the writing.
-
-A separate component combines the three into a score, and only that score decides to contain. The sensors contain nothing, so thresholds are tuned without touching them.
+A separate component combines them into a score, which is the only thing that orders containment. Since the sensors contain nothing, thresholds are tuned without touching them.
 
 ## Architecture
 
-A filesystem watcher drops events into a locked buffer. A sampling thread keeps the most recent picture of per-process writes. The main thread reads the score every second and decides whether to act.
+A filesystem watcher stores events in a locked buffer. A sampling thread measures every 500 ms how much each process writes and keeps the latest measurement. The main thread reads the score every second and decides whether to act.
 
 <ArchDiagram {...frontmatter.diagram} />
 
 Containment kills the process tree and moves the binary to a quarantine directory with no execute permission.
 
-The test bench's infrastructure is described in Terraform, so the lab is created and destroyed with one command and every run starts from the same machine. Terraform state and the variables file stay out of version control, because a state file holds sensitive values in the clear.
+The test bench's infrastructure is described in Terraform. The lab is created and destroyed with one command, and every run starts from the same machine. Terraform state and the variables file stay out of version control, because the state file holds sensitive values in the clear.
 
 ## Result
 
-The detector contains mass encryption without having seen the binary before and without anyone intervening. It reacts to what the process does, which was the point of the exercise.
+The detector contains mass encryption from a binary it has never seen, with nobody intervening, because it reacts to what the process does.
 
-The test bench is reproduced with one command, so every threshold adjustment was measured from the same starting machine and the results compare across runs.
+Every threshold adjustment was measured from the same starting machine, so the results can be compared across runs.
 
 ## What I learned
 
 The threshold was the hard part. A legitimate backup produces a pattern very close to mass encryption: many files written fast, with high-entropy content.
 
-With the three signals available I found no value that separated the two cases. The delivered version prioritises not missing a real case and accepts false positives, and the threshold is documented with that justification. When two cases are indistinguishable from the data you have, the decision stops being technical and becomes which of the two errors costs more.
+With the three signals available I found no value that separated the two cases. The delivered version prioritises not letting a real case through and accepts false positives. The threshold is documented with that justification.
+
+Here the threshold stopped being a technical decision, because setting it meant choosing which error costs more: stopping a legitimate backup or letting an encryption through.

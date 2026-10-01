@@ -1,7 +1,7 @@
 ---
 slug: seiri-asistencia
 title: Seiri | Control de asistencia
-tagline: El colaborador marca con foto y ubicación desde obra o ruta. El registro se guarda en el teléfono y sube cuando hay red, con un marcaje diario por regla.
+tagline: El colaborador marca con foto y ubicación desde la obra o la ruta, aunque no tenga señal.
 areas: [movil]
 kind: profesional
 org: Kaizen Apps CR
@@ -35,7 +35,7 @@ diagram:
     - name: "Bloqueo de las filas del día"
       body: "La transacción bloquea las marcas del día antes de decidir. Dos sincronizaciones simultáneas ya no pueden pasar ambas la validación, porque la segunda espera a que la primera termine."
     - name: "Día laboral en zona fija"
-      body: "La ventana del día se calcula en la zona horaria del país, no en la del proceso. El servidor corre en UTC, y sin esta regla una marca a las 23:30 locales contaría al día siguiente."
+      body: "La ventana del día se calcula en la zona horaria del país, no en la del proceso. El servidor se ejecuta en UTC, y sin esta regla una marca a las 23:30 locales contaría en el día siguiente."
     - name: "Conflicto a revisión"
       body: "La marca que pierde no se descarta. Queda registrada y señalada para revisión manual, con su dispositivo y su hora, para que alguien pueda decidir cuál era la buena."
     - name: "Verificación registrada"
@@ -47,29 +47,29 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-Seiri es la aplicación de marcaje de asistencia que Kaizen ofrece a las empresas que usan sus sistemas. El colaborador marca su entrada y su salida desde el teléfono, con foto y ubicación, y el registro alimenta el cálculo de nómina.
+Seiri es la aplicación de marcaje de asistencia que Kaizen ofrece a las empresas que usan sus sistemas. El colaborador marca su entrada y su salida desde el teléfono, con foto y ubicación, y ese registro se usa para calcular la nómina.
 
-Buena parte de esos colaboradores trabaja en obra y en ruta, donde no hay reloj marcador ni cobertura garantizada. Ese es el motivo del proyecto: llevar el punto de marcaje a donde está la persona, en lugar de obligarla a pasar por un lugar fijo.
+Buena parte de esos colaboradores trabaja en obra y en ruta, donde no hay reloj marcador ni cobertura garantizada. El proyecto lleva el punto de marcaje a donde está la persona, en lugar de obligarla a pasar por un lugar fijo.
 
 ## Problema
 
-Sin sistema, la entrada se anota en un cuaderno o la toma un encargado nombre por nombre. En centros con mucho personal esa fila consume tiempo productivo cada mañana, antes de que nadie llegue a su puesto.
+Sin sistema, la entrada se anota en un cuaderno o la toma un encargado nombre por nombre. En centros con mucho personal, esa fila consume tiempo productivo cada mañana, antes de que nadie llegue a su puesto.
 
-El registro que sale de ahí tampoco se sostiene solo. La hora es la que alguien apuntó, no hay constancia de dónde estaba la persona, y la nómina se calcula sobre datos que dependen de que otro los confirme después.
+Ese registro tampoco es fiable por sí solo. La hora es la que alguien apuntó, no hay constancia de dónde estaba la persona y la nómina se calcula sobre datos que otro tiene que confirmar después.
 
 ## Decisiones técnicas
 
-Sin conexión, dos dispositivos pueden marcar al mismo colaborador sin verse entre sí. Al reconectar, ambos envían una marca válida según lo que cada uno observó. El esquema anterior contaba las marcas del día y después insertaba, que son dos pasos sin garantía entre ellos.
+Sin conexión, dos dispositivos pueden marcar al mismo colaborador sin verse entre sí. Al reconectar, ambos envían una marca válida según lo que cada uno observó. El esquema anterior contaba las marcas del día y después insertaba la nueva: dos pasos sin ninguna garantía entre ellos.
 
-La validación se movió dentro de una transacción de base de datos que bloquea las filas del día antes de decidir. Dos sincronizaciones simultáneas dejan de poder pasar ambas: la segunda espera a que la primera termine.
+La validación pasó a una transacción de base de datos que bloquea las filas del día antes de decidir. Así, la segunda sincronización espera a que termine la primera.
 
-La marca que pierde el conflicto no se descarta. Queda registrada y señalada para revisión, con su dispositivo y su hora, porque descartarla en silencio dejaría a alguien sin jornada registrada y sin forma de reclamarla.
+La marca que pierde el conflicto queda señalada para revisión. Descartarla en silencio dejaría a alguien sin jornada registrada y sin forma de reclamarla.
 
-El registro de la jornada de un colaborador no puede quedar sujeto a que un servicio de apoyo esté disponible. Por eso el resultado de la verificación de identidad viaja con la marca, y la revisión posterior trabaja sobre ese dato.
+El registro de la jornada no puede depender de que un servicio de apoyo esté disponible. Por eso cada marca guarda el resultado de la verificación de identidad, y la revisión posterior trabaja sobre ese dato.
 
 ## Arquitectura
 
-El teléfono escribe primero en su base local y encola la marca. Una tarea en segundo plano vacía la cola contra el API cuando hay red. El token se guarda en el almacén seguro del sistema.
+El teléfono escribe primero en su base local y pone la marca en una cola. Una tarea en segundo plano envía la cola al API cuando hay red. El token se guarda en el almacén seguro del sistema.
 
 Las cuatro reglas que deciden si la marca entra se aplican en el servidor, dentro de la misma transacción.
 
@@ -77,14 +77,14 @@ Las cuatro reglas que deciden si la marca entra se aplican en el servidor, dentr
 
 ## Resultado
 
-El colaborador marca en segundos, con foto y ubicación, sin nadie tomando nota y sin depender de la señal. La marca sube sola en cuanto hay red.
+El colaborador marca en segundos, con foto y ubicación, sin que nadie tome nota y sin depender de la señal. La marca se envía sola en cuanto hay red.
 
 Cada registro llega con su hora, su ubicación y su verificación de identidad, así que la nómina se calcula sobre datos que no hay que confirmar después.
 
-La fórmula de geocerca existe dos veces, en el servidor y en el cliente. Hay una prueba cuyo único trabajo es fallar si las dos versiones dejan de coincidir.
+La fórmula de geocerca existe dos veces, en el servidor y en el cliente. Una prueba tiene como único trabajo fallar si las dos versiones dejan de coincidir.
 
 ## Lo que aprendí
 
-Contar las marcas del día en el cliente no impide un duplicado: cada dispositivo lleva su propio recuento y ninguno ve al otro mientras están sin red.
+Contar las marcas del día en el cliente no impide un duplicado, porque cada dispositivo lleva su propio recuento y ninguno ve al otro sin red.
 
-En la transacción del servidor el conflicto sigue ocurriendo, pero se detecta y va a revisión en lugar de resolverse por orden de llegada. Cuando el cliente puede trabajar sin conexión, la comprobación que decide algo tiene que estar en el único punto que ve a todos los clientes a la vez.
+En la transacción del servidor el conflicto sigue ocurriendo, pero se detecta y va a revisión en lugar de resolverse por orden de llegada. Con clientes que trabajan sin conexión, la comprobación que decide tiene que estar en el servidor, el único punto que ve a todos los clientes.

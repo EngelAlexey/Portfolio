@@ -1,7 +1,7 @@
 ---
 slug: deteccion-por-umbral
 title: Detector de cifrado masivo | Contención sin firmas
-tagline: Contiene un cifrado masivo sin haber visto antes el binario y sin intervención humana. Tres señales del sistema forman una puntuación, y solo ella decide.
+tagline: Detiene un programa desconocido que cifra archivos en masa, combinando tres señales del sistema operativo.
 areas: [seguridad, infra]
 kind: academico
 org: Universidad Técnica Nacional
@@ -30,13 +30,13 @@ diagram:
   gate: 2
   layers:
     - name: "Eventos de archivo"
-      body: "Un observador registra creaciones, escrituras y renombrados en un búfer con bloqueo. Dice que hay actividad, no quién la produce."
+      body: "Un observador registra creaciones, escrituras y renombrados en un búfer con bloqueo. Indica que hay actividad, pero no qué proceso la produce."
     - name: "Entropía del contenido"
       body: "Se mide la entropía de lo que se escribe. Un contenido cercano al azar indica que el archivo dejó de parecerse a un documento, sin necesidad de abrirlo ni de identificarlo."
     - name: "Escritura por proceso"
       body: "Un muestreo de write_bytes por proceso cada 500 ms atribuye el volumen escrito a un proceso concreto. Es la única de las tres señales que identifica al responsable."
     - name: "Decisión única"
-      body: "Ninguna señal contiene por sí sola. El componente que las combina es el único que puede ordenar la contención, así que los umbrales se ajustan sin tocar los sensores."
+      body: "Ninguna señal contiene por sí sola. Solo el componente que las combina puede ordenar la contención."
   caption: "Las tres señales solo observan; la decisión de contener está en un único punto."
 ---
 
@@ -44,46 +44,46 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-Proyecto final individual de Seguridad de TI I, el mismo curso del [análisis de spyware](/es/proyectos/analisis-spyware). La consigna pedía una herramienta que detectara y contuviera un cifrado masivo por su cuenta, y un banco de pruebas donde ejercitarla.
+Es el proyecto final individual de Seguridad de TI I, el mismo curso del [análisis de spyware](/es/proyectos/analisis-spyware). La consigna pedía una herramienta que detectara y contuviera por su cuenta un cifrado masivo, y un banco de pruebas donde ejercitarla.
 
-El escenario que modela es el de una organización atacada por un programa que nadie ha visto antes. En ese caso no hay firma que reconocer, y la contención tiene que decidirse con lo que el sistema operativo puede observar mientras ocurre.
+El escenario es una organización atacada por un programa que nadie ha visto antes. No hay firma que reconocer, así que la contención se decide con lo que el sistema operativo observa mientras ocurre.
 
-El ejercicio corre sobre una instancia efímera de AWS levantada para eso. Nada de lo que se ejecuta ahí toca un sistema en uso.
+El ejercicio se ejecuta en una instancia efímera de AWS creada para él, sin acceso a ningún sistema en uso.
 
 ## Problema
 
-Un antivirus por firmas solo reconoce lo que ya se vio antes. Frente a un binario nuevo no dispara, y el cifrado avanza mientras alguien lo identifica.
+Un antivirus por firmas solo reconoce lo que ya vio. Ante un binario nuevo no genera ninguna alerta, así que el cifrado avanza mientras alguien lo identifica.
 
-Esperar a que una persona lo note tampoco sirve: para cuando alguien abre un archivo y lo encuentra ilegible, el cifrado ya recorrió el disco.
+Esperar a que una persona lo note tampoco sirve. Cuando alguien abre un archivo y lo encuentra ilegible, el cifrado ya alcanzó el resto del disco.
 
-La pregunta pasa a ser otra: qué observa el sistema operativo cuando algo cifra archivos en masa, y cuánto de eso se puede medir sin identificar al programa.
+El proyecto parte de qué observa el sistema operativo cuando un programa cifra archivos en masa, y de cuánto de eso se puede medir sin identificarlo.
 
 ## Decisiones técnicas
 
-Tres señales independientes, ninguna concluyente por sí sola.
+El detector usa tres señales independientes: la actividad en el sistema de archivos, la entropía de lo que se escribe y el volumen que escribe cada proceso. Ninguna es concluyente por sí sola.
 
-Los eventos del sistema de archivos indican que hay actividad. La entropía de lo que se escribe indica que el contenido dejó de parecerse a un documento. El muestreo de `write_bytes` por proceso, cada 500 ms, indica quién está escribiendo.
-
-Un componente aparte combina las tres en una puntuación, y solo esa puntuación decide contener. Los sensores no contienen nada, así que los umbrales se ajustan sin tocarlos.
+Un componente aparte las combina en una puntuación, que es lo único que ordena la contención. Como los sensores no contienen nada, los umbrales se ajustan sin tocarlos.
 
 ## Arquitectura
 
-Un observador del sistema de archivos deposita eventos en un búfer con bloqueo. Un hilo de muestreo mantiene la foto más reciente de escritura por proceso. El hilo principal consulta la puntuación cada segundo y decide si actúa.
+Un observador del sistema de archivos guarda los eventos en un búfer con bloqueo. Un hilo de muestreo mide cada 500 ms cuánto escribe cada proceso y conserva la medición más reciente. El hilo principal consulta la puntuación cada segundo y decide si actúa.
 
 <ArchDiagram {...frontmatter.diagram} />
 
 La contención mata el árbol de procesos y mueve el binario a un directorio de cuarentena sin permisos de ejecución.
 
-La infraestructura del banco de pruebas está descrita en Terraform, así que el laboratorio se levanta y se destruye con un comando y cada corrida parte de la misma máquina. El estado de Terraform y el fichero de variables quedan fuera del control de versiones, porque un fichero de estado guarda valores sensibles en claro.
+La infraestructura del banco de pruebas está descrita en Terraform. El laboratorio se crea y se destruye con una orden, y cada ejecución parte de la misma máquina. El estado de Terraform y el archivo de variables quedan fuera del control de versiones, porque el archivo de estado guarda valores sensibles en claro.
 
 ## Resultado
 
-El detector contiene un cifrado masivo sin haber visto antes el binario y sin que nadie intervenga. Reacciona a lo que el proceso hace, que era el objetivo del ejercicio.
+El detector contiene un cifrado masivo de un binario que nunca había visto, sin que nadie intervenga, porque reacciona a lo que hace el proceso.
 
-El banco de pruebas se reproduce con un comando, así que cada ajuste de umbral se midió sobre la misma máquina de partida y los resultados son comparables entre corridas.
+Cada ajuste de umbral se midió sobre la misma máquina de partida, así que los resultados se pueden comparar entre ejecuciones.
 
 ## Lo que aprendí
 
 El umbral fue la parte difícil. Una copia de seguridad legítima produce un patrón muy parecido al de un cifrado masivo: muchos archivos escritos rápido, con contenido de entropía alta.
 
-Con las tres señales disponibles no encontré un valor que separara los dos casos. La versión entregada prioriza no perder un caso real y acepta falsos positivos, y el umbral quedó documentado con esa justificación. Cuando dos casos son indistinguibles con los datos que hay, la decisión deja de ser técnica y pasa a ser cuál de los dos errores cuesta más.
+Con las tres señales disponibles no encontré un valor que separara los dos casos. La versión entregada prioriza no dejar pasar un caso real y acepta falsos positivos. El umbral quedó documentado con esa justificación.
+
+Aquí el umbral dejó de ser una decisión técnica, porque fijarlo era elegir qué error cuesta más: detener una copia de seguridad legítima o dejar pasar un cifrado.

@@ -1,7 +1,7 @@
 ---
 slug: kaizen-ai
 title: Kaizen AI | Inteligencia de negocio
-tagline: Las empresas que licencian el ERP consultan sus propios datos escribiendo la pregunta. El servidor acota cada consulta a lo que esa empresa y ese rol pueden ver.
+tagline: Las empresas consultan sus datos en lenguaje natural, y el servidor limita cada respuesta a su empresa y su rol.
 areas: [ia, seguridad]
 kind: profesional
 org: Kaizen Apps CR
@@ -50,29 +50,29 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Contexto
 
-Kaizen licencia un ERP de recursos humanos a otras empresas. Kaizen AI es la herramienta que pone en manos de esas empresas. Consultan sus propios datos escribiendo la pregunta en lenguaje natural, sin pasar por un informe ni por el equipo de soporte.
+Kaizen licencia un ERP de recursos humanos a otras empresas. Kaizen AI es la herramienta con la que esas empresas consultan sus propios datos. Escriben la pregunta en lenguaje natural, sin pasar por un informe ni por el equipo de soporte.
 
-El proyecto nació de una necesidad de la operación, no de una idea de producto: el equipo de soporte atendía una a una las consultas de todos los clientes, y ese trabajo crecía al mismo ritmo que la cartera.
+El proyecto nació de una necesidad de la operación. El equipo de soporte atendía una a una las consultas de todos los clientes, y ese trabajo crecía al mismo ritmo que la cartera.
 
 ## Problema
 
-Cada consulta de un cliente la respondía una persona del equipo de soporte. Conforme crece la demanda de ayuda, ese equipo se satura y el cliente espera.
+Cada consulta de un cliente la respondía una persona del equipo de soporte. Cuando la demanda de ayuda crecía, el equipo se saturaba y el cliente esperaba.
 
-Buena parte de esas consultas se repiten: cómo se hace algo, qué significa un concepto de recursos humanos o de salud ocupacional, qué dice la legislación laboral al respecto. Eran horas de un equipo especializado dedicadas a preguntas que ya tenían respuesta.
+Buena parte de esas consultas se repetían: cómo se hace algo, qué significa un concepto de recursos humanos o de salud ocupacional, o qué dice la legislación laboral. Eran horas de un equipo especializado dedicadas a preguntas que ya tenían respuesta.
 
 ## Decisiones técnicas
 
-Varias empresas cliente usan la herramienta sobre la misma instalación. Eso convierte el control de acceso en la decisión central del proyecto: un modelo que consulta datos productivos plantea una pregunta que un prompt no resuelve, que es quién puede leer qué. Si la restricción dependiera de que el modelo siga instrucciones, bastaría reformular la pregunta para saltársela.
+Varias empresas cliente usan la herramienta sobre la misma instalación, así que el control de acceso es la decisión central del proyecto. Un modelo que consulta datos productivos plantea una pregunta que un prompt no resuelve: quién puede leer qué. Si la restricción dependiera de que el modelo siga instrucciones, bastaría reformular la pregunta para saltársela.
 
-La pregunta se traduce a SQL y el servidor reescribe esa consulta antes de ejecutarla. Un reescritor sobre el árbol sintáctico inyecta tres filtros: base de datos del cliente, rol de la sesión y alcance de la acción.
+La pregunta se traduce a SQL y el servidor reescribe esa consulta antes de ejecutarla. Un reescritor sobre el árbol de sintaxis inyecta tres filtros: la base de datos del cliente, el rol de la sesión y el alcance de la acción.
 
-Una consulta que pidiera datos de otra empresa no falla una validación. Se ejecuta ya acotada y devuelve solo lo permitido, que es una garantía más fuerte que rechazarla.
+Una consulta que pida datos de otra empresa no depende de que una validación la detecte: se ejecuta ya acotada y devuelve solo lo permitido.
 
-Ninguna de las tres restricciones se le pide al modelo. El servidor las inyecta pase lo que pase por encima, así que el alcance de una respuesta no depende de cómo esté redactada la pregunta.
+Ninguna de las tres restricciones se le pide al modelo. El servidor las inyecta siempre, así que el alcance de una respuesta no depende de cómo esté redactada la pregunta.
 
 ## Arquitectura
 
-El modelo no habla con la base. Propone un SQL, y ese texto pasa por el reescritor antes de ejecutarse.
+El modelo no se conecta a la base de datos. Propone un SQL, y ese texto pasa por el reescritor antes de ejecutarse.
 
 <ArchDiagram {...frontmatter.diagram} />
 
@@ -80,14 +80,14 @@ El reescritor es el único punto del recorrido que fija cuánto se devuelve, as�
 
 ## Resultado
 
-La herramienta está en producción para las empresas que licencian el ERP. Cada una consulta sus propios datos, distingue lo que ve un desarrollador, un administrador y un usuario, oculta los campos sensibles y deja registro de cada consulta ejecutada.
+La herramienta está en producción para las empresas que licencian el ERP. Cada empresa consulta sus propios datos, cada rol ve su propio conjunto, los campos sensibles quedan ocultos y cada consulta ejecutada queda registrada.
 
-Las preguntas que antes ocupaban al equipo de soporte las resuelve ahora el cliente, y el equipo atiende lo que sí necesita a una persona.
+Las preguntas que antes ocupaban al equipo de soporte las resuelve ahora el cliente, y el equipo atiende lo que necesita a una persona.
 
-La recuperación exige un mínimo de relevancia. Una pregunta sin respaldo en los datos devuelve que no hay información, en lugar de un texto armado con fragmentos poco relacionados.
+La recuperación exige una relevancia mínima. Una pregunta sin respaldo en los datos devuelve que no hay información, en lugar de un texto armado con fragmentos poco relacionados.
 
 ## Lo que aprendí
 
-Un control de visibilidad puede vivir en el texto de la instrucción o en el código. La diferencia práctica es que el segundo se puede ejecutar: una prueba pasa una pregunta por el reescritor y comprueba que el SQL resultante lleva los tres filtros.
+Un control de visibilidad se puede escribir en el texto de la instrucción o en el código. Solo el segundo se puede ejecutar: una prueba pasa una pregunta por el reescritor y comprueba que el SQL resultante lleva los tres filtros.
 
-Sobre un prompt no hay nada equivalente que ejecutar. Cuando una garantía tiene que sostenerse frente a un cliente, conviene ponerla donde una prueba pueda comprobarla.
+Sobre un prompt no hay nada equivalente que ejecutar. Por eso, una garantía que tiene que sostenerse frente a un cliente se pone donde una prueba pueda comprobarla.

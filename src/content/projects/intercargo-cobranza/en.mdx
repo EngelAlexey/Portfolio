@@ -1,7 +1,7 @@
 ---
 slug: intercargo-cobranza
 title: Collections assistant | Statements and payments
-tagline: The client checks a balance, reports a payment or promises a date on WhatsApp. The model interprets; the code decides the action and what it may disclose.
+tagline: On WhatsApp, the client checks their balance and reports payments, and the code decides what data they may see.
 areas: [ia, fullstack]
 kind: profesional
 org: Intercargo Panamá — via Kaizen Apps CR
@@ -38,7 +38,7 @@ diagram:
       body: "A phone number is not enough as an identity. Until identity is verified, the conversation discloses nothing about the account."
     - name: "What may be asked"
       body: "The model returns an intent, not a command. The available actions are a closed set defined in code, so an intent with no matching action executes nothing."
-    - name: "When we may write"
+    - name: "When messages may be sent"
       body: "Working days, holidays and the contact window are computed on the server. Anyone who asks to stop receiving messages stops receiving them. The reminder goes out one working day before the date the client promised."
     - name: "What is recorded"
       body: "Every turn stores the message received, the intent resolved and the action executed. An unexpected reply can be reconstructed later without consulting the model again."
@@ -49,48 +49,48 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-A collections assistant over WhatsApp for Intercargo's operation in Panama. The client writes in, checks their statement, reports a payment or promises a date, and all of it happens inside the conversation.
+A collections assistant over WhatsApp for Intercargo's operation in Panama. The client checks their statement, reports a payment or promises a date without leaving the conversation.
 
-It is still in development. The client asked to automate that cycle. Collections tied up their team in repetitive contact and verification work that grew with the receivables book, and they wanted debtors able to handle the routine part themselves.
+It is still in development. Intercargo asked to automate that cycle, because collections tied up its team in repetitive contact and verification work that grew with the receivables book. It wanted debtors to handle the routine part on their own.
 
 ## Problem
 
-Collections relied on lists of clients to be contacted one by one. Every reminder was a call or a message written by hand, and the order depended on who reviewed the list that day.
+Collections relied on lists of clients who had to be contacted one by one. Every reminder was a call or a message written by hand, and the order depended on who reviewed the list that day.
 
-Every payment receipt was checked by a person before the balance was brought up to date. Until that check happened, the statement the company saw did not match what the client had already paid.
+A person checked every payment receipt before updating the balance. Until that check, the statement the company saw did not match what the client had already paid.
 
 ## Technical decisions
 
-A collections assistant exposes third-party balances. If the model decided who they are shown to, every reply would depend on it not making a mistake, and a language model does not offer that guarantee.
+A collections assistant shows third-party balances. If the model decided who sees them, every reply would depend on it not making a mistake, and a language model does not offer that guarantee.
 
-So the model does one thing: turn a plain-language message into an intent and, where applicable, into a date.
+So the model does one thing: turn a plain-language message into an intent and, where relevant, into a date.
 
-Everything else is code: validating identity, querying the receivables book, recording a payment promise and deciding whether a reminder is due. The conversation is resolved in a state machine that returns actions, and a separate layer translates them to the WhatsApp transport.
+Everything else is code: validating identity, querying the receivables book, recording a payment promise and deciding whether a reminder is due. The conversation is resolved in a state machine that returns actions. A separate layer translates those actions to the WhatsApp transport.
 
-The service uses no web framework. It starts a server with `node:http` and runs as its own deployment.
+The service uses no web framework. It starts a server with `node:http` and is deployed on its own.
 
-It was started before [the corporate platform](/en/projects/intercargo-plataforma), so it carries its own model of the receivables book: customers, invoices, promises and payment reports, across nine tables of its own. Folding it into the platform is outstanding work, not a separation that was sought.
+It was started before [the corporate platform](/en/projects/intercargo-plataforma), so it carries its own model of the receivables book: customers, invoices, promises and payment reports, across nine tables of its own. Merging it into the platform is outstanding work: the split comes from the order in which the two projects started.
 
 The model provider is swappable, with two implementations behind the same interface.
 
 ## Architecture
 
-The model occupies a single leg of the path. What goes into it and what comes out are structures the code validates before continuing.
+The model takes part in a single step of the path. What it receives and what it returns are structures the code validates before continuing.
 
 <ArchDiagram {...frontmatter.diagram} />
 
-The state machine returns actions and a separate layer translates them to the transport, so the whole conversation can be run without Meta credentials or a WhatsApp line.
+Since the transport sits in a separate layer, the whole conversation can be run without Meta credentials or a WhatsApp line.
 
 ## Result
 
-The assistant resolves the whole cycle inside the conversation. Debtors check their own balance and attach their own receipt, the reminder goes out on its own one business day before the date they promised, and the team steps in only where judgement is needed.
+Debtors check their balance and attach their receipt without waiting for the team, which steps in only where judgement is needed.
 
-Anyone who asks to stop receiving messages stops receiving them, and business days and public holidays are calculated on the server, so the operation does not depend on someone watching the calendar.
+The server sends the reminders, honours opt-outs and computes working days, so the operation does not depend on someone watching the calendar.
 
-One command replays a whole dialogue against the real logic. It is used to test the hard cases: a promise with an ambiguous date, a payment reported twice, a client asking to be left alone.
+One command replays a whole dialogue against the real logic. It is used to test the hard cases: a promise with an ambiguous date, a payment reported twice and a client asking to stop receiving messages.
 
 ## What I learned
 
-That simulator walks the state machine end to end, which is why it detects a flow regression without being able to locate it: when it fails, it points at the whole dialogue rather than the module.
+That simulator walks the state machine end to end. That is why it detects a flow regression but does not locate it: when it fails, it points at the whole dialogue rather than the module.
 
-A test that covers the entire path tells you something broke, but not where. Tests over the action layer are the next step, precisely to shorten that diagnosis.
+Locating the fault requires tests over the action layer, which are the next step.

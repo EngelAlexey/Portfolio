@@ -1,7 +1,7 @@
 ---
 slug: kaizen-web
 title: Kaizen Apps | Corporate site
-tagline: The company's bilingual site, with the product demonstrations under the same domain and a booking form that reaches a person.
+tagline: A bilingual site with the demonstrations under the same domain and a booking form that reaches a person.
 areas: [fullstack, seguridad]
 kind: profesional
 org: Kaizen Apps CR
@@ -44,9 +44,9 @@ shots:
     caption: "Payroll and finance, another section with a route of its own."
   - src: /img/shots/kz-agendar.jpg
     alt: "Demonstration request form, with the anti-bot challenge at the foot"
-    caption: "The booking form, the site's one server endpoint, with the anti-bot challenge before submission."
+    caption: "The booking form, the site's only server route, with the anti-bot challenge before submission."
   - src: /img/shots/kz-nosotros.jpg
-    alt: "Company page, with the ecosystem described and its figures"
+    alt: "Company page, with its description and its figures"
     caption: "About. What Kaizen is, on a page with its own entry in the route table."
   - src: /img/shots/kz-privacidad.jpg
     alt: "Privacy policy page, with the last-updated date and the detail of data collected"
@@ -65,52 +65,56 @@ diagram:
     - name: "Fields are checked before anything else"
       body: "The type, presence and length of every field are verified on the server. A submission that fails those checks reaches neither the challenge verification nor the email."
     - name: "Opaque errors on the way out"
-      body: "The public response says the submission failed and nothing more. The real error code stays in the server log, where it gives no guidance to anyone probing the form blind."
+      body: "The public response says the submission failed and nothing more. The real error code stays in the server log, where it gives no hints to anyone probing the form."
     - name: "Secrets stay server-side"
-      body: "Only the challenge's public key travels in the HTML. The secret key and the email service key exist only in the server environment."
-  caption: "The site's one public endpoint, with four rules before a submission becomes an email."
+      body: "The HTML only includes the challenge's public key. The secret key and the email service key exist only in the server environment."
+  caption: "The only public server route, with four rules before a submission becomes an email."
 ---
 
 import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-Kaizen Apps sells bespoke software, so its site is the first commercial contact and the place where a prospect sees the product running before speaking to anyone.
+Kaizen Apps sells bespoke software, so its site is the first commercial contact. It is also where a prospect sees the product running before speaking to anyone.
 
-The assignment was to rebuild it entirely: the marketing pages in Spanish and English, the application demonstrations under the same domain, and a booking channel that does not depend on someone checking a shared inbox.
+The assignment was to rebuild it entirely:
+
+- the marketing pages, in Spanish and English;
+- the application demonstrations, under the same domain;
+- a booking channel that does not depend on someone checking a shared inbox.
 
 ## Problem
 
-The previous site carried no search metadata. There were no per-page titles or descriptions, and no declared relationship between the Spanish and English versions, so a search engine had no way of knowing they were the same page in two languages.
+The previous site had no search metadata. There were no per-page titles or descriptions, and no declared relationship between the Spanish and English versions. A search engine had no way of knowing they were the same page in two languages.
 
-The applications the company sells each live at their own address, off the site. A prospect who wanted to see them running left the commercial site, and once outside had no way back and no way across to the next one.
+Each application the company sells sits at its own address, off the site. A prospect who wanted to see them running left the commercial site, and from outside had no way back and no way on to the next one.
 
 ## Technical decisions
 
-Routes are declared in a single file. Every page carries its identifier, its two routes and its metadata there, and both the menu and the language equivalence map behind the language switch come out of that same table. Adding a page means adding an entry, not walking through six files.
+Routes are declared in a single file. Every page carries its identifier, its two routes and its metadata there. The menu and the language equivalence map used by the language switch both come from that same table. Adding a page means adding an entry, without walking through six files.
 
-The site is static except where it cannot be. Only the booking needs a server, so only the booking is served as a server route; the rest is generated at build time. That made moving it from one host to another a matter of swapping the adapter, without touching the pages.
+The site is static except where it cannot be. Only the booking needs a server, so only the booking is served as a server route, and the rest is generated at build time. That is why the site moved from one host to another by swapping the adapter alone, without touching the pages.
 
-The eight pages that wrap a demonstration were eight copies of the same HTML. They were reduced to one shared function each route delegates to: the floating menu and the frame policy are edited in one file, not eight.
+The eight pages that wrap a demonstration were eight copies of the same HTML. Each route now delegates to one shared function, so the floating menu and the frame policy are edited in a single file.
 
-The anti-bot challenge is validated against Cloudflare from the server, not in the browser, and the public response does not distinguish between an invalid token, a malformed field and a failure of the email service. The real code is recorded server-side.
+The anti-bot challenge is validated against Cloudflare from the server, not in the browser. The public response does not distinguish between an invalid token, a malformed field and a failure of the email service. The real code stays in the server log.
 
 ## Architecture
 
-The site has three classes of page. The marketing pages are static and bilingual, generated from the route table. The demonstration wrappers are HTML responses that mount the corresponding application inside the site. And there is a single server endpoint, the booking one.
+The site has three classes of page. The marketing pages are static and bilingual, and they are generated from the route table. The demonstration wrappers are HTML responses that mount the corresponding application inside the site. The only server route is the booking one.
 
 <ArchDiagram {...frontmatter.diagram} />
 
 ## Result
 
-The site publishes in Spanish and English from a single route definition, with each page's metadata and the correspondence between languages declared where the page itself is declared.
+The site publishes in Spanish and English from a single route definition. Each page's metadata and the correspondence between languages are declared where the page itself is declared.
 
-The demonstrations ended up under the same domain and share navigation, so a prospect can walk through them without going back in the browser.
+The demonstrations sit under the same domain and share navigation, so a prospect can go through them without going back in the browser.
 
-A meeting request now arrives as a formatted email in the commercial inbox, and the sender gets their confirmation in the language they wrote in.
+A meeting request arrives as a formatted email in the commercial inbox, and the sender gets the confirmation in the language they wrote in.
 
 ## What I learned
 
-A bilingual site breaks on duplication, not on translation. While routes lived in the menu, in the language switch and in every page, each new section cost three edits and produced at least one broken link. With a single table, language stopped being a special case.
+On a bilingual site, the faults came from duplication, not from translation. While routes were spread across the menu, the language switch and every page, each new section cost three edits and produced at least one broken link. With a single table, language stopped being a special case.
 
-The other lesson is commercial. The form is not a detail of the contact page: it is the one point on the site where a visitor leaves something behind. It received the most security attention, and it was the only thing that justified having a server at all.
+The other lesson is commercial. The form is the one point on the site where a visitor leaves something behind. That is why it received most of the security work, and it was the only thing that justified having a server.

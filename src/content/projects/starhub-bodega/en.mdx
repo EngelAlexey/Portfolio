@@ -1,7 +1,7 @@
 ---
 slug: starhub-bodega
 title: StarHub | Warehouse management
-tagline: Container receiving line by line, with the position of each pallet and a photo of damaged goods. It reads the ERP over SQL and writes only through its API.
+tagline: The warehouse operator records each line received, each pallet's position and photos of the damage from a phone.
 areas: [fullstack, movil]
 kind: profesional
 org: Star Cargo Service
@@ -35,7 +35,7 @@ diagram:
     - name: "Single-use code"
       body: "Enrolment uses a code that expires and is bound to the device identifier. The registry stores its hash, never the value, and the code does not work again after first use."
     - name: "Two rate limits"
-      body: "The enrolment endpoint is public, so it is bounded per origin and per device. Repeated attempts to guess the code stop well before the space of possibilities is covered."
+      body: "The enrolment route is public, so it is bounded per origin and per device. Repeated attempts to guess the code stop well before the space of possibilities is covered."
     - name: "Reads and writes separated"
       body: "The token grants reads over SQL and writes only through the ERP's API. The service's surface exposes no direct write against the database."
     - name: "Warehouse scoping"
@@ -47,31 +47,31 @@ import ArchDiagram from '../../../components/ArchDiagram.astro';
 
 ## Context
 
-StarHub is the tool a warehouse operator uses to record a container's arrival from their phone. They scan the receipt code, log every line as it is unloaded, note where each pallet goes, and photograph damaged goods.
+StarHub is the tool a warehouse operator uses to record a container's arrival from their phone. They scan the receipt code, log every line they unload, note where each pallet goes and photograph damaged goods.
 
-The service and the Android app were built by the team. My assignment was maintenance: fixing the defects that surfaced once the system was already in production. On the app, which another colleague had started, I also connected the screens to the service's real data and added the timestamp seal on evidence photos.
+The service and the Android app were built by the team. My assignment was maintenance: fixing the defects that appeared once the system was already in production. On the app, which another colleague had started, I also connected the screens to the service's real data and added the timestamp seal on evidence photos.
 
 ## Problem
 
-Goods-in was recorded on paper and someone transcribed it into the ERP later. Until that happened, inventory did not match what was in the warehouse, and the discrepancy only surfaced when someone went to find the goods and they were not where the system said.
+Goods-in was recorded on paper and someone transcribed it into the ERP later. Until then, inventory did not match what was in the warehouse. The discrepancy only appeared when someone went to fetch the goods and they were not where the system said.
 
-Transcription also loses detail. Pallet positions and the condition of damaged goods rarely survive the trip from paper to system.
+Transcription also loses detail. Pallet positions and the condition of damaged goods rarely make it intact from paper to the system.
 
 ## Technical decisions
 
-The database schema is not controlled by this service. It is governed by the tool the client runs its operation from, and it can change without the service hearing about it. All the maintenance work starts from that.
+This service does not control the database schema. The tool the client runs its operation with defines it, and it can change without notice. All the maintenance work starts from that.
 
-Database names are translated with SQL aliases inside the data-access layer, rather than propagated to the contract the Android client consumes. That contract stays stable and absorbs a schema change without shipping a new release: the build already tested in production keeps serving untouched. The correspondence between columns is checked against the real data before it is written, because two columns of the same type are easy to cross.
+Database names are translated with SQL aliases in the data-access layer. They never reach the contract the Android app consumes. That contract therefore stays stable through a schema change, and the app version already tested in production keeps working untouched. The correspondence between columns is checked against the real data before it is written, because two columns of the same type are easy to mix up.
 
-The warehouse queue filters by document type. The table it reads mixes receipts and dispatches, and without that filter an operator would see outbound orders looking like receipts and try to receive cargo against one of them.
+The warehouse queue filters by document type. The table it reads mixes receipts and dispatches. Without that filter, an operator would see outbound orders that look like receipts and try to receive cargo against one of them.
 
-A field the database stops offering comes back null, not padded. If that takes away functionality the operation was using, it gets reported as such rather than hidden inside the mapping.
+A field the database stops offering comes back null, not padded. If that removes functionality the operation was using, it is reported as such instead of being hidden in the mapping.
 
 ## Architecture
 
-The service reads over direct SQL against the ERP's database, which is the fast path, and writes only through the ERP's API, slower but respecting the sequence formulas and the triggers a direct write would not fire. That separation already existed, and the maintenance work had to respect it.
+The service reads with direct SQL against the ERP's database and writes only through the ERP's API. The direct read is the fast path. Writes go through the API because it respects the sequence formulas and the triggers that a direct write would not fire. That separation already existed, and the maintenance work had to respect it.
 
-A phone cannot authenticate with the platform's identity, because enrolment happens before the device holds any credential at all. That is the service's gate, and it carries four rules applied at once.
+A phone cannot authenticate with the platform's identity, because enrolment happens before the device holds any credential. Enrolment is therefore the service's control point, with four rules applied at once.
 
 <ArchDiagram {...frontmatter.diagram} />
 
@@ -79,14 +79,14 @@ Once enrolled, the device works with a token scoped to its warehouse.
 
 ## Result
 
-With StarHub, goods-in reaches the ERP at the moment the operator records it, with its lines, each pallet's position and the photos of damaged goods. Inventory stopped depending on a later transcription.
+With StarHub, goods-in reaches the ERP at the moment the operator records it. It arrives with its lines, each pallet's position and the photos of damaged goods. Inventory stopped depending on a later transcription.
 
-A change in the ERP's schema is absorbed inside the service, with no new release pushed to the phones already on the floor. The queue shows receipts and only receipts, even though they share a table with dispatches.
+Schema changes in the ERP no longer require shipping a new version to the phones, and the queue only shows receipts.
 
-One case was written down as unverified, because checking it creates real rows in the ERP and needs the client's authorisation.
+One case was recorded as unverified, because checking it creates real rows in the ERP and requires the client's authorisation.
 
 ## What I learned
 
-A service integrated against a platform another team governs does not control its schema. Putting the translation in the mapping layer, and not in the contract the mobile client consumes, is what avoids pushing a new release to phones already out in the field.
+Against a platform another team manages, the name translation has to sit in the service's mapping layer, not in the mobile app's contract.
 
-The other half is commercial. When a schema change takes away something the operation was using, reporting it is part of the job. Quietly resolving it inside the mapping leaves the people running the operation unaware they lost anything.
+The other lesson is commercial. If a schema change removes something the operation was using, reporting it is part of the job. Resolving it silently leaves the people running the operation unaware that they lost something.
