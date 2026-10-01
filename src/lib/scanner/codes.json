@@ -203,6 +203,7 @@
 	},
 	"notes": [
 		"cdn",
+		"hsts-preloaded",
 		"no-mx",
 		"http-not-served",
 		"ipv6-only",

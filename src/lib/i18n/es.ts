@@ -171,7 +171,7 @@ export const es = {
 	},
 	scanner: {
 		title: 'Revisor de seguridad web',
-		lead: 'Analiza las cabeceras de seguridad de un sitio público e indica cómo corregir cada hallazgo.',
+		lead: 'Analiza la configuración de seguridad de un sitio público e indica cómo corregir cada hallazgo.',
 		label: 'Dominio',
 		placeholder: 'su-dominio.example',
 		submit: 'Analizar dominio',
@@ -233,7 +233,7 @@ export const es = {
 			'x-powered-by': 'Identifica la tecnología del sitio. Se recomienda no enviarla.'
 		},
 		findingsTitle: 'Hallazgos',
-		noFindings: 'Las cabeceras evaluadas no presentan hallazgos.',
+		noFindings: 'El análisis no encontró nada que corregir.',
 		blockedPage: 'Las cabeceras que se muestran son las de la página de bloqueo.',
 		passedTitle: 'Comprobaciones superadas',
 		notesTitle: 'Observaciones',
@@ -319,6 +319,7 @@ export const es = {
 		},
 		notes: {
 			cdn: 'El sitio se sirve a través de la red de {detail}.',
+			'hsts-preloaded': 'El dominio termina en .{detail}, un dominio de nivel superior que los navegadores tienen en su lista de precarga HSTS. Solo lo abren por HTTPS.',
 			'no-mx': 'El dominio no tiene registros MX, así que no recibe correo. SPF y DMARC siguen evitando correos falsificados con el dominio.',
 			'http-not-served': 'El puerto 80 no responde: el sitio no tiene versión HTTP.',
 			'ipv6-only': 'El sitio solo publica direcciones IPv6, y el revisor solo conecta por IPv4.',
@@ -336,8 +337,8 @@ export const es = {
 			lead: 'El revisor de seguridad web lee la configuración que un sitio público envía a cualquier visitante. Esta página describe sus peticiones y cómo bloquearlo.',
 			whatTitle: 'Qué analiza',
 			what: [
-				'El revisor pide la página principal de un dominio por HTTPS y evalúa sus cabeceras de seguridad.',
-				'Para cada hallazgo indica la cabecera afectada y enlaza la corrección en la guía de seguridad.',
+				'El revisor evalúa la conexión segura, las cabeceras, las cookies y el contenido de la página principal de un dominio.',
+				'También revisa los registros DNS que protegen el correo del dominio: SPF, DMARC y CAA.',
 				'No es una auditoría ni una prueba de intrusión: solo lee lo que el sitio envía a cualquier visitante.'
 			],
 			identityTitle: 'Cómo se identifica',
@@ -345,9 +346,11 @@ export const es = {
 			network: 'Las peticiones salen de la red de Vercel, que no usa direcciones IP fijas.',
 			requestsTitle: 'Qué peticiones hace',
 			requests: [
-				'Una consulta DNS a 1.1.1.1 para obtener las direcciones del dominio.',
-				'Una petición GET a la página principal por HTTPS, con un límite de 10 segundos y 2 MB.',
-				'Hasta 5 redirecciones, siempre dentro del mismo sitio.'
+				'Consultas DNS a 1.1.1.1: las direcciones del dominio y sus registros TXT, MX y CAA.',
+				'Tres conexiones TLS al puerto 443: una normal y dos que intentan TLS 1.0 y TLS 1.1.',
+				'Una petición GET a la página principal por HTTPS: 10 segundos y 2 MB como máximo, y hasta 5 redirecciones en el mismo sitio.',
+				'Una petición GET a la página principal por HTTP, para comprobar que redirige a HTTPS.',
+				'Una petición GET a /.well-known/security.txt.'
 			],
 			requestsNot: 'El revisor no envía formularios, no prueba contraseñas y no visita otras páginas del sitio.',
 			whoTitle: 'Quién inicia un análisis',

@@ -171,7 +171,7 @@ export const en: Dict = {
 	},
 	scanner: {
 		title: 'Website security scanner',
-		lead: "Analyses a public site's security headers and shows how to fix each finding.",
+		lead: "Analyses a public site's security configuration and shows how to fix each finding.",
 		label: 'Domain',
 		placeholder: 'your-domain.example',
 		submit: 'Scan domain',
@@ -232,7 +232,7 @@ export const en: Dict = {
 			'x-powered-by': 'Identifies the technology behind the site. The recommended setting is not to send it.'
 		},
 		findingsTitle: 'Findings',
-		noFindings: 'The headers evaluated show no findings.',
+		noFindings: 'The scan found nothing to fix.',
 		blockedPage: 'The headers shown belong to the block page.',
 		passedTitle: 'Passed checks',
 		notesTitle: 'Notes',
@@ -318,6 +318,7 @@ export const en: Dict = {
 		},
 		notes: {
 			cdn: "The site is served through {detail}'s network.",
+			'hsts-preloaded': "The domain ends in .{detail}, a top-level domain on the browsers' HSTS preload list. Browsers only open it over HTTPS.",
 			'no-mx': 'The domain has no MX records, so it receives no email. SPF and DMARC still stop spoofed email from the domain.',
 			'http-not-served': 'Port 80 does not answer: the site has no HTTP version.',
 			'ipv6-only': 'The site only publishes IPv6 addresses, and the scanner only connects over IPv4.',
@@ -335,8 +336,8 @@ export const en: Dict = {
 			lead: 'The website security scanner reads the configuration a public site sends to every visitor. This page describes its requests and how to block it.',
 			whatTitle: 'What it checks',
 			what: [
-				"The scanner requests a domain's home page over HTTPS and evaluates its security headers.",
-				'For each finding it names the affected header and links to the fix in the security guide.',
+				"The scanner evaluates the secure connection, headers, cookies and content of a domain's home page.",
+				"It also checks the DNS records that protect the domain's email: SPF, DMARC and CAA.",
 				'It is not an audit or a penetration test: it only reads what the site sends to every visitor.'
 			],
 			identityTitle: 'How it identifies itself',
@@ -344,9 +345,11 @@ export const en: Dict = {
 			network: "Requests come from Vercel's network, which does not use fixed IP addresses.",
 			requestsTitle: 'Which requests it makes',
 			requests: [
-				"One DNS query to 1.1.1.1 to get the domain's addresses.",
-				'One GET request to the home page over HTTPS, limited to 10 seconds and 2 MB.',
-				'Up to 5 redirects, always within the same site.'
+				"DNS queries to 1.1.1.1: the domain's addresses and its TXT, MX and CAA records.",
+				'Three TLS connections to port 443: a normal one and two that try TLS 1.0 and TLS 1.1.',
+				'One GET request to the home page over HTTPS: 10 seconds and 2 MB at most, and up to 5 redirects within the same site.',
+				'One GET request to the home page over HTTP, to check that it redirects to HTTPS.',
+				'One GET request to /.well-known/security.txt.'
 			],
 			requestsNot: 'The scanner does not submit forms, does not try passwords and does not visit other pages of the site.',
 			whoTitle: 'Who starts a scan',
