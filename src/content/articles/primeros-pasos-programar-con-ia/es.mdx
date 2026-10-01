@@ -382,6 +382,8 @@ Queda una decisión de coste: qué modelo usa la sesión. Cámbielo con `/model`
 
 **Cómo comprobarlo.** Pida al agente el contenido de `.env`. Con la regla puesta, la herramienta de lectura devuelve el bloqueo en lugar del archivo. Que el modelo conteste que no piensa hacerlo no comprueba nada, porque esa respuesta no la produce la regla.
 
+<span id="13-cómo-revisar-lo-que-hizo-el-agente" style="scroll-margin-top: 5rem"></span>
+
 ## 12. Cómo revisar lo que hizo el agente
 
 El agente edita los archivos directamente, así que al terminar queda un *diff*. Un *diff* es la lista de líneas que cambiaron entre el estado anterior del repositorio y el actual. El *diff* solo sirve si el punto de partida estaba limpio. Por eso `git status --porcelain` tiene que salir vacío antes de la petición.
