@@ -6,7 +6,7 @@ description: "Qué es CORS, por qué Chrome muestra «has been blocked by CORS p
 areas: [seguridad]
 category: seguridad-web
 published: '2026-09-27'
-updated: '2026-09-27'
+updated: '2026-09-30'
 draft: false
 path: null
 repo: null
@@ -187,7 +187,7 @@ http.createServer((req, res) => {
 2. Compare el `Origin` recibido con la lista por igualdad exacta de la cadena completa. `Set.has` compara así; `includes` sobre un texto o una expresión regular sin anclar, no.
 3. Si el origen está en la lista, devuélvalo en `Access-Control-Allow-Origin`. Si no está, no envíe ninguna cabecera `Access-Control-*`.
 4. Añada `Vary: Origin` a todas las respuestas. Indica a las cachés intermedias que la respuesta cambia según el origen, y evita que sirvan a un origen la cabecera calculada para otro<Cite n={2} repeat />.
-5. Conteste la petición previa con los métodos y las cabeceras que el *frontend* usa de verdad.
+5. Conteste la petición previa solo con los métodos y las cabeceras que usa el *frontend*.
 
 En Express, el paquete `cors` 2.8.6 hace lo mismo con su opción `origin`, que acepta una lista: `cors({ origin: ['http://localhost:5173'] })`<Cite n={3} repeat />. En la medición, con esa lista devolvió el origen permitido, no devolvió nada a los demás y añadió `Vary: Origin` por su cuenta.
 
@@ -202,8 +202,8 @@ La primera respuesta trae `Access-Control-Allow-Origin: http://localhost:5173` y
 
 **Cuando el error no está en la configuración CORS.** El mismo mensaje aparece cuando la respuesta sale sin las cabeceras CORS, aunque la configuración sea correcta. En la medición, con la lista de orígenes activa, dos casos dieron el error:
 
-- Una ruta que falla y responde `500` antes de añadir las cabeceras. Chrome mostró «No 'Access-Control-Allow-Origin' header is present on the requested resource», el mismo texto que sin configurar CORS.
-- Una comprobación de autenticación que se ejecuta antes que CORS. La petición previa nunca lleva credenciales<Cite n={4} repeat />, así que la comprobación respondió `401`. Chrome indicó «Response to preflight request doesn't pass access control check».
+1. Una ruta que falla y responde `500` antes de añadir las cabeceras. Chrome mostró «No 'Access-Control-Allow-Origin' header is present on the requested resource», el mismo texto que sin configurar CORS.
+2. Una comprobación de autenticación que se ejecuta antes que CORS. La petición previa nunca lleva credenciales<Cite n={4} repeat />, así que la comprobación respondió `401`. Chrome indicó «Response to preflight request doesn't pass access control check».
 
 El navegador no da al script el detalle de una petición bloqueada por CORS<Cite n={6} />. Para ver el estado real, repita la petición con curl y la misma cabecera `Origin`:
 
@@ -344,7 +344,7 @@ En «Opciones» puede cambiar cada parte por separado, como la web que hace la p
 
 Los puntos anteriores se pueden aplicar a mano. También puede hacerlo un agente de programación con un prompt. Cópielo con el botón «Copiar prompt» del panel «Configurar CORS» y péguelo en una sesión abierta en la raíz del proyecto. El agente sigue siete fases:
 
-1. **Reconoce el proyecto** sin escribir nada. Busca dónde se fija CORS, en el código o en el proxy, y qué orígenes llaman de verdad a la API. También averigua si autentica con cookies o con `Authorization`.
+1. **Reconoce el proyecto** sin escribir nada. Busca dónde se fija CORS, en el código o en el proxy, y qué orígenes llaman hoy a la API. También averigua si autentica con cookies o con `Authorization`.
 2. **Diagnostica** con las peticiones del punto 8 y clasifica lo que encuentra, del fallo más grave al más leve.
 3. **Propone y espera.** Presenta los fallos, la lista de orígenes por entorno y el cambio exacto, y se detiene hasta que usted confirma.
 4. **Aplica el cambio** del punto 4, con la lista en una variable de entorno. No toca otra lógica de la aplicación.

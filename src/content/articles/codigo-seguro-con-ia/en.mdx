@@ -6,7 +6,7 @@ description: 'What asking a model for "secure code" achieves, what context to ad
 areas: [ia, seguridad]
 category: seguridad-web
 published: '2026-09-07'
-updated: '2026-09-27'
+updated: '2026-09-30'
 draft: false
 path: ask-ai-for-secure-code
 repo: null
@@ -95,7 +95,7 @@ paths:
 - Another user's resource answers 404, not 403.
 ```
 
-According to Anthropic's guide, the context window is a shared resource, and every paragraph of a rule takes space the conversation and the work in progress need<Cite n={7} />. So a rule should only contain what the model does not already know. A rule that explains what a parameterised query is adds nothing. One that says which database client the repository uses adds a fact the model cannot infer.
+According to Anthropic's guide, the context window is a shared resource. Every paragraph of a rule takes space that the conversation and the work in progress need<Cite n={7} />. So a rule should only contain what the model does not already know. A rule that explains what a parameterised query is adds nothing. One that says which database client the repository uses adds a fact the model cannot infer.
 
 Vercel's public skills repository makes it possible to measure the difference between loading only what is needed and loading everything. It publishes each guide in two formats: an index and the concatenation of all its rules. In `react-best-practices`, checked on 7 September 2026, the index takes 7251 bytes and the concatenation 108,261, spread over 72 rule files<Cite n={8} />. Reading the index and the two rules that affect a change takes about 10,000 bytes, a tenth of the total.
 
@@ -222,7 +222,7 @@ export async function POST(req: Request) {
 
 If you ask an agent for tests, it writes them, and they usually pass. When it writes them after the code, they tend to describe what the code does and not what it should do. A test that passes with the defect and without it does not tell the two states apart.
 
-**Mutation testing** measures that. It introduces a defect, called a **mutant**, into the production code and runs the tests. If any test fails, the mutant is *killed*; if they all pass, the mutant *survives* and points to a gap in the tests. Stryker's documentation distinguishes it from coverage, which measures which lines run and not whether the tests check the behaviour<Cite n={11} />.
+**Mutation testing** measures that. It introduces a defect, called a **mutant**, into the production code and runs the tests. If any test fails, the mutant is *killed*; if they all pass, the mutant *survives* and points to behaviour the tests do not check. Stryker's documentation distinguishes it from coverage, which measures which lines run and not whether the tests check the behaviour<Cite n={11} />.
 
 The manual version needs no program. Before accepting a test, check it in two directions:
 
@@ -282,7 +282,7 @@ Google's engineering guides set the order of magnitude: 100 lines is a reasonabl
 
 With an agent, the time it takes to write no longer limits the size of the change: asking for 800 lines costs the same as asking for 80. Set the size in the request.
 
-Ask the reviewer, whether a person or an agent, to look for what does not hold up and to write down what it checked for each finding. Write its limit too. Programs that detect dead or duplicated code are only good for guiding the search, because they do not see re-exports or scripts run from the command line. Before writing in the report that something is unused, check it in the file.
+Ask the reviewer, whether a person or an agent, to look for what does not hold up and to write down what it checked for each finding. Write its limit too. Programs that detect dead or duplicated code are only good for guiding the search. They do not see re-exports or scripts run from the command line. Before writing in the report that something is unused, check it in the file.
 
 **How to check it.** Record in every review the hash of the commit it reviewed. Without that hash, nobody can repeat the review or compare it with the code.
 
@@ -293,7 +293,7 @@ The checks above only work if someone runs them. In continuous integration, the 
 1. **Compilation.** Run `tsc --noEmit` on the whole project.
 2. **Linter with type information.** It applies the two rules from section 4.
 3. **Tests.** Automate running them. The condition from section 5, having seen the test fail, is checked in review, because it needs the code from before the fix.
-4. **Dependencies.** Installing runs third-party code, and the lockfile decides what gets installed. The article [npm vs pnpm 11: install script security and allowBuilds](/en/blog/npm-vs-pnpm-install-security) explains how to configure it.
+4. **Dependencies.** Installing runs third-party code, and the lockfile decides what is installed. The article [npm vs pnpm 11: install script security and allowBuilds](/en/blog/npm-vs-pnpm-install-security) explains how to configure it.
 5. **Secrets.** GitHub blocks pushing a commit when it detects a credential. On public repositories that protection is on by default for user accounts. On private ones it has to be turned on, and it requires GitHub Secret Protection<Cite n={14} />.
 
 None of the five steps can tell whether a person or a model wrote the change, so they apply to both alike.
@@ -309,17 +309,17 @@ Neither replaces continuous integration, because both run on your machine and ca
 
 ## Which failures static analysis does not detect
 
-The compiler and the linter do not find broken access control. No pattern tells `obtenerPedido(pedidos, id, usuarioId)` apart from `obtenerPedido(pedidos, id)`: both versions compile, pass the linter, and the missing check leaves no trace in the code. A static analyser finds the query that concatenates text, but not the correct query that is missing a filter.
+The compiler and the linter do not find broken access control. No pattern tells `obtenerPedido(pedidos, id, usuarioId)` apart from `obtenerPedido(pedidos, id)`: both versions compile and pass the linter, and the missing check leaves no trace in the code. A static analyser finds the query that concatenates text, but not the correct query that is missing a filter.
 
 That failure is detected by a test with two users that has been seen to fail, like the one in section 1, and by reviewing every change. The database can also enforce it with row-level security, which filters every query by the connection's user. In exchange, every request has to open the connection with the user's identity, and the rule ends up split between the application and the database.
 
-If authorisation lives in the application, include the owner in the query condition, inside the `where`. Section 2 of [Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) shows it with code.
+If authorisation is in the application, include the owner in the query condition, inside the `where`. Section 2 of [Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) shows it with code.
 
 **How to check it.** With one user's session, request an identifier that belongs to another. The right answer is `404`. If the record comes back, neither the compiler nor the linter would have stopped it.
 
 ## Where to go next
 
-[Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) teaches how to look for eight common failures by hand, with the fix for each and the command that checks it.
+[Eight things to check in the code your AI writes](/en/blog/seven-things-to-check-in-ai-generated-code) teaches how to look for eight common failures by hand. For each one it gives the fix and the command that checks it.
 
 [How to secure a web application](/en/blog/how-to-secure-a-web-application) gathers the ten layers these rules and checks have to cover in an application with users.
 

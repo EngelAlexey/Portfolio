@@ -7,7 +7,7 @@ areas: [seguridad]
 category: seguridad-web
 lead: true
 published: '2026-09-27'
-updated: '2026-09-27'
+updated: '2026-09-30'
 draft: false
 path: null
 repo: null
@@ -222,9 +222,9 @@ Por eso el ejemplo sube `maxmem` a 256 MiB. Con esos parámetros, calcular un *h
 
 Ese coste lo paga también el servidor. OWASP advierte de que un factor de trabajo demasiado alto permite a un atacante agotar la CPU del servidor con peticiones de inicio de sesión<Cite n={12} repeat />. Con estos parámetros, además, cada cálculo reserva unos 128 MiB. Por eso el límite de intentos que sigue se monta en la ruta de inicio de sesión, delante del cálculo del *hash*: `app.post('/login', limite, iniciarSesion)`.
 
-El límite por cuenta no acota esa carga cuando se prueban muchas cuentas; la acota el segundo límite, por IP. Mida también cuántos inicios de sesión simultáneos soporta su servidor antes de fijar los parámetros.
+El límite por cuenta no acota esa carga cuando se prueban muchas cuentas; la acota el segundo límite, por IP. Mida también cuántos inicios de sesión simultáneos puede atender su servidor antes de fijar los parámetros.
 
-Un *hash* lento no frena a quien prueba contraseñas contra el inicio de sesión. Para eso sirve un límite de intentos. OWASP pide asociar el contador de fallos a la cuenta, no a la dirección IP<Cite n={14} />. `skipSuccessfulRequests` hace que el límite solo cuente los intentos fallidos:
+Un *hash* lento no detiene a quien prueba contraseñas contra el inicio de sesión. Para eso sirve un límite de intentos. OWASP pide asociar el contador de fallos a la cuenta, no a la dirección IP<Cite n={14} />. `skipSuccessfulRequests` hace que el límite solo cuente los intentos fallidos:
 
 ```js
 // Cinco intentos por cuenta cada 15 minutos (OWASP asocia el contador a la cuenta, no a la IP).
@@ -247,7 +247,7 @@ HTTP/1.1 429 Too Many Requests RateLimit: "5-in-15min"; r=0; t=898 Retry-After: 
 
 El límite de una cuenta no afecta a las demás: justo después, un intento con otra cuenta respondió `401`, no `429`.
 
-Por la misma razón, el límite por cuenta no frena el *password spraying*, que OWASP define como probar una sola contraseña débil contra muchas cuentas distintas<Cite n={16} />. Cada cuenta recibe un intento, y ningún contador llega a cinco. OWASP recomienda no depender de un único límite de volumen predecible<Cite n={16} repeat />. Añada un segundo límite, más alto, sobre los intentos fallidos de cada IP, y revise los registros cuando fallen inicios de sesión en muchas cuentas a la vez.
+Por la misma razón, el límite por cuenta no detiene el *password spraying*, que OWASP define como probar una sola contraseña débil contra muchas cuentas distintas<Cite n={16} />. Cada cuenta recibe un intento, y ningún contador llega a cinco. OWASP recomienda no depender de un único límite de volumen predecible<Cite n={16} repeat />. Añada un segundo límite, más alto, sobre los intentos fallidos de cada IP, y revise los registros cuando fallen inicios de sesión en muchas cuentas a la vez.
 
 Quedan dos detalles del ejemplo. Si la petición no trae `email`, la clave es una cadena vacía y todas esas peticiones comparten un contador, así que rechace antes del límite la petición sin `email`. Además, el almacén por defecto de express-rate-limit guarda los contadores en la memoria del proceso y no los comparte entre varios procesos o servidores<Cite n={17} />. Con más de una instancia, use un almacén compartido, como Redis.
 

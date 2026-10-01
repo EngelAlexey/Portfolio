@@ -6,7 +6,7 @@ description: 'How to set up reviewer subagents and work agents in Claude Code, w
 areas: [ia]
 category: programar-con-ia
 published: '2026-09-27'
-updated: null
+updated: '2026-09-30'
 draft: false
 path: complete-coding-agent-setup
 repo: null
@@ -61,14 +61,14 @@ The documentation recommends that each subagent focus on one specific task<Cite 
 
 1. The **security** one asks whether the change lets someone do or see something they should not.
 2. The **quality** one asks whether the change leaves the code better or worse, in duplication, imports and structure.
-3. The **errors and types** one asks whether an error can pass unnoticed, or whether the types allow a state that should not exist.
+3. The **errors and types** one asks whether an error can pass unnoticed. It also asks whether the types allow a state that should not exist.
 4. The **tests** one does not judge the design. It runs the suite, the types and the linter, measures whether the tests would fail if the code broke and runs whatever the security one needs checked.
 
 A useful reviewer stands out for what it demands of each finding, and several public sources set it out. Cloudflare's audit guide only accepts a security finding if it names who crosses which trust boundary and what concrete result follows. It also gives severity only to what is confirmed<Cite n={2} />.
 
 Anthropic's security reviewer only reports what it considers exploitable with more than 80% confidence. It also explicitly discards categories that tend to be noise<Cite n={3} />. ECC requires citing the exact line, reading the functions that call the reviewed code and accepting that a review with no findings is valid<Cite n={4} />. Google's review guide asks reviewers not to accept changes that degrade the code health of the system<Cite n={5} />.
 
-Each subagent spends tokens on its own model, and the `model` field decides which. If neither the call nor the definition sets it, Claude Code uses the model in the `CLAUDE_CODE_SUBAGENT_MODEL` variable and, without it, the main conversation's model<Cite n={1} repeat />. So if the conversation uses the top model, subagents with no model of their own use it too. A reviewer that searches files does not need the same model as one that reasons about authorisation, so each definition sets its own.
+Each subagent spends tokens on its own model, and the `model` field decides which. If neither the call nor the definition sets it, Claude Code uses the model in the `CLAUDE_CODE_SUBAGENT_MODEL` variable. Without that variable, it uses the main conversation's model<Cite n={1} repeat />. So if the conversation uses the top model, subagents with no model of their own use it too. A reviewer that searches files does not need the same model as one that reasons about authorisation, so each definition sets its own.
 
 If several subagents edit the same directory at once, one can overwrite another's changes. A git **worktree** prevents it: it is another directory of the same repository, with its own branch. Each subagent works in its own, and the main agent merges the branches one at a time. In Claude Code it is switched on with `isolation: worktree` in the subagent's definition. By default, the worktree starts from the remote's default branch, not the current one<Cite n={6} />.
 
@@ -102,12 +102,12 @@ Everything above can be set up by hand, file by file. The agent can also do it w
 2. **Proposes and waits.** It presents the files it will create and the model for each subagent, and stops until you confirm. It also includes the recommended optional tools, each with what it sends off the machine.
 3. **Writes `AGENTS.md`** with the checked commands, the conventions, an optional part for domain vocabulary and which skill or agent to use in each situation.
 4. **Blocks reading secrets** with its harness's permission rule, and checks it by trying to read `.env`.
-5. **Creates four method skills.** `clarify` asks you questions in rounds before building, with its recommended answer to each one. The agent looks up in the code whatever can be found there, and the decisions are yours. `test-first` and `root-cause-debugging` set the failing-test cycle and the search for the root cause. `orchestrate` decides how many subagents to launch, at what model tier, and when to use worktrees and *workflows*.
+5. **Creates four method skills.** `clarify` asks you questions in rounds before building, with its recommended answer to each one. The agent looks up in the code whatever can be found there, and the decisions are yours. `test-first` and `root-cause-debugging` set the failing-test cycle and the search for the root cause. `orchestrate` decides how many subagents to launch and at what model tier. It also decides when to use worktrees and *workflows*.
 6. **Creates the four reviewers from section 1.** The security one carries a project context file and nine per-domain checklists, which it loads depending on what the change touches. The quality one also checks whether the change does what was asked, with what is missing and what is extra. The errors and types one looks for silent failures, `catch` blocks that hide errors, misleading fallback values, impossible states and forced conversions.
 7. **Creates the six work agents from section 1**, each with its own model tier.
 8. **Creates the `review-change` skill**, which runs the security, quality and errors reviewers in parallel, leaves the tests one for last and composes the verdict.
 9. **Proposes optional settings**: the default subagent model, the workflow size, the base branch for worktrees and three *hooks*. The hooks format the code, protect sensitive files and block destructive commands such as `git push --force`, `git reset --hard` or `rm -rf`.
-10. **Proposes three tools and two skill collections, all optional**, and asks before installing each one: graphify, claude-council, archify, Matt Pocock's skills and gstack.
+10. **Proposes three tools and two skill collections, all optional**: graphify, claude-council, archify, Matt Pocock's skills and gstack. It asks before installing each one.
 11. **Checks and closes.** It seeds one flaw per reviewer on a temporary branch, checks that each reviewer catches its own and deletes the branch. Then it asks the architect for the plan of a sample task and repeats the check of the installed tools.
 
 The base setup, phases 1 to 9, takes 15 to 20 minutes on a small project. In the measured run it took 14: 5 to survey the project and propose, 2 waiting for the answer and 7 to create the files.
@@ -134,7 +134,7 @@ On a sample Node.js project, with the five optional tools installed, the prompt 
 	<figcaption>VS Code screenshot of the sample project after running the English prompt with Claude Code 2.1.283, with the GitHub Dark Dimmed theme and the vscode-icons icon set. On the right, the preview of the generated `AGENTS.md`.</figcaption>
 </figure>
 
-The prompt does not touch application code. If the setup needs a dependency, a plugin or an MCP server installed, the agent first proposes it with its source and reason, and waits for your confirmation.
+The prompt does not touch application code. If the setup needs a dependency, a plugin or an MCP server installed, the agent first proposes it with its source and reason. It then waits for your confirmation.
 
 <Callout kind="riesgo" title="Read the prompt before pasting it">
 	This prompt asks the agent to run the project's commands and write configuration files. The full text opens with **Show the full prompt**, under the button, and it is exactly the text the button copies. Phase 2 makes the agent stop before writing; if it carries on without asking, interrupt it with `Esc`.
@@ -170,13 +170,13 @@ From the CC BY-SA sources only ideas are taken; the text is original.
 
 Besides what it creates, the prompt proposes three tools and two skill collections, all optional.
 
-**graphify** turns the repository into a knowledge graph: which function calls which, which module imports which, and which files make up a subsystem. The agent queries it before opening files one by one, for instance to find everything that uses a function before changing its signature.
+**graphify** turns the repository into a knowledge graph: which function calls which, which module imports which and which files make up a subsystem. The agent queries it before opening files one by one, for instance to find everything that uses a function before changing its signature.
 
 graphify analyses the code locally with tree-sitter, a syntax parser, with no language model involved. Documentation, PDFs and images, on the other hand, do go to the agent's model. Building the graph from the terminal, with `graphify update .`, sends nothing off the machine<Cite n={13} />.
 
 **claude-council** is a third-party plugin for Claude Code that asks the same question to several models. It shows the answers side by side, with a summary of where they agree and disagree. It suits design decisions where a single model's bias could mislead, such as choosing between two data structures.
 
-With API providers, such as OpenAI, Gemini or Grok, the plugin sends those third parties the question and up to five project files it adds by itself. The `--local` mode, using Claude subagents, and the `ollama` mode send nothing off the machine<Cite n={14} />.
+With API providers, such as OpenAI, Gemini or Grok, the plugin sends those third parties the question. It also sends them up to five project files it adds by itself. The `--local` mode, using Claude subagents, and the `ollama` mode send nothing off the machine<Cite n={14} />.
 
 **archify** is a skill with a Node.js command-line program. It turns a description or a repository into an interactive diagram, as a single self-contained HTML file. There are five types: architecture, workflow, sequence, data flow and lifecycle.
 
@@ -217,7 +217,7 @@ no total may drop below zero, and the change comes with its tests.
 
 3. **It designs and splits.** With the decisions made, `orchestrate` decides whether the task is worth splitting. If it is, the `architect`, on the top model, splits it into pieces that share no files. Each piece carries its test, its check command and its model tier. Before proposing new code it looks for what already exists, here `formatearPrecio`.
 4. **You approve the plan.** The plan appears as text: you can approve it, ask for more planning or edit it with `Ctrl+G`<Cite n={16} repeat />. You correct a wrong approach in that text, with no files to revert.
-5. **It implements test first.** Each piece follows `test-first`. First comes the test for the behaviour, for instance that a discount larger than the total throws an error, and the agent checks that it fails; then the minimal code. If there are independent pieces, each `implementer` works in its own worktree. The main agent merges them one at a time and runs the suite after each merge.
+5. **It implements test first.** Each piece follows `test-first`. First comes the test for the behaviour, for instance that a discount larger than the total throws an error. The agent checks that it fails, and then writes the minimal code. If there are independent pieces, each `implementer` works in its own worktree. The main agent merges them one at a time and runs the suite after each merge.
 6. **The limits stay on.** If the agent tries to read `.env`, edit `package-lock.json` or run `git reset --hard`, the permission rule and the *hooks* block it. It does not depend on the model remembering.
 7. **It reviews before committing.** `AGENTS.md` asks for `review-change` before every commit, and you can also run it with `/review-change`. The quality reviewer compares the change with the approved plan, and the errors and types reviewer looks, for example, for a negative discount nobody validates. The tests reviewer mutates the discount logic to see whether any test catches it.
 8. **It commits.** If the verdict is clean or only has warnings, the agent commits the change in the project's commit format. If something blocks, it fixes it and reviews again.
@@ -226,7 +226,7 @@ The optional tools fit into the same steps. The `explorer` queries graphify befo
 
 **What the project gains.** Each step prevents a specific kind of error:
 
-- A decision nobody made, such as the kind of discount or what happens with negatives, is asked about before any code is written, instead of turning up in review.
+- A decision nobody made, such as the kind of discount or what happens with negatives, is asked about before any code is written. It therefore does not turn up in review.
 - A forgotten convention, such as formatting an amount outside `formatearPrecio`, is written down in `AGENTS.md`, and the quality reviewer checks it.
 - A test that passes by construction protects nothing, so `test-first` requires seeing it fail and the tests reviewer mutates the code to check.
 - A security flaw is reviewed by another agent, in its own context, which confirms it by running it. It does not depend on whoever wrote it noticing it.

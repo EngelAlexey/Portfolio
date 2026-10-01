@@ -5,7 +5,7 @@ tagline: Qué midieron los experimentos que retiraron la IA antes del examen y q
 areas: [ia]
 category: programar-con-ia
 published: '2026-09-08'
-updated: '2026-09-27'
+updated: '2026-09-30'
 draft: false
 path: null
 repo: null
@@ -164,7 +164,7 @@ En Cursor, la misma configuración es un archivo `.mdc` en `.cursor/rules` con `
 
 Claude Code incluye además dos estilos de salida con el mismo fin. Según su documentación, *Explanatory* intercala explicaciones de las decisiones de implementación mientras trabaja. *Learning* le pide a usted que escriba pequeñas partes del código y las marca con `TODO(human)` en el archivo<Cite n={8} />.
 
-En una sola petición no interactiva, el estilo *Learning* devolvió las explicaciones y escribió la función entera, sin dejar ninguna parte para usted. Elija el estilo con `/output-style learning`, que requiere la versión 2.1.269 o posterior, con `/config`, en la entrada de estilo de salida, o con el campo `outputStyle` de un archivo de configuración<Cite n={8} repeat />.
+En una sola petición no interactiva, el estilo *Learning* devolvió las explicaciones y escribió la función entera, sin dejar ninguna parte para usted. Elija el estilo con `/output-style learning`, que requiere la versión 2.1.269 o posterior. También puede elegirlo con `/config`, en la entrada de estilo de salida, o con el campo `outputStyle` de un archivo de configuración<Cite n={8} repeat />.
 
 <Callout kind="nota" title="Esta configuración evita la pérdida, pero no añade ganancia">
 En el experimento, la versión con pistas evitó casi toda la pérdida, sin ninguna ganancia frente a no usar la IA<Cite n={1} repeat />. Actívela para la parte del código que quiere aprender, no para todo el repositorio. Para eso sirve `paths`.

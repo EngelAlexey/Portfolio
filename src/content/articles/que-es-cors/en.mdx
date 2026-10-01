@@ -6,7 +6,7 @@ description: "What CORS is, why Chrome says \"has been blocked by CORS policy\" 
 areas: [seguridad]
 category: seguridad-web
 published: '2026-09-27'
-updated: '2026-09-27'
+updated: '2026-09-30'
 draft: false
 path: what-is-cors
 repo: null
@@ -187,7 +187,7 @@ http.createServer((req, res) => {
 2. Compare the received `Origin` with the list by exact equality of the whole string. `Set.has` compares that way; `includes` on a string or an unanchored regular expression does not.
 3. If the origin is on the list, return it in `Access-Control-Allow-Origin`. If it is not, send no `Access-Control-*` header at all.
 4. Add `Vary: Origin` to every response. It tells intermediate caches that the response changes with the origin, and stops them serving one origin the header computed for another<Cite n={2} repeat />.
-5. Answer the preflight request with the methods and headers the frontend actually uses.
+5. Answer the preflight request only with the methods and headers the frontend uses.
 
 In Express, the `cors` package 2.8.6 does the same with its `origin` option, which accepts a list: `cors({ origin: ['http://localhost:5173'] })`<Cite n={3} repeat />. In the measurement, with that list it returned the allowed origin, returned nothing to the rest and added `Vary: Origin` on its own.
 
@@ -202,8 +202,8 @@ The first response carries `Access-Control-Allow-Origin: http://localhost:5173` 
 
 **When the error is not in the CORS configuration.** The same message appears when the response leaves without the CORS headers, even if the configuration is correct. In the measurement, with the origin list active, two cases gave the error:
 
-- A route that fails and answers `500` before adding the headers. Chrome showed "No 'Access-Control-Allow-Origin' header is present on the requested resource", the same text as with no CORS configured.
-- An authentication check that runs before CORS. The preflight request never carries credentials<Cite n={4} repeat />, so the check answered `401`. Chrome reported "Response to preflight request doesn't pass access control check".
+1. A route that fails and answers `500` before adding the headers. Chrome showed "No 'Access-Control-Allow-Origin' header is present on the requested resource", the same text as with no CORS configured.
+2. An authentication check that runs before CORS. The preflight request never carries credentials<Cite n={4} repeat />, so the check answered `401`. Chrome reported "Response to preflight request doesn't pass access control check".
 
 The browser does not give the script the details of a request blocked by CORS<Cite n={6} />. To see the real status, repeat the request with curl and the same `Origin` header:
 
@@ -344,7 +344,7 @@ Under **Options** you can change each part separately, such as the site that mak
 
 You can apply the previous sections by hand. A coding agent can also do it with a prompt. Copy it with the **Copy prompt** button in the **Configure CORS** panel and paste it into a session opened at the project root. The agent follows seven phases:
 
-1. **It explores the project** without writing anything. It looks for where CORS is set, in the code or in the proxy, and which origins actually call the API. It also finds out whether the API authenticates with cookies or with `Authorization`.
+1. **It explores the project** without writing anything. It looks for where CORS is set, in the code or in the proxy, and which origins call the API today. It also finds out whether the API authenticates with cookies or with `Authorization`.
 2. **It diagnoses** with the requests from section 8 and ranks what it finds, from the most serious failure to the least.
 3. **It proposes and waits.** It presents the failures, the list of origins per environment and the exact change, and stops until you confirm.
 4. **It applies the change** from section 4, with the list in an environment variable. It does not touch other application logic.

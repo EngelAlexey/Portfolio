@@ -5,7 +5,7 @@ tagline: What the experiments that took AI away before the exam measured, and wh
 areas: [ia]
 category: programar-con-ia
 published: '2026-09-08'
-updated: '2026-09-27'
+updated: '2026-09-30'
 draft: false
 path: do-you-learn-to-code-if-ai-writes-it
 repo: null
@@ -162,7 +162,7 @@ In Cursor, the same configuration is a `.mdc` file in `.cursor/rules` with `glob
 
 Claude Code also ships two output styles for the same purpose. According to its documentation, *Explanatory* interleaves explanations of implementation decisions while it works. *Learning* asks you to write small pieces of the code and marks them with `TODO(human)` in the file<Cite n={8} />.
 
-In a single non-interactive request, the *Learning* style returned the explanations and wrote the whole function, leaving no part for you. Choose the style with `/output-style learning`, which requires version 2.1.269 or later, with `/config`, under the output style entry, or with the `outputStyle` field in a settings file<Cite n={8} repeat />.
+In a single non-interactive request, the *Learning* style returned the explanations and wrote the whole function, leaving no part for you. Choose the style with `/output-style learning`, which requires version 2.1.269 or later. You can also choose it with `/config`, under the output style entry, or with the `outputStyle` field in a settings file<Cite n={8} repeat />.
 
 <Callout kind="nota" title="This configuration prevents the loss but adds no gain">
 	In the experiment, the version with hints prevented almost all the loss, with no gain over not using AI<Cite n={1} repeat />. Switch it on for the part of the code you want to learn, not for the whole repository. That is what `paths` is for.

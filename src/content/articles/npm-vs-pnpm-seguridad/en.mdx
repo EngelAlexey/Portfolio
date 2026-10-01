@@ -6,7 +6,7 @@ description: 'What npm 12 and pnpm 11 do with install scripts, how to fix ERR_PN
 areas: [seguridad, infra]
 category: seguridad-web
 published: '2026-09-07'
-updated: '2026-09-27'
+updated: '2026-09-30'
 draft: false
 path: npm-vs-pnpm-install-security
 repo: null
@@ -187,7 +187,7 @@ node -e "require('ms')"
 
 With npm, the line works on both versions in the table. With pnpm it fails with `MODULE_NOT_FOUND` on both of its versions, because pnpm only puts the dependencies the project declares at the root of `node_modules`.
 
-If a `require` works without the package being declared, another package chooses the version of that package. Nobody pinned it, nobody reviews it on an update, and it disappears the day `debug` changes or replaces its own dependency.
+If a `require` works without the package being declared, another package chooses the version of that package. Nobody pinned it and nobody reviews it on an update. It also disappears the day `debug` changes or replaces its own dependency.
 
 **How to check it.** Install the project with pnpm and start the application. Every `MODULE_NOT_FOUND` that appears is a package that was missing from the manifest.
 

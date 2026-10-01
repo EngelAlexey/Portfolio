@@ -6,7 +6,7 @@ description: 'SQL injection, XSS, CSRF, SSRF, JWT and nine more attacks: what ea
 areas: [seguridad]
 category: seguridad-web
 published: '2026-09-27'
-updated: null
+updated: '2026-09-30'
 draft: false
 path: common-web-attacks
 repo: null
@@ -106,7 +106,7 @@ $ curl -s -b /tmp/lab-cookies -H 'Sec-Fetch-Site: cross-site' \
 {"cambiado":true,"email":"atacante@ejemplo.test"}
 ```
 
-The OWASP guide asks for an anti-CSRF token on routes that change data and treats `SameSite` as an additional defence. For modern browsers it accepts `Sec-Fetch-Site` as the main signal, always with a check on the `Origin` header as a fallback<Cite n={7} />. The fixed route rejects requests from another site, falls back to `Origin` when `Sec-Fetch-Site` is missing, and requires the token:
+The OWASP guide asks for an anti-CSRF token on routes that change data and treats `SameSite` as an additional defence. For modern browsers it accepts `Sec-Fetch-Site` as the main signal, always with a check on the `Origin` header as a fallback<Cite n={7} />. The fixed route rejects requests from another site, falls back to `Origin` when `Sec-Fetch-Site` is missing and requires the token:
 
 ```js
 const ORIGEN = 'http://127.0.0.1:3000';
@@ -268,7 +268,7 @@ app.get('/f/docs', (req, res) => {
 
 A malicious package is a published dependency that contains harmful code, which can run in an install script such as `postinstall`<Cite n={15} />. Under A03, OWASP cites a 2025 worm that spread through a script of that kind<Cite n={16} />. It runs during `npm install`, before the application starts, with the permissions of whoever installs it.
 
-The defence has three parts. Run install scripts only for packages you approve one by one, install from the lockfile with `npm ci`, and verify the registry signatures:
+The defence has three parts. Run install scripts only for packages you approve one by one, install from the lockfile with `npm ci` and verify the registry signatures:
 
 ```bash
 $ npm audit signatures
@@ -327,7 +327,7 @@ if (!ADMIN_PASS || ADMIN_PASS.length < 16) {
 
 ## 10. What a detailed error is and how to prevent it
 
-A detailed error returns the internal message, the stack trace or the failed query to the client<Cite n={20} />. It tells the attacker which database is in use, which tables exist and where the code lives on disk.
+A detailed error returns the internal message, the stack trace or the failed query to the client<Cite n={20} />. It tells the attacker which database is in use, which tables exist and where the code is on disk.
 
 ```js
 app.get('/v/ordenar', (req, res) => {
@@ -460,7 +460,7 @@ $ for i in $(seq 1 8); do curl -s -o /dev/null -w '%{http_code} ' \
 401 401 401 401 401 429 429 429
 ```
 
-While the lock lasts, the correct password also gets `429`. That stops the attacker from learning when a guess is right, but it lets anyone lock someone else's account with five attempts. OWASP ties the counter to the account rather than the IP address, and considers two-step verification the best defence against the majority of password attacks<Cite n={26} />. NIST sets an upper bound of 100 consecutive failed attempts per account<Cite n={27} />. Section 6 of [How to secure a web application](/en/blog/how-to-secure-a-web-application) explains the full code and password hashing.
+While the lock lasts, the correct password also gets `429`. That stops the attacker from learning when a guess is right, but it lets anyone lock someone else's account with five attempts. OWASP ties the counter to the account rather than the IP address. It also considers two-step verification the best defence against most password attacks<Cite n={26} />. NIST sets an upper bound of 100 consecutive failed attempts per account<Cite n={27} />. Section 6 of [How to secure a web application](/en/blog/how-to-secure-a-web-application) explains the full code and password hashing.
 
 **How to check it.** Repeat the loop against `/f/login` and check that the sixth attempt returns `429` with the `Retry-After` header, which gives the seconds left until the lock ends.
 
@@ -538,7 +538,7 @@ $ curl -s -H "Authorization: Bearer $DEBIL" http://127.0.0.1:3000/v2/perfil
 {"hola":"ana","rol":"admin"}
 ```
 
-According to RFC 8725, a password a person can remember must not be used as an HMAC key, because it can be found offline by brute force or with a dictionary<Cite n={35} repeat />. The jsonwebtoken 9.0.3 library does not check the length of the secret: the example signed with `secret` without any warning. Generate the secret from 32 random bytes, for example with `openssl rand -base64 32`, and keep it in an environment variable.
+According to RFC 8725, a password a person can remember must not be used as an HMAC key. It can be found offline by brute force or with a dictionary<Cite n={35} repeat />. The jsonwebtoken 9.0.3 library does not check the length of the secret: the example signed with `secret` without any warning. Generate the secret from 32 random bytes, for example with `openssl rand -base64 32`, and keep it in an environment variable.
 
 **Not limiting validity.** `exp` is the time on or after which the token must not be accepted<Cite n={33} repeat />. A token without `exp` works forever if it leaks. The fix sets the algorithm, the issuer, the audience and the maximum age:
 
@@ -557,7 +557,7 @@ const datos = jwt.verify(token, process.env.JWT_SECRET, {
 
 The prompt behind the **Copy prompt** button asks a coding agent to look for these fourteen attacks and the JWT mistakes in your project. First it surveys the project without changing anything. Then it delivers a report with each finding as `file:line`, waits for your confirmation, and fixes each flaw with a test that fails first and then passes. Phase 3 makes the agent stop before writing; if it carries on without asking, interrupt it.
 
-In a demonstration run with `claude -p` on Windows, on a copy of the article's lab, the agent took 2.5 minutes to reach phase 3 and stopped. After confirmation it took 6 more minutes to write 19 tests, see 18 of them fail before the fixes and all 19 pass after.
+In a demonstration run with `claude -p` on Windows, on a copy of the article's lab, the agent reached phase 3 in 2.5 minutes. It stopped there. After confirmation it took 6 more minutes to write 19 tests, see 18 of them fail before the fixes and all 19 pass after.
 
 Its path traversal test uses `../package.json`, as the prompt says. Among other items, it left two-step verification and password hashing pending, because they change the login logic. It also changed two routes it had not marked in phase 3 and the start command in `package.json`, and explained this in the report.
 

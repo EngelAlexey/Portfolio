@@ -6,7 +6,7 @@ description: 'Inyección SQL, XSS, CSRF, SSRF, JWT y nueve ataques más: qué ha
 areas: [seguridad]
 category: seguridad-web
 published: '2026-09-27'
-updated: null
+updated: '2026-09-30'
 draft: false
 path: null
 repo: null
@@ -460,7 +460,7 @@ $ for i in $(seq 1 8); do curl -s -o /dev/null -w '%{http_code} ' \
 401 401 401 401 401 429 429 429
 ```
 
-Mientras dura el bloqueo, la contraseña correcta también recibe `429`. Eso impide que el atacante sepa cuándo acierta, pero permite a cualquiera bloquear la cuenta de otro con cinco intentos. OWASP asocia el contador a la cuenta y no a la IP, y considera la verificación en dos pasos la mejor defensa contra la mayoría de los ataques a contraseñas<Cite n={26} />. NIST fija como máximo 100 intentos fallidos consecutivos por cuenta<Cite n={27} />. El punto 6 de [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) explica el código completo y el hash de las contraseñas.
+Mientras dura el bloqueo, la contraseña correcta también recibe `429`. Eso impide que el atacante sepa cuándo acierta, pero permite a cualquiera bloquear la cuenta de otro con cinco intentos. OWASP asocia el contador a la cuenta y no a la IP. Además, considera la verificación en dos pasos la mejor defensa contra la mayoría de los ataques a contraseñas<Cite n={26} />. NIST fija como máximo 100 intentos fallidos consecutivos por cuenta<Cite n={27} />. El punto 6 de [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) explica el código completo y el hash de las contraseñas.
 
 **Cómo comprobarlo.** Repita el bucle contra `/f/login` y compruebe que el sexto intento devuelve `429` con la cabecera `Retry-After`, que indica los segundos que faltan para el desbloqueo.
 
@@ -538,7 +538,7 @@ $ curl -s -H "Authorization: Bearer $DEBIL" http://127.0.0.1:3000/v2/perfil
 {"hola":"ana","rol":"admin"}
 ```
 
-Según el RFC 8725, una contraseña que una persona puede recordar no debe usarse como clave HMAC, porque se encuentra fuera de línea por fuerza bruta o con un diccionario<Cite n={35} repeat />. La biblioteca jsonwebtoken 9.0.3 no comprueba la longitud del secreto: el ejemplo firmó con `secret` sin ningún aviso. Genere el secreto con 32 bytes aleatorios, como `openssl rand -base64 32`, y guárdelo en una variable de entorno.
+Según el RFC 8725, una contraseña que una persona puede recordar no debe usarse como clave HMAC. Se puede encontrar fuera de línea por fuerza bruta o con un diccionario<Cite n={35} repeat />. La biblioteca jsonwebtoken 9.0.3 no comprueba la longitud del secreto: el ejemplo firmó con `secret` sin ningún aviso. Genere el secreto con 32 bytes aleatorios, como `openssl rand -base64 32`, y guárdelo en una variable de entorno.
 
 **No limitar la validez.** `exp` es el momento a partir del cual el token no se debe aceptar<Cite n={33} repeat />. Un token sin `exp` sirve para siempre si se filtra. La corrección fija el algoritmo, el emisor, la audiencia y la antigüedad máxima:
 
@@ -557,7 +557,7 @@ const datos = jwt.verify(token, process.env.JWT_SECRET, {
 
 El prompt del botón «Copiar prompt» pide a un agente de programación que busque en su proyecto estos catorce ataques y los fallos de JWT. Primero reconoce el proyecto sin cambiar nada. Después entrega un informe con cada hallazgo en `archivo:línea`, espera su confirmación y corrige cada fallo con una prueba que primero falla y después pasa. La fase 3 hace que el agente se detenga antes de escribir; si sigue sin preguntar, interrúmpalo.
 
-En una ejecución de demostración con `claude -p` en Windows, sobre una copia del laboratorio del artículo, el agente tardó 2,5 minutos en llegar a la fase 3 y se detuvo. Después de la confirmación tardó 6 minutos más en escribir 19 pruebas, ver fallar 18 antes de corregir y pasar las 19 después.
+En una ejecución de demostración con `claude -p` en Windows, sobre una copia del laboratorio del artículo, el agente llegó a la fase 3 en 2,5 minutos. Ahí se detuvo. Después de la confirmación tardó 6 minutos más en escribir 19 pruebas, ver fallar 18 antes de corregir y pasar las 19 después.
 
 Su prueba del recorrido de rutas usa `../package.json`, como indica el prompt. Dejó pendientes, entre otros, la verificación en dos pasos y el hash de las contraseñas, que cambian la lógica del inicio de sesión. También cambió dos rutas que no había marcado en la fase 3 y la orden de arranque de `package.json`, y lo explicó en el informe.
 

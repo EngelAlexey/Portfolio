@@ -6,7 +6,7 @@ description: 'Qué consigue pedir «código seguro» a un modelo, qué contexto 
 areas: [ia, seguridad]
 category: seguridad-web
 published: '2026-09-07'
-updated: '2026-09-27'
+updated: '2026-09-30'
 draft: false
 path: null
 repo: null
@@ -95,7 +95,7 @@ paths:
 - Un recurso de otro usuario responde 404, no 403.
 ```
 
-Según la guía de Anthropic, la ventana de contexto es un recurso compartido, y cada párrafo de una regla ocupa espacio que necesitan la conversación y el trabajo en curso<Cite n={7} />. Por eso una regla solo debe contener lo que el modelo no sabe ya. Una regla que explica qué es una consulta parametrizada no aporta nada. Una que indica qué cliente de base de datos usa el repositorio aporta un dato que el modelo no puede deducir.
+Según la guía de Anthropic, la ventana de contexto es un recurso compartido. Cada párrafo de una regla ocupa espacio que necesitan la conversación y el trabajo en curso<Cite n={7} />. Por eso una regla solo debe contener lo que el modelo no sabe ya. Una regla que explica qué es una consulta parametrizada no aporta nada. Una que indica qué cliente de base de datos usa el repositorio aporta un dato que el modelo no puede deducir.
 
 El repositorio público de skills de Vercel permite medir la diferencia entre cargar solo lo necesario y cargarlo todo. Publica cada guía en dos formatos: un índice y la concatenación de todas sus reglas. En `react-best-practices`, consultado el 7 de septiembre de 2026, el índice ocupa 7251 bytes y la concatenación, 108 261, repartidos en 72 archivos de regla<Cite n={8} />. Leer el índice y las dos reglas que afectan a un cambio ocupa unos 10 000 bytes, la décima parte.
 
@@ -282,7 +282,7 @@ Las guías de ingeniería de Google fijan el orden de magnitud: 100 líneas es u
 
 Con un agente, el tiempo de escribir ya no limita el tamaño del cambio: pedir 800 líneas cuesta lo mismo que pedir 80. Fije el tamaño en la petición.
 
-Pida al revisor, sea una persona o un agente, que busque lo que no se sostiene y que escriba qué comprobó para cada hallazgo. Escriba también su límite. Los programas que detectan código muerto o duplicado solo sirven para orientar la búsqueda, porque no ven las reexportaciones ni los scripts que se ejecutan desde la línea de órdenes. Antes de escribir en el informe que algo no se usa, compruébelo en el archivo.
+Pida al revisor, sea una persona o un agente, que busque lo que no se sostiene y que escriba qué comprobó para cada hallazgo. Escriba también su límite. Los programas que detectan código muerto o duplicado solo sirven para orientar la búsqueda. No ven las reexportaciones ni los scripts que se ejecutan desde la línea de órdenes. Antes de escribir en el informe que algo no se usa, compruébelo en el archivo.
 
 **Cómo comprobarlo.** Anote en cada revisión el hash del commit que revisó. Sin ese hash, nadie puede repetir la revisión ni contrastarla con el código.
 
@@ -319,7 +319,7 @@ Si la autorización está en la aplicación, incluya al dueño en la condición 
 
 ## Por dónde seguir
 
-[Ocho cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) enseña a buscar a mano ocho fallos frecuentes, con la corrección de cada uno y la orden que la comprueba.
+[Ocho cosas que revisar en el código que genera la IA](/es/blog/revisar-codigo-generado-por-ia) enseña a buscar a mano ocho fallos frecuentes. Para cada uno da la corrección y la orden que la comprueba.
 
 [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web) reúne las diez capas que estas reglas y comprobaciones deben cubrir en una aplicación con usuarios.
 
