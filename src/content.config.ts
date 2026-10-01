@@ -112,7 +112,6 @@ const articleSchema = z
 
 		areas: z.array(z.enum(AREA_IDS)).min(1).max(3),
 
-		// Seccion del blog en la que aparece, y si es el articulo por el que se empieza.
 		category: z.enum(CATEGORY_IDS),
 		lead: z.boolean().default(false),
 
@@ -130,7 +129,6 @@ const articleSchema = z
 		related: z.array(z.string().min(1)).max(4).default([]),
 		cover: z.string().startsWith('/img/').nullable().default(null),
 
-		// Publicacion de Instagram con la version corta del articulo, si existe.
 		instagram: url
 			.nullable()
 			.default(null)
@@ -138,10 +136,8 @@ const articleSchema = z
 				message: 'instagram must be a www.instagram.com URL'
 			}),
 
-		// Titulo del panel del prompt en este idioma; null = el de la interfaz («Configurar entorno»).
 		promptTitle: z.string().min(3).max(40).nullable().default(null),
 
-		// Minutos que tarda en ejecutarse el prompt del articulo, como [minimo, maximo], si trae uno.
 		promptMinutes: z
 			.tuple([z.number().int().positive(), z.number().int().positive()])
 			.nullable()

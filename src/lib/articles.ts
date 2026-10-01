@@ -11,8 +11,6 @@ export type Article = {
 	meta: ArticleMeta;
 	lang: Lang;
 	entry: ArticleEntry;
-	// Segmento de URL de este idioma, y el de los dos, para hreflang y para el
-	// conmutador. El slug de la carpeta sigue siendo la identidad interna.
 	path: string;
 	paths: Record<Lang, string>;
 };
@@ -96,8 +94,6 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Article>>>> {
 		for (const lang of LANGS) bucket[lang]!.paths = paths;
 	}
 
-	// Dos articulos con el mismo segmento en un idioma se pisarian la ruta, y
-	// el segundo ganaria en silencio.
 	for (const lang of LANGS) {
 		const seen = new Map<string, string>();
 		for (const [slug, bucket] of bySlug) {
@@ -113,8 +109,6 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Article>>>> {
 		}
 	}
 
-	// Una seccion tiene como mucho un articulo por el que empezar; con dos, la
-	// pagina elegiria uno por el orden de carga de los archivos.
 	const leads = new Map<CategoryId, string>();
 	for (const [slug, bucket] of bySlug) {
 		const { category, lead } = bucket.es!.meta;
@@ -133,7 +127,6 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Article>>>> {
 	return bySlug;
 }
 
-// Los borradores se ven en `astro dev` y no existen en el sitio publicado.
 const visible = (article: Article): boolean => !article.meta.draft || !import.meta.env.PROD;
 
 function compare(a: Article, b: Article): number {
@@ -157,9 +150,6 @@ export type ArticleGroup = {
 	rest: Article[];
 };
 
-// Las secciones del blog en su orden, con el articulo de inicio aparte y el
-// resto por fecha. Una seccion sin nada publicado no sale: un titulo vacio
-// en produccion anuncia algo que no existe.
 export async function articlesByCategory(lang: Lang): Promise<ArticleGroup[]> {
 	const list = await allArticles(lang);
 	return CATEGORY_IDS.map((category) => {
@@ -189,8 +179,6 @@ export async function getArticleByPath(lang: Lang, path: string): Promise<Articl
 	return (await allArticles(lang)).find((article) => article.path === path);
 }
 
-// La compuerta de lanzamiento. Mientras no haya nada publicado, el blog no se
-// enlaza, no entra en el sitemap y no se indexa: un blog vacio resta.
 export const hasArticles = async (lang: Lang): Promise<boolean> =>
 	(await allArticles(lang)).length > 0;
 
@@ -203,7 +191,6 @@ export async function neighbours(
 	lang: Lang,
 	slug: string
 ): Promise<{ prev?: Article; next?: Article }> {
-	// El recorrido sigue la seccion del articulo, en el mismo orden que el blog.
 	const group = (await articlesByCategory(lang)).find((g) =>
 		[g.lead, ...g.rest].some((a) => a?.meta.slug === slug)
 	);

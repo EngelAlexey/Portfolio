@@ -8,8 +8,6 @@ interface Props {
 
 const { label, headings } = Astro.props;
 
-// El titular ya lleva su numero y el indice no lo repite: en la columna
-// estrecha la cifra pesaba mas que el texto que la sigue.
 const items = headings
 	.filter((heading) => heading.depth === 2)
 	.map((heading) => ({ slug: heading.slug, text: heading.text.replace(/^\d+\.\s*/, '') }));
@@ -34,8 +32,6 @@ const items = headings
 
 <script is:inline>
 	(() => {
-		// El indice va antes del cuerpo, asi que en tiempo de parseo los titulares
-		// todavia no existen y resolverlos aqui devolveria null en todos.
 		const start = () => {
 			const nav = document.querySelector('.toc');
 			if (!nav) return;
@@ -53,8 +49,6 @@ const items = headings
 
 			const mark = () => {
 				queued = false;
-				// El titular activo es el ultimo que ya paso por debajo de la cabecera
-				// pegajosa. Sin esa banda, el primero se marca antes de estar a la vista.
 				let current = sections[0];
 				for (const section of sections) {
 					const target = section.target;
@@ -74,7 +68,6 @@ const items = headings
 			mark();
 			addEventListener('scroll', schedule, { passive: true });
 			addEventListener('resize', schedule, { passive: true });
-			// Un salto por ancla no siempre genera evento de scroll.
 			addEventListener('hashchange', schedule);
 		};
 

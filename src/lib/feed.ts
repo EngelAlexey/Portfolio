@@ -20,8 +20,6 @@ export async function feed(lang: Lang): Promise<string> {
 	const items = articles
 		.map((article) => {
 			const link = absolute(routePath(lang, 'article', article.path));
-			// RSS 2.0 no tiene fecha de edicion, asi que la ultima edicion va en
-			// `atom:updated`, que los lectores entienden junto a `pubDate`.
 			const edited = article.meta.updated
 				? `
       <atom:updated>${article.meta.updated}T00:00:00Z</atom:updated>`

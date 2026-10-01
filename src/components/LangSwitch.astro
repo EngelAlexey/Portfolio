@@ -10,7 +10,6 @@ interface Props {
 
 const { lang, routeKey, slug, slugs } = Astro.props;
 
-// El segmento del otro idioma no siempre es el mismo: un articulo lo traduce.
 const target = slugs ? slugs[other(lang)] : slug;
 const href = path(other(lang), routeKey, target);
 const strings = t(lang).a11y;

@@ -1,6 +1,3 @@
-// Logica del simulador de CORS del articulo que-es-cors.
-// Reproduce lo que hace Chrome 153 con una peticion fetch a http://localhost:3000.
-// Cada combinacion se contrasto con Chrome headless; los mensajes son literales.
 
 export type Pagina = 'http://localhost:5173' | 'http://localhost:8080' | 'http://127.0.0.1:8080';
 export type Peticion = 'get' | 'post-texto' | 'post-json' | 'put-json' | 'get-auth';
@@ -27,17 +24,11 @@ export interface Envio {
 }
 
 export interface Resultado {
-	/** Peticion previa, si el navegador la envia. */
 	previa: { envio: Envio; respuesta: Record<string, string> } | null;
-	/** Peticion real, si llega a enviarse. */
 	real: { envio: Envio; respuesta: Record<string, string> } | null;
-	/** La pagina puede leer la respuesta. */
 	leida: boolean;
-	/** Respuesta opaca de mode: 'no-cors'. */
 	opaca: boolean;
-	/** Error de la promesa de fetch, si se rechaza. */
 	error: string | null;
-	/** Mensaje de la consola de Chrome, si lo hay. */
 	consola: string | null;
 }
 
@@ -55,7 +46,6 @@ const PETICIONES: Record<Peticion, { metodo: string; ruta: string; cabeceras: Re
 
 const TIPOS_SIMPLES = ['application/x-www-form-urlencoded', 'multipart/form-data', 'text/plain'];
 
-/** Cabeceras que obligan a una peticion previa, en minusculas y en orden. */
 function cabecerasNoSimples(cabeceras: Record<string, string>): string[] {
 	const fuera: string[] = [];
 	for (const [nombre, valor] of Object.entries(cabeceras)) {
@@ -66,12 +56,10 @@ function cabecerasNoSimples(cabeceras: Record<string, string>): string[] {
 	return fuera.sort();
 }
 
-/** El sitio es el esquema y el dominio registrable; el puerto no cuenta. */
 function mismoSitio(pagina: string): boolean {
 	return new URL(pagina).hostname === new URL(API).hostname;
 }
 
-/** Cabeceras CORS que devuelve el servidor de ejemplo con cada configuracion. */
 export function respuestaServidor(
 	config: Config,
 	origen: string | null,
@@ -119,7 +107,6 @@ export function respuestaServidor(
 	return h;
 }
 
-/** Comprobacion CORS de una respuesta (Fetch Standard, CORS check). Devuelve el motivo o null. */
 function comprobar(h: Record<string, string>, origen: string, credenciales: Credenciales): string | null {
 	const acao = h['Access-Control-Allow-Origin'];
 	if (acao === undefined) return "No 'Access-Control-Allow-Origin' header is present on the requested resource.";
@@ -151,7 +138,6 @@ export function simular(e: Entrada): Resultado {
 	const bloqueo = (motivo: string) => `Access to fetch at '${url}' from origin '${e.pagina}' has been blocked by CORS policy: ${motivo}`;
 	const errorRed = 'TypeError: Failed to fetch';
 
-	// La cookie viaja con credentials: 'include', salvo que SameSite=Lax la retenga entre sitios.
 	const cookie = e.credenciales === 'include' && (mismoSitio(e.pagina) || e.cookie === 'none');
 
 	if (e.modo === 'no-cors') {
@@ -161,7 +147,6 @@ export function simular(e: Entrada): Resultado {
 				error: `TypeError: Failed to execute 'fetch' on 'Window': '${p.metodo}' is unsupported in no-cors mode.`
 			};
 		}
-		// En no-cors el navegador descarta las cabeceras que no son simples.
 		const cabeceras = Object.fromEntries(
 			Object.entries(p.cabeceras).filter(([n, v]) => n.toLowerCase() === 'content-type' && TIPOS_SIMPLES.includes(v))
 		);

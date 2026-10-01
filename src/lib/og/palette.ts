@@ -63,9 +63,6 @@ const OKLCH = /oklch\(\s*([\d.]+)%\s+([\d.]+)\s+([\d.]+)\s*\)/;
 
 export type Mode = 'light' | 'dark';
 
-// El tema claro es el primer bloque `:root` del archivo. El oscuro es el que
-// lleva el atributo, no el que vive dentro de la media query: ese esta anidado
-// y su llave de cierre no seria la que termina la lista de tokens.
 const SELECTOR: Record<Mode, string> = {
 	light: ':root {',
 	dark: ":root[data-theme='dark'] {"

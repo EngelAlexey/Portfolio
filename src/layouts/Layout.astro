@@ -62,7 +62,6 @@ const fontFaces = [
 	face('JetBrains Mono Variable', '100 800', monoLatinExt, LATIN_EXT)
 ].join('\n');
 
-// Solo en compilaciones: astro dev no manda sesiones de desarrollo a GA4.
 const gaId = import.meta.env.PROD ? ANALYTICS.ga4 : null;
 const gtagInit = gaId
 	? `window.dataLayer = window.dataLayer || [];
@@ -73,7 +72,6 @@ gtag('js', new Date());
 gtag('config', '${gaId}');`
 	: '';
 
-// ?notrack=1 excluye este navegador de GA4 y de Vercel; ?notrack=0 lo deshace.
 const notrackInit = `try {
 	var notrack = new URLSearchParams(location.search).get('notrack');
 	if (notrack === '1') localStorage.setItem('notrack', '1');
@@ -89,8 +87,6 @@ const notrackInit = `try {
 const strings = t(lang);
 const current = key;
 
-// El blog no se enlaza hasta que haya algo publicado. La compuerta vive aqui
-// para que el menu, el feed y el sitemap tomen la misma decision.
 const showBlog = await hasArticles(lang);
 
 const links = [
@@ -123,12 +119,9 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 				if (stored === 'dark' || stored === 'light') {
 					document.documentElement.dataset.theme = stored;
 				}
-			} catch (e) {
-				// Blocked storage: fall back to prefers-color-scheme.
-			}
+			} catch (e) {}
 
 			window.addEventListener('pagereveal', function (e) {
-				// Arrived through a view transition: skip the entrance animations.
 				if (e.viewTransition) document.documentElement.dataset.vt = '';
 			});
 		</script>
@@ -152,10 +145,6 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 		<Analytics />
 		<SpeedInsights />
 		<script is:inline>
-			// build.format is 'file', so the components stamp data-pathname="/es.html",
-			// and both the reported path and the route derived from it would name a URL
-			// the site never serves. This runs while parsing, after the elements exist
-			// and before the deferred modules upgrade them.
 			(function () {
 				var tags = ['vercel-analytics', 'vercel-speed-insights'];
 				for (var i = 0; i < tags.length; i++) {

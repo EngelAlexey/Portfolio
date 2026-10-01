@@ -35,7 +35,6 @@ const address = (url: string): string => {
 
 const minutes = strings.blog.minutes(readingMinutes(article));
 
-// Un articulo con prompt.<idioma>.md en su carpeta lleva el boton que lo copia.
 const prompts = import.meta.glob<string>('/src/content/articles/*/prompt.*.md', {
 	query: '?raw',
 	import: 'default',
@@ -103,8 +102,6 @@ const prompt = prompts[`/src/content/articles/${meta.slug}/prompt.${lang}.md`]?.
 					<dd><time datetime={meta.published}>{formatDate(meta.published, lang)}</time></dd>
 				</div>
 				{
-					// Una fecha de edicion igual a la de publicacion no dice nada:
-					// el articulo se corrigio el mismo dia que salio.
 					meta.updated &&
 						meta.updated !== meta.published && (
 						<div>
@@ -168,7 +165,6 @@ const prompt = prompts[`/src/content/articles/${meta.slug}/prompt.${lang}.md`]?.
 				)
 			}
 
-			{/* Con carrusel publicado se enlaza la publicacion; sin el, el perfil. */}
 			<aside class="follow">
 				<h2 class="meta-label">{strings.article.followTitle}</h2>
 				<p>{meta.instagram ? strings.article.followPostBody : strings.article.followBody}</p>
@@ -216,8 +212,6 @@ const prompt = prompts[`/src/content/articles/${meta.slug}/prompt.${lang}.md`]?.
 		margin-inline: auto;
 	}
 
-	/* Sin margenes laterales, el indice y el boton del prompt caen en la columna
-	   del texto y se alinean con ella, no con el borde de la pagina. */
 	@media (max-width: 79.99rem) {
 		.articulo > :global(.toc),
 		.articulo > :global(.prompt-rail) {
@@ -226,11 +220,6 @@ const prompt = prompts[`/src/content/articles/${meta.slug}/prompt.${lang}.md`]?.
 		}
 	}
 
-	/* Tres columnas con los margenes iguales, para que el texto quede centrado
-	   en la pagina y no el conjunto de texto mas indice. El indice vive en el
-	   margen izquierdo, pegado al texto. Por debajo de este ancho no hay margen
-	   para el, y entonces cae entre los datos y el texto, que es donde sirve en
-	   un telefono. */
 	@media (min-width: 80rem) {
 		.articulo {
 			display: grid;

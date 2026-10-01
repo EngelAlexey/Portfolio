@@ -113,9 +113,7 @@ const strings = t(lang).a11y;
 			root.dataset.theme = next;
 			try {
 				localStorage.setItem('theme', next);
-			} catch {
-				// Blocked storage: the choice lasts this page only.
-			}
+			} catch {}
 			relabel();
 		});
 	}

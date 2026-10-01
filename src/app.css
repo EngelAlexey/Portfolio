@@ -467,9 +467,6 @@ body {
 	color: var(--ink-faint);
 }
 
-/* Callout: se usa desde el cuerpo de un articulo .mdx, asi que sus estilos
-   viven aqui. Astro no propaga el CSS con ambito de un componente importado
-   dentro de un .mdx que se renderiza con render(). */
 .callout {
 	margin: 1.5rem 0;
 	padding: 0.95rem 1.15rem;
@@ -512,8 +509,6 @@ body {
 	background: var(--paper);
 }
 
-/* Simulador de CORS (CorsSimulator.astro). Vive aqui porque un componente
-   importado desde un .mdx no recibe su CSS con ambito. */
 .cors-sim {
 	margin: 1.75rem 0;
 	padding: 1.1rem 1.15rem 1rem;
@@ -713,9 +708,6 @@ body {
 	margin-bottom: 0.2rem;
 }
 
-
-/* Lista de comprobación de seguridad (SecurityChecklist.astro). Aquí por el mismo
-   motivo que el simulador de CORS: un componente de un .mdx pierde su CSS con ámbito. */
 .sec-check {
 	margin: 1.75rem 0;
 	padding: 1.1rem 1.15rem 1rem;
@@ -833,10 +825,6 @@ body {
 	cursor: pointer;
 }
 
-
-/* Shiki emite --shiki-light y --shiki-dark con defaultColor: false. Se toma de
-   ahi solo el color del texto; el fondo sigue siendo el del sitio, para que un
-   bloque de codigo sea el mismo objeto en una ficha y en un articulo. */
 .astro-code,
 .astro-code span {
 	color: var(--shiki-light);
@@ -854,8 +842,6 @@ body {
 	color: var(--shiki-dark);
 }
 
-/* Cita y lista de referencias. Los dos componentes se usan desde el cuerpo de
-   un articulo .mdx, asi que sus estilos van aqui y no en el componente. */
 .prose .cite {
 	font-size: 0.7em;
 	line-height: 0;

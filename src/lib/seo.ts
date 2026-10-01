@@ -14,8 +14,6 @@ export type SeoInput = {
 	lang: Lang;
 	key: RouteKey | null;
 	slug?: string;
-	// Cuando el segmento de URL cambia con el idioma, `alternates` no lo puede
-	// derivar de uno solo.
 	slugs?: Record<Lang, string>;
 	title: string;
 	description: string;
@@ -46,9 +44,6 @@ export function seo({ lang, key, slug, slugs, image, noindex = false }: SeoInput
 		canonical: absolute(routePath(lang, route, slug)),
 		alternates: [
 			...LANGS.map((l) => ({ hreflang: l, href: absolute(paths[l]) })),
-			// El destino de reserva es esta misma pagina en el idioma por defecto, no
-			// la portada: /es/proyectos/x no se sustituye por /. Y no es la raiz porque
-			// la raiz redirige, y hreflang debe apuntar a la URL final e indexable.
 			{ hreflang: 'x-default', href: absolute(paths[DEFAULT_LANG]) }
 		],
 		ogImage: noindex ? null : absolute(card),

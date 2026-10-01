@@ -10,9 +10,7 @@ export const text = (value: Text, lang: Lang): string =>
 
 export type Role = {
 	period: Bilingual;
-	/** How the working relationship is set up. Shown under the organisation. */
 	engagement?: Bilingual;
-	/** Machine dates behind `period`. */
 	range: { start: string; end: string | null };
 	title: Bilingual;
 	org: Text;

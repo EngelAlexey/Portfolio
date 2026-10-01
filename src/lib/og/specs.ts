@@ -104,8 +104,6 @@ async function fichaCards(lang: Lang): Promise<CardSpec[]> {
 	});
 }
 
-// Las tarjetas del blog van en oscuro para que un enlace compartido se lea
-// como las portadas del feed. El resto del sitio comparte en claro.
 async function articleCards(lang: Lang): Promise<CardSpec[]> {
 	const strings = t(lang);
 	const list = await allArticles(lang);

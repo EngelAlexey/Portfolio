@@ -1,9 +1,4 @@
 ---
-// Lista de comprobación del artículo como-proteger-una-pagina-web. Las capas siguen el
-// mismo orden y los mismos nombres que la tabla del punto 1 y la fase 2 del prompt.
-// El estado se guarda en localStorage solo como comodidad para quien lee.
-// Los estilos están en src/app.css (.sec-check): un componente importado desde un .mdx
-// no recibe su CSS con ámbito.
 interface Props {
 	lang: 'es' | 'en';
 }
@@ -228,9 +223,7 @@ const total = T.capas.reduce((n, c) => n + c.puntos.length, 0);
 	function guardar(estado: Record<string, boolean>) {
 		try {
 			localStorage.setItem(CLAVE, JSON.stringify(estado));
-		} catch {
-			// Sin almacenamiento (ventana privada o bloqueado): la lista funciona igual, sin recordar.
-		}
+		} catch {}
 	}
 
 	for (const raiz of document.querySelectorAll<HTMLElement>('.sec-check')) {

@@ -5,9 +5,6 @@ import { fichas } from '../lib/content';
 import { DEFAULT_LANG, other, path as routePath, t } from '../lib/i18n';
 import { absolute, PERSON, locationLine } from '../lib/site';
 
-// Convencion llmstxt.org: un indice en Markdown, en la raiz, pensado para que
-// un modelo lea la estructura del sitio sin tener que rastrear el HTML. No hay
-// garantia de que ningun proveedor lo consuma; cuesta un archivo generado.
 export const GET: APIRoute = async () => {
 	const lang = DEFAULT_LANG;
 	const strings = t(lang);

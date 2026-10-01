@@ -20,8 +20,6 @@ const LOCALE: Record<Lang, string> = { es: 'es-CR', en: 'en-US' };
 
 const FORMATTERS = new Map<string, Intl.DateTimeFormat>();
 
-// La fecha se construye en UTC a proposito: `new Date('2026-09-14')` ya es
-// medianoche UTC, y formatearla en la zona local la retrasaria un dia en America.
 export function formatDate(iso: string, lang: Lang): string {
 	let formatter = FORMATTERS.get(lang);
 	if (!formatter) {

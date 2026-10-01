@@ -11,19 +11,14 @@ type Entry = { key: RouteKey; slug?: string; slugs?: Record<Lang, string> };
 
 const dates: Record<string, string> = lastmod;
 
-// La clave sale del tipo de entrada, no de si hay slug: un articulo con slug
-// buscaria `project:<slug>` y se quedaria sin fecha.
 const stampKey = ({ key, slug }: Entry): string => (slug ? `${key}:${slug}` : key);
 
 function urlEntry(entry: Entry, declared: Map<string, string>): string {
 	const { key, slug, slugs } = entry;
-	// Un articulo traduce su segmento, asi que el par no se puede derivar de uno.
 	const pair = slugs
 		? { es: path('es', key, slugs.es), en: path('en', key, slugs.en) }
 		: alternates(key, slug);
 	const segment = (lang: Lang) => (slugs ? slugs[lang] : slug);
-	// La fecha declarada en el front matter gana sobre la del historial de git:
-	// es la que el autor afirma, y el historial queda de reserva.
 	const date = declared.get(stampKey(entry)) ?? dates[stampKey(entry)];
 	const stamp = date ? `
     <lastmod>${date}</lastmod>` : '';
@@ -49,7 +44,6 @@ export const GET: APIRoute = async () => {
 
 	const declared = new Map<string, string>();
 
-	// El blog entra en el sitemap solo cuando hay algo que leer.
 	if (await hasArticles(DEFAULT_LANG)) {
 		entries.push({ key: 'blog' });
 
