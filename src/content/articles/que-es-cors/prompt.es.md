@@ -2,7 +2,7 @@
 
 Eres el agente de programación que se ejecuta en este repositorio. Vas a revisar cómo responde el proyecto a las peticiones de otros orígenes y a dejar CORS configurado con una lista de orígenes permitidos:
 
-- encontrar dónde se fija CORS y qué orígenes llaman de verdad a la API;
+- encontrar dónde se fija CORS y qué orígenes llaman hoy a la API;
 - detectar las configuraciones que dejan leer la API desde cualquier origen;
 - proponer el cambio y esperar la confirmación del usuario;
 - aplicarlo, probarlo con una prueba automática y comprobarlo con curl;
@@ -30,7 +30,7 @@ Averigua y anota:
    - en el proxy o la plataforma (`nginx.conf`, `vercel.json`, `netlify.toml`, `next.config.*`, el API Gateway);
    - en las respuestas escritas a mano (`setHeader('Access-Control-…')`).
    Busca también `Origin`, `origin:` y `credentials` en el código del servidor.
-3. Qué orígenes llaman de verdad a la API, por entorno: el *frontend* del repositorio, las variables de entorno (`FRONTEND_URL`, `ALLOWED_ORIGINS`, `CORS_ORIGIN` o parecidas) y los dominios de despliegue que aparezcan en la configuración. Si no lo puedes deducir, anótalo como pregunta para la fase 3.
+3. Qué orígenes llaman hoy a la API, por entorno: el *frontend* del repositorio, las variables de entorno (`FRONTEND_URL`, `ALLOWED_ORIGINS`, `CORS_ORIGIN` o parecidas) y los dominios de despliegue que aparezcan en la configuración. Si no lo puedes deducir, anótalo como pregunta para la fase 3.
 4. Cómo autentica la API: con cookies, con la cabecera `Authorization` o sin autenticación. Si usa cookies, los atributos de la cookie de sesión: `SameSite`, `Secure` y `HttpOnly`.
 5. En el cliente, cualquier `fetch` o cliente HTTP con `mode: 'no-cors'` o `credentials: 'include'` / `withCredentials: true`.
 
@@ -79,7 +79,7 @@ Presenta al usuario, antes de escribir nada:
 3. Si el origen está en la lista, devuelve ese origen en `Access-Control-Allow-Origin`. Si no está, no devuelvas ninguna cabecera `Access-Control-*`. No respondas con un error: el navegador ya impide leer la respuesta.
 4. Añade `Vary: Origin` a todas las respuestas que pasan por esa comprobación.
 5. Solo si la API usa cookies entre orígenes, añade `Access-Control-Allow-Credentials: true`.
-6. Contesta la petición previa (`OPTIONS`) con los métodos y las cabeceras que el *frontend* usa de verdad, no con `*`. Puedes añadir `Access-Control-Max-Age` para que el navegador la guarde en caché.
+6. Contesta la petición previa (`OPTIONS`) solo con los métodos y las cabeceras que usa el *frontend*, no con `*`. Puedes añadir `Access-Control-Max-Age` para que el navegador la guarde en caché.
 7. Si el cliente usa `mode: 'no-cors'` para una API propia, quítalo.
 
 Si CORS se fija en dos sitios (por ejemplo, en el código y en el proxy), deja uno solo y dile al usuario cuál quitaste. Dos cabeceras `Access-Control-Allow-Origin` en la misma respuesta hacen fallar la petición en el navegador.

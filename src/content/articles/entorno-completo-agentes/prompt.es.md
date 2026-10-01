@@ -7,7 +7,7 @@ Eres el agente de programación que se ejecuta en este repositorio. Vas a dejar 
 - cuatro skills de método: aclarar antes de construir, pruebas primero, depuración y orquestación de subagentes;
 - cuatro revisores (seguridad, calidad, errores y tipos, y pruebas) y una skill que los lanza sobre cada cambio;
 - seis agentes de trabajo: explorar, diseñar, implementar, arreglar la compilación, documentar y limpiar;
-- si tu herramienta lo admite, ajustes para que los subagentes usen el modelo adecuado y hooks que formatean, protegen archivos sensibles y frenan órdenes destructivas;
+- si tu herramienta lo admite, ajustes para que los subagentes usen el modelo adecuado y hooks que formatean, protegen archivos sensibles y bloquean órdenes destructivas;
 - y, si el usuario las quiere, tres herramientas recomendadas (graphify, un mapa del código para el agente; claude-council, segundas opiniones de otros modelos; y archify, diagramas interactivos del proyecto) y dos colecciones de skills: las de Matt Pocock y gstack.
 
 Este texto sirve para cualquier herramienta. Tú sabes cuál eres y dónde lee tu herramienta cada cosa. Donde este texto dice «el directorio de skills» o «el directorio de subagentes», usa el de tu herramienta. Si no estás seguro de una ruta, de un nombre de modelo o de una capacidad, consulta la documentación oficial actual de tu herramienta antes de escribir; no lo supongas de memoria.
@@ -41,7 +41,7 @@ Las plantillas son largas a propósito. Cópialas completas y cambia solo las ma
    - cómo se autentica (sesión, tokens, proveedor externo) y en qué archivo se verifica;
    - dónde se decide la autorización (middleware, guardas, políticas de la base de datos) y cómo se comprueba que un recurso es de quien lo pide;
    - cómo se accede a los datos (ORM, consultas parametrizadas, SQL a mano) y si hay varios inquilinos;
-   - qué biblioteca valida la entrada y qué motor pinta la interfaz (y si escapa por defecto);
+   - qué biblioteca valida la entrada y qué motor de plantillas genera la interfaz (y si escapa por defecto);
    - qué llamadas salen a servicios externos o a URLs que da el usuario;
    - si hay funciones con modelos de lenguaje, herramientas o servidores MCP;
    - qué se sabe del despliegue desde el repositorio (contenedores, proxy, CDN, CI) y qué no.
@@ -177,7 +177,7 @@ Primero la prueba que lo reproduce y falla. Después el arreglo. La prueba se qu
 - Prueba comportamiento observable, no detalles internos ni el texto de una constante.
 - Un doble no se comprueba a sí mismo: se comprueba lo que hace el código real con él.
 - Los dobles reproducen la estructura completa del dato real, no solo los campos que la prueba lee.
-- Lo que solo necesitan las pruebas vive en utilidades de prueba, no en el código de producción.
+- Lo que solo necesitan las pruebas va en utilidades de prueba, no en el código de producción.
 
 ## Cuándo no
 Prototipos que se van a tirar, código generado y archivos de configuración. Si dudas, pregunta.
@@ -401,15 +401,15 @@ Sin esas seis piezas no es un hallazgo: es una buena práctica que falta. Se ano
 3. **Lo que se borró.** Para cada comprobación, validación o filtro que el diff elimina o afloja, mira con `git log` o `git blame` por qué existía. Una validación quitada sin sustituto es la señal más fiable del diff.
 4. **Alcance.** Para cada función modificada de riesgo alto, busca quién la llama. Con muchos llamadores, revisa todos sus caminos, no solo el nuevo.
 5. **Referencias.** Abre solo las que tocan las superficies del diff, y siempre la primera:
-   - `<directorio de la skill>/references/clases-generales.md` — siempre.
-   - `<directorio de la skill>/references/web-y-autenticacion.md` — rutas HTTP, sesiones, cookies, tokens, OAuth, CSRF, CORS, cabeceras, caché.
-   - `<directorio de la skill>/references/datos-y-aislamiento.md` — consultas, varios usuarios o inquilinos, cachés, búsqueda, exportación, borrado.
-   - `<directorio de la skill>/references/cliente-y-navegador.md` — código que corre en el navegador, HTML generado, almacenamiento local, mensajes entre ventanas.
-   - `<directorio de la skill>/references/dependencias-y-ci.md` — manifiestos, archivos de bloqueo, flujos de CI, publicación, plugins.
-   - `<directorio de la skill>/references/ia-y-agentes.md` — prompts, recuperación de documentos, memoria, herramientas, MCP, salida de modelos.
-   - `<directorio de la skill>/references/disponibilidad.md` — entradas del usuario que cuestan CPU, memoria, colas o dinero.
-   - `<directorio de la skill>/references/nube-y-despliegue.md` — contenedores, infraestructura como código, permisos de nube, variables de entorno.
-   - `<directorio de la skill>/references/otros-dominios.md` — webhooks y colas, apps móviles o de escritorio, código nativo.
+   - `<directorio de la skill>/references/clases-generales.md`: siempre.
+   - `<directorio de la skill>/references/web-y-autenticacion.md`: rutas HTTP, sesiones, cookies, tokens, OAuth, CSRF, CORS, cabeceras, caché.
+   - `<directorio de la skill>/references/datos-y-aislamiento.md`: consultas, varios usuarios o inquilinos, cachés, búsqueda, exportación, borrado.
+   - `<directorio de la skill>/references/cliente-y-navegador.md`: código que corre en el navegador, HTML generado, almacenamiento local, mensajes entre ventanas.
+   - `<directorio de la skill>/references/dependencias-y-ci.md`: manifiestos, archivos de bloqueo, flujos de CI, publicación, plugins.
+   - `<directorio de la skill>/references/ia-y-agentes.md`: prompts, recuperación de documentos, memoria, herramientas, MCP, salida de modelos.
+   - `<directorio de la skill>/references/disponibilidad.md`: entradas del usuario que cuestan CPU, memoria, colas o dinero.
+   - `<directorio de la skill>/references/nube-y-despliegue.md`: contenedores, infraestructura como código, permisos de nube, variables de entorno.
+   - `<directorio de la skill>/references/otros-dominios.md`: webhooks y colas, apps móviles o de escritorio, código nativo.
 6. **Caza por invariante.** Para cada superficie de riesgo:
    1. nombra al actor de menor confianza y lo que puede hacer por diseño;
    2. nombra el valor o la acción que acepta el código;
@@ -459,7 +459,7 @@ La gravedad no puede superar el impacto demostrado. Si no puedes decir el daño 
 - Buenas prácticas que faltan sin frontera violada: cabeceras ausentes, límites de peticiones ausentes, registros de auditoría ausentes.
 - Denegación de servicio o agotamiento de recursos: solo con un camino de la entrada al coste, ningún límite visible y efecto sobre otros usuarios o sobre el gasto compartido. Si no, una línea como endurecimiento.
 - Inyección en un prompt por sí sola: solo si además falta un control determinista (autorización antes de recuperar datos, filtro de inquilino en la consulta y en la clave de caché, el manejador de la herramienta vuelve a comprobar al usuario).
-- Falta de comprobaciones de permisos en código del navegador: el control vive en el servidor. Sí es hallazgo si el servidor no lo comprueba.
+- Falta de comprobaciones de permisos en código del navegador: el control está en el servidor. Sí es hallazgo si el servidor no lo comprueba.
 - XSS en frameworks que escapan por defecto, salvo que se use su vía de escape (`dangerouslySetInnerHTML`, `v-html`, `|safe`, `innerHTML`).
 - SSRF que solo controla la ruta y no el host ni el protocolo; SSRF o recorrido de rutas en código que corre en el navegador.
 - Ataques que exigen controlar variables de entorno u opciones de línea de órdenes: son valores de confianza.
@@ -660,7 +660,7 @@ Se aplica a cualquier cambio. Cada entrada dice qué buscar y qué hace falta pa
 - Service workers: la caché incluye la cuenta y el inquilino en su clave y se limpia al cerrar sesión; el script y su alcance no los controla un tercero.
 - Clickjacking: una acción que cambia estado no se puede completar dentro de un iframe ajeno (`frame-ancestors`).
 - Navegación: los destinos que vienen del cliente se validan por esquema y por destino.
-- Secretos en el paquete del navegador: nada que dé acceso vive en código que se descarga.
+- Secretos en el paquete del navegador: nada que dé acceso está en código que se descarga.
 - Las comprobaciones de permisos en el cliente son comodidad, no control: lo que importa es que el servidor las repita.
 ```
 
@@ -1310,7 +1310,7 @@ if (nombre && !plantilla.test(nombre) && protegidos.some((patron) => patron.test
 }
 ```
 
-Pruébalos antes de registrarlos: en cuanto están en `.claude/settings.json`, el de órdenes destructivas revisa también tus propias órdenes, incluidas las de prueba. Escribe cada caso en un archivo JSON dentro de la carpeta temporal del sistema y pásaselo por la entrada estándar, sin ejecutar ninguna orden de verdad. Con `{"tool_input":{"command":"git push --force"}}`, `node .claude/hooks/ordenes-destructivas.mjs < <archivo>` imprime una respuesta con `"permissionDecision":"deny"`, y con `git status` no imprime nada. Tienen que bloquearse también `git reset --hard`, `git clean -fd`, `git branch -D x`, `git checkout .`, `rm -rf src` y `DROP TABLE x`, y pasar `git push`, `rm archivo.txt` y un `rm -rf` dentro de la carpeta temporal del sistema. El de protección bloquea `{"tool_input":{"file_path":".env"}}` y `package-lock.json`, y deja pasar `.env.example` y `README.md`.
+Pruébalos antes de registrarlos: en cuanto están en `.claude/settings.json`, el de órdenes destructivas revisa también tus propias órdenes, incluidas las de prueba. Escribe cada caso en un archivo JSON dentro de la carpeta temporal del sistema y pásaselo por la entrada estándar, sin ejecutar ninguna orden real. Con `{"tool_input":{"command":"git push --force"}}`, `node .claude/hooks/ordenes-destructivas.mjs < <archivo>` imprime una respuesta con `"permissionDecision":"deny"`, y con `git status` no imprime nada. Tienen que bloquearse también `git reset --hard`, `git clean -fd`, `git branch -D x`, `git checkout .`, `rm -rf src` y `DROP TABLE x`, y pasar `git push`, `rm archivo.txt` y un `rm -rf` dentro de la carpeta temporal del sistema. El de protección bloquea `{"tool_input":{"file_path":".env"}}` y `package-lock.json`, y deja pasar `.env.example` y `README.md`.
 
 Cuando pasen todos los casos, regístralos en `.claude/settings.json`, junto a los demás ajustes:
 
@@ -1350,7 +1350,7 @@ Solo si tu herramienta es Claude Code.
 - **Qué sale de la máquina.** Depende de los proveedores configurados. Con proveedores por API (OpenAI, Gemini, Grok, Perplexity, Kimi, OpenRouter), la pregunta y hasta cinco archivos del proyecto que añade de forma automática se envían a esos terceros, y OpenRouter los reenvía a un segundo. Sin claves, el modo `--local` usa solo subagentes del propio agente y no envía nada fuera; con `ollama`, tampoco sale de la máquina.
 - **Instalación, si el usuario la quiere.** `claude plugin marketplace add hex/claude-marketplace` y `claude plugin install claude-council@hex-plugins --scope project`, que lo activa solo en este proyecto. En la sesión, el usuario puede hacer lo mismo con `/plugin marketplace add hex/claude-marketplace` y `/plugin install claude-council@hex-plugins`.
 - **Configuración segura por omisión.** No configures claves de proveedores externos sin que se pida: usa `--local` u `ollama`. Deja desactivada la revisión automática al terminar el turno, que envía el diff entero al proveedor. Las respuestas en caché y las transcripciones guardan el prompt completo en texto plano: comprueba que su carpeta queda fuera del repositorio.
-- **Uso.** Para decisiones con opciones de verdad equivalentes, no para cada pregunta: en modo local lanza varios subagentes (cuatro por omisión, hasta ocho), así que sigue las reglas de la skill `orquestar`. Que varios modelos coincidan es una señal, no una decisión: la recomendación se presenta y decide el usuario.
+- **Uso.** Para decisiones entre opciones equivalentes, no para cada pregunta: en modo local lanza varios subagentes (cuatro por omisión, hasta ocho), así que sigue las reglas de la skill `orquestar`. Que varios modelos coincidan es una señal, no una decisión: la recomendación se presenta y decide el usuario.
 - **Comprobación.** `claude plugin list` lo muestra instalado. Sus órdenes empiezan por `/`, así que la prueba la hace el usuario en una sesión nueva: `/claude-council:status` muestra los proveedores, y `/claude-council:ask --local "<pregunta de prueba>"` confirma que funciona.
 
 ### archify: diagramas interactivos del proyecto

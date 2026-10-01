@@ -41,7 +41,7 @@ The templates are long on purpose. Copy them in full and change only the `<...>`
    - how it authenticates (session, tokens, external provider) and in which file that is verified;
    - where authorisation is decided (middleware, guards, database policies) and how it checks that a resource belongs to whoever asks for it;
    - how data is accessed (ORM, parameterised queries, hand-written SQL) and whether there are several tenants;
-   - which library validates input and which engine renders the interface (and whether it escapes by default);
+   - which library validates input and which template engine renders the interface (and whether it escapes by default);
    - which calls go out to external services or to URLs the user supplies;
    - whether there are features with language models, tools or MCP servers;
    - what the repository shows about deployment (containers, proxy, CDN, CI) and what it does not.
@@ -177,7 +177,7 @@ First the test that reproduces it and fails. Then the fix. The test stays so the
 - It tests observable behaviour, not internal details or the text of a constant.
 - A test double is not tested against itself: the test checks what the real code does with it.
 - Doubles mirror the complete structure of the real data, not just the fields the test reads.
-- What only tests need lives in test utilities, not in production code.
+- What only tests need goes in test utilities, not in production code.
 
 ## When not to
 Throwaway prototypes, generated code and configuration files. If in doubt, ask.
@@ -401,15 +401,15 @@ Without those six pieces it is not a finding: it is a missing best practice. It 
 3. **What was deleted.** For every check, validation or filter the diff removes or loosens, use `git log` or `git blame` to see why it existed. A validation removed with no replacement is the most reliable signal in the diff.
 4. **Reach.** For each modified high-risk function, find its callers. With many callers, review all their paths, not just the new one.
 5. **References.** Open only those that match the surfaces in the diff, and always the first:
-   - `<skill directory>/references/general-classes.md` — always.
-   - `<skill directory>/references/web-and-auth.md` — HTTP routes, sessions, cookies, tokens, OAuth, CSRF, CORS, headers, caching.
-   - `<skill directory>/references/data-and-isolation.md` — queries, multiple users or tenants, caches, search, export, deletion.
-   - `<skill directory>/references/client-and-browser.md` — code that runs in the browser, generated HTML, local storage, cross-window messages.
-   - `<skill directory>/references/dependencies-and-ci.md` — manifests, lockfiles, CI workflows, publishing, plugins.
-   - `<skill directory>/references/ai-and-agents.md` — prompts, document retrieval, memory, tools, MCP, model output.
-   - `<skill directory>/references/availability.md` — user input that costs CPU, memory, queues or money.
-   - `<skill directory>/references/cloud-and-deployment.md` — containers, infrastructure as code, cloud permissions, environment variables.
-   - `<skill directory>/references/other-domains.md` — webhooks and queues, mobile or desktop apps, native code.
+   - `<skill directory>/references/general-classes.md`: always.
+   - `<skill directory>/references/web-and-auth.md`: HTTP routes, sessions, cookies, tokens, OAuth, CSRF, CORS, headers, caching.
+   - `<skill directory>/references/data-and-isolation.md`: queries, multiple users or tenants, caches, search, export, deletion.
+   - `<skill directory>/references/client-and-browser.md`: code that runs in the browser, generated HTML, local storage, cross-window messages.
+   - `<skill directory>/references/dependencies-and-ci.md`: manifests, lockfiles, CI workflows, publishing, plugins.
+   - `<skill directory>/references/ai-and-agents.md`: prompts, document retrieval, memory, tools, MCP, model output.
+   - `<skill directory>/references/availability.md`: user input that costs CPU, memory, queues or money.
+   - `<skill directory>/references/cloud-and-deployment.md`: containers, infrastructure as code, cloud permissions, environment variables.
+   - `<skill directory>/references/other-domains.md`: webhooks and queues, mobile or desktop apps, native code.
 6. **Hunt by invariant.** For each risky surface:
    1. name the lowest-trust actor and what it can do by design;
    2. name the value or action the code accepts;
@@ -660,7 +660,7 @@ Applies to any change. Each entry says what to look for and what it takes to be 
 - Service workers: the cache includes account and tenant in its key and is cleared on sign-out; the script and its scope are not controlled by a third party.
 - Clickjacking: a state-changing action cannot be completed inside a foreign iframe (`frame-ancestors`).
 - Navigation: destinations that come from the client are validated by scheme and destination.
-- Secrets in the browser bundle: nothing that grants access lives in code that is downloaded.
+- Secrets in the browser bundle: nothing that grants access is in code that is downloaded.
 - Permission checks in the client are convenience, not control: what matters is that the server repeats them.
 ```
 
@@ -994,7 +994,7 @@ If your tool supports subagents, create one per reviewer in its subagents direct
 | `errors-and-types-reviewer` | mid | read, search and read-only commands |
 | `tests-reviewer` | mid | read, search, run commands and edit files (only for temporary tests and mutations, which it restores) |
 
-Write the concrete model name that matches each tier in your tool; do not let them inherit the main agent's model. For example, in Claude Code they are `.claude/agents/<name>.md` files with the fields `name`, `description`, `tools`, `model` and `skills: [<name>]`. A subagent works in its own context, so each reviewer reads the change without the bias of the conversation that wrote it. In Claude Code, launching subagents is the `Agent` tool; a subagent's definition cannot limit which types it launches (the `Agent(<name>)` syntax only applies to the main agent), so that restriction on the security reviewer lives in its instructions.
+Write the concrete model name that matches each tier in your tool; do not let them inherit the main agent's model. For example, in Claude Code they are `.claude/agents/<name>.md` files with the fields `name`, `description`, `tools`, `model` and `skills: [<name>]`. A subagent works in its own context, so each reviewer reads the change without the bias of the conversation that wrote it. In Claude Code, launching subagents is the `Agent` tool; a subagent's definition cannot limit which types it launches (the `Agent(<name>)` syntax only applies to the main agent), so that restriction on the security reviewer goes in its instructions.
 
 If your tool has its own exploration subagent that inherits the main agent's model, and lets a project subagent replace it, propose in phase 2 that the `explorer` from phase 7 take its place. In Claude Code this is documented: a project subagent named `Explore` replaces the built-in one and keeps its own `model` field.
 

@@ -2,7 +2,7 @@
 
 You are the coding agent running in this repository. You are going to review how the project answers requests from other origins and leave CORS configured with an allowlist of origins:
 
-- find where CORS is set and which origins actually call the API;
+- find where CORS is set and which origins call the API today;
 - detect the configurations that let any origin read the API;
 - propose the change and wait for the user's confirmation;
 - apply it, test it with an automated test and check it with curl;
@@ -30,7 +30,7 @@ Find out and note:
    - in the proxy or the platform (`nginx.conf`, `vercel.json`, `netlify.toml`, `next.config.*`, the API Gateway);
    - in hand-written responses (`setHeader('Access-Control-…')`).
    Also search for `Origin`, `origin:` and `credentials` in the server code.
-3. Which origins actually call the API, per environment: the frontend in the repository, the environment variables (`FRONTEND_URL`, `ALLOWED_ORIGINS`, `CORS_ORIGIN` or similar) and the deployment domains that appear in the configuration. If you cannot work it out, note it as a question for phase 3.
+3. Which origins call the API today, per environment: the frontend in the repository, the environment variables (`FRONTEND_URL`, `ALLOWED_ORIGINS`, `CORS_ORIGIN` or similar) and the deployment domains that appear in the configuration. If you cannot work it out, note it as a question for phase 3.
 4. How the API authenticates: with cookies, with the `Authorization` header or without authentication. If it uses cookies, the attributes of the session cookie: `SameSite`, `Secure` and `HttpOnly`.
 5. In the client, any `fetch` or HTTP client with `mode: 'no-cors'` or `credentials: 'include'` / `withCredentials: true`.
 
@@ -79,7 +79,7 @@ Before writing anything, present to the user:
 3. If the origin is on the list, return that origin in `Access-Control-Allow-Origin`. If it is not, return no `Access-Control-*` header. Do not answer with an error: the browser already prevents reading the response.
 4. Add `Vary: Origin` to every response that goes through that check.
 5. Only if the API uses cookies across origins, add `Access-Control-Allow-Credentials: true`.
-6. Answer the preflight request (`OPTIONS`) with the methods and headers the frontend actually uses, not with `*`. You can add `Access-Control-Max-Age` so the browser caches it.
+6. Answer the preflight request (`OPTIONS`) only with the methods and headers the frontend uses, not with `*`. You can add `Access-Control-Max-Age` so the browser caches it.
 7. If the client uses `mode: 'no-cors'` for an API of its own, remove it.
 
 If CORS is set in two places (for example, in the code and in the proxy), keep only one and tell the user which one you removed. Two `Access-Control-Allow-Origin` headers in the same response make the request fail in the browser.
