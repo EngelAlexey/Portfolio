@@ -7,6 +7,7 @@ export const en: Dict = {
 		blog: 'Blog',
 		about: 'About',
 		contact: 'Contact',
+		scanner: 'Scanner',
 		menu: 'Menu'
 	},
 	a11y: {
@@ -167,6 +168,92 @@ export const en: Dict = {
 		title: 'Page not found',
 		body: 'This address does not match any page on the site.',
 		back: 'Back to home'
+	},
+	scanner: {
+		title: 'Website security scanner',
+		lead: "Analyses a public site's security headers and shows how to fix each finding.",
+		label: 'Domain',
+		placeholder: 'your-domain.example',
+		submit: 'Scan domain',
+		scanning: (host: string) => `Scanning ${host}`,
+		done: 'Scan complete',
+		noScript: 'The scanner requires JavaScript to send the domain and show the result.',
+		errors: {
+			invalid_url: 'The domain is not valid. Check the spelling.',
+			blocked_address: 'The scanner only checks public internet domains.',
+			domain_not_found: 'The domain is not registered or publishes no IP addresses. Check the spelling.',
+			dns_error: "The domain's DNS did not answer. Try again in a few minutes.",
+			unreachable: 'The site did not answer within 10 seconds. It may be out of service or responding too slowly.',
+			redirect_offsite: (target: string) => `The home page redirects to another site, ${target}. Scan that domain to evaluate its headers.`,
+			redirect_blocked: 'The home page redirects to an address the scanner does not visit: an IP address, a non-standard port or a private network.',
+			redirect_invalid: 'The home page has an invalid redirect chain or one longer than 5 steps.',
+			https_downgrade: 'The home page redirects from HTTPS to HTTP. The scanner stops at that point.',
+			ipv6_only: 'The site only publishes IPv6 addresses, and the scanner does not support IPv6 connections yet.',
+			disabled: 'The scanner is down for maintenance. Try again later.',
+			network: 'The scanner could not be reached. Check your connection and try again.',
+			unknown: 'The scan failed because of an unexpected error. Try again.'
+		},
+		resultTitle: (host: string) => `Result for ${host}`,
+		copy: 'Copy result',
+		copied: 'Copied',
+		copiedStatus: 'Result copied to the clipboard.',
+		copyError: 'Copying failed. The text is selected: press Ctrl+C or Cmd+C.',
+		summary: (passed: number, total: number) => `${passed} of ${total} ${total === 1 ? 'check' : 'checks'} passed`,
+		facts: {
+			status: (code: number) => `HTTP status ${code}`,
+			https: 'HTTPS connection',
+			redirects: (count: number) => (count === 1 ? '1 redirect' : `${count} redirects`),
+			headers: (sent: number, total: number) => `${sent} of ${total} headers present`,
+			time: (seconds: string) => `Scan time: ${seconds} s`
+		},
+		redirects: 'Redirects',
+		headersTitle: 'Response headers',
+		lineOk: 'Passed',
+		missing: 'Missing',
+		notSent: 'Not sent',
+		currentValue: 'Current value',
+		guide: 'See the fix in the security guide',
+		headerHints: {
+			'strict-transport-security': 'Forces the browser to always connect over HTTPS.',
+			'content-security-policy': 'Defines the origins from which the page can load scripts, styles and frames.',
+			'content-security-policy-report-only': 'Tests a content policy without enforcing it and only reports what it would block.',
+			'x-frame-options': 'Stops other sites from displaying the page inside a frame.',
+			'x-content-type-options': 'Stops the browser from inferring a file type from its content.',
+			'referrer-policy': 'Limits how much of the address is sent when a link leads to another site.',
+			'permissions-policy': 'Restricts access to the camera, microphone, location and other browser features.',
+			'server': 'Identifies the server software. It should not include the version number.',
+			'x-powered-by': 'Identifies the technology behind the site. The recommended setting is not to send it.'
+		},
+		findingsTitle: 'Findings',
+		noFindings: 'The headers evaluated show no findings.',
+		passedTitle: 'Passed checks',
+		severity: {
+			critical: 'Critical',
+			high: 'High',
+			medium: 'Medium',
+			low: 'Low',
+			info: 'Informational'
+		},
+		findings: {
+			'hsts-missing': 'The site does not enforce HTTPS with HSTS',
+			'hsts-short': 'The HSTS policy lasts less than a year',
+			'csp-missing': 'The site does not define a Content Security Policy (CSP)',
+			'csp-unsafe': 'The Content Security Policy does not restrict scripts',
+			'framing-allowed': 'Other sites can display the page inside a frame',
+			'nosniff-missing': 'The browser can infer file types from their content',
+			'referrer-policy-missing': 'The referrer policy does not limit what is sent to other sites',
+			'permissions-policy-missing': 'Access to the camera, microphone and location is not restricted',
+			'version-disclosure': 'The server reveals the version of its software'
+		},
+		passed: {
+			hsts: 'HSTS enforces HTTPS for a year or more.',
+			csp: 'The Content Security Policy restricts scripts.',
+			framing: 'No other site can display the page inside a frame.',
+			nosniff: 'The browser does not infer file types from their content.',
+			'referrer-policy': 'The referrer policy limits what is sent to other sites.',
+			'permissions-policy': 'Access to the camera, microphone and location is restricted.',
+			version: 'The server does not reveal the version of its software.'
+		}
 	},
 	meta: {
 		siteName: 'Alex Herrera Manzanares',

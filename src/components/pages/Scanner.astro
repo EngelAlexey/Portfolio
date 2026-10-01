@@ -1,0 +1,734 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Container from '../Container.astro';
+import { path, t, type Lang } from '../../lib/i18n';
+import { getArticle } from '../../lib/articles';
+import type { ScannerStrings } from '../../lib/scanner/form';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const strings = t(lang);
+const text = strings.scanner;
+
+const apiBase: string =
+	import.meta.env.PUBLIC_SCANNER_API ?? (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.alexherrera.dev');
+
+const SECURITY_GUIDE = 'como-proteger-una-pagina-web';
+const GUIDE_SECTIONS = {
+	es: {
+		https: '#3-cómo-servir-la-aplicación-por-https-y-activar-hsts',
+		headers: '#4-qué-cabeceras-de-seguridad-enviar'
+	},
+	en: {
+		https: '#3-how-to-serve-the-application-over-https-and-enable-hsts',
+		headers: '#4-which-security-headers-to-send'
+	}
+} as const;
+const GUIDE_BY_FINDING = {
+	'hsts-missing': 'https',
+	'hsts-short': 'https',
+	'csp-missing': 'headers',
+	'csp-unsafe': 'headers',
+	'framing-allowed': 'headers',
+	'nosniff-missing': 'headers',
+	'referrer-policy-missing': 'headers',
+	'version-disclosure': 'headers'
+} as const;
+
+const guideArticle = await getArticle(lang, SECURITY_GUIDE);
+const guides: Record<string, string> = {};
+if (guideArticle !== undefined) {
+	const base = path(lang, 'article', guideArticle.path);
+	for (const [code, section] of Object.entries(GUIDE_BY_FINDING)) {
+		guides[code] = `${base}${GUIDE_SECTIONS[lang][section]}`;
+	}
+}
+
+const PASSED = '{passed}' as unknown as number;
+const TOTAL = '{total}' as unknown as number;
+const COUNT = '{count}' as unknown as number;
+const SENT = '{sent}' as unknown as number;
+const CODE = '{code}' as unknown as number;
+
+const clientStrings: ScannerStrings = {
+	scanning: text.scanning('{host}'),
+	done: text.done,
+	errors: { ...text.errors, redirect_offsite: text.errors.redirect_offsite('{target}') },
+	resultTitle: text.resultTitle('{host}'),
+	copy: text.copy,
+	copied: text.copied,
+	copiedStatus: text.copiedStatus,
+	copyError: text.copyError,
+	summaryOne: text.summary(PASSED, 1),
+	summaryMany: text.summary(PASSED, TOTAL),
+	facts: {
+		status: text.facts.status(CODE),
+		https: text.facts.https,
+		redirectsOne: text.facts.redirects(1),
+		redirectsMany: text.facts.redirects(COUNT),
+		headers: text.facts.headers(SENT, TOTAL),
+		time: text.facts.time('{seconds}')
+	},
+	redirects: text.redirects,
+	headersTitle: text.headersTitle,
+	lineOk: text.lineOk,
+	missing: text.missing,
+	notSent: text.notSent,
+	currentValue: text.currentValue,
+	guide: text.guide,
+	guides,
+	headerHints: text.headerHints,
+	findingsTitle: text.findingsTitle,
+	noFindings: text.noFindings,
+	passedTitle: text.passedTitle,
+	severity: text.severity,
+	findings: text.findings,
+	passed: text.passed
+};
+---
+
+<Layout {lang} key="scanner" title={strings.meta.titleTemplate(text.title)} description={text.lead} noindex>
+	<Container as="header" size="text">
+		<div class="head">
+			<h1>{text.title}</h1>
+			<p>{text.lead}</p>
+		</div>
+	</Container>
+
+	<Container size="text">
+		<form class="scan" data-scanner-form data-api={apiBase} data-strings={JSON.stringify(clientStrings)} novalidate>
+			<label class="label" for="scan-url">{text.label}</label>
+			<div class="row">
+				<div class="field">
+					<span class="affix" aria-hidden="true">https://</span>
+					<input
+						id="scan-url"
+						name="url"
+						type="text"
+						inputmode="url"
+						autocomplete="url"
+						autocapitalize="off"
+						spellcheck="false"
+						required
+						placeholder={text.placeholder}
+					/>
+					<span class="affix" aria-hidden="true">/</span>
+				</div>
+				<button class="btn primary" type="submit">{text.submit}</button>
+			</div>
+			<div class="progress" data-scanner-progress hidden><span></span></div>
+			<p class="status" data-scanner-status role="status"></p>
+		</form>
+		<noscript><p class="help">{text.noScript}</p></noscript>
+		<section class="result" data-scanner-result hidden></section>
+		<template data-scanner-copy>
+			<div class="actions">
+				<button type="button" class="copy" data-copy>
+					<svg class="icon icon-copy" viewBox="0 0 16 16" aria-hidden="true">
+						<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect>
+						<path d="M10.5 3.5v-.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3v5A1.5 1.5 0 0 0 4 9.5h.5"></path>
+					</svg>
+					<svg class="icon icon-check" viewBox="0 0 16 16" aria-hidden="true">
+						<path d="M3 8.5l3 3 7-7"></path>
+					</svg>
+					<span data-copy-label>{text.copy}</span>
+				</button>
+				<span class="sr-only" data-copy-live aria-live="polite"></span>
+			</div>
+			<div class="copy-fallback" data-copy-fallback hidden>
+				<p class="copy-error" id="scan-copy-error" data-copy-error></p>
+				<textarea class="copy-source" data-copy-source readonly rows="10" aria-describedby="scan-copy-error"></textarea>
+			</div>
+		</template>
+	</Container>
+</Layout>
+
+<style>
+	.head {
+		padding-block: clamp(2.5rem, 7vw, 4rem) 1.5rem;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: var(--h1);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+	}
+
+	.head p {
+		margin: 0.6rem 0 0;
+		color: var(--ink-muted);
+		font-size: 1.0625rem;
+		line-height: 1.6;
+	}
+
+	.scan {
+		position: relative;
+		padding-bottom: 1.5rem;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.label {
+		display: block;
+		margin-bottom: 0.4rem;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--ink-muted);
+	}
+
+	.row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+	}
+
+	.field {
+		display: flex;
+		align-items: center;
+		flex: 1 1 18rem;
+		min-width: 0;
+		min-height: 48px;
+		padding-inline: 0.85rem;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		font-family: var(--font-mono);
+		font-size: 0.9375rem;
+		transition: border-color 120ms ease;
+	}
+
+	.field:hover {
+		border-color: var(--ink-faint);
+	}
+
+	.field:focus-within {
+		border-color: var(--focus);
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
+	}
+
+	.affix {
+		color: var(--ink-faint);
+		user-select: none;
+	}
+
+	input {
+		flex: 1;
+		min-width: 0;
+		height: 46px;
+		padding: 0 0.15rem;
+		border: 0;
+		background: transparent;
+		color: var(--ink);
+		font: inherit;
+	}
+
+	input:focus,
+	input:focus-visible {
+		outline: none;
+	}
+
+	input::placeholder {
+		color: var(--ink-faint);
+	}
+
+	.row .btn {
+		min-height: 48px;
+	}
+
+	button:disabled {
+		opacity: 0.6;
+		cursor: progress;
+	}
+
+	.progress {
+		position: relative;
+		height: 2px;
+		margin-top: 0.75rem;
+		overflow: hidden;
+		background: var(--line);
+	}
+
+	.progress span {
+		position: absolute;
+		inset-block: 0;
+		width: 35%;
+		background: var(--focus);
+		animation: sweep 1.1s ease-in-out infinite;
+	}
+
+	@keyframes sweep {
+		from {
+			left: -35%;
+		}
+		to {
+			left: 100%;
+		}
+	}
+
+	.help {
+		margin: 0.6rem 0 0;
+		font-size: 0.875rem;
+		color: var(--ink-muted);
+	}
+
+	.status {
+		margin: 0.75rem 0 0;
+		min-height: 1.5em;
+		font-size: 0.9375rem;
+	}
+
+	.result {
+		padding-block: 2rem 3.5rem;
+	}
+
+	.result :global(h2) {
+		margin: 0;
+		font-size: clamp(1.5rem, 3.5vw, 1.875rem);
+		font-weight: 600;
+		letter-spacing: -0.02em;
+		overflow-wrap: anywhere;
+	}
+
+	.result :global(h2:focus) {
+		outline: none;
+	}
+
+	.result :global(.summary) {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		column-gap: 1.25rem;
+	}
+
+	.result :global(.summary > *) {
+		grid-column: 1 / -1;
+	}
+
+	.result :global(.summary > h2) {
+		grid-column: 1;
+	}
+
+	.result :global(.summary > .actions) {
+		grid-column: 2;
+		grid-row: 1;
+		align-self: start;
+	}
+
+	.result :global(.copy) {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+		min-height: 44px;
+		padding: 0 0.95rem;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--ink-muted);
+		font: inherit;
+		font-size: 0.875rem;
+		font-weight: 500;
+		white-space: nowrap;
+		cursor: pointer;
+		transition:
+			color 140ms ease,
+			border-color 140ms ease;
+	}
+
+	.result :global(.copy:hover),
+	.result :global(.copy:focus-visible),
+	.result :global(.copy[data-state='copied']) {
+		border-color: var(--ink-faint);
+		color: var(--ink);
+	}
+
+	.result :global(.copy[data-state='copied']) {
+		border-color: var(--check-pass);
+	}
+
+	.result :global(.icon) {
+		flex: none;
+		width: 1rem;
+		height: 1rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.4;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.result :global(.icon-check),
+	.result :global(.copy[data-state='copied'] .icon-copy) {
+		display: none;
+	}
+
+	.result :global(.copy[data-state='copied'] .icon-check) {
+		display: block;
+		color: var(--check-pass);
+	}
+
+	.result :global(.copy-fallback) {
+		margin-top: 1rem;
+	}
+
+	.result :global(.copy-error) {
+		margin: 0 0 0.5rem;
+		font-size: 0.875rem;
+	}
+
+	.result :global(.copy-source) {
+		display: block;
+		box-sizing: border-box;
+		width: 100%;
+		padding: 0.75rem 0.9rem;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-sm);
+		background: var(--paper-sunken);
+		color: var(--ink);
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		line-height: 1.6;
+		resize: vertical;
+	}
+
+	.result :global(.tally) {
+		margin: 0.35rem 0 0;
+		font-size: 1.0625rem;
+		color: var(--ink-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.result :global(.meter) {
+		display: flex;
+		gap: 4px;
+		margin: 1rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.result :global(.meter li) {
+		flex: 1;
+		height: 14px;
+		border-radius: 3px;
+		background: var(--line);
+		transform-origin: left center;
+		animation: fill-segment 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+		animation-delay: calc(var(--i, 0) * 70ms);
+	}
+
+	@keyframes fill-segment {
+		from {
+			transform: scaleX(0);
+		}
+		to {
+			transform: scaleX(1);
+		}
+	}
+
+	.result :global(.facts) {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 1rem 0 0;
+	}
+
+	.result :global(.facts li) {
+		padding: 0.2rem 0.7rem;
+		border: 1px solid var(--line-strong);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--ink-muted);
+		font-size: 0.8125rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.result :global([data-state='pass']),
+	.result :global([data-severity='pass']) {
+		--tone: var(--check-pass);
+	}
+
+	.result :global([data-state='critical']),
+	.result :global([data-severity='critical']) {
+		--tone: var(--sev-critical);
+	}
+
+	.result :global([data-state='high']),
+	.result :global([data-severity='high']) {
+		--tone: var(--sev-high);
+	}
+
+	.result :global([data-state='medium']),
+	.result :global([data-severity='medium']) {
+		--tone: var(--sev-medium);
+	}
+
+	.result :global([data-state='low']),
+	.result :global([data-severity='low']) {
+		--tone: var(--sev-low);
+	}
+
+	.result :global([data-state='info']),
+	.result :global([data-severity='info']) {
+		--tone: var(--sev-info);
+	}
+
+	.result :global([data-state='neutral']) {
+		--tone: var(--ink-faint);
+	}
+
+	.result :global(.meter li[data-state]) {
+		background: var(--tone);
+	}
+
+	.result :global(h3) {
+		margin: 2.25rem 0 0.75rem;
+		font-size: 1.0625rem;
+		font-weight: 600;
+	}
+
+	.result :global(ul),
+	.result :global(ol) {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.result :global(.empty) {
+		margin: 0;
+		color: var(--ink-muted);
+	}
+
+	.result :global(.findings li) {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.35rem 0.85rem;
+		padding: 0.9rem 1rem;
+		border: 1px solid var(--line);
+		border-left: 4px solid var(--tone);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+	}
+
+	.result :global(.findings li + li) {
+		margin-top: 0.6rem;
+	}
+
+	.result :global(.findings .severity) {
+		flex: 0 0 6.5rem;
+		box-sizing: border-box;
+		padding: 0.1rem 0.5rem;
+		border: 1px solid color-mix(in oklch, var(--tone) 55%, transparent);
+		border-radius: 999px;
+		background: color-mix(in oklch, var(--tone) 16%, transparent);
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-align: center;
+	}
+
+	.result :global(.findings .title) {
+		flex: 1 1 14rem;
+		min-width: 0;
+		font-weight: 500;
+	}
+
+	.result :global(.findings .meta),
+	.result :global(.findings .detail),
+	.result :global(.findings .guide) {
+		flex: 1 1 100%;
+		min-width: 0;
+		margin: 0;
+		padding-left: 7.35rem;
+		font-size: 0.8125rem;
+		overflow-wrap: anywhere;
+	}
+
+	.result :global(.findings .meta) {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.15rem 0.6rem;
+		color: var(--ink-muted);
+	}
+
+	.result :global(.findings .header) {
+		font-family: var(--font-mono);
+		color: var(--ink);
+	}
+
+	.result :global(.findings .current) {
+		font-family: var(--font-mono);
+	}
+
+	.result :global(.findings .detail) {
+		color: var(--ink-muted);
+		font-family: var(--font-mono);
+	}
+
+	.result :global(.findings .guide) {
+		width: fit-content;
+		color: var(--ink);
+		font-weight: 500;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.result :global(.response) {
+		padding: 1rem 1.15rem 0.4rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--paper-sunken);
+		font-family: var(--font-mono);
+		font-size: 0.875rem;
+		line-height: 1.7;
+		overflow-wrap: anywhere;
+	}
+
+	.result :global(.chain) {
+		color: var(--ink-muted);
+	}
+
+	.result :global(.chain .hop) {
+		padding-left: 1.5rem;
+	}
+
+	.result :global(.status-line) {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 0.9rem;
+		margin: 0.4rem 0 0;
+		padding-bottom: 0.6rem;
+	}
+
+	.result :global(.status-line .code) {
+		font-weight: 700;
+	}
+
+	.result :global(.status-line .url) {
+		color: var(--ink-muted);
+	}
+
+	.result :global(.lines li) {
+		position: relative;
+		padding: 0.65rem 0 0.65rem 1.6rem;
+		border-top: 1px solid var(--line);
+	}
+
+	.result :global(.lines .mark) {
+		position: absolute;
+		top: 0.65rem;
+		left: 0;
+		width: 1rem;
+		color: var(--tone);
+		font-weight: 700;
+		text-align: center;
+	}
+
+	.result :global(.lines [data-state='pass'] .mark)::before {
+		content: '✓';
+	}
+
+	.result :global(.lines [data-state='neutral'] .mark)::before {
+		content: '·';
+	}
+
+	.result :global(.lines li:not([data-state='pass'], [data-state='neutral']) .mark)::before {
+		content: '●';
+		font-size: 0.7em;
+	}
+
+	.result :global(.line-main) {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		column-gap: 0.1rem;
+	}
+
+	.result :global(.line-main .key) {
+		font-weight: 600;
+	}
+
+	.result :global(.line-main .val) {
+		min-width: 0;
+		color: var(--ink-muted);
+	}
+
+	.result :global(.line-main .gap) {
+		padding: 0 0.4rem;
+		border: 1px dashed var(--tone);
+		border-radius: 3px;
+		color: var(--tone);
+	}
+
+	.result :global(.lines [data-state='neutral'] .gap) {
+		border-color: var(--line-strong);
+		color: var(--ink-faint);
+	}
+
+	.result :global(.line-main .tag) {
+		margin-left: auto;
+		padding: 0 0.55rem;
+		border-radius: 999px;
+		background: color-mix(in oklch, var(--tone) 18%, transparent);
+		color: var(--ink);
+		font-family: var(--font-sans);
+		font-size: 0.75rem;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.result :global(.lines .hint) {
+		margin: 0.15rem 0 0;
+		color: var(--ink-muted);
+		font-family: var(--font-sans);
+		font-size: 0.8125rem;
+		line-height: 1.5;
+	}
+
+	.result :global(.passed) {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+		gap: 0.6rem 1.5rem;
+	}
+
+	.result :global(.passed li) {
+		position: relative;
+		padding-left: 1.6rem;
+		line-height: 1.5;
+	}
+
+	.result :global(.passed li)::before {
+		content: '✓';
+		position: absolute;
+		left: 0;
+		color: var(--check-pass);
+		font-weight: 700;
+	}
+
+	@media (max-width: 40rem) {
+		.result :global(.summary) {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.result :global(.summary > .actions) {
+			grid-column: 1;
+			grid-row: auto;
+			margin-top: 1rem;
+		}
+
+		.result :global(.findings .meta),
+		.result :global(.findings .detail),
+		.result :global(.findings .guide) {
+			padding-left: 0;
+		}
+	}
+</style>
+
+<script>
+	import { mountScannerForm } from '../../lib/scanner/form';
+
+	for (const form of document.querySelectorAll<HTMLFormElement>('[data-scanner-form]')) {
+		mountScannerForm(form);
+	}
+</script>

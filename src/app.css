@@ -27,6 +27,13 @@
 
 	--available: oklch(62% 0.15 152);
 
+	--sev-critical: oklch(52% 0.2 27);
+	--sev-high: oklch(60% 0.17 48);
+	--sev-medium: oklch(70% 0.15 80);
+	--sev-low: oklch(56% 0.1 245);
+	--sev-info: oklch(58% 0.01 260);
+	--check-pass: oklch(56% 0.13 155);
+
 	--shadow-card: 0 1px 2px oklch(18% 0.008 260 / 0.05), 0 4px 12px oklch(18% 0.008 260 / 0.04);
 
 	--area-fullstack-fg: oklch(48% 0.15 264);
@@ -84,6 +91,13 @@
 		--focus: oklch(72% 0.16 255);
 		--available: oklch(72% 0.15 152);
 
+		--sev-critical: oklch(70% 0.18 27);
+		--sev-high: oklch(75% 0.15 52);
+		--sev-medium: oklch(83% 0.14 85);
+		--sev-low: oklch(76% 0.09 245);
+		--sev-info: oklch(68% 0.01 265);
+		--check-pass: oklch(76% 0.14 155);
+
 		--shadow-card: 0 1px 2px oklch(0% 0 0 / 0.4), 0 4px 14px oklch(0% 0 0 / 0.28);
 
 		--area-fullstack-fg: oklch(80% 0.12 264);
@@ -132,6 +146,13 @@
 	--action-ink: oklch(15.5% 0.008 265);
 	--focus: oklch(72% 0.16 255);
 	--available: oklch(72% 0.15 152);
+
+	--sev-critical: oklch(70% 0.18 27);
+	--sev-high: oklch(75% 0.15 52);
+	--sev-medium: oklch(83% 0.14 85);
+	--sev-low: oklch(76% 0.09 245);
+	--sev-info: oklch(68% 0.01 265);
+	--check-pass: oklch(76% 0.14 155);
 
 	--shadow-card: 0 1px 2px oklch(0% 0 0 / 0.4), 0 4px 14px oklch(0% 0 0 / 0.28);
 

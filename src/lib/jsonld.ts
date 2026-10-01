@@ -276,7 +276,8 @@ const PAGE_TYPE: Record<RouteKey, string> = {
 	blog: 'CollectionPage',
 	article: 'WebPage',
 	about: 'ProfilePage',
-	contact: 'ContactPage'
+	contact: 'ContactPage',
+	scanner: 'WebPage'
 };
 
 export async function buildGraph(input: GraphInput): Promise<string | null> {
