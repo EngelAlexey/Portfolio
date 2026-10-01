@@ -346,9 +346,9 @@ export const en: Dict = {
 			requestsTitle: 'Which requests it makes',
 			requests: [
 				"DNS queries to 1.1.1.1: the domain's addresses and its TXT, MX and CAA records.",
-				'Three TLS connections to port 443: a normal one and two that try TLS 1.0 and TLS 1.1.',
+				'Up to six TLS connections to port 443: a normal one and two more with TLS 1.0 and TLS 1.1, each retried once.',
 				'One GET request to the home page over HTTPS: 10 seconds and 2 MB at most, and up to 5 redirects within the same site.',
-				'One GET request to the home page over HTTP, to check that it redirects to HTTPS.',
+				'GET requests to the home page over HTTP, up to the first redirect to HTTPS, to check that it exists.',
 				'One GET request to /.well-known/security.txt.'
 			],
 			requestsNot: 'The scanner does not submit forms, does not try passwords and does not visit other pages of the site.',

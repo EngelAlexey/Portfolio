@@ -347,9 +347,9 @@ export const es = {
 			requestsTitle: 'Qué peticiones hace',
 			requests: [
 				'Consultas DNS a 1.1.1.1: las direcciones del dominio y sus registros TXT, MX y CAA.',
-				'Tres conexiones TLS al puerto 443: una normal y dos que intentan TLS 1.0 y TLS 1.1.',
+				'Hasta seis conexiones TLS al puerto 443: una normal y otras dos con TLS 1.0 y TLS 1.1, cada una con un reintento.',
 				'Una petición GET a la página principal por HTTPS: 10 segundos y 2 MB como máximo, y hasta 5 redirecciones en el mismo sitio.',
-				'Una petición GET a la página principal por HTTP, para comprobar que redirige a HTTPS.',
+				'Peticiones GET a la página principal por HTTP, hasta la primera redirección a HTTPS, para comprobar que existe.',
 				'Una petición GET a /.well-known/security.txt.'
 			],
 			requestsNot: 'El revisor no envía formularios, no prueba contraseñas y no visita otras páginas del sitio.',
