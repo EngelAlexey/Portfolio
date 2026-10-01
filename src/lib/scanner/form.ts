@@ -1,5 +1,5 @@
 import { createBotCheck } from './bot-check';
-import { fill, renderScan } from './report';
+import { fill, minutesSentence, minutesUntil, RESCAN_KEY, renderScan } from './report';
 import type { Scan, ScannerStrings } from './types';
 
 export type { ScannerStrings };
@@ -40,6 +40,22 @@ function errorMessage(strings: ScannerStrings, { error, detail, retryAfter }: Ap
 	return strings.errors[error] ?? strings.errors['unknown'] ?? '';
 }
 
+function reusedMessage(scan: Scan, strings: ScannerStrings): string {
+	const ago = Math.max(1, Math.floor((Date.now() - Date.parse(scan.createdAt ?? '')) / 60_000) || 1);
+	const wait = minutesUntil(scan.rescanAt);
+	return `${minutesSentence(ago, strings.agoOne, strings.agoMany)} ${minutesSentence(wait, strings.rescanInOne, strings.rescanInMany)}`;
+}
+
+function takeRescan(): string | undefined {
+	try {
+		const host = sessionStorage.getItem(RESCAN_KEY) ?? undefined;
+		sessionStorage.removeItem(RESCAN_KEY);
+		return host;
+	} catch {
+		return undefined;
+	}
+}
+
 export function hostFromInput(value: string): string {
 	const trimmed = value.trim();
 	try {
@@ -62,6 +78,12 @@ export function mountScannerForm(form: HTMLFormElement): void {
 		return;
 	}
 	const botCheck = createBotCheck(widget, form.dataset['sitekey'] ?? '');
+
+	const rescan = takeRescan();
+	if (rescan !== undefined) {
+		input.value = rescan;
+		input.focus();
+	}
 
 	input.addEventListener('blur', () => {
 		input.value = hostFromInput(input.value);
@@ -98,8 +120,8 @@ export function mountScannerForm(form: HTMLFormElement): void {
 			});
 			const body: unknown = await response.json().catch(() => null);
 			if (response.ok && isScan(body)) {
-				status.textContent = strings.done;
-				renderScan(result, body, performance.now() - startedAt, strings);
+				status.textContent = body.reused === true ? reusedMessage(body, strings) : strings.done;
+				renderScan(result, body, body.reused === true ? null : performance.now() - startedAt, strings, { reportLink: true });
 			} else {
 				status.textContent = errorMessage(strings, readError(body));
 			}

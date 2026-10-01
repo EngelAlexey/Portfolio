@@ -47,6 +47,15 @@ const FINDING_SPECS = codes.findings as Readonly<Record<string, FindingSpec | un
 const CHECK_ORDER = Object.keys(codes.passed);
 const SHOWN_HEADERS = Object.keys(HEADER_CHECKS);
 const COPIED_RESET_MS = 2500;
+export const RESCAN_KEY = 'scanner:rescan';
+
+export function minutesSentence(minutes: number, one: string, many: string): string {
+	return minutes === 1 ? one : fill(many, { minutes: String(minutes) });
+}
+
+export function minutesUntil(iso: string | undefined): number {
+	return Math.max(1, Math.ceil((Date.parse(iso ?? '') - Date.now()) / 60_000) || 1);
+}
 
 export function fill(template: string, values: Readonly<Record<string, string>>): string {
 	return template.replace(/\{(\w+)\}/g, (placeholder, key: string) => values[key] ?? placeholder);
@@ -202,7 +211,7 @@ function extraDetail(finding: Finding, header: string | undefined, current: stri
 	return detail;
 }
 
-function factLabels(scan: Scan, elapsedMs: number, strings: ScannerStrings): string[] {
+function factLabels(scan: Scan, elapsedMs: number | null, strings: ScannerStrings): string[] {
 	const labels: string[] = [];
 	if (scan.status !== null) {
 		labels.push(fill(strings.facts.status, { code: String(scan.status) }));
@@ -218,7 +227,9 @@ function factLabels(scan: Scan, elapsedMs: number, strings: ScannerStrings): str
 		const sent = SHOWN_HEADERS.filter((name) => scan.headers[name] !== undefined).length;
 		labels.push(fill(strings.facts.headers, { sent: String(sent), total: String(SHOWN_HEADERS.length) }));
 	}
-	labels.push(fill(strings.facts.time, { seconds: formatSeconds(elapsedMs) }));
+	if (elapsedMs !== null) {
+		labels.push(fill(strings.facts.time, { seconds: formatSeconds(elapsedMs) }));
+	}
 	return labels;
 }
 
@@ -252,7 +263,7 @@ function resultText(
 	scan: Scan,
 	states: Map<string, CheckState>,
 	findings: readonly Finding[],
-	elapsedMs: number,
+	elapsedMs: number | null,
 	strings: ScannerStrings
 ): string {
 	const lines = [fill(strings.resultTitle, { host: scan.displayHost })];
@@ -315,7 +326,7 @@ function renderSummary(
 	scan: Scan,
 	states: Map<string, CheckState>,
 	findings: readonly Finding[],
-	elapsedMs: number,
+	elapsedMs: number | null,
 	strings: ScannerStrings
 ): HTMLElement {
 	const summary = create('div', undefined, 'summary');
@@ -526,12 +537,35 @@ function mountCopy(summary: HTMLElement, text: string, title: string, strings: S
 	summary.append(fragment);
 }
 
-export function renderScan(container: HTMLElement, scan: Scan, elapsedMs: number, strings: ScannerStrings): void {
+export type RenderOptions = {
+	readonly reportLink: boolean;
+};
+
+function mountReportLink(summary: HTMLElement, scan: Scan, strings: ScannerStrings): void {
+	const actions = summary.querySelector<HTMLElement>('.actions');
+	if (actions === null || typeof scan.id !== 'string') {
+		return;
+	}
+	const link = create('a', strings.reportLink, 'copy report-link');
+	link.href = fill(strings.reportPath, { id: scan.id });
+	actions.prepend(link);
+}
+
+export function renderScan(
+	container: HTMLElement,
+	scan: Scan,
+	elapsedMs: number | null,
+	strings: ScannerStrings,
+	options: RenderOptions = { reportLink: false }
+): void {
 	const findings = allFindings(scan);
 	const states = checkStates(scan, findings);
 	const summary = renderSummary(scan, states, findings, elapsedMs, strings);
 	const title = fill(strings.resultTitle, { host: scan.displayHost });
 	mountCopy(summary, resultText(scan, states, findings, elapsedMs, strings), title, strings);
+	if (options.reportLink) {
+		mountReportLink(summary, scan, strings);
+	}
 	container.replaceChildren(
 		summary,
 		create('h3', `${strings.findingsTitle} (${findings.length})`),

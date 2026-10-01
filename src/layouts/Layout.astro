@@ -23,6 +23,7 @@ interface Props {
 	description: string;
 	image?: string | null;
 	noindex?: boolean;
+	analytics?: boolean;
 	published?: string | null;
 	updated?: string | null;
 }
@@ -36,6 +37,7 @@ const {
 	description,
 	image = null,
 	noindex = false,
+	analytics = true,
 	published = null,
 	updated = null
 } = Astro.props;
@@ -62,7 +64,7 @@ const fontFaces = [
 	face('JetBrains Mono Variable', '100 800', monoLatinExt, LATIN_EXT)
 ].join('\n');
 
-const gaId = import.meta.env.PROD ? ANALYTICS.ga4 : null;
+const gaId = import.meta.env.PROD && analytics ? ANALYTICS.ga4 : null;
 const gtagInit = gaId
 	? `window.dataLayer = window.dataLayer || [];
 function gtag() {
@@ -97,7 +99,7 @@ const links = [
 	{ key: 'contact', href: path(lang, 'contact'), label: strings.nav.contact }
 ] as { key: RouteKey; href: string; label: string }[];
 
-const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', article: 'blog', scannerAbout: 'scanner' };
+const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', article: 'blog', scannerAbout: 'scanner', scannerReport: 'scanner' };
 ---
 
 <!doctype html>
@@ -142,8 +144,8 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 	</head>
 
 	<body>
-		<Analytics />
-		<SpeedInsights />
+		{analytics && <Analytics />}
+		{analytics && <SpeedInsights />}
 		<script is:inline>
 			(function () {
 				var tags = ['vercel-analytics', 'vercel-speed-insights'];

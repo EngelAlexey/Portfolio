@@ -148,15 +148,17 @@ function breadcrumbNode(input: GraphInput, key: RouteKey): Node | null {
 
 	const trail: Node[] = [home];
 
-	if (key === 'project' || key === 'article' || key === 'scannerAbout') {
+	if (key === 'project' || key === 'article' || key === 'scannerAbout' || key === 'scannerReport') {
 		const parent = key === 'project' ? 'projects' : key === 'article' ? 'blog' : 'scanner';
+		const name =
+			key === 'scannerAbout' ? strings.scanner.about.title : key === 'scannerReport' ? strings.scanner.report.title : input.title;
 		trail.push({
 			'@type': 'ListItem',
 			position: 2,
 			name: strings.nav[parent],
 			item: absolute(routePath(input.lang, parent))
 		});
-		trail.push({ '@type': 'ListItem', position: 3, name: key === 'scannerAbout' ? strings.scanner.about.title : input.title });
+		trail.push({ '@type': 'ListItem', position: 3, name });
 	} else {
 		trail.push({ '@type': 'ListItem', position: 2, name: strings.nav[key] });
 	}
@@ -278,7 +280,8 @@ const PAGE_TYPE: Record<RouteKey, string> = {
 	about: 'ProfilePage',
 	contact: 'ContactPage',
 	scanner: 'WebPage',
-	scannerAbout: 'WebPage'
+	scannerAbout: 'WebPage',
+	scannerReport: 'WebPage'
 };
 
 export async function buildGraph(input: GraphInput): Promise<string | null> {

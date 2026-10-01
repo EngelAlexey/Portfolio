@@ -13,6 +13,12 @@ export type ScannerStrings = {
 	readonly copied: string;
 	readonly copiedStatus: string;
 	readonly copyError: string;
+	readonly reportLink: string;
+	readonly reportPath: string;
+	readonly agoOne: string;
+	readonly agoMany: string;
+	readonly rescanInOne: string;
+	readonly rescanInMany: string;
 	readonly summaryOne: string;
 	readonly summaryMany: string;
 	readonly facts: {
@@ -79,4 +85,9 @@ export type Scan = {
 	readonly score?: number;
 	readonly grade?: string;
 	readonly partial?: boolean;
+	readonly id?: string | null;
+	readonly createdAt?: string;
+	readonly rescanAt?: string;
+	readonly expiresAt?: string;
+	readonly reused?: boolean;
 };

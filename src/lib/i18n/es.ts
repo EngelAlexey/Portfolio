@@ -340,6 +340,25 @@ export const es = {
 			'spf-ptr-deprecated': 'El registro SPF usa el mecanismo ptr, que la RFC 7208 desaconseja.',
 			'dmarc-testing': 'La política DMARC está en modo de prueba (t=y).'
 		},
+		report: {
+			title: 'Reporte del revisor',
+			loading: 'Cargando el reporte.',
+			notFound: 'Este reporte no existe o ya venció. Los reportes se borran a los 30 días.',
+			scanned: (date: string) => `Análisis del ${date}.`,
+			expires: (date: string) => `El reporte se borra el ${date}.`,
+			copyLink: 'Copiar enlace',
+			linkCopied: 'Copiado',
+			linkCopiedStatus: 'Enlace copiado al portapapeles.',
+			copyLinkError: 'No se pudo copiar. El enlace está seleccionado: pulse Ctrl+C o Cmd+C.',
+			linkLabel: 'Enlace del reporte',
+			rescan: 'Volver a analizar',
+			rescanIn: (minutes: number) =>
+				minutes === 1 ? 'Puede volver a analizarlo en 1 minuto.' : `Puede volver a analizarlo en ${minutes} minutos.`,
+			open: 'Abrir el reporte',
+			ago: (minutes: number) => (minutes === 1 ? 'Este sitio se analizó hace 1 minuto.' : `Este sitio se analizó hace ${minutes} minutos.`),
+			back: 'Ir al revisor',
+			noScript: 'El reporte requiere JavaScript para cargarse.'
+		},
 		explanation: {
 			show: 'Ver cómo corregirlo',
 			loading: 'Cargando la explicación.',

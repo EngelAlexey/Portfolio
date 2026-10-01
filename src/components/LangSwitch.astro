@@ -15,7 +15,7 @@ const href = path(other(lang), routeKey, target);
 const strings = t(lang).a11y;
 ---
 
-<a {href} class="switch" hreflang={other(lang)} aria-label={strings.langSwitch}>
+<a {href} class="switch" data-lang-switch hreflang={other(lang)} aria-label={strings.langSwitch}>
 	{strings.langSwitchShort}
 </a>
 

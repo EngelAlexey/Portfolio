@@ -16,6 +16,10 @@
       "permanent": false
     }
   ],
+  "rewrites": [
+    { "source": "/es/herramientas/revisor/reporte/:id", "destination": "/es/herramientas/revisor/reporte" },
+    { "source": "/en/tools/scanner/report/:id", "destination": "/en/tools/scanner/report" }
+  ],
   "headers": [
     {
       "source": "/_astro/(.*)",
@@ -47,6 +51,24 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "X-Frame-Options", "value": "DENY" }
       ]
+    },
+    {
+      "source": "/es/herramientas/revisor/reporte/:path*",
+      "headers": [
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
+      "source": "/en/tools/scanner/report/:path*",
+      "headers": [
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
+      "source": "/scanner/explanations/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }]
     }
   ]
 }

@@ -339,6 +339,24 @@ export const en: Dict = {
 			'spf-ptr-deprecated': 'The SPF record uses the ptr mechanism, which RFC 7208 discourages.',
 			'dmarc-testing': 'The DMARC policy is in testing mode (t=y).'
 		},
+		report: {
+			title: 'Scanner report',
+			loading: 'Loading the report.',
+			notFound: 'This report does not exist or has expired. Reports are deleted after 30 days.',
+			scanned: (date: string) => `Scanned on ${date}.`,
+			expires: (date: string) => `The report is deleted on ${date}.`,
+			copyLink: 'Copy link',
+			linkCopied: 'Copied',
+			linkCopiedStatus: 'Link copied to the clipboard.',
+			copyLinkError: 'Copying failed. The link is selected: press Ctrl+C or Cmd+C.',
+			linkLabel: 'Report link',
+			rescan: 'Scan again',
+			rescanIn: (minutes: number) => (minutes === 1 ? 'You can scan it again in 1 minute.' : `You can scan it again in ${minutes} minutes.`),
+			open: 'Open the report',
+			ago: (minutes: number) => (minutes === 1 ? 'This site was scanned 1 minute ago.' : `This site was scanned ${minutes} minutes ago.`),
+			back: 'Open the scanner',
+			noScript: 'The report requires JavaScript to load.'
+		},
 		explanation: {
 			show: 'See how to fix it',
 			loading: 'Loading the explanation.',
