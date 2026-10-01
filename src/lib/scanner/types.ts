@@ -30,6 +30,9 @@ export type ScannerStrings = {
 	readonly notSent: string;
 	readonly currentValue: string;
 	readonly guide: string;
+	readonly explanationShow: string;
+	readonly explanationLoading: string;
+	readonly explanationError: string;
 	readonly guides: Readonly<Record<string, string>>;
 	readonly headerHints: Readonly<Record<string, string>>;
 	readonly findingsTitle: string;

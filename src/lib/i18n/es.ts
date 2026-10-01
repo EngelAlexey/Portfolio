@@ -340,6 +340,16 @@ export const es = {
 			'spf-ptr-deprecated': 'El registro SPF usa el mecanismo ptr, que la RFC 7208 desaconseja.',
 			'dmarc-testing': 'La política DMARC está en modo de prueba (t=y).'
 		},
+		explanation: {
+			show: 'Ver cómo corregirlo',
+			loading: 'Cargando la explicación.',
+			loadError: 'No se pudo cargar la explicación. Vuelva a intentarlo.',
+			difficulty: { easy: 'Dificultad baja', medium: 'Dificultad media', hard: 'Dificultad alta' },
+			minutes: (minutes: number) => `Unos ${minutes} minutos`,
+			sources: 'Fuentes',
+			fallback: 'Esta explicación todavía solo está en español.',
+			missing: 'Esta explicación todavía no está escrita.'
+		},
 		about: {
 			title: 'Qué es este revisor',
 			lead: 'El revisor de seguridad web lee la configuración que un sitio público envía a cualquier visitante. Esta página describe sus peticiones y cómo bloquearlo.',

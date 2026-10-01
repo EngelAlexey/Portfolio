@@ -1,0 +1,57 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import MinorHeading from '../../../../components/scanner/MinorHeading.astro';
+import SubHeading from '../../../../components/scanner/SubHeading.astro';
+import { LANGS, t, type Lang } from '../../../../lib/i18n';
+import codes from '../../../../lib/scanner/codes.json';
+
+export const partial = true;
+
+type Props = { entry: CollectionEntry<'scanner'> | undefined; fallback: boolean };
+
+export async function getStaticPaths() {
+	const entries = new Map((await getCollection('scanner')).map((entry) => [entry.id, entry]));
+	const missing = Object.keys(codes.findings).filter((code) => !entries.has(`${code}/es`));
+	if (missing.length > 0 && import.meta.env.PROD) {
+		throw new Error(`Missing Spanish explanations for: ${missing.join(', ')}`);
+	}
+	return LANGS.flatMap((lang) =>
+		Object.keys(codes.findings).map((code) => {
+			const own = entries.get(`${code}/${lang}`);
+			return { params: { lang, code }, props: { entry: own ?? entries.get(`${code}/es`), fallback: own === undefined } };
+		})
+	);
+}
+
+const { entry, fallback } = Astro.props as Props;
+const lang = Astro.params.lang as Lang;
+const text = t(lang).scanner.explanation;
+const rendered = entry === undefined ? undefined : await render(entry);
+---
+
+<article class="explanation" lang={fallback ? 'es' : lang}>
+	{
+		entry === undefined || rendered === undefined ? (
+			<p class="missing">{text.missing}</p>
+		) : (
+			<>
+				{fallback && lang !== 'es' && <p class="fallback" lang={lang}>{text.fallback}</p>}
+				<ul class="explanation-meta" lang={lang}>
+					<li>{text.difficulty[entry.data.difficulty]}</li>
+					<li>{text.minutes(entry.data.minutes)}</li>
+				</ul>
+				<rendered.Content components={{ h2: SubHeading, h3: MinorHeading }} />
+				<p class="sources-title" lang={lang}>{text.sources}</p>
+				<ul class="sources">
+					{entry.data.sources.map((source) => (
+						<li>
+							<a href={source.url} rel="noreferrer" target="_blank">
+								{source.text}
+							</a>
+						</li>
+					))}
+				</ul>
+			</>
+		)
+	}
+</article>

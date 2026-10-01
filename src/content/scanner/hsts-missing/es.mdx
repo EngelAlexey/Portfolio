@@ -1,0 +1,73 @@
+---
+code: hsts-missing
+title: Su sitio no obliga al navegador a usar siempre HTTPS
+difficulty: easy
+minutes: 10
+platforms: [nginx, apache, cloudflare, vercel, netlify]
+sources:
+  - text: 'RFC 6797: HTTP Strict Transport Security (HSTS)'
+    url: https://www.rfc-editor.org/rfc/rfc6797
+  - text: 'OWASP: HTTP Strict Transport Security Cheat Sheet'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html
+  - text: 'Cloudflare: HTTP Strict Transport Security (HSTS)'
+    url: https://developers.cloudflare.com/ssl/edge-certificates/additional-options/http-strict-transport-security/
+---
+
+## Qué significa
+
+La cabecera `Strict-Transport-Security`, conocida como HSTS, indica al navegador que use siempre HTTPS con su dominio durante los segundos que marca `max-age`. Su sitio no la envía, o la envía sin un `max-age` válido.
+
+Sin HSTS, el navegador vuelve a probar HTTP cada vez que alguien escribe la dirección sin `https://` o sigue un enlace antiguo.
+
+## Qué riesgo tiene
+
+Esa primera petición por HTTP se envía sin cifrar. En una red wifi pública, un atacante puede responderla antes que su servidor. Así mantiene a la persona en HTTP, donde lee y cambia lo que envía, incluidas las contraseñas.
+
+Con HSTS, después de la primera visita por HTTPS el navegador ya no usa HTTP con su dominio.
+
+## Cómo corregirlo
+
+Envíe la cabecera solo en las respuestas HTTPS, con un `max-age` de al menos un año. OWASP recomienda dos años, 63072000 segundos:
+
+```text
+Strict-Transport-Security: max-age=63072000; includeSubDomains
+```
+
+Incluya `includeSubDomains` solo si todos los subdominios ya funcionan por HTTPS. Si alguno sigue en HTTP, el navegador dejará de abrirlo.
+
+### Nginx
+
+En el bloque `server` que escucha en el puerto 443:
+
+```nginx
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+```
+
+El parámetro `always` envía la cabecera también en las respuestas de error.
+
+### Apache
+
+Con el módulo `mod_headers` activo, dentro del bloque `<VirtualHost *:443>`:
+
+```apache
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+```
+
+### Cloudflare
+
+En **SSL/TLS > Edge Certificates**, abra **HTTP Strict Transport Security (HSTS)**, active **Enable HSTS** y elija un **Max Age** de 12 meses. Active **Apply HSTS policy to subdomains** solo si todos los subdominios funcionan por HTTPS.
+
+### Vercel y Netlify
+
+Las dos plataformas envían HSTS por defecto en los dominios propios: [Vercel](https://vercel.com/docs/encryption) con `max-age=63072000` y [Netlify](https://docs.netlify.com/manage/domains/secure-domains-with-https/https-ssl/) con `max-age=31536000`. Si el revisor marca este hallazgo en una de ellas, revise `vercel.json`, `netlify.toml` o `_headers`: una cabecera `Strict-Transport-Security` propia sustituye a la de la plataforma.
+
+## Cómo comprobarlo
+
+La respuesta HTTPS de la página principal debe traer la cabecera:
+
+```text
+$ curl -sI https://su-dominio.example/ | grep -i strict-transport-security
+strict-transport-security: max-age=63072000; includeSubDomains
+```
+
+Después, vuelva a analizar el sitio: HSTS aparece en «Comprobaciones superadas». El punto 3 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#3-cómo-servir-la-aplicación-por-https-y-activar-hsts) explica por qué la cabecera solo se envía por HTTPS.

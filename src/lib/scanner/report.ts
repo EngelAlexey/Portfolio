@@ -400,15 +400,43 @@ function renderFindings(scan: Scan, findings: readonly Finding[], strings: Scann
 		if (detail !== '') {
 			item.append(create('p', detail, 'detail'));
 		}
-		const guide = strings.guides[finding.code];
-		if (guide !== undefined) {
-			const link = create('a', strings.guide, 'guide');
-			link.href = guide;
-			item.append(link);
-		}
+		item.append(explanationDisclosure(finding.code, strings));
 		list.append(item);
 	}
 	return list;
+}
+
+async function loadExplanation(code: string, body: HTMLElement, strings: ScannerStrings): Promise<void> {
+	body.dataset['state'] = 'loading';
+	body.replaceChildren(create('p', strings.explanationLoading, 'fix-status'));
+	try {
+		const lang = document.documentElement.lang || 'es';
+		const response = await fetch(`/scanner/explanations/${lang}/${encodeURIComponent(code)}`);
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}`);
+		}
+		const article = new DOMParser().parseFromString(await response.text(), 'text/html').querySelector('article.explanation');
+		if (article === null) {
+			throw new Error('no explanation in the fragment');
+		}
+		body.replaceChildren(document.importNode(article, true));
+		body.dataset['state'] = 'loaded';
+	} catch {
+		delete body.dataset['state'];
+		body.replaceChildren(create('p', strings.explanationError, 'fix-status'));
+	}
+}
+
+function explanationDisclosure(code: string, strings: ScannerStrings): HTMLElement {
+	const disclosure = create('details', undefined, 'fix');
+	const body = create('div', undefined, 'fix-body');
+	disclosure.append(create('summary', strings.explanationShow), body);
+	disclosure.addEventListener('toggle', () => {
+		if (disclosure.open && body.dataset['state'] === undefined) {
+			void loadExplanation(code, body, strings);
+		}
+	});
+	return disclosure;
 }
 
 function renderResponse(scan: Scan, states: Map<string, CheckState>, findings: readonly Finding[], strings: ScannerStrings): HTMLElement {

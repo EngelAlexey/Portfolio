@@ -339,6 +339,16 @@ export const en: Dict = {
 			'spf-ptr-deprecated': 'The SPF record uses the ptr mechanism, which RFC 7208 discourages.',
 			'dmarc-testing': 'The DMARC policy is in testing mode (t=y).'
 		},
+		explanation: {
+			show: 'See how to fix it',
+			loading: 'Loading the explanation.',
+			loadError: 'The explanation could not load. Try again.',
+			difficulty: { easy: 'Low difficulty', medium: 'Medium difficulty', hard: 'High difficulty' },
+			minutes: (minutes: number) => `About ${minutes} minutes`,
+			sources: 'Sources',
+			fallback: 'This explanation is only available in Spanish for now.',
+			missing: 'This explanation has not been written yet.'
+		},
 		about: {
 			title: 'About this scanner',
 			lead: 'The website security scanner reads the configuration a public site sends to every visitor. This page describes its requests and how to block it.',

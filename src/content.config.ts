@@ -3,6 +3,7 @@ import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
 import { AREA_IDS } from './lib/areas';
 import { CATEGORY_IDS } from './lib/categories';
+import scannerCodes from './lib/scanner/codes.json';
 
 const url = z.url();
 
@@ -169,4 +170,33 @@ const articles = defineCollection({
 	schema: articleSchema
 });
 
-export const collections = { projects, articles };
+export const FINDING_CODES = Object.keys(scannerCodes.findings) as [string, ...string[]];
+export const PLATFORMS = ['nginx', 'apache', 'cloudflare', 'vercel', 'netlify', 'wordpress', 'dns'] as const;
+
+const explanationSchema = z.object({
+	code: z.enum(FINDING_CODES),
+	title: z.string().min(10).max(140),
+	difficulty: z.enum(['easy', 'medium', 'hard']),
+	minutes: z.number().int().positive().max(240),
+	platforms: z.array(z.enum(PLATFORMS)).max(PLATFORMS.length),
+	sources: z
+		.array(
+			z.object({
+				text: z.string().min(3),
+				url
+			})
+		)
+		.min(1)
+		.max(3)
+});
+
+const scanner = defineCollection({
+	loader: glob({
+		base: './src/content/scanner',
+		pattern: '*/{es,en}.mdx',
+		generateId: ({ entry }) => entry.replace(/\.mdx$/, '')
+	}),
+	schema: explanationSchema
+});
+
+export const collections = { projects, articles, scanner };
