@@ -71,6 +71,8 @@ const clientStrings: ScannerStrings = {
 		rate_limited_one: text.errors.rate_limited(1)
 	},
 	resultTitle: text.resultTitle('{host}'),
+	grade: text.grade('{grade}', '{score}' as unknown as number),
+	partialGrade: text.partialGrade,
 	copy: text.copy,
 	copied: text.copied,
 	copiedStatus: text.copiedStatus,
@@ -96,11 +98,13 @@ const clientStrings: ScannerStrings = {
 	headerHints: text.headerHints,
 	findingsTitle: text.findingsTitle,
 	noFindings: text.noFindings,
+	noFindingsPartial: text.noFindingsPartial,
 	blockedPage: text.blockedPage,
 	passedTitle: text.passedTitle,
 	notesTitle: text.notesTitle,
 	sections: text.sections,
 	sectionStatus: text.sectionStatus,
+	sectionStatusMany: text.sectionStatusMany,
 	notes: text.notes,
 	severity: text.severity,
 	findings: text.findings,
@@ -438,6 +442,58 @@ const clientStrings: ScannerStrings = {
 		font-size: 0.8125rem;
 		line-height: 1.6;
 		resize: vertical;
+	}
+
+	.result :global(.grade) {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: center;
+		column-gap: 1rem;
+		margin-top: 1rem;
+	}
+
+	.result :global(.grade[data-grade='A']),
+	.result :global(.grade[data-grade='B']) {
+		--tone: var(--check-pass);
+	}
+
+	.result :global(.grade[data-grade='C']) {
+		--tone: var(--sev-medium);
+	}
+
+	.result :global(.grade[data-grade='D']) {
+		--tone: var(--sev-high);
+	}
+
+	.result :global(.grade[data-grade='F']) {
+		--tone: var(--sev-critical);
+	}
+
+	.result :global(.grade .letter) {
+		display: grid;
+		place-items: center;
+		width: 3.5rem;
+		height: 3.5rem;
+		border: 1px solid color-mix(in oklch, var(--tone) 60%, transparent);
+		border-radius: var(--radius);
+		background: color-mix(in oklch, var(--tone) 20%, transparent);
+		color: var(--ink);
+		font-size: 2rem;
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	.result :global(.grade .words) {
+		margin: 0;
+		font-size: 1.0625rem;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.result :global(.grade .partial) {
+		margin: 0.15rem 0 0;
+		color: var(--ink-muted);
+		font-size: 0.875rem;
 	}
 
 	.result :global(.notices) {

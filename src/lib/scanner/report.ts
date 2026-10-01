@@ -119,11 +119,21 @@ function checkStates(scan: Scan, findings: readonly Finding[]): Map<string, Chec
 }
 
 function notices(scan: Scan, strings: ScannerStrings): Notice[] {
-	return sectionsOf(scan).flatMap(([id, section]) =>
-		UNREVIEWED.has(section.status)
-			? [{ status: section.status as UnreviewedStatus, text: `${strings.sections[id]}: ${strings.sectionStatus[section.status as UnreviewedStatus]}` }]
-			: []
-	);
+	const lang = document.documentElement.lang || 'es';
+	const grouped = new Map<UnreviewedStatus, string[]>();
+	for (const [id, section] of sectionsOf(scan)) {
+		if (UNREVIEWED.has(section.status)) {
+			const status = section.status as UnreviewedStatus;
+			grouped.set(status, [...(grouped.get(status) ?? []), strings.sections[id]]);
+		}
+	}
+	return [...grouped].map(([status, names]) => {
+		const listed = new Intl.ListFormat(lang, { type: 'conjunction' }).format(
+			names.map((name, index) => (index === 0 ? name : `${name.charAt(0).toLowerCase()}${name.slice(1)}`))
+		);
+		const text = names.length === 1 ? strings.sectionStatus[status] : strings.sectionStatusMany[status];
+		return { status, text: `${listed}: ${text}` };
+	});
 }
 
 function noteTexts(scan: Scan, strings: ScannerStrings): string[] {
@@ -212,6 +222,13 @@ function factLabels(scan: Scan, elapsedMs: number, strings: ScannerStrings): str
 	return labels;
 }
 
+function gradeLine(scan: Scan, strings: ScannerStrings): string | undefined {
+	if (scan.grade === undefined || scan.score === undefined) {
+		return undefined;
+	}
+	return fill(strings.grade, { grade: scan.grade, score: String(scan.score) });
+}
+
 function tally(states: Map<string, CheckState>, strings: ScannerStrings): string {
 	const total = states.size;
 	const passed = [...states.values()].filter((state) => state === 'pass').length;
@@ -239,6 +256,10 @@ function resultText(
 	strings: ScannerStrings
 ): string {
 	const lines = [fill(strings.resultTitle, { host: scan.displayHost })];
+	const graded = gradeLine(scan, strings);
+	if (graded !== undefined) {
+		lines.push(scan.partial === true ? `${graded}. ${strings.partialGrade}` : graded);
+	}
 	if (states.size > 0) {
 		lines.push(tally(states, strings));
 	}
@@ -248,7 +269,7 @@ function resultText(
 	}
 	lines.push('', `${strings.findingsTitle} (${findings.length})`);
 	if (findings.length === 0) {
-		lines.push(strings.noFindings);
+		lines.push(scan.partial === true ? strings.noFindingsPartial : strings.noFindings);
 	}
 	for (const finding of findings) {
 		const header = headerOf(finding);
@@ -302,6 +323,21 @@ function renderSummary(
 	title.tabIndex = -1;
 	summary.append(title);
 
+	const graded = gradeLine(scan, strings);
+	if (graded !== undefined && scan.grade !== undefined) {
+		const grade = create('div', undefined, 'grade');
+		grade.dataset['grade'] = scan.grade;
+		const letter = create('span', scan.grade, 'letter');
+		letter.setAttribute('aria-hidden', 'true');
+		const text = create('div', undefined, 'text');
+		text.append(create('p', graded, 'words'));
+		if (scan.partial === true) {
+			text.append(create('p', strings.partialGrade, 'partial'));
+		}
+		grade.append(letter, text);
+		summary.append(grade);
+	}
+
 	if (states.size > 0) {
 		const meter = create('ol', undefined, 'meter');
 		meter.setAttribute('aria-hidden', 'true');
@@ -338,7 +374,7 @@ function renderSummary(
 
 function renderFindings(scan: Scan, findings: readonly Finding[], strings: ScannerStrings): HTMLElement {
 	if (findings.length === 0) {
-		return create('p', strings.noFindings, 'empty');
+		return create('p', scan.partial === true ? strings.noFindingsPartial : strings.noFindings, 'empty');
 	}
 	const list = create('ul', undefined, 'findings');
 	for (const finding of findings) {

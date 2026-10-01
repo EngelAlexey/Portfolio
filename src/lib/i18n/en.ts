@@ -201,6 +201,8 @@ export const en: Dict = {
 			unknown: 'The scan failed because of an unexpected error. Try again.'
 		},
 		resultTitle: (host: string) => `Result for ${host}`,
+		grade: (grade: string, score: number) => `Grade ${grade}, ${score} out of 100 points`,
+		partialGrade: 'Partial grade: the sections that could not be checked do not count.',
 		copy: 'Copy result',
 		copied: 'Copied',
 		copiedStatus: 'Result copied to the clipboard.',
@@ -233,6 +235,7 @@ export const en: Dict = {
 		},
 		findingsTitle: 'Findings',
 		noFindings: 'The scan found nothing to fix.',
+		noFindingsPartial: 'The sections checked have nothing to fix.',
 		blockedPage: 'The headers shown belong to the block page.',
 		passedTitle: 'Passed checks',
 		notesTitle: 'Notes',
@@ -247,6 +250,11 @@ export const en: Dict = {
 			error: 'this section could not be checked.',
 			blocked: "the site's firewall blocked this section. Some protection services block every automated visit.",
 			not_applicable: 'does not apply, because the platform that hosts this domain controls its DNS.'
+		},
+		sectionStatusMany: {
+			error: 'these sections could not be checked.',
+			blocked: "the site's firewall blocked these sections. Some protection services block every automated visit.",
+			not_applicable: 'do not apply, because the platform that hosts this domain controls its DNS.'
 		},
 		severity: {
 			critical: 'Critical',

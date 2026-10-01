@@ -7,6 +7,8 @@ export type ScannerStrings = {
 	readonly done: string;
 	readonly errors: Readonly<Record<string, string>>;
 	readonly resultTitle: string;
+	readonly grade: string;
+	readonly partialGrade: string;
 	readonly copy: string;
 	readonly copied: string;
 	readonly copiedStatus: string;
@@ -32,11 +34,13 @@ export type ScannerStrings = {
 	readonly headerHints: Readonly<Record<string, string>>;
 	readonly findingsTitle: string;
 	readonly noFindings: string;
+	readonly noFindingsPartial: string;
 	readonly blockedPage: string;
 	readonly passedTitle: string;
 	readonly notesTitle: string;
 	readonly sections: Readonly<Record<SectionId, string>>;
 	readonly sectionStatus: Readonly<Record<UnreviewedStatus, string>>;
+	readonly sectionStatusMany: Readonly<Record<UnreviewedStatus, string>>;
 	readonly severity: Readonly<Record<Severity, string>>;
 	readonly findings: Readonly<Record<string, string>>;
 	readonly passed: Readonly<Record<string, string>>;
@@ -69,4 +73,7 @@ export type Scan = {
 	readonly hops: readonly Hop[];
 	readonly headers: Readonly<Record<string, readonly string[]>>;
 	readonly sections: Readonly<Partial<Record<SectionId, Section>>>;
+	readonly score?: number;
+	readonly grade?: string;
+	readonly partial?: boolean;
 };

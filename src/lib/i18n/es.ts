@@ -201,6 +201,8 @@ export const es = {
 			unknown: 'El análisis falló por un error inesperado. Vuelva a intentarlo.'
 		},
 		resultTitle: (host: string) => `Resultado de ${host}`,
+		grade: (grade: string, score: number) => `Nota ${grade}, ${score} de 100 puntos`,
+		partialGrade: 'Nota parcial: las secciones que no se pudieron revisar no cuentan.',
 		copy: 'Copiar resultado',
 		copied: 'Copiado',
 		copiedStatus: 'Resultado copiado al portapapeles.',
@@ -234,6 +236,7 @@ export const es = {
 		},
 		findingsTitle: 'Hallazgos',
 		noFindings: 'El análisis no encontró nada que corregir.',
+		noFindingsPartial: 'Las secciones revisadas no tienen nada que corregir.',
 		blockedPage: 'Las cabeceras que se muestran son las de la página de bloqueo.',
 		passedTitle: 'Comprobaciones superadas',
 		notesTitle: 'Observaciones',
@@ -248,6 +251,11 @@ export const es = {
 			error: 'no se pudo revisar esta sección.',
 			blocked: 'el cortafuegos del sitio bloqueó esta sección. Algunos servicios de protección bloquean cualquier visita automática.',
 			not_applicable: 'no aplica, porque el DNS de este dominio lo controla la plataforma que lo aloja.'
+		},
+		sectionStatusMany: {
+			error: 'no se pudieron revisar estas secciones.',
+			blocked: 'el cortafuegos del sitio bloqueó estas secciones. Algunos servicios de protección bloquean cualquier visita automática.',
+			not_applicable: 'no aplican, porque el DNS de este dominio lo controla la plataforma que lo aloja.'
 		},
 		severity: {
 			critical: 'Crítica',
