@@ -115,16 +115,14 @@ export const EXPERIENCE: Role[] = [
 				'Entregué cuatro sistemas a la medida, construidos o rehechos por completo, entre ellos Kaizen AI y Seiri.',
 				'Rehice el sitio de la empresa, kaizenapps.net, con español e inglés desde una sola fuente y el SEO que antes no existía.',
 				'Corrijo y actualizo el ERP que la empresa licencia cuando la tarea me toca; su desarrollo y su soporte diario los lleva el resto del equipo.',
-				'Doy soporte de nivel 2, rastreando la falla hasta el código que la produce.',
-				'Ningún sistema se libera sin pruebas del equipo y del cliente ni sin aprobación de gerencia.'
+				'Doy soporte de nivel 2, rastreando la falla hasta el código que la produce.'
 			],
 			en: [
 				'Design and build the new systems the team delivers, from requirements through to production and maintenance.',
 				'Delivered four bespoke systems, built from scratch or completely rebuilt, among them Kaizen AI and Seiri.',
 				'Rebuilt the company site, kaizenapps.net, with Spanish and English from a single source and the SEO it previously lacked.',
 				'Fix and update the ERP the company licenses when the task falls to me; its development and its day-to-day support sit with the rest of the team.',
-				'Provide level 2 support, tracing a fault down to the code behind it.',
-				'No system ships without testing by the team and the client, and without management approval.'
+				'Provide level 2 support, tracing a fault down to the code behind it.'
 			]
 		}
 	}
