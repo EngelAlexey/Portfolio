@@ -16,6 +16,13 @@ const text = strings.scanner;
 const apiBase: string =
 	import.meta.env.PUBLIC_SCANNER_API ?? (import.meta.env.DEV ? 'http://localhost:3000' : 'https://api.alexherrera.dev');
 
+const TURNSTILE_TEST_SITEKEY = '1x00000000000000000000AA';
+const siteKey: string | undefined =
+	import.meta.env.PUBLIC_TURNSTILE_SITEKEY || (process.env.VERCEL ? undefined : TURNSTILE_TEST_SITEKEY);
+if (siteKey === undefined) {
+	throw new Error('PUBLIC_TURNSTILE_SITEKEY must be set for Vercel builds');
+}
+
 const SECURITY_GUIDE = 'como-proteger-una-pagina-web';
 const GUIDE_SECTIONS = {
 	es: {
@@ -52,11 +59,17 @@ const TOTAL = '{total}' as unknown as number;
 const COUNT = '{count}' as unknown as number;
 const SENT = '{sent}' as unknown as number;
 const CODE = '{code}' as unknown as number;
+const MINUTES = '{minutes}' as unknown as number;
 
 const clientStrings: ScannerStrings = {
 	scanning: text.scanning('{host}'),
 	done: text.done,
-	errors: { ...text.errors, redirect_offsite: text.errors.redirect_offsite('{target}') },
+	errors: {
+		...text.errors,
+		redirect_offsite: text.errors.redirect_offsite('{target}'),
+		rate_limited: text.errors.rate_limited(MINUTES),
+		rate_limited_one: text.errors.rate_limited(1)
+	},
 	resultTitle: text.resultTitle('{host}'),
 	copy: text.copy,
 	copied: text.copied,
@@ -83,6 +96,7 @@ const clientStrings: ScannerStrings = {
 	headerHints: text.headerHints,
 	findingsTitle: text.findingsTitle,
 	noFindings: text.noFindings,
+	blocked: text.blocked,
 	passedTitle: text.passedTitle,
 	severity: text.severity,
 	findings: text.findings,
@@ -95,11 +109,19 @@ const clientStrings: ScannerStrings = {
 		<div class="head">
 			<h1>{text.title}</h1>
 			<p>{text.lead}</p>
+			<p class="about"><a href={path(lang, 'scannerAbout')}>{text.about.title}</a></p>
 		</div>
 	</Container>
 
 	<Container size="text">
-		<form class="scan" data-scanner-form data-api={apiBase} data-strings={JSON.stringify(clientStrings)} novalidate>
+		<form
+			class="scan"
+			data-scanner-form
+			data-api={apiBase}
+			data-sitekey={siteKey}
+			data-strings={JSON.stringify(clientStrings)}
+			novalidate
+		>
 			<label class="label" for="scan-url">{text.label}</label>
 			<div class="row">
 				<div class="field">
@@ -119,6 +141,7 @@ const clientStrings: ScannerStrings = {
 				</div>
 				<button class="btn primary" type="submit">{text.submit}</button>
 			</div>
+			<div class="bot-check" data-scanner-turnstile></div>
 			<div class="progress" data-scanner-progress hidden><span></span></div>
 			<p class="status" data-scanner-status role="status"></p>
 		</form>
@@ -163,6 +186,26 @@ const clientStrings: ScannerStrings = {
 		color: var(--ink-muted);
 		font-size: 1.0625rem;
 		line-height: 1.6;
+	}
+
+	.head .about {
+		margin-top: 0.4rem;
+		font-size: 0.9375rem;
+	}
+
+	.about a {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--line-strong);
+		text-underline-offset: 0.18em;
+	}
+
+	.about a:hover {
+		text-decoration-color: currentColor;
+	}
+
+	.bot-check:has(:global(iframe)) {
+		margin-top: 0.75rem;
 	}
 
 	.scan {
@@ -391,6 +434,16 @@ const clientStrings: ScannerStrings = {
 		font-size: 0.8125rem;
 		line-height: 1.6;
 		resize: vertical;
+	}
+
+	.result :global(.notice) {
+		margin: 0.75rem 0 0;
+		padding: 0.75rem 1rem;
+		border: 1px solid var(--line);
+		border-left: 4px solid var(--sev-medium);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		line-height: 1.55;
 	}
 
 	.result :global(.tally) {

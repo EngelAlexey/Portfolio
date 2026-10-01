@@ -34,6 +34,7 @@ export type ScannerStrings = {
 	readonly headerHints: Readonly<Record<string, string>>;
 	readonly findingsTitle: string;
 	readonly noFindings: string;
+	readonly blocked: string;
 	readonly passedTitle: string;
 	readonly severity: Readonly<Record<Severity, string>>;
 	readonly findings: Readonly<Record<string, string>>;
@@ -41,7 +42,25 @@ export type ScannerStrings = {
 };
 
 type Finding = { readonly code: string; readonly evidence?: Readonly<Record<string, unknown>> };
-type Section = { readonly findings: readonly Finding[]; readonly passed: readonly string[]; readonly notes: readonly string[] };
+type Section = {
+	readonly status: string;
+	readonly findings: readonly Finding[];
+	readonly passed: readonly string[];
+	readonly notes: readonly string[];
+};
+type ApiError = { readonly error: string; readonly detail: string | undefined; readonly retryAfter: number | undefined };
+type TurnstileApi = {
+	render(container: HTMLElement, options: Readonly<Record<string, unknown>>): string | undefined;
+	execute(widget: string): void;
+	reset(widget: string): void;
+};
+type BotCheck = { token(): Promise<string>; reset(): void };
+
+declare global {
+	interface Window {
+		turnstile?: TurnstileApi;
+	}
+}
 type Hop = { readonly url: string; readonly status: number; readonly location: string };
 type Scan = {
 	readonly host: string;
@@ -94,6 +113,10 @@ const FINDING_SPECS = codes.findings as Readonly<Record<string, FindingSpec | un
 const CHECK_ORDER = Object.keys(codes.passed);
 const SHOWN_HEADERS = Object.keys(HEADER_CHECKS);
 const COPIED_RESET_MS = 2500;
+const TURNSTILE_SCRIPT = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+const TURNSTILE_ACTION = 'scan';
+
+let turnstileLoad: Promise<TurnstileApi> | undefined;
 
 function severityOf(code: string): Severity {
 	return FINDING_SPECS[code]?.severity ?? 'info';
@@ -131,17 +154,23 @@ function isScan(body: unknown): body is Scan {
 	return typeof body === 'object' && body !== null && 'sections' in body && 'headers' in body && 'finalUrl' in body;
 }
 
-function readError(body: unknown): { readonly error: string; readonly detail: string | undefined } {
+function readError(body: unknown): ApiError {
 	if (typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string') {
 		const detail = 'detail' in body && typeof body.detail === 'string' ? body.detail : undefined;
-		return { error: body.error, detail };
+		const retryAfter = 'retryAfter' in body && typeof body.retryAfter === 'number' ? body.retryAfter : undefined;
+		return { error: body.error, detail, retryAfter };
 	}
-	return { error: 'unknown', detail: undefined };
+	return { error: 'unknown', detail: undefined, retryAfter: undefined };
 }
 
-function errorMessage(strings: ScannerStrings, error: string, detail: string | undefined): string {
+function errorMessage(strings: ScannerStrings, { error, detail, retryAfter }: ApiError): string {
 	if (error === 'redirect_offsite') {
 		return fill(strings.errors['redirect_offsite'] ?? '', { target: detail ?? '' });
+	}
+	if (error === 'rate_limited') {
+		const minutes = Math.max(1, Math.ceil((retryAfter ?? 3600) / 60));
+		const template = minutes === 1 ? strings.errors['rate_limited_one'] : strings.errors['rate_limited'];
+		return fill(template ?? '', { minutes: String(minutes) });
 	}
 	if (UNREACHABLE_ERRORS.has(error)) {
 		return strings.errors['unreachable'] ?? '';
@@ -267,6 +296,10 @@ function passedMessages(scan: Scan, strings: ScannerStrings): string[] {
 	return Object.values(scan.sections).flatMap((section) => section.passed.map((check) => strings.passed[check] ?? check));
 }
 
+function isBlocked(scan: Scan): boolean {
+	return Object.values(scan.sections).some((section) => section.status === 'blocked');
+}
+
 function resultText(
 	scan: Scan,
 	states: Map<string, CheckState>,
@@ -274,9 +307,16 @@ function resultText(
 	elapsedMs: number,
 	strings: ScannerStrings
 ): string {
-	const lines = [fill(strings.resultTitle, { host: scan.displayHost }), tally(states, strings), factLabels(scan, elapsedMs, strings).join(' | '), ''];
-	lines.push(`${strings.findingsTitle} (${findings.length})`);
-	if (findings.length === 0) {
+	const blocked = isBlocked(scan);
+	const lines = [
+		fill(strings.resultTitle, { host: scan.displayHost }),
+		blocked ? strings.blocked : tally(states, strings),
+		factLabels(scan, elapsedMs, strings).join(' | ')
+	];
+	if (!blocked) {
+		lines.push('', `${strings.findingsTitle} (${findings.length})`);
+	}
+	if (!blocked && findings.length === 0) {
 		lines.push(strings.noFindings);
 	}
 	for (const finding of findings) {
@@ -338,7 +378,11 @@ function renderSummary(
 		facts.append(create('li', label));
 	}
 
-	summary.append(title, create('p', tally(states, strings), 'tally'), meter, facts);
+	if (isBlocked(scan)) {
+		summary.append(title, create('p', strings.blocked, 'notice'), facts);
+	} else {
+		summary.append(title, create('p', tally(states, strings), 'tally'), meter, facts);
+	}
 	return summary;
 }
 
@@ -455,13 +499,17 @@ function renderScan(container: HTMLElement, scan: Scan, elapsedMs: number, strin
 	const states = checkStates(scan, findings);
 	const summary = renderSummary(scan, states, findings, elapsedMs, strings);
 	mountCopy(summary, resultText(scan, states, findings, elapsedMs, strings), fill(strings.resultTitle, { host: scan.displayHost }), strings);
-	container.replaceChildren(
-		summary,
-		create('h3', `${strings.findingsTitle} (${findings.length})`),
-		renderFindings(scan, findings, strings),
-		create('h3', strings.headersTitle),
-		renderResponse(scan, states, findings, strings)
-	);
+	const response = [create('h3', strings.headersTitle), renderResponse(scan, states, findings, strings)];
+	if (isBlocked(scan)) {
+		container.replaceChildren(summary, ...response);
+	} else {
+		container.replaceChildren(
+			summary,
+			create('h3', `${strings.findingsTitle} (${findings.length})`),
+			renderFindings(scan, findings, strings),
+			...response
+		);
+	}
 	const passed = passedMessages(scan, strings);
 	if (passed.length > 0) {
 		const list = create('ul', undefined, 'passed');
@@ -474,6 +522,78 @@ function renderScan(container: HTMLElement, scan: Scan, elapsedMs: number, strin
 	summary.querySelector('h2')?.focus();
 }
 
+function loadTurnstile(): Promise<TurnstileApi> {
+	turnstileLoad ??= new Promise<TurnstileApi>((resolve, reject) => {
+		if (window.turnstile) {
+			resolve(window.turnstile);
+			return;
+		}
+		const script = document.createElement('script');
+		script.src = TURNSTILE_SCRIPT;
+		script.async = true;
+		script.addEventListener('load', () => (window.turnstile ? resolve(window.turnstile) : reject(new Error('turnstile_load'))));
+		script.addEventListener('error', () => reject(new Error('turnstile_load')));
+		document.head.append(script);
+	}).catch((error: unknown) => {
+		turnstileLoad = undefined;
+		throw error;
+	});
+	return turnstileLoad;
+}
+
+function pageTheme(): string {
+	const theme = document.documentElement.dataset['theme'];
+	return theme === 'dark' || theme === 'light' ? theme : 'auto';
+}
+
+function createBotCheck(container: HTMLElement, siteKey: string): BotCheck {
+	let widget: string | undefined;
+	let pending: { resolve(token: string): void; reject(error: Error): void } | undefined;
+	const settle = (outcome: string | Error): void => {
+		const current = pending;
+		pending = undefined;
+		if (current === undefined) {
+			return;
+		}
+		if (typeof outcome === 'string') {
+			current.resolve(outcome);
+		} else {
+			current.reject(outcome);
+		}
+	};
+	return {
+		async token() {
+			const api = await loadTurnstile();
+			return new Promise<string>((resolve, reject) => {
+				pending = { resolve, reject };
+				widget ??= api.render(container, {
+					'sitekey': siteKey,
+					'action': TURNSTILE_ACTION,
+					'appearance': 'interaction-only',
+					'execution': 'execute',
+					'retry': 'never',
+					'language': document.documentElement.lang || 'auto',
+					'theme': pageTheme(),
+					'callback': (token: string) => settle(token),
+					'error-callback': () => settle(new Error('turnstile_failed')),
+					'timeout-callback': () => settle(new Error('turnstile_failed')),
+					'expired-callback': () => settle(new Error('turnstile_failed'))
+				});
+				if (widget === undefined) {
+					settle(new Error('turnstile_load'));
+					return;
+				}
+				api.execute(widget);
+			});
+		},
+		reset() {
+			if (widget !== undefined) {
+				window.turnstile?.reset(widget);
+			}
+		}
+	};
+}
+
 export function mountScannerForm(form: HTMLFormElement): void {
 	const strings = JSON.parse(form.dataset['strings'] ?? '{}') as ScannerStrings;
 	const api = form.dataset['api'] ?? '';
@@ -481,10 +601,12 @@ export function mountScannerForm(form: HTMLFormElement): void {
 	const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
 	const status = form.querySelector<HTMLElement>('[data-scanner-status]');
 	const progress = form.querySelector<HTMLElement>('[data-scanner-progress]');
+	const widget = form.querySelector<HTMLElement>('[data-scanner-turnstile]');
 	const result = document.querySelector<HTMLElement>('[data-scanner-result]');
-	if (!input || !button || !status || !progress || !result) {
+	if (!input || !button || !status || !progress || !widget || !result) {
 		return;
 	}
+	const botCheck = createBotCheck(widget, form.dataset['sitekey'] ?? '');
 
 	input.addEventListener('blur', () => {
 		input.value = hostFromInput(input.value);
@@ -504,24 +626,32 @@ export function mountScannerForm(form: HTMLFormElement): void {
 		form.setAttribute('aria-busy', 'true');
 		result.hidden = true;
 		status.textContent = fill(strings.scanning, { host });
-		const startedAt = performance.now();
 		try {
+			let token: string;
+			try {
+				token = await botCheck.token();
+			} catch (error) {
+				const code = error instanceof Error ? error.message : 'turnstile_failed';
+				status.textContent = strings.errors[code] ?? strings.errors['turnstile_failed'] ?? '';
+				return;
+			}
+			const startedAt = performance.now();
 			const response = await fetch(`${api}/v1/scans`, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ url: host })
+				body: JSON.stringify({ url: host, token })
 			});
 			const body: unknown = await response.json().catch(() => null);
 			if (response.ok && isScan(body)) {
 				status.textContent = strings.done;
 				renderScan(result, body, performance.now() - startedAt, strings);
 			} else {
-				const { error, detail } = readError(body);
-				status.textContent = errorMessage(strings, error, detail);
+				status.textContent = errorMessage(strings, readError(body));
 			}
 		} catch {
 			status.textContent = strings.errors['network'] ?? '';
 		} finally {
+			botCheck.reset();
 			button.disabled = false;
 			progress.hidden = true;
 			form.removeAttribute('aria-busy');

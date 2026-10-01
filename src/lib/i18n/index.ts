@@ -14,7 +14,7 @@ export const t = (lang: Lang): Dict => DICTS[lang];
 
 export const other = (lang: Lang): Lang => (lang === 'es' ? 'en' : 'es');
 
-export type RouteKey = 'home' | 'projects' | 'project' | 'blog' | 'article' | 'about' | 'contact' | 'scanner';
+export type RouteKey = 'home' | 'projects' | 'project' | 'blog' | 'article' | 'about' | 'contact' | 'scanner' | 'scannerAbout';
 
 const SEGMENTS: Record<RouteKey, Record<Lang, string>> = {
 	home: { es: '', en: '' },
@@ -24,7 +24,8 @@ const SEGMENTS: Record<RouteKey, Record<Lang, string>> = {
 	article: { es: 'blog', en: 'blog' },
 	about: { es: 'sobre-mi', en: 'about' },
 	contact: { es: 'contacto', en: 'contact' },
-	scanner: { es: 'herramientas/revisor', en: 'tools/scanner' }
+	scanner: { es: 'herramientas/revisor', en: 'tools/scanner' },
+	scannerAbout: { es: 'herramientas/revisor/acerca', en: 'tools/scanner/about' }
 };
 
 const NESTED: RouteKey[] = ['project', 'article'];

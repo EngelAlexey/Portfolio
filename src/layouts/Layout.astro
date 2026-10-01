@@ -97,7 +97,7 @@ const links = [
 	{ key: 'contact', href: path(lang, 'contact'), label: strings.nav.contact }
 ] as { key: RouteKey; href: string; label: string }[];
 
-const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', article: 'blog' };
+const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', article: 'blog', scannerAbout: 'scanner' };
 ---
 
 <!doctype html>

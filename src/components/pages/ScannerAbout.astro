@@ -1,0 +1,85 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Container from '../Container.astro';
+import Prose from '../Prose.astro';
+import { path, t, type Lang } from '../../lib/i18n';
+import { PERSON } from '../../lib/site';
+import codes from '../../lib/scanner/codes.json';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const strings = t(lang);
+const text = strings.scanner.about;
+---
+
+<Layout {lang} key="scannerAbout" title={strings.meta.titleTemplate(text.title)} description={text.lead}>
+	<Container as="header" size="text">
+		<div class="head">
+			<h1>{text.title}</h1>
+			<p>{text.lead}</p>
+		</div>
+	</Container>
+
+	<Container size="text">
+		<Prose>
+			<h2>{text.whatTitle}</h2>
+			{text.what.map((line) => <p>{line}</p>)}
+
+			<h2>{text.identityTitle}</h2>
+			<p>{text.identity}</p>
+			<pre><code>{codes.userAgent}</code></pre>
+			<p>{text.network}</p>
+
+			<h2>{text.requestsTitle}</h2>
+			<ul>
+				{text.requests.map((line) => <li>{line}</li>)}
+			</ul>
+			<p>{text.requestsNot}</p>
+
+			<h2>{text.whoTitle}</h2>
+			{text.who.map((line) => <p>{line}</p>)}
+
+			<h2>{text.blockTitle}</h2>
+			<p>{text.block}</p>
+
+			<h2>{text.dataTitle}</h2>
+			{text.data.map((line) => <p>{line}</p>)}
+
+			<h2>{text.contactTitle}</h2>
+			<p>
+				{text.contactBefore} <a href={`mailto:${PERSON.email}`}>{PERSON.email}</a>.
+			</p>
+		</Prose>
+		<p class="open">
+			<a class="btn primary" href={path(lang, 'scanner')}>{text.open}</a>
+		</p>
+	</Container>
+</Layout>
+
+<style>
+	.head {
+		padding-block: clamp(2.5rem, 7vw, 4rem) 0.5rem;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: var(--h1);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+	}
+
+	.head p {
+		max-width: var(--measure);
+		margin: 0.6rem 0 0;
+		color: var(--ink-muted);
+		font-size: 1.0625rem;
+		line-height: 1.6;
+	}
+
+	.open {
+		margin: 2.5rem 0 4rem;
+	}
+</style>

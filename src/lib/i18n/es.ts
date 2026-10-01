@@ -190,6 +190,13 @@ export const es = {
 			https_downgrade: 'La página principal redirige de HTTPS a HTTP. El revisor detiene el análisis en ese punto.',
 			ipv6_only: 'El sitio solo publica direcciones IPv6, y el revisor todavía no admite conexiones IPv6.',
 			disabled: 'El revisor está desactivado por mantenimiento. Vuelva a intentarlo más tarde.',
+			unavailable: 'El revisor no está disponible en este momento. Vuelva a intentarlo en unos minutos.',
+			turnstile_failed: 'No se pudo comprobar que la petición la hace una persona. Recargue la página e inténtelo de nuevo.',
+			turnstile_unavailable: 'La verificación anti-bots no responde. Vuelva a intentarlo en unos minutos.',
+			turnstile_load: 'No se pudo cargar la verificación anti-bots. Recargue la página e inténtelo de nuevo.',
+			rate_limited: (minutes: number) =>
+				`Ha alcanzado el límite de 5 análisis por hora. Vuelva a intentarlo en ${minutes === 1 ? '1 minuto' : `${minutes} minutos`}.`,
+			daily_limit: 'El revisor alcanzó su límite de análisis de hoy. Vuelva a intentarlo mañana.',
 			network: 'No se pudo contactar con el revisor. Compruebe su conexión e inténtelo de nuevo.',
 			unknown: 'El análisis falló por un error inesperado. Vuelva a intentarlo.'
 		},
@@ -227,6 +234,8 @@ export const es = {
 		},
 		findingsTitle: 'Hallazgos',
 		noFindings: 'Las cabeceras evaluadas no presentan hallazgos.',
+		blocked:
+			'El cortafuegos del sitio bloqueó el análisis. Algunos servicios de protección bloquean cualquier visita automática. Las cabeceras que se muestran son las de la página de bloqueo.',
 		passedTitle: 'Comprobaciones superadas',
 		severity: {
 			critical: 'Crítica',
@@ -254,6 +263,41 @@ export const es = {
 			'referrer-policy': 'La política de referencia limita la información enviada a otros sitios.',
 			'permissions-policy': 'El acceso a la cámara, el micrófono y la ubicación está restringido.',
 			version: 'El servidor no revela la versión de su software.'
+		},
+		about: {
+			title: 'Qué es este revisor',
+			lead: 'El revisor de seguridad web lee la configuración que un sitio público envía a cualquier visitante. Esta página describe sus peticiones y cómo bloquearlo.',
+			whatTitle: 'Qué analiza',
+			what: [
+				'El revisor pide la página principal de un dominio por HTTPS y evalúa sus cabeceras de seguridad.',
+				'Para cada hallazgo indica la cabecera afectada y enlaza la corrección en la guía de seguridad.',
+				'No es una auditoría ni una prueba de intrusión: solo lee lo que el sitio envía a cualquier visitante.'
+			],
+			identityTitle: 'Cómo se identifica',
+			identity: 'Cada petición del revisor lleva este User-Agent:',
+			network: 'Las peticiones salen de la red de Vercel, que no usa direcciones IP fijas.',
+			requestsTitle: 'Qué peticiones hace',
+			requests: [
+				'Una consulta DNS a 1.1.1.1 para obtener las direcciones del dominio.',
+				'Una petición GET a la página principal por HTTPS, con un límite de 10 segundos y 2 MB.',
+				'Hasta 5 redirecciones, siempre dentro del mismo sitio.'
+			],
+			requestsNot: 'El revisor no envía formularios, no prueba contraseñas y no visita otras páginas del sitio.',
+			whoTitle: 'Quién inicia un análisis',
+			who: [
+				'Cada análisis lo inicia una persona que escribe el dominio en el formulario del revisor. Cada envío pasa la verificación anti-bots de Cloudflare Turnstile.',
+				'Cada dirección IP puede iniciar 5 análisis por hora, y el revisor hace como máximo 500 análisis al día.'
+			],
+			blockTitle: 'Cómo bloquearlo',
+			block: 'Bloquee el User-Agent «AlexHerreraScanner» en el servidor o en el cortafuegos del sitio. El revisor muestra el bloqueo en el resultado y no intenta evitarlo.',
+			dataTitle: 'Qué datos guarda',
+			data: [
+				'El revisor no guarda el resultado del análisis ni el dominio analizado.',
+				'Para aplicar el límite por hora, guarda un hash HMAC de la dirección IP de quien analiza. El hash cambia cada hora, no permite recuperar la IP y se borra a las 48 horas.'
+			],
+			contactTitle: 'Contacto',
+			contactBefore: 'Para cualquier consulta sobre el revisor, escriba a',
+			open: 'Ir al revisor'
 		}
 	},
 	meta: {

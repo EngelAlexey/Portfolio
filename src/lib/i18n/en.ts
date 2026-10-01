@@ -190,6 +190,13 @@ export const en: Dict = {
 			https_downgrade: 'The home page redirects from HTTPS to HTTP. The scanner stops at that point.',
 			ipv6_only: 'The site only publishes IPv6 addresses, and the scanner does not support IPv6 connections yet.',
 			disabled: 'The scanner is down for maintenance. Try again later.',
+			unavailable: 'The scanner is not available right now. Try again in a few minutes.',
+			turnstile_failed: 'The bot check could not confirm that a person sent the request. Reload the page and try again.',
+			turnstile_unavailable: 'The bot check is not responding. Try again in a few minutes.',
+			turnstile_load: 'The bot check failed to load. Reload the page and try again.',
+			rate_limited: (minutes: number) =>
+				`You have reached the limit of 5 scans per hour. Try again in ${minutes === 1 ? '1 minute' : `${minutes} minutes`}.`,
+			daily_limit: "The scanner has reached today's scan limit. Try again tomorrow.",
 			network: 'The scanner could not be reached. Check your connection and try again.',
 			unknown: 'The scan failed because of an unexpected error. Try again.'
 		},
@@ -226,6 +233,8 @@ export const en: Dict = {
 		},
 		findingsTitle: 'Findings',
 		noFindings: 'The headers evaluated show no findings.',
+		blocked:
+			"The site's firewall blocked the scan. Some protection services block every automated visit. The headers shown belong to the block page.",
 		passedTitle: 'Passed checks',
 		severity: {
 			critical: 'Critical',
@@ -253,6 +262,41 @@ export const en: Dict = {
 			'referrer-policy': 'The referrer policy limits what is sent to other sites.',
 			'permissions-policy': 'Access to the camera, microphone and location is restricted.',
 			version: 'The server does not reveal the version of its software.'
+		},
+		about: {
+			title: 'About this scanner',
+			lead: 'The website security scanner reads the configuration a public site sends to every visitor. This page describes its requests and how to block it.',
+			whatTitle: 'What it checks',
+			what: [
+				"The scanner requests a domain's home page over HTTPS and evaluates its security headers.",
+				'For each finding it names the affected header and links to the fix in the security guide.',
+				'It is not an audit or a penetration test: it only reads what the site sends to every visitor.'
+			],
+			identityTitle: 'How it identifies itself',
+			identity: 'Every request from the scanner carries this User-Agent:',
+			network: "Requests come from Vercel's network, which does not use fixed IP addresses.",
+			requestsTitle: 'Which requests it makes',
+			requests: [
+				"One DNS query to 1.1.1.1 to get the domain's addresses.",
+				'One GET request to the home page over HTTPS, limited to 10 seconds and 2 MB.',
+				'Up to 5 redirects, always within the same site.'
+			],
+			requestsNot: 'The scanner does not submit forms, does not try passwords and does not visit other pages of the site.',
+			whoTitle: 'Who starts a scan',
+			who: [
+				'Every scan is started by a person who types the domain into the scanner form. Each submission passes the Cloudflare Turnstile bot check.',
+				'Each IP address can start 5 scans per hour, and the scanner runs at most 500 scans a day.'
+			],
+			blockTitle: 'How to block it',
+			block: 'Block the User-Agent "AlexHerreraScanner" on the server or in the site firewall. The scanner shows the block in the result and does not try to get around it.',
+			dataTitle: 'What data it keeps',
+			data: [
+				'The scanner does not store the scan result or the scanned domain.',
+				'To apply the hourly limit, it stores an HMAC hash of the IP address of the person scanning. The hash changes every hour, cannot be turned back into the IP and is deleted after 48 hours.'
+			],
+			contactTitle: 'Contact',
+			contactBefore: 'For any question about the scanner, write to',
+			open: 'Open the scanner'
 		}
 	},
 	meta: {

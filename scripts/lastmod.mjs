@@ -47,7 +47,8 @@ const PAGES = {
 	projects: ['src/components/pages/Projects.astro', CONTENT, ...I18N],
 	blog: ['src/components/pages/Blog.astro', ARTICLES, ...I18N],
 	about: ['src/components/pages/About.astro', 'src/lib/about.ts', ...I18N],
-	contact: ['src/components/pages/Contact.astro', 'src/lib/site.ts', ...I18N]
+	contact: ['src/components/pages/Contact.astro', 'src/lib/site.ts', ...I18N],
+	scannerAbout: ['src/components/pages/ScannerAbout.astro', ...I18N]
 };
 
 /** @type {Record<string, string>} */

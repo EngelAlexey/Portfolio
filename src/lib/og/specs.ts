@@ -78,6 +78,18 @@ function fixedCards(lang: Lang): CardSpec[] {
 			portrait: false,
 			theme: 'light',
 			footer: PERSON.name
+		},
+		{
+			route: routeOf(lang, 'scannerAbout'),
+			lang,
+			eyebrow,
+			heading: strings.scanner.about.title,
+			meta: strings.scanner.about.lead,
+			areas: ['seguridad'],
+			accent: 'seguridad',
+			portrait: false,
+			theme: 'light',
+			footer: strings.scanner.title
 		}
 	];
 }
