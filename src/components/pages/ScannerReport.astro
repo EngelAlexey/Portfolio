@@ -36,7 +36,7 @@ const pageStrings: ReportPageStrings = {
 		data-strings={JSON.stringify(clientStrings)}
 		data-page={JSON.stringify(pageStrings)}
 	>
-		<Container as="header" size="text">
+		<Container as="header">
 			<div class="head">
 				<h1>{report.title}</h1>
 				<p class="meta" data-report-meta></p>
@@ -55,7 +55,7 @@ const pageStrings: ReportPageStrings = {
 			</div>
 		</Container>
 
-		<Container size="text">
+		<Container>
 			<p class="status" data-report-status role="status"></p>
 			<noscript><p class="status">{report.noScript}</p></noscript>
 			<ScannerResult {lang} />
@@ -68,6 +68,11 @@ const pageStrings: ReportPageStrings = {
 	.head {
 		padding-block: clamp(2.5rem, 7vw, 4rem) 1.5rem;
 		border-bottom: 1px solid var(--line);
+	}
+
+	.head > *,
+	.status {
+		max-width: 48rem;
 	}
 
 	h1 {

@@ -361,7 +361,9 @@ function renderSummary(
 			segment.title = state === 'pass' ? (strings.passed[check] ?? check) : (strings.findings[worst?.code ?? ''] ?? check);
 			meter.append(segment);
 		}
-		summary.append(create('p', tally(states, strings), 'tally'), meter);
+		const score = create('div', undefined, 'score');
+		score.append(create('p', tally(states, strings), 'tally'), meter);
+		summary.append(score);
 	}
 
 	const facts = create('ul', undefined, 'facts');
@@ -566,22 +568,26 @@ export function renderScan(
 	if (options.reportLink) {
 		mountReportLink(summary, scan, strings);
 	}
-	container.replaceChildren(
-		summary,
-		create('h3', `${strings.findingsTitle} (${findings.length})`),
-		renderFindings(scan, findings, strings)
-	);
+	const main = create('div', undefined, 'main');
+	main.append(create('h3', `${strings.findingsTitle} (${findings.length})`), renderFindings(scan, findings, strings));
 	if (scan.finalUrl !== null) {
-		container.append(create('h3', strings.headersTitle), renderResponse(scan, states, findings, strings));
+		main.append(create('h3', strings.headersTitle), renderResponse(scan, states, findings, strings));
 	}
+	const side = create('div', undefined, 'side');
 	const passed = passedMessages(scan, strings);
 	if (passed.length > 0) {
-		container.append(create('h3', `${strings.passedTitle} (${passed.length})`), list('passed', passed));
+		side.append(create('h3', `${strings.passedTitle} (${passed.length})`), list('passed', passed));
 	}
 	const notes = noteTexts(scan, strings);
 	if (notes.length > 0) {
-		container.append(create('h3', `${strings.notesTitle} (${notes.length})`), list('notes', notes));
+		side.append(create('h3', `${strings.notesTitle} (${notes.length})`), list('notes', notes));
 	}
+	const layout = create('div', undefined, 'layout');
+	layout.append(main);
+	if (side.childElementCount > 0) {
+		layout.append(side);
+	}
+	container.replaceChildren(summary, layout);
 	container.hidden = false;
 	summary.querySelector('h2')?.focus();
 }

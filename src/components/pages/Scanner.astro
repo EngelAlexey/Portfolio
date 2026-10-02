@@ -24,7 +24,7 @@ const clientStrings = await scannerClientStrings(lang);
 ---
 
 <Layout {lang} key="scanner" title={strings.meta.titleTemplate(text.title)} description={text.lead}>
-	<Container as="header" size="text">
+	<Container as="header">
 		<div class="head">
 			<h1>{text.heading}</h1>
 			<p>{text.lead}</p>
@@ -32,7 +32,7 @@ const clientStrings = await scannerClientStrings(lang);
 		</div>
 	</Container>
 
-	<Container size="text">
+	<Container>
 		<form
 			class="scan"
 			data-scanner-form
@@ -76,6 +76,11 @@ const clientStrings = await scannerClientStrings(lang);
 <style>
 	.head {
 		padding-block: clamp(2.5rem, 7vw, 4rem) 1.5rem;
+	}
+
+	.head > *,
+	.scan > * {
+		max-width: 48rem;
 	}
 
 	h1 {
