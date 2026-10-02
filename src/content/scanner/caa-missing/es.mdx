@@ -17,7 +17,7 @@ sources:
 
 CAA es un registro DNS que indica qué autoridades de certificación pueden emitir certificados para su dominio. Ni el dominio analizado ni sus dominios padre publican uno.
 
-El revisor consulta el dominio analizado y sube por sus dominios padre, sin llegar al dominio de nivel superior. Para `www.su-dominio.example`, consulta `www.su-dominio.example` y `su-dominio.example`.
+El escáner consulta el dominio analizado y sube por sus dominios padre, sin llegar al dominio de nivel superior. Para `www.su-dominio.example`, consulta `www.su-dominio.example` y `su-dominio.example`.
 
 ## Qué riesgo tiene
 
@@ -55,7 +55,7 @@ Las dos plataformas emiten sus certificados con Let's Encrypt: [Vercel](https://
 
 ## Cómo comprobarlo
 
-Consulte el dominio donde publicó el registro, porque `dig`, a diferencia del revisor, no sube por los dominios padre:
+Consulte el dominio donde publicó el registro, porque `dig`, a diferencia del escáner, no sube por los dominios padre:
 
 ```text
 $ dig +short CAA su-dominio.example

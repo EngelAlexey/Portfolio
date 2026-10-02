@@ -170,34 +170,36 @@ export const es = {
 		back: 'Volver al inicio'
 	},
 	scanner: {
-		title: 'Revisor de seguridad web',
-		lead: 'Analiza la configuración de seguridad de un sitio público e indica cómo corregir cada hallazgo.',
+		title: 'Escáner de seguridad web',
+		heading: 'Escanee su sitio',
+		lead: 'El escáner analiza la configuración de seguridad de un sitio público e indica cómo corregir cada hallazgo.',
+		aboutLink: 'Más información',
 		label: 'Dominio',
-		placeholder: 'su-dominio.example',
-		submit: 'Analizar dominio',
+		placeholder: 'su-dominio.ejemplo',
+		submit: 'Analizar sitio',
 		scanning: (host: string) => `Analizando ${host}`,
 		done: 'Análisis terminado',
-		noScript: 'El revisor requiere JavaScript para enviar el dominio y mostrar el resultado.',
+		noScript: 'El escáner requiere JavaScript para enviar el dominio y mostrar el resultado.',
 		errors: {
 			invalid_url: 'El dominio no es válido. Compruebe que esté bien escrito.',
-			blocked_address: 'El revisor solo analiza dominios públicos de internet.',
+			blocked_address: 'El escáner solo analiza dominios públicos de internet.',
 			domain_not_found: 'El dominio no está registrado o no publica direcciones IP. Compruebe que esté bien escrito.',
 			dns_error: 'El DNS del dominio no respondió. Vuelva a intentarlo en unos minutos.',
 			unreachable: 'El sitio no respondió en 10 segundos. Puede estar fuera de servicio o responder con demasiada lentitud.',
 			redirect_offsite: (target: string) => `La página principal redirige a otro sitio, ${target}. Analice ese dominio para evaluar sus cabeceras.`,
-			redirect_blocked: 'La página principal redirige a una dirección que el revisor no visita: una IP, un puerto no estándar o una red privada.',
+			redirect_blocked: 'La página principal redirige a una dirección que el escáner no visita: una IP, un puerto no estándar o una red privada.',
 			redirect_invalid: 'La página principal tiene una cadena de redirecciones inválida o de más de 5 saltos.',
-			https_downgrade: 'La página principal redirige de HTTPS a HTTP. El revisor detiene el análisis en ese punto.',
-			ipv6_only: 'El sitio solo publica direcciones IPv6, y el revisor todavía no admite conexiones IPv6.',
-			disabled: 'El revisor está desactivado por mantenimiento. Vuelva a intentarlo más tarde.',
-			unavailable: 'El revisor no está disponible en este momento. Vuelva a intentarlo en unos minutos.',
+			https_downgrade: 'La página principal redirige de HTTPS a HTTP. El escáner detiene el análisis en ese punto.',
+			ipv6_only: 'El sitio solo publica direcciones IPv6, y el escáner todavía no admite conexiones IPv6.',
+			disabled: 'El escáner está desactivado por mantenimiento. Vuelva a intentarlo más tarde.',
+			unavailable: 'El escáner no está disponible en este momento. Vuelva a intentarlo en unos minutos.',
 			turnstile_failed: 'No se pudo comprobar que la petición la hace una persona. Recargue la página e inténtelo de nuevo.',
 			turnstile_unavailable: 'La verificación anti-bots no responde. Vuelva a intentarlo en unos minutos.',
 			turnstile_load: 'No se pudo cargar la verificación anti-bots. Recargue la página e inténtelo de nuevo.',
 			rate_limited: (minutes: number) =>
 				`Ha alcanzado el límite de 5 análisis por hora. Vuelva a intentarlo en ${minutes === 1 ? '1 minuto' : `${minutes} minutos`}.`,
-			daily_limit: 'El revisor alcanzó su límite de análisis de hoy. Vuelva a intentarlo mañana.',
-			network: 'No se pudo contactar con el revisor. Compruebe su conexión e inténtelo de nuevo.',
+			daily_limit: 'El escáner alcanzó su límite de análisis de hoy. Vuelva a intentarlo mañana.',
+			network: 'No se pudo contactar con el escáner. Compruebe su conexión e inténtelo de nuevo.',
 			unknown: 'El análisis falló por un error inesperado. Vuelva a intentarlo.'
 		},
 		resultTitle: (host: string) => `Resultado de ${host}`,
@@ -330,10 +332,10 @@ export const es = {
 			'hsts-preloaded': 'El dominio termina en .{detail}, un dominio de nivel superior que los navegadores tienen en su lista de precarga HSTS. Solo lo abren por HTTPS.',
 			'no-mx': 'El dominio no tiene registros MX, así que no recibe correo. SPF y DMARC siguen evitando correos falsificados con el dominio.',
 			'http-not-served': 'El puerto 80 no responde: el sitio no tiene versión HTTP.',
-			'ipv6-only': 'El sitio solo publica direcciones IPv6, y el revisor solo conecta por IPv4.',
+			'ipv6-only': 'El sitio solo publica direcciones IPv6, y el escáner solo conecta por IPv4.',
 			'redirects-offsite': 'La página principal redirige a otro sitio, {detail}. Analice ese dominio para revisar sus cabeceras, cookies y contenido.',
-			'content-truncated': 'La página supera los 2 MB, y el revisor analizó solo los primeros 2 MB.',
-			'http2-only': 'El servidor solo admite HTTP/2, y el revisor se conecta por HTTP/1.1.',
+			'content-truncated': 'La página supera los 2 MB, y el escáner analizó solo los primeros 2 MB.',
+			'http2-only': 'El servidor solo admite HTTP/2, y el escáner se conecta por HTTP/1.1.',
 			'csp-report-only': 'El sitio envía Content-Security-Policy-Report-Only: la política se prueba, pero no se aplica.',
 			'mixed-content-passive': 'La página carga imágenes, audio o vídeo por HTTP. Los navegadores actuales los piden por HTTPS.',
 			'cookie-samesite-none-rejected': 'Una cookie declara SameSite=None sin Secure, y el navegador la descarta.',
@@ -341,7 +343,7 @@ export const es = {
 			'dmarc-testing': 'La política DMARC está en modo de prueba (t=y).'
 		},
 		report: {
-			title: 'Reporte del revisor',
+			title: 'Reporte del escáner',
 			loading: 'Cargando el reporte.',
 			notFound: 'Este reporte no existe o ya venció. Los reportes se borran a los 30 días.',
 			scanned: (date: string) => `Análisis del ${date}.`,
@@ -356,7 +358,7 @@ export const es = {
 				minutes === 1 ? 'Puede volver a analizarlo en 1 minuto.' : `Puede volver a analizarlo en ${minutes} minutos.`,
 			open: 'Abrir el reporte',
 			ago: (minutes: number) => (minutes === 1 ? 'Este sitio se analizó hace 1 minuto.' : `Este sitio se analizó hace ${minutes} minutos.`),
-			back: 'Ir al revisor',
+			back: 'Ir al escáner',
 			noScript: 'El reporte requiere JavaScript para cargarse.'
 		},
 		explanation: {
@@ -370,16 +372,16 @@ export const es = {
 			missing: 'Esta explicación todavía no está escrita.'
 		},
 		about: {
-			title: 'Qué es este revisor',
-			lead: 'El revisor de seguridad web lee la configuración que un sitio público envía a cualquier visitante. Esta página describe sus peticiones y cómo bloquearlo.',
+			title: 'Acerca del escáner',
+			lead: 'El escáner de seguridad web lee la configuración que un sitio público envía a cualquier visitante. Esta página describe sus peticiones y cómo bloquearlo.',
 			whatTitle: 'Qué analiza',
 			what: [
-				'El revisor evalúa la conexión segura, las cabeceras, las cookies y el contenido de la página principal de un dominio.',
+				'El escáner evalúa la conexión segura, las cabeceras, las cookies y el contenido de la página principal de un dominio.',
 				'También revisa los registros DNS que protegen el correo del dominio: SPF, DMARC y CAA.',
 				'No es una auditoría ni una prueba de intrusión: solo lee lo que el sitio envía a cualquier visitante.'
 			],
 			identityTitle: 'Cómo se identifica',
-			identity: 'Cada petición del revisor lleva este User-Agent:',
+			identity: 'Cada petición del escáner lleva este User-Agent:',
 			network: 'Las peticiones salen de la red de Vercel, que no usa direcciones IP fijas.',
 			requestsTitle: 'Qué peticiones hace',
 			requests: [
@@ -389,22 +391,22 @@ export const es = {
 				'Peticiones GET a la página principal por HTTP, hasta la primera redirección a HTTPS, para comprobar que existe.',
 				'Una petición GET a /.well-known/security.txt.'
 			],
-			requestsNot: 'El revisor no envía formularios, no prueba contraseñas y no visita otras páginas del sitio.',
+			requestsNot: 'El escáner no envía formularios, no prueba contraseñas y no visita otras páginas del sitio.',
 			whoTitle: 'Quién inicia un análisis',
 			who: [
-				'Cada análisis lo inicia una persona que escribe el dominio en el formulario del revisor. Cada envío pasa la verificación anti-bots de Cloudflare Turnstile.',
-				'Cada dirección IP puede iniciar 5 análisis por hora, y el revisor hace como máximo 500 análisis al día.'
+				'Cada análisis lo inicia una persona que escribe el dominio en el formulario del escáner. Cada envío pasa la verificación anti-bots de Cloudflare Turnstile.',
+				'Cada dirección IP puede iniciar 5 análisis por hora, y el escáner hace como máximo 500 análisis al día.'
 			],
 			blockTitle: 'Cómo bloquearlo',
-			block: 'Bloquee el User-Agent «AlexHerreraScanner» en el servidor o en el cortafuegos del sitio. El revisor muestra el bloqueo en el resultado y no intenta evitarlo.',
+			block: 'Bloquee el User-Agent «AlexHerreraScanner» en el servidor o en el cortafuegos del sitio. El escáner muestra el bloqueo en el resultado y no intenta evitarlo.',
 			dataTitle: 'Qué datos guarda',
 			data: [
-				'El revisor no guarda el resultado del análisis ni el dominio analizado.',
+				'El escáner guarda el reporte y el dominio analizado durante 30 días, para que pueda compartir su enlace. Cualquiera con el enlace puede ver el reporte, que no incluye la dirección IP de quien analiza.',
 				'Para aplicar el límite por hora, guarda un hash HMAC de la dirección IP de quien analiza. El hash cambia cada hora, no permite recuperar la IP y se borra a las 48 horas.'
 			],
 			contactTitle: 'Contacto',
-			contactBefore: 'Para cualquier consulta sobre el revisor, escriba a',
-			open: 'Ir al revisor'
+			contactBefore: 'Para cualquier consulta sobre el escáner, escriba a',
+			open: 'Ir al escáner'
 		}
 	},
 	meta: {

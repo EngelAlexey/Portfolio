@@ -15,7 +15,7 @@ sources:
 
 ## Qué significa
 
-Además de la conexión normal, el revisor intentó una conexión que solo admite TLS 1.0 y otra que solo admite TLS 1.1. Su servidor aceptó al menos una de las dos.
+Además de la conexión normal, el escáner intentó una conexión que solo admite TLS 1.0 y otra que solo admite TLS 1.1. Su servidor aceptó al menos una de las dos.
 
 ## Qué riesgo tiene
 
@@ -49,11 +49,11 @@ El valor por defecto, `all -SSLv3`, incluye TLS 1.0 y TLS 1.1. Si un `VirtualHos
 
 ### Cloudflare
 
-La observación «El sitio se sirve a través de la red de Cloudflare» indica que el revisor negoció con Cloudflare, no con su servidor. Cloudflare acepta TLS 1.0 por defecto, según su [documentación](https://developers.cloudflare.com/ssl/reference/protocols/), así que ese valor basta para que aparezca este hallazgo. En **SSL/TLS > Edge Certificates**, cambie **Minimum TLS Version** a TLS 1.2.
+La observación «El sitio se sirve a través de la red de Cloudflare» indica que el escáner negoció con Cloudflare, no con su servidor. Cloudflare acepta TLS 1.0 por defecto, según su [documentación](https://developers.cloudflare.com/ssl/reference/protocols/), así que ese valor basta para que aparezca este hallazgo. En **SSL/TLS > Edge Certificates**, cambie **Minimum TLS Version** a TLS 1.2.
 
 ## Cómo comprobarlo
 
-Intente una conexión con cada versión antigua. OpenSSL 3 solo usa TLS 1.0 y TLS 1.1 con el nivel de seguridad 0. Por eso la orden lo fija con `-cipher`, como hace el revisor:
+Intente una conexión con cada versión antigua. OpenSSL 3 solo usa TLS 1.0 y TLS 1.1 con el nivel de seguridad 0. Por eso la orden lo fija con `-cipher`, como hace el escáner:
 
 ```text
 $ openssl s_client -connect su-dominio.example:443 -servername su-dominio.example -tls1 -cipher 'DEFAULT:@SECLEVEL=0' </dev/null 2>&1 | grep -E 'Cipher is|no protocols'

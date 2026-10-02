@@ -15,15 +15,15 @@ sources:
 
 ## Qué significa
 
-Una cabecera `Set-Cookie` de su página principal crea una cookie sin el atributo `HttpOnly`, así que cualquier script de la página puede leerla con `document.cookie`. El revisor lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
+Una cabecera `Set-Cookie` de su página principal crea una cookie sin el atributo `HttpOnly`, así que cualquier script de la página puede leerla con `document.cookie`. El escáner lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
 
-Este hallazgo, de severidad informativa y sin restar puntos, cubre las cookies que no son de sesión. El revisor considera de sesión los nombres conocidos, como `PHPSESSID` o `wordpress_logged_in_…`, y los que contienen `sess`, `sid`, `auth`, `token` o `jwt`. Las demás cookies entran aquí, igual que las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`.
+Este hallazgo, de severidad informativa y sin restar puntos, cubre las cookies que no son de sesión. El escáner considera de sesión los nombres conocidos, como `PHPSESSID` o `wordpress_logged_in_…`, y los que contienen `sess`, `sid`, `auth`, `token` o `jwt`. Las demás cookies entran aquí, igual que las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`.
 
 ## Qué riesgo tiene
 
 Si un atacante consigue ejecutar un script en su página, ese script puede leer la cookie. El daño depende del contenido de la cookie: una preferencia de idioma expone poco; un identificador de la persona permite actuar en su nombre.
 
-El revisor decide solo por el nombre, así que no reconoce una cookie de sesión llamada `sesion` o `usuario`. Si esta cookie identifica a la persona, corríjala igual que una cookie de sesión: el riesgo es el mismo.
+El escáner decide solo por el nombre, así que no reconoce una cookie de sesión llamada `sesion` o `usuario`. Si esta cookie identifica a la persona, corríjala igual que una cookie de sesión: el riesgo es el mismo.
 
 ## Cómo corregirlo
 
@@ -61,7 +61,7 @@ Indique el nombre en lugar de `~`, que añadiría `HttpOnly` a todas las cookies
 
 ## Cómo comprobarlo
 
-La cabecera `Set-Cookie` de la cookie debe incluir `HttpOnly`. La orden pide la página principal con GET y sigue las redirecciones, como el revisor:
+La cabecera `Set-Cookie` de la cookie debe incluir `HttpOnly`. La orden pide la página principal con GET y sigue las redirecciones, como el escáner:
 
 ```text
 $ curl -sL -o /dev/null -D - https://su-dominio.example/ | grep -i '^set-cookie'

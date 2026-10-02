@@ -15,9 +15,9 @@ sources:
 
 ## Qué significa
 
-Una cabecera `Set-Cookie` de su página principal crea una cookie de sesión sin el atributo `Secure`. Ese atributo indica al navegador que envíe la cookie solo por HTTPS. El revisor lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
+Una cabecera `Set-Cookie` de su página principal crea una cookie de sesión sin el atributo `Secure`. Ese atributo indica al navegador que envíe la cookie solo por HTTPS. El escáner lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
 
-El revisor reconoce una cookie de sesión por su nombre. Cuenta los nombres conocidos, como `PHPSESSID`, `JSESSIONID`, `connect.sid`, `laravel_session` o `wordpress_logged_in_…`, y cualquier nombre que contenga `sess`, `sid`, `auth`, `token` o `jwt`. Excluye las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`.
+El escáner reconoce una cookie de sesión por su nombre. Cuenta los nombres conocidos, como `PHPSESSID`, `JSESSIONID`, `connect.sid`, `laravel_session` o `wordpress_logged_in_…`, y cualquier nombre que contenga `sess`, `sid`, `auth`, `token` o `jwt`. Excluye las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`.
 
 Una cookie con `SameSite=None` y sin `Secure` no cuenta en este hallazgo. Chrome, Edge y Firefox la rechazan, así que el análisis la señala en «Observaciones».
 
@@ -35,7 +35,7 @@ Añada `Secure` a la cabecera `Set-Cookie` que crea la cookie de sesión. Antes,
 Set-Cookie: PHPSESSID=2c7d9e4f1a8b6e3d; Path=/; Secure; HttpOnly; SameSite=Lax
 ```
 
-El ejemplo incluye también `HttpOnly` y `SameSite=Lax`, que el revisor comprueba en otros hallazgos. El atributo se fija donde la aplicación crea la cookie.
+El ejemplo incluye también `HttpOnly` y `SameSite=Lax`, que el escáner comprueba en otros hallazgos. El atributo se fija donde la aplicación crea la cookie.
 
 En PHP, active [`session.cookie_secure`](https://www.php.net/manual/en/session.configuration.php#ini.session.cookie-secure) en `php.ini`. Su valor por defecto es `0`:
 
@@ -64,13 +64,13 @@ El símbolo `~` sin expresión regular aplica la regla a todas las cookies.
 
 ### WordPress
 
-Según su [documentación](https://developer.wordpress.org/advanced-administration/wordpress/cookies/), WordPress crea cookies para quien inicia sesión y para quien comenta. El revisor no hace ninguna de las dos cosas, así que esta cookie la crea un plugin, el tema o el alojamiento.
+Según su [documentación](https://developer.wordpress.org/advanced-administration/wordpress/cookies/), WordPress crea cookies para quien inicia sesión y para quien comenta. El escáner no hace ninguna de las dos cosas, así que esta cookie la crea un plugin, el tema o el alojamiento.
 
 Si la cookie es `PHPSESSID`, la crea la sesión de PHP y el ajuste de arriba se aplica también a ella. La excepción es un plugin que fije otros valores en su código. Si tiene otro nombre, búsquelo en el código de los plugins y del tema para saber cuál la crea. Después, pida la corrección a su autor.
 
 ## Cómo comprobarlo
 
-La cabecera `Set-Cookie` de la cookie de sesión debe incluir `secure`, en mayúsculas o en minúsculas. La orden pide la página principal con GET y sigue las redirecciones, como el revisor:
+La cabecera `Set-Cookie` de la cookie de sesión debe incluir `secure`, en mayúsculas o en minúsculas. La orden pide la página principal con GET y sigue las redirecciones, como el escáner:
 
 ```text
 $ curl -sL -o /dev/null -D - https://su-dominio.example/ | grep -i '^set-cookie'

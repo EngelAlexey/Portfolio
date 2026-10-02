@@ -17,7 +17,7 @@ sources:
 
 Su sitio envía la cabecera `Strict-Transport-Security`, conocida como HSTS, con un `max-age` menor de 31536000 segundos, un año. El navegador aplica la política durante ese plazo, contado desde que recibió la cabecera.
 
-El revisor pide al menos un año, el mínimo que exige la [lista de precarga HSTS](https://hstspreload.org/) de los navegadores.
+El escáner pide al menos un año, el mínimo que exige la [lista de precarga HSTS](https://hstspreload.org/) de los navegadores.
 
 ## Qué riesgo tiene
 
@@ -31,7 +31,7 @@ Suba `max-age` a un año como mínimo. OWASP recomienda dos años, 63072000 segu
 Strict-Transport-Security: max-age=63072000; includeSubDomains
 ```
 
-Si su cabecera ya lleva `includeSubDomains` o `preload`, consérvelos y cambie solo el número. Si la respuesta lleva dos cabeceras `Strict-Transport-Security`, el navegador y el revisor solo leen la primera, así que deje una.
+Si su cabecera ya lleva `includeSubDomains` o `preload`, consérvelos y cambie solo el número. Si la respuesta lleva dos cabeceras `Strict-Transport-Security`, el navegador y el escáner solo leen la primera, así que deje una.
 
 ### Nginx
 

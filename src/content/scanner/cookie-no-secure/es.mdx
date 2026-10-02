@@ -13,9 +13,9 @@ sources:
 
 ## Qué significa
 
-Una cabecera `Set-Cookie` de su página principal crea una cookie sin el atributo `Secure`. Ese atributo indica al navegador que envíe la cookie solo por HTTPS. El revisor lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
+Una cabecera `Set-Cookie` de su página principal crea una cookie sin el atributo `Secure`. Ese atributo indica al navegador que envíe la cookie solo por HTTPS. El escáner lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
 
-Este hallazgo cubre las cookies que no son de sesión. El revisor considera de sesión los nombres conocidos, como `PHPSESSID` o `wordpress_logged_in_…`, y los que contienen `sess`, `sid`, `auth`, `token` o `jwt`. Las demás cookies entran aquí, igual que las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`.
+Este hallazgo cubre las cookies que no son de sesión. El escáner considera de sesión los nombres conocidos, como `PHPSESSID` o `wordpress_logged_in_…`, y los que contienen `sess`, `sid`, `auth`, `token` o `jwt`. Las demás cookies entran aquí, igual que las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`.
 
 Una cookie con `SameSite=None` y sin `Secure` no cuenta en este hallazgo. Chrome, Edge y Firefox la rechazan, así que el análisis la señala en «Observaciones».
 
@@ -23,7 +23,7 @@ Una cookie con `SameSite=None` y sin `Secure` no cuenta en este hallazgo. Chrome
 
 Sin `Secure`, el navegador envía la cookie en cualquier petición a su dominio, también por `http://`. En una red wifi pública, quien comparte la red puede leer esa petición sin cifrar. El daño depende del contenido de la cookie: una preferencia de idioma expone poco; un identificador de la persona permite actuar en su nombre.
 
-El revisor decide solo por el nombre, así que no reconoce una cookie de sesión llamada `sesion` o `usuario`. Si esta cookie identifica a la persona, corríjala igual que una cookie de sesión: el riesgo es el mismo.
+El escáner decide solo por el nombre, así que no reconoce una cookie de sesión llamada `sesion` o `usuario`. Si esta cookie identifica a la persona, corríjala igual que una cookie de sesión: el riesgo es el mismo.
 
 ## Cómo corregirlo
 
@@ -57,7 +57,7 @@ El símbolo `~` sin expresión regular aplica la regla a todas las cookies.
 
 ## Cómo comprobarlo
 
-Cada cabecera `Set-Cookie` debe incluir `secure`, en mayúsculas o en minúsculas. La orden pide la página principal con GET y sigue las redirecciones, como el revisor:
+Cada cabecera `Set-Cookie` debe incluir `secure`, en mayúsculas o en minúsculas. La orden pide la página principal con GET y sigue las redirecciones, como el escáner:
 
 ```text
 $ curl -sL -o /dev/null -D - https://su-dominio.example/ | grep -i '^set-cookie'

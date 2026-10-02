@@ -15,9 +15,9 @@ sources:
 
 ## Qué significa
 
-Su página principal se sirve por HTTPS, pero carga por HTTP al menos un recurso activo. El revisor lee el HTML que envía el servidor, sin ejecutar JavaScript. Cuenta como activos los scripts, las hojas de estilo, los marcos (`<iframe>`, `<frame>`) y los elementos `<object>` y `<embed>`. Una etiqueta `<base>` con una dirección `http:` convierte en `http:` también las rutas relativas.
+Su página principal se sirve por HTTPS, pero carga por HTTP al menos un recurso activo. El escáner lee el HTML que envía el servidor, sin ejecutar JavaScript. Cuenta como activos los scripts, las hojas de estilo, los marcos (`<iframe>`, `<frame>`) y los elementos `<object>` y `<embed>`. Una etiqueta `<base>` con una dirección `http:` convierte en `http:` también las rutas relativas.
 
-Las imágenes, el audio y el vídeo por HTTP no dan este hallazgo, porque los navegadores actuales los piden por HTTPS. El revisor los anota como observación, que no resta puntos.
+Las imágenes, el audio y el vídeo por HTTP no dan este hallazgo, porque los navegadores actuales los piden por HTTPS. El escáner los anota como observación, que no resta puntos.
 
 ## Qué riesgo tiene
 
@@ -29,9 +29,9 @@ Si un navegador los cargara, llegarían sin cifrar. En una red wifi pública, un
 
 Cambie a `https://` la dirección de cada recurso que muestra el hallazgo, después de comprobar que se descarga por HTTPS. Para los recursos de su propio dominio, una ruta relativa como `/js/menu.js` también sirve. Si un recurso no existe por HTTPS, sírvalo desde su dominio o quítelo.
 
-Busque las direcciones en las plantillas y en el contenido guardado. El revisor solo lee la página principal, así que revise también el resto de páginas.
+Busque las direcciones en las plantillas y en el contenido guardado. El escáner solo lee la página principal, así que revise también el resto de páginas.
 
-La directiva `upgrade-insecure-requests` de una política de seguridad de contenido (CSP) hace que el navegador pida por HTTPS todos los recursos de la página. El revisor la acepta en la cabecera `Content-Security-Policy` o en esta etiqueta dentro de `<head>`:
+La directiva `upgrade-insecure-requests` de una política de seguridad de contenido (CSP) hace que el navegador pida por HTTPS todos los recursos de la página. El escáner la acepta en la cabecera `Content-Security-Policy` o en esta etiqueta dentro de `<head>`:
 
 ```html
 <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
@@ -64,7 +64,7 @@ $ curl -s https://su-dominio.example/ | grep -Eic '<(script|link|iframe|frame|ob
 0
 ```
 
-Si da más de 0, cambie `-c` por `-o` para ver las etiquetas. Para el revisor, un `<link>` solo cuenta si es una hoja de estilo (`rel="stylesheet"`).
+Si da más de 0, cambie `-c` por `-o` para ver las etiquetas. Para el escáner, un `<link>` solo cuenta si es una hoja de estilo (`rel="stylesheet"`).
 
 Si eligió `upgrade-insecure-requests`, la orden anterior sigue contando las etiquetas. Compruebe en su lugar que la directiva llega en la cabecera o en la etiqueta `<meta>`:
 

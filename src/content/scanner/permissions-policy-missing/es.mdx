@@ -15,9 +15,9 @@ sources:
 
 ## Qué significa
 
-La cabecera `Permissions-Policy` indica qué funciones del navegador puede usar la página. El revisor comprueba tres: `camera`, `microphone` y `geolocation`. Su página principal no envía la cabecera, omite alguna de las tres o la permite a cualquier origen con `*`.
+La cabecera `Permissions-Policy` indica qué funciones del navegador puede usar la página. El escáner comprueba tres: `camera`, `microphone` y `geolocation`. Su página principal no envía la cabecera, omite alguna de las tres o la permite a cualquier origen con `*`.
 
-El revisor también marca la cabecera cuando no puede leerla, por ejemplo si usa la sintaxis de la antigua cabecera `Feature-Policy`, como `camera 'none'`. El navegador ignora entera una cabecera que no puede leer. Tampoco cuenta una cabecera `Feature-Policy`, que el revisor no lee.
+El escáner también marca la cabecera cuando no puede leerla, por ejemplo si usa la sintaxis de la antigua cabecera `Feature-Policy`, como `camera 'none'`. El navegador ignora entera una cabecera que no puede leer. Tampoco cuenta una cabecera `Feature-Policy`, que el escáner no lee.
 
 ## Qué riesgo tiene
 

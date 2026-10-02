@@ -15,14 +15,14 @@ sources:
 
 El archivo `security.txt` indica a quien encuentra un fallo de seguridad en su sitio cómo avisarle. La RFC 9116 fija su dirección, `/.well-known/security.txt`, y su formato.
 
-El revisor pide `https://su-dominio.example/.well-known/security.txt` y comprueba cuatro condiciones:
+El escáner pide `https://su-dominio.example/.well-known/security.txt` y comprueba cuatro condiciones:
 
 1. La respuesta tiene el estado 200.
 2. La respuesta llega con el tipo `text/plain`.
 3. El archivo incluye un campo `Contact`.
 4. El archivo incluye un campo `Expires` con una fecha futura.
 
-Si falla una, el revisor muestra el hallazgo. Una página HTML con estado 200 no cuenta, porque su tipo no es `text/plain`. El revisor sigue las redirecciones dentro de su dominio, pero no las que llevan a otro dominio o a HTTP.
+Si falla una, el escáner muestra el hallazgo. Una página HTML con estado 200 no cuenta, porque su tipo no es `text/plain`. El escáner sigue las redirecciones dentro de su dominio, pero no las que llevan a otro dominio o a HTTP.
 
 ## Qué riesgo tiene
 
@@ -39,7 +39,7 @@ Contact: mailto:seguridad@su-dominio.example
 Expires: 2027-09-30T00:00:00Z
 ```
 
-`Contact` admite un correo con `mailto:`, un teléfono con `tel:` o una página con `https://`. `Expires` lleva una fecha en el formato de la RFC 3339. La RFC 9116 recomienda que esa fecha quede a menos de un año. Cuando pase, el revisor volverá a mostrar el hallazgo, así que actualícela antes.
+`Contact` admite un correo con `mailto:`, un teléfono con `tel:` o una página con `https://`. `Expires` lleva una fecha en el formato de la RFC 3339. La RFC 9116 recomienda que esa fecha quede a menos de un año. Cuando pase, el escáner volverá a mostrar el hallazgo, así que actualícela antes.
 
 Publique el archivo en `/.well-known/security.txt`, por HTTPS y con el tipo `text/plain`. Si su servidor sirve archivos estáticos, guárdelo en la carpeta `.well-known` de la raíz pública del sitio.
 

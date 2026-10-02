@@ -17,7 +17,7 @@ sources:
 
 SPF es un registro TXT que empieza por `v=spf1` y enumera los servidores autorizados a enviar correo con su dominio. Su dominio no publica ninguno.
 
-El revisor lo busca en el dominio registrado, `su-dominio.example`, también cuando analiza un subdominio como `www.su-dominio.example`.
+El escáner lo busca en el dominio registrado, `su-dominio.example`, también cuando analiza un subdominio como `www.su-dominio.example`.
 
 ## Qué riesgo tiene
 
@@ -41,7 +41,7 @@ Si el dominio envía correo, añada lo que indique cada servicio, normalmente un
 v=spf1 include:_spf.google.com ~all
 ```
 
-Microsoft 365 usa `include:spf.protection.outlook.com`. Google recomienda terminar en `~all`, que pide marcar como sospechoso el correo de otros servidores. Microsoft recomienda `-all`, que pide rechazarlo. El revisor acepta los dos finales.
+Microsoft 365 usa `include:spf.protection.outlook.com`. Google recomienda terminar en `~all`, que pide marcar como sospechoso el correo de otros servidores. Microsoft recomienda `-all`, que pide rechazarlo. El escáner acepta los dos finales.
 
 ### DNS
 

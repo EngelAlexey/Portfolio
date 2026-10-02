@@ -17,7 +17,7 @@ sources:
 
 DMARC es un registro TXT que publica la política de su dominio para el remitente visible de un correo, el campo `From`. Indica a los servidores de correo qué hacer con un mensaje que no supera SPF ni DKIM con ese dominio. DKIM es la firma que su proveedor de correo añade a cada mensaje.
 
-El revisor busca un único registro que empiece por `v=DMARC1` en `_dmarc.su-dominio.example`, también cuando analiza un subdominio. No encontró ninguno o encontró varios. Con varios, la RFC 9989 pide a los servidores de correo descartarlos todos.
+El escáner busca un único registro que empiece por `v=DMARC1` en `_dmarc.su-dominio.example`, también cuando analiza un subdominio. No encontró ninguno o encontró varios. Con varios, la RFC 9989 pide a los servidores de correo descartarlos todos.
 
 ## Qué riesgo tiene
 
@@ -41,7 +41,7 @@ Si envía correo, empiece con `p=none` y una dirección para los informes agrega
 v=DMARC1; p=none; rua=mailto:dmarc@su-dominio.example
 ```
 
-`p=none` no pide ningún tratamiento, pero muchos servidores de destino envían a `rua` un resumen diario de los mensajes que usan su dominio. Revíselos durante unas semanas y pase después a `p=quarantine` o `p=reject`. Hasta entonces, el revisor mostrará el hallazgo «La política DMARC no frena los correos falsificados con el dominio».
+`p=none` no pide ningún tratamiento, pero muchos servidores de destino envían a `rua` un resumen diario de los mensajes que usan su dominio. Revíselos durante unas semanas y pase después a `p=quarantine` o `p=reject`. Hasta entonces, el escáner mostrará el hallazgo «La política DMARC no frena los correos falsificados con el dominio».
 
 ### DNS
 

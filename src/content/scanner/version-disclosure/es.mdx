@@ -15,7 +15,7 @@ sources:
 
 ## Qué significa
 
-Una cabecera de la respuesta de su página principal incluye el número de versión del software del servidor, como `Server: nginx/1.24.0` o `X-Powered-By: PHP/8.2.12`. El revisor lee `Server`, `X-Powered-By`, `X-AspNet-Version`, `X-AspNetMvc-Version` y `X-Generator`.
+Una cabecera de la respuesta de su página principal incluye el número de versión del software del servidor, como `Server: nginx/1.24.0` o `X-Powered-By: PHP/8.2.12`. El escáner lee `Server`, `X-Powered-By`, `X-AspNet-Version`, `X-AspNetMvc-Version` y `X-Generator`.
 
 El nombre del producto sin número no cuenta, así que `Server: nginx` aprueba la comprobación.
 
@@ -65,7 +65,7 @@ En **Rules > Settings**, abra la pestaña **Managed Transforms** y active `Remov
 
 ## Cómo comprobarlo
 
-Ninguna de las cabeceras que lee el revisor debe llevar un número de versión:
+Ninguna de las cabeceras que lee el escáner debe llevar un número de versión:
 
 ```text
 $ curl -sI https://su-dominio.example/ | grep -iE '^(server|x-powered-by|x-aspnet-version|x-aspnetmvc-version|x-generator):'

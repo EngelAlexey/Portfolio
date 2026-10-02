@@ -15,7 +15,7 @@ sources:
 
 ## Qué significa
 
-Su sitio envía una política de seguridad de contenido (CSP), pero ninguna de sus políticas restringe los scripts. El revisor mira `script-src` o, si falta, `default-src`. Esa directiva restringe los scripts cuando cumple dos condiciones:
+Su sitio envía una política de seguridad de contenido (CSP), pero ninguna de sus políticas restringe los scripts. El escáner mira `script-src` o, si falta, `default-src`. Esa directiva restringe los scripts cuando cumple dos condiciones:
 
 1. No admite `'unsafe-inline'`, salvo que lo acompañen un *nonce*, un *hash* o `'strict-dynamic'`. En ese caso, el navegador ignora `'unsafe-inline'`.
 2. No incluye `*`, `http:`, `https:` ni `data:`, salvo junto a `'strict-dynamic'`, que hace que el navegador los ignore.
@@ -50,7 +50,7 @@ Mantenga en la política nueva las demás directivas de la actual, como `frame-a
 
 ### Vercel
 
-Si su sitio usa Next.js, la política sin *nonce* de la [guía de Next.js](https://nextjs.org/docs/app/guides/content-security-policy) incluye `'unsafe-inline'` en `script-src`, así que el revisor la marca. La misma guía genera un *nonce* en `proxy.ts`, y Next.js lo añade a sus propios scripts. A cambio, todas las páginas pasan a generarse en cada petición.
+Si su sitio usa Next.js, la política sin *nonce* de la [guía de Next.js](https://nextjs.org/docs/app/guides/content-security-policy) incluye `'unsafe-inline'` en `script-src`, así que el escáner la marca. La misma guía genera un *nonce* en `proxy.ts`, y Next.js lo añade a sus propios scripts. A cambio, todas las páginas pasan a generarse en cada petición.
 
 ### Netlify
 

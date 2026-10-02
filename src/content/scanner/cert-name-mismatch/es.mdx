@@ -17,7 +17,7 @@ sources:
 
 Un certificado declara los nombres de dominio que protege en la extensión *Subject Alternative Name* (SAN), con entradas de tipo DNS. El nombre que usted analizó no está en esa lista, ni lo cubre un comodín. Un comodín como `*.su-dominio.example` cubre un solo nivel, como `www.su-dominio.example`. No cubre `su-dominio.example` ni `a.b.su-dominio.example`.
 
-El revisor también marca este hallazgo si el certificado no tiene ninguna entrada DNS en esa extensión. Chrome, desde la versión 58, y Firefox, desde la 101, no usan el campo *Common Name* (CN) para comprobar el nombre. El revisor comprueba el nombre aunque el certificado falle por otro motivo, así que este hallazgo puede aparecer junto a otro del certificado.
+El escáner también marca este hallazgo si el certificado no tiene ninguna entrada DNS en esa extensión. Chrome, desde la versión 58, y Firefox, desde la 101, no usan el campo *Common Name* (CN) para comprobar el nombre. El escáner comprueba el nombre aunque el certificado falle por otro motivo, así que este hallazgo puede aparecer junto a otro del certificado.
 
 ## Qué riesgo tiene
 

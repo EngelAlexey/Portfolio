@@ -14,10 +14,12 @@
       "source": "/ig",
       "destination": "/es/blog?utm_source=instagram&utm_medium=social&utm_campaign=bio",
       "permanent": false
-    }
+    },
+    { "source": "/es/herramientas/revisor", "destination": "/es/herramientas/escaner", "permanent": true },
+    { "source": "/es/herramientas/revisor/:path+", "destination": "/es/herramientas/escaner/:path+", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/es/herramientas/revisor/reporte/:id", "destination": "/es/herramientas/revisor/reporte" },
+    { "source": "/es/herramientas/escaner/reporte/:id", "destination": "/es/herramientas/escaner/reporte" },
     { "source": "/en/tools/scanner/report/:id", "destination": "/en/tools/scanner/report" }
   ],
   "headers": [
@@ -53,7 +55,7 @@
       ]
     },
     {
-      "source": "/es/herramientas/revisor/reporte/:path*",
+      "source": "/es/herramientas/escaner/reporte/:path*",
       "headers": [
         { "key": "Referrer-Policy", "value": "no-referrer" },
         { "key": "X-Robots-Tag", "value": "noindex" }

@@ -15,13 +15,13 @@ sources:
 
 Su página principal carga un script desde una CDN pública sin el atributo `integrity`. Ese atributo contiene el *hash* del archivo, un resumen calculado a partir de su contenido. Si el archivo que llega no coincide con el *hash*, el navegador no lo ejecuta.
 
-El revisor solo marca los scripts de estas CDN:
+El escáner solo marca los scripts de estas CDN:
 
 - jsDelivr y unpkg, con la versión completa en la dirección, como `@5.3.3`;
 - cdnjs, con la versión en la ruta de `cdnjs.cloudflare.com/ajax/libs/`;
 - `code.jquery.com`, `ajax.googleapis.com`, `stackpath.bootstrapcdn.com` y `ga.jspm.io`.
 
-Una versión abierta, como `@3` o `@latest`, cambia de contenido con cada publicación, así que un *hash* fijo dejaría de coincidir. El revisor no marca esas versiones ni los scripts de servicios como Google Tag Manager.
+Una versión abierta, como `@3` o `@latest`, cambia de contenido con cada publicación, así que un *hash* fijo dejaría de coincidir. El escáner no marca esas versiones ni los scripts de servicios como Google Tag Manager.
 
 ## Qué riesgo tiene
 

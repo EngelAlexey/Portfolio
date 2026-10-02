@@ -26,9 +26,9 @@ const clientStrings = await scannerClientStrings(lang);
 <Layout {lang} key="scanner" title={strings.meta.titleTemplate(text.title)} description={text.lead}>
 	<Container as="header" size="text">
 		<div class="head">
-			<h1>{text.title}</h1>
+			<h1>{text.heading}</h1>
 			<p>{text.lead}</p>
-			<p class="about"><a href={path(lang, 'scannerAbout')}>{text.about.title}</a></p>
+			<p class="about"><a href={path(lang, 'scannerAbout')}>{text.aboutLink}</a></p>
 		</div>
 	</Container>
 

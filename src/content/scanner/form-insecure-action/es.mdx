@@ -15,7 +15,7 @@ sources:
 
 ## Qué significa
 
-Un formulario de la página principal envía lo que escribe la persona a una dirección `http:`, aunque la página se sirva por HTTPS. El revisor lee el atributo `action` de cada `<form>` y el atributo `formaction` de los botones, que sustituye al `action` cuando se pulsa ese botón.
+Un formulario de la página principal envía lo que escribe la persona a una dirección `http:`, aunque la página se sirva por HTTPS. El escáner lee el atributo `action` de cada `<form>` y el atributo `formaction` de los botones, que sustituye al `action` cuando se pulsa ese botón.
 
 Una ruta relativa, como `/contacto`, usa el `https:` de la página y no cuenta. Si la página tiene una etiqueta `<base>` con una dirección `http:`, las rutas relativas también pasan a `http:`.
 
@@ -35,9 +35,9 @@ Cambie la dirección del atributo `action` o `formaction` a `https://`. Si el fo
 
 Si la página tiene una etiqueta `<base>` con una dirección `http:`, cámbiela también a `https://`. Si el formulario envía los datos a otro servicio, como uno de boletines, use la dirección `https://` que indica su documentación.
 
-Busque el formulario en la plantilla o en el contenido de la página. El revisor solo lee la página principal, así que revise también los formularios del resto del sitio.
+Busque el formulario en la plantilla o en el contenido de la página. El escáner solo lee la página principal, así que revise también los formularios del resto del sitio.
 
-Una política de seguridad de contenido (CSP) con la directiva `upgrade-insecure-requests` también pasa el envío a HTTPS, según la [especificación de la directiva](https://www.w3.org/TR/upgrade-insecure-requests/). Aun así, el revisor lee el atributo y mantiene el hallazgo mientras la dirección empiece por `http:`.
+Una política de seguridad de contenido (CSP) con la directiva `upgrade-insecure-requests` también pasa el envío a HTTPS, según la [especificación de la directiva](https://www.w3.org/TR/upgrade-insecure-requests/). Aun así, el escáner lee el atributo y mantiene el hallazgo mientras la dirección empiece por `http:`.
 
 ## Cómo comprobarlo
 

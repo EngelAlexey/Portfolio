@@ -46,7 +46,7 @@ Abra cada tipo de página con la consola del navegador abierta y resuelva cada a
 
 No resuelva un aviso con `'unsafe-inline'`, `*` o `https:` en `script-src`, porque entonces la política ya no restringe los scripts. Cuando la consola no muestre avisos, cambie el nombre de la cabecera a `Content-Security-Policy`.
 
-Si no puede enviar cabeceras, el revisor también acepta la política en una etiqueta `<meta http-equiv="Content-Security-Policy">` al principio de `<head>`. Ahí no funcionan `frame-ancestors` ni el modo de solo informe.
+Si no puede enviar cabeceras, el escáner también acepta la política en una etiqueta `<meta http-equiv="Content-Security-Policy">` al principio de `<head>`. Ahí no funcionan `frame-ancestors` ni el modo de solo informe.
 
 ### Nginx
 
@@ -112,6 +112,6 @@ $ curl -sI https://su-dominio.example/ | grep -i content-security-policy
 content-security-policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'
 ```
 
-Mientras la política siga en modo de solo informe, la línea empieza por `content-security-policy-report-only` y el revisor mantiene el hallazgo. Si usó la etiqueta `<meta>`, compruébela con `curl -s https://su-dominio.example/ | grep -io '<meta http-equiv[^>]*>'`.
+Mientras la política siga en modo de solo informe, la línea empieza por `content-security-policy-report-only` y el escáner mantiene el hallazgo. Si usó la etiqueta `<meta>`, compruébela con `curl -s https://su-dominio.example/ | grep -io '<meta http-equiv[^>]*>'`.
 
 Después, vuelva a analizar el sitio: la CSP aparece en «Comprobaciones superadas». El punto 4 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#4-qué-cabeceras-de-seguridad-enviar) muestra el aviso que escribe Chrome y cómo autorizar un script propio.

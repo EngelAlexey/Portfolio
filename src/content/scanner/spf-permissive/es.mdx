@@ -15,7 +15,7 @@ sources:
 
 ## Qué significa
 
-Su dominio publica un registro SPF, pero ese registro autoriza a todos los servidores o no se pronuncia sobre los que no lista. El revisor marca este hallazgo en cuatro casos:
+Su dominio publica un registro SPF, pero ese registro autoriza a todos los servidores o no se pronuncia sobre los que no lista. El escáner marca este hallazgo en cuatro casos:
 
 - el `all` que se aplica, también el que llega a través de `redirect=`, es `+all`, `?all` o `all` sin calificador, que equivale a `+all`;
 - el registro no tiene `all` ni `redirect=`, un final que la RFC 7208 trata como `?all`;
@@ -36,7 +36,7 @@ Termine el registro en `-all` o `~all` y quite cualquier `ip4` o `ip6` con prefi
 v=spf1 include:_spf.google.com ~all
 ```
 
-`-all` pide rechazar el correo de los servidores que no aparecen en el registro, y `~all` pide marcarlo como sospechoso. El revisor acepta los dos. Antes del cambio, compruebe que el registro incluye todos los servicios que envían con su dominio, porque el que falte dejará de superar SPF.
+`-all` pide rechazar el correo de los servidores que no aparecen en el registro, y `~all` pide marcarlo como sospechoso. El escáner acepta los dos. Antes del cambio, compruebe que el registro incluye todos los servicios que envían con su dominio, porque el que falte dejará de superar SPF.
 
 Si el final ya es correcto y el hallazgo continúa, el `+all` viene de un `include`. Consulte cada uno con `dig +short TXT`, seguido del dominio que aparece tras `include:`. Quite el que termine en `+all` o pida a ese proveedor el valor correcto.
 

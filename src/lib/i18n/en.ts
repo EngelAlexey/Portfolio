@@ -171,10 +171,12 @@ export const en: Dict = {
 	},
 	scanner: {
 		title: 'Website security scanner',
-		lead: "Analyses a public site's security configuration and shows how to fix each finding.",
+		heading: 'Scan your site',
+		lead: "The scanner analyses a public site's security configuration and shows how to fix each finding.",
+		aboutLink: 'More information',
 		label: 'Domain',
 		placeholder: 'your-domain.example',
-		submit: 'Scan domain',
+		submit: 'Scan site',
 		scanning: (host: string) => `Scanning ${host}`,
 		done: 'Scan complete',
 		noScript: 'The scanner requires JavaScript to send the domain and show the result.',
@@ -368,7 +370,7 @@ export const en: Dict = {
 			missing: 'This explanation has not been written yet.'
 		},
 		about: {
-			title: 'About this scanner',
+			title: 'About the scanner',
 			lead: 'The website security scanner reads the configuration a public site sends to every visitor. This page describes its requests and how to block it.',
 			whatTitle: 'What it checks',
 			what: [
@@ -397,7 +399,7 @@ export const en: Dict = {
 			block: 'Block the User-Agent "AlexHerreraScanner" on the server or in the site firewall. The scanner shows the block in the result and does not try to get around it.',
 			dataTitle: 'What data it keeps',
 			data: [
-				'The scanner does not store the scan result or the scanned domain.',
+				'The scanner keeps the report and the scanned domain for 30 days so that you can share its link. Anyone with the link can see the report, which does not include the IP address of the person scanning.',
 				'To apply the hourly limit, it stores an HMAC hash of the IP address of the person scanning. The hash changes every hour, cannot be turned back into the IP and is deleted after 48 hours.'
 			],
 			contactTitle: 'Contact',

@@ -15,7 +15,7 @@ sources:
 
 ## Qué significa
 
-El revisor ofreció TLS 1.2 y TLS 1.3 al conectarse a su servidor, que eligió TLS 1.2. Su severidad es informativa, así que no resta puntos.
+El escáner ofreció TLS 1.2 y TLS 1.3 al conectarse a su servidor, que eligió TLS 1.2. Su severidad es informativa, así que no resta puntos.
 
 ## Qué riesgo tiene
 
@@ -49,11 +49,11 @@ Si un `VirtualHost` tiene su propia línea `SSLProtocol`, cámbiela de la misma 
 
 ### Cloudflare
 
-La observación «El sitio se sirve a través de la red de Cloudflare» indica que el revisor negoció con Cloudflare, no con su servidor. En **SSL/TLS > Edge Certificates**, active **TLS 1.3**.
+La observación «El sitio se sirve a través de la red de Cloudflare» indica que el escáner negoció con Cloudflare, no con su servidor. En **SSL/TLS > Edge Certificates**, active **TLS 1.3**.
 
 ## Cómo comprobarlo
 
-Abra una conexión TLS normal, como hace el revisor. La línea `Protocol version` debe mostrar `TLSv1.3`:
+Abra una conexión TLS normal, como hace el escáner. La línea `Protocol version` debe mostrar `TLSv1.3`:
 
 ```text
 $ openssl s_client -brief -connect su-dominio.example:443 -servername su-dominio.example </dev/null 2>&1 | grep 'Protocol version'

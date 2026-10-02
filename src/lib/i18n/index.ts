@@ -24,9 +24,9 @@ const SEGMENTS: Record<RouteKey, Record<Lang, string>> = {
 	article: { es: 'blog', en: 'blog' },
 	about: { es: 'sobre-mi', en: 'about' },
 	contact: { es: 'contacto', en: 'contact' },
-	scanner: { es: 'herramientas/revisor', en: 'tools/scanner' },
-	scannerAbout: { es: 'herramientas/revisor/acerca', en: 'tools/scanner/about' },
-	scannerReport: { es: 'herramientas/revisor/reporte', en: 'tools/scanner/report' }
+	scanner: { es: 'herramientas/escaner', en: 'tools/scanner' },
+	scannerAbout: { es: 'herramientas/escaner/acerca', en: 'tools/scanner/about' },
+	scannerReport: { es: 'herramientas/escaner/reporte', en: 'tools/scanner/report' }
 };
 
 const NESTED: RouteKey[] = ['project', 'article'];

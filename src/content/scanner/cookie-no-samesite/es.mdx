@@ -15,9 +15,9 @@ sources:
 
 ## Qué significa
 
-Una cabecera `Set-Cookie` de su página principal crea una cookie de sesión sin el atributo `SameSite` o con un valor no válido. Los valores válidos son `Strict`, `Lax` y `None`. Según el borrador de la RFC 6265bis, el navegador trata cualquier otro valor como si el atributo faltara. El revisor lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
+Una cabecera `Set-Cookie` de su página principal crea una cookie de sesión sin el atributo `SameSite` o con un valor no válido. Los valores válidos son `Strict`, `Lax` y `None`. Según el borrador de la RFC 6265bis, el navegador trata cualquier otro valor como si el atributo faltara. El escáner lee las cabeceras de la respuesta HTTPS y de sus redirecciones dentro del mismo sitio. Las cookies que crea el JavaScript de la página no cuentan.
 
-El revisor solo exige `SameSite` en las cookies de sesión, que reconoce por su nombre. Cuenta los nombres conocidos, como `PHPSESSID`, `JSESSIONID`, `connect.sid`, `laravel_session` o `wordpress_logged_in_…`, y cualquier nombre que contenga `sess`, `sid`, `auth`, `token` o `jwt`. Excluye las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`. Las demás cookies sin `SameSite` no generan este hallazgo.
+El escáner solo exige `SameSite` en las cookies de sesión, que reconoce por su nombre. Cuenta los nombres conocidos, como `PHPSESSID`, `JSESSIONID`, `connect.sid`, `laravel_session` o `wordpress_logged_in_…`, y cualquier nombre que contenga `sess`, `sid`, `auth`, `token` o `jwt`. Excluye las cookies conocidas anti-CSRF, de analítica, de infraestructura y de consentimiento, como `XSRF-TOKEN`, `_ga` o `__cf_bm`. Las demás cookies sin `SameSite` no generan este hallazgo.
 
 ## Qué riesgo tiene
 
@@ -65,13 +65,13 @@ Indique el nombre en lugar de `~`, que cambiaría también las demás cookies.
 
 ### WordPress
 
-Según su [documentación](https://developer.wordpress.org/advanced-administration/wordpress/cookies/), WordPress crea cookies para quien inicia sesión y para quien comenta. El revisor no hace ninguna de las dos cosas, así que esta cookie la crea un plugin, el tema o el alojamiento.
+Según su [documentación](https://developer.wordpress.org/advanced-administration/wordpress/cookies/), WordPress crea cookies para quien inicia sesión y para quien comenta. El escáner no hace ninguna de las dos cosas, así que esta cookie la crea un plugin, el tema o el alojamiento.
 
 Si la cookie es `PHPSESSID`, la crea la sesión de PHP y el ajuste de arriba se aplica también a ella. La excepción es un plugin que fije otros valores en su código. Si tiene otro nombre, búsquelo en el código de los plugins y del tema para saber cuál la crea. Después, pida la corrección a su autor.
 
 ## Cómo comprobarlo
 
-La cabecera `Set-Cookie` de la cookie de sesión debe incluir `SameSite=Lax`, o `SameSite=Strict` si eligió ese valor. La orden pide la página principal con GET y sigue las redirecciones, como el revisor:
+La cabecera `Set-Cookie` de la cookie de sesión debe incluir `SameSite=Lax`, o `SameSite=Strict` si eligió ese valor. La orden pide la página principal con GET y sigue las redirecciones, como el escáner:
 
 ```text
 $ curl -sL -o /dev/null -D - https://su-dominio.example/ | grep -i '^set-cookie'

@@ -15,9 +15,9 @@ sources:
 
 ## Qué significa
 
-El revisor pidió `https://su-dominio.example/` y siguió las redirecciones. Una de ellas lleva a una dirección que empieza por `http://`, así que la visita pasa de HTTPS a HTTP. Cuenta igual si esa dirección es de otro dominio.
+El escáner pidió `https://su-dominio.example/` y siguió las redirecciones. Una de ellas lleva a una dirección que empieza por `http://`, así que la visita pasa de HTTPS a HTTP. Cuenta igual si esa dirección es de otro dominio.
 
-El revisor se detiene en esa redirección, así que las secciones de cabeceras, cookies y contenido quedan sin revisar.
+El escáner se detiene en esa redirección, así que las secciones de cabeceras, cookies y contenido quedan sin revisar.
 
 ## Qué riesgo tiene
 
@@ -66,4 +66,4 @@ Location: https://www.su-dominio.example/
 HTTP/1.1 200 OK
 ```
 
-Después, vuelva a analizar el sitio: el hallazgo ya no aparece y el revisor analiza las cabeceras, las cookies y el contenido. El punto 3 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#3-cómo-servir-la-aplicación-por-https-y-activar-hsts) explica cómo servir toda la aplicación por HTTPS.
+Después, vuelva a analizar el sitio: el hallazgo ya no aparece y el escáner analiza las cabeceras, las cookies y el contenido. El punto 3 de la guía [Cómo proteger una página web](/es/blog/como-proteger-una-pagina-web#3-cómo-servir-la-aplicación-por-https-y-activar-hsts) explica cómo servir toda la aplicación por HTTPS.

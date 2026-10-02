@@ -15,9 +15,9 @@ sources:
 
 ## Qué significa
 
-La respuesta de su página principal no indica al navegador si otros sitios pueden mostrarla dentro de un marco (`<iframe>`). El revisor acepta `X-Frame-Options` con `DENY` o `SAMEORIGIN`, o la directiva `frame-ancestors` de la cabecera `Content-Security-Policy` sin `*`, `http:` ni `https:`.
+La respuesta de su página principal no indica al navegador si otros sitios pueden mostrarla dentro de un marco (`<iframe>`). El escáner acepta `X-Frame-Options` con `DENY` o `SAMEORIGIN`, o la directiva `frame-ancestors` de la cabecera `Content-Security-Policy` sin `*`, `http:` ni `https:`.
 
-Si la CSP tiene `frame-ancestors`, el navegador ignora `X-Frame-Options`, y el revisor también. El valor `ALLOW-FROM` está obsoleto, y los navegadores actuales ignoran la cabecera que lo lleva. Dentro de una etiqueta `<meta>`, ninguna de las dos protecciones tiene efecto.
+Si la CSP tiene `frame-ancestors`, el navegador ignora `X-Frame-Options`, y el escáner también. El valor `ALLOW-FROM` está obsoleto, y los navegadores actuales ignoran la cabecera que lo lleva. Dentro de una etiqueta `<meta>`, ninguna de las dos protecciones tiene efecto.
 
 ## Qué riesgo tiene
 
@@ -31,7 +31,7 @@ Si su sitio ya envía una CSP en la cabecera, añada `frame-ancestors 'none'` a 
 X-Frame-Options: DENY
 ```
 
-Una cabecera `Content-Security-Policy` con solo `frame-ancestors` también protege, pero el revisor la cuenta como una CSP que no restringe los scripts.
+Una cabecera `Content-Security-Policy` con solo `frame-ancestors` también protege, pero el escáner la cuenta como una CSP que no restringe los scripts.
 
 `DENY` y `'none'` impiden cualquier marco, también los de su propio sitio. Si una página suya se muestra dentro de otra del mismo sitio, use `SAMEORIGIN` o `frame-ancestors 'self'`. Para permitir un sitio concreto, añada su origen después de `'self'` en `frame-ancestors`.
 

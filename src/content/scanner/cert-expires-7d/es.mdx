@@ -17,7 +17,7 @@ sources:
 
 Al certificado que presenta su servidor le quedan menos de 7 días de validez. Certbot renueva un certificado de 90 días cuando le quedan 30, y Vercel renueva los suyos entre 30 y 14 días antes del vencimiento. Por eso este hallazgo suele indicar que la renovación automática falló o que el servidor web sigue usando el certificado anterior.
 
-En los certificados de vida corta, el revisor usa como umbral la sexta parte de la vigencia. En uno de 160 horas de Let's Encrypt (perfil `shortlived`), el hallazgo aparece cuando quedan unas 27 horas.
+En los certificados de vida corta, el escáner usa como umbral la sexta parte de la vigencia. En uno de 160 horas de Let's Encrypt (perfil `shortlived`), el hallazgo aparece cuando quedan unas 27 horas.
 
 ## Qué riesgo tiene
 

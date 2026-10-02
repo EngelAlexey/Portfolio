@@ -15,7 +15,7 @@ sources:
 
 ## Qué significa
 
-Su dominio publica una política DMARC, pero la que se aplica es `none`, que no pide ningún tratamiento para los mensajes que fallan DMARC. El revisor la considera `none` si `p` falta o su valor no es `quarantine` ni `reject`, y también si combina `p=quarantine` con `t=y`.
+Su dominio publica una política DMARC, pero la que se aplica es `none`, que no pide ningún tratamiento para los mensajes que fallan DMARC. El escáner la considera `none` si `p` falta o su valor no es `quarantine` ni `reject`, y también si combina `p=quarantine` con `t=y`.
 
 La RFC 9989 define `t=y` como modo de prueba, en el que los servidores aplican la política un nivel por debajo. Así, `quarantine` pasa a `none` y `reject` pasa a `quarantine`.
 
@@ -25,7 +25,7 @@ Con `none`, el servidor que recibe un correo falsificado con su dominio aplica s
 
 ## Cómo corregirlo
 
-Pase la política a `p=quarantine`, que pide tratar como sospechoso el correo que falla DMARC, y después a `p=reject`, que pide rechazarlo. Quite también `t=y`. El revisor da la comprobación por superada desde `p=quarantine`.
+Pase la política a `p=quarantine`, que pide tratar como sospechoso el correo que falla DMARC, y después a `p=reject`, que pide rechazarlo. Quite también `t=y`. El escáner da la comprobación por superada desde `p=quarantine`.
 
 Antes de cada cambio, compruebe en los informes que sus correos legítimos superan DMARC. Cada servicio que envía con su dominio, como su correo, el formulario de contacto o la facturación, debe superar SPF o DKIM con ese dominio. DKIM es la firma que su proveedor de correo añade a cada mensaje.
 
