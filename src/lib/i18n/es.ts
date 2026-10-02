@@ -177,14 +177,13 @@ export const es = {
 		label: 'Dominio',
 		placeholder: 'su-dominio.ejemplo',
 		submit: 'Analizar sitio',
-		consent:
-			'Soy responsable de este sitio o tengo permiso para analizarlo, y acepto que el reporte se guarde 30 días y después se borre.',
+		consent: 'Acepto que el reporte se guarde 30 días y después se borre.',
 		scanning: (host: string) => `Analizando ${host}`,
 		done: 'Análisis terminado',
 		noScript: 'El escáner requiere JavaScript para enviar el dominio y mostrar el resultado.',
 		errors: {
 			invalid_url: 'El dominio no es válido. Compruebe que esté bien escrito.',
-			consent_required: 'Marque la casilla para confirmar que puede analizar el sitio y que acepta guardar el reporte 30 días.',
+			consent_required: 'Marque la casilla para aceptar que el reporte se guarde 30 días.',
 			blocked_address: 'El escáner solo analiza dominios públicos de internet.',
 			domain_not_found: 'El dominio no está registrado o no publica direcciones IP. Compruebe que esté bien escrito.',
 			dns_error: 'El DNS del dominio no respondió. Vuelva a intentarlo en unos minutos.',
