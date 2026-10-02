@@ -69,12 +69,13 @@ export function mountScannerForm(form: HTMLFormElement): void {
 	const strings = JSON.parse(form.dataset['strings'] ?? '{}') as ScannerStrings;
 	const api = form.dataset['api'] ?? '';
 	const input = form.querySelector<HTMLInputElement>('input[name="url"]');
+	const consent = form.querySelector<HTMLInputElement>('input[name="consent"]');
 	const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
 	const status = form.querySelector<HTMLElement>('[data-scanner-status]');
 	const progress = form.querySelector<HTMLElement>('[data-scanner-progress]');
 	const widget = form.querySelector<HTMLElement>('[data-scanner-turnstile]');
 	const result = document.querySelector<HTMLElement>('[data-scanner-result]');
-	if (!input || !button || !status || !progress || !widget || !result) {
+	if (!input || !consent || !button || !status || !progress || !widget || !result) {
 		return;
 	}
 	const botCheck = createBotCheck(widget, form.dataset['sitekey'] ?? '');
@@ -96,6 +97,11 @@ export function mountScannerForm(form: HTMLFormElement): void {
 		if (host === '') {
 			status.textContent = strings.errors['invalid_url'] ?? '';
 			input.focus();
+			return;
+		}
+		if (!consent.checked) {
+			status.textContent = strings.errors['consent_required'] ?? '';
+			consent.focus();
 			return;
 		}
 		button.disabled = true;

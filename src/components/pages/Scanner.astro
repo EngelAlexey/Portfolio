@@ -60,6 +60,10 @@ const clientStrings = await scannerClientStrings(lang);
 				</div>
 				<button class="btn primary" type="submit">{text.submit}</button>
 			</div>
+			<label class="consent">
+				<input type="checkbox" name="consent" required />
+				<span>{text.consent}</span>
+			</label>
 			<div class="bot-check" data-scanner-turnstile></div>
 			<div class="progress" data-scanner-progress hidden><span></span></div>
 			<p class="status" data-scanner-status role="status"></p>
@@ -180,6 +184,32 @@ const clientStrings = await scannerClientStrings(lang);
 
 	.row .btn {
 		min-height: 48px;
+	}
+
+	.consent {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.6rem;
+		margin-top: 0.85rem;
+		font-size: 0.875rem;
+		line-height: 1.5;
+		color: var(--ink-muted);
+		cursor: pointer;
+	}
+
+	.consent input {
+		flex: none;
+		width: 1.125rem;
+		height: 1.125rem;
+		margin: 0.15rem 0 0;
+		padding: 0;
+		accent-color: var(--focus);
+		cursor: pointer;
+	}
+
+	.consent input:focus-visible {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
 	}
 
 	button:disabled {

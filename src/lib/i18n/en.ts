@@ -177,11 +177,13 @@ export const en: Dict = {
 		label: 'Domain',
 		placeholder: 'your-domain.example',
 		submit: 'Scan site',
+		consent: 'I am responsible for this site or have permission to scan it, and I agree that the report is kept for 30 days and then deleted.',
 		scanning: (host: string) => `Scanning ${host}`,
 		done: 'Scan complete',
 		noScript: 'The scanner requires JavaScript to send the domain and show the result.',
 		errors: {
 			invalid_url: 'The domain is not valid. Check the spelling.',
+			consent_required: 'Tick the box to confirm that you may scan the site and that you agree to keep the report for 30 days.',
 			blocked_address: 'The scanner only checks public internet domains.',
 			domain_not_found: 'The domain is not registered or publishes no IP addresses. Check the spelling.',
 			dns_error: "The domain's DNS did not answer. Try again in a few minutes.",
