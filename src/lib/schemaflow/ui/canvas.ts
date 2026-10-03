@@ -1327,7 +1327,7 @@ export class Canvas {
 					this.host.openRelationBubble(drag.relation, { x: e.clientX, y: e.clientY });
 				} else if (drag.target === 'marquee') {
 					this.host.bubble.close(false);
-					if (!isEmptySelection(this.store.selection)) this.store.select(emptySelection());
+					if (!drag.additive && !isEmptySelection(this.store.selection)) this.store.select(emptySelection());
 				} else if (drag.clickSelect) {
 					this.store.select(drag.clickSelect, drag.focus ?? null);
 				}
@@ -1599,7 +1599,9 @@ export class Canvas {
 	}
 
 	private onDoubleClick(e: MouseEvent): void {
-		const target = e.target as HTMLElement;
+		const hit = document.elementFromPoint(e.clientX, e.clientY);
+		const target = (hit instanceof Element && this.root.contains(hit) ? hit : e.target) as HTMLElement;
+		if (!this.root.contains(target)) return;
 		if (target.closest('input, textarea, button, .sf-zoom, .sf-sheet, .sf-empty')) return;
 		const card = target.closest<HTMLElement>('.sf-card');
 		if (card?.dataset.table) {
