@@ -95,12 +95,27 @@ const links = [
 	{ key: 'home', href: path(lang, 'home'), label: strings.nav.home },
 	{ key: 'projects', href: path(lang, 'projects'), label: strings.nav.projects },
 	...(showBlog ? [{ key: 'blog', href: path(lang, 'blog'), label: strings.nav.blog }] : []),
-	{ key: 'scanner', href: path(lang, 'scanner'), label: strings.nav.scanner },
+	{ key: 'tools', href: path(lang, 'tools'), label: strings.nav.tools },
 	{ key: 'about', href: path(lang, 'about'), label: strings.nav.about },
 	{ key: 'contact', href: path(lang, 'contact'), label: strings.nav.contact }
 ] as { key: RouteKey; href: string; label: string }[];
 
-const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', article: 'blog', scannerAbout: 'scanner', scannerReport: 'scanner' };
+const parentOf: Partial<Record<RouteKey, RouteKey>> = {
+	project: 'projects',
+	article: 'blog',
+	scanner: 'tools',
+	scannerAbout: 'tools',
+	scannerReport: 'tools',
+	schemaflow: 'tools'
+};
+
+const toolLinks = [
+	{ key: 'scanner', href: path(lang, 'scanner'), label: strings.nav.scanner, icon: 'shield' },
+	{ key: 'schemaflow', href: path(lang, 'schemaflow'), label: strings.nav.schemaflow, icon: 'diagram' }
+] as const;
+
+const toolSection: Partial<Record<RouteKey, RouteKey>> = { scanner: 'scanner', scannerAbout: 'scanner', scannerReport: 'scanner', schemaflow: 'schemaflow' };
+const currentTool = current === null ? null : (toolSection[current] ?? null);
 ---
 
 <!doctype html>
@@ -172,21 +187,73 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 					<nav aria-label={strings.nav.menu}>
 						<ul>
 							{
-								links.map((link) => (
-									<li>
-										<a
-											href={link.href}
-											aria-current={
-												current === link.key ||
-												(current !== null && parentOf[current] === link.key)
-													? 'page'
-													: undefined
-											}
-										>
-											{link.label}
-										</a>
-									</li>
-								))
+								links.map((link) =>
+									link.key === 'tools' ? (
+										<li class="group" data-nav-group>
+											<button
+												type="button"
+												class="group-toggle"
+												aria-expanded="false"
+												aria-controls="nav-tools"
+												data-current={current === 'tools' || currentTool !== null ? '' : undefined}
+												data-nav-toggle
+											>
+												{link.label}
+												<svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+													<path d="m6 9 6 6 6-6" />
+												</svg>
+											</button>
+											<ul class="sub" id="nav-tools">
+												{toolLinks.map((tool) => (
+													<li>
+														<a href={tool.href} aria-current={currentTool === tool.key ? 'page' : undefined}>
+															<span class="sub-icon" aria-hidden="true">
+																{tool.icon === 'shield' ? (
+																	<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+																		<path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3Z" />
+																		<path d="m9 12 2 2 4-4" />
+																	</svg>
+																) : (
+																	<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+																		<rect x="3" y="3" width="7" height="7" rx="1.5" />
+																		<rect x="14" y="14" width="7" height="7" rx="1.5" />
+																		<path d="M10 6.5h3.5a2 2 0 0 1 2 2V14" />
+																	</svg>
+																)}
+															</span>
+															<span class="sub-text">
+																<span class="sub-name">{tool.label}</span>
+																<span class="sub-body">{strings.tools.items[tool.key].body}</span>
+															</span>
+														</a>
+													</li>
+												))}
+												<li class="sub-all">
+													<a href={link.href} aria-current={current === 'tools' ? 'page' : undefined}>
+														{strings.tools.title}
+														<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+															<path d="M5 12h14M13 6l6 6-6 6" />
+														</svg>
+													</a>
+												</li>
+											</ul>
+										</li>
+									) : (
+										<li>
+											<a
+												href={link.href}
+												aria-current={
+													current === link.key ||
+													(current !== null && parentOf[current] === link.key)
+														? 'page'
+														: undefined
+												}
+											>
+												{link.label}
+											</a>
+										</li>
+									)
+								)
 							}
 						</ul>
 					</nav>
@@ -207,6 +274,35 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 				<p class="built">{strings.footer.builtWith}</p>
 			</footer>
 		</div>
+
+		<script is:inline>
+			(() => {
+				const group = document.querySelector('[data-nav-group]');
+				const toggle = group && group.querySelector('[data-nav-toggle]');
+				if (!group || !toggle) return;
+
+				/** @param {boolean} open */
+				const setOpen = (open) => {
+					toggle.setAttribute('aria-expanded', String(open));
+					if (open) group.setAttribute('data-open', '');
+					else group.removeAttribute('data-open');
+				};
+
+				toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+				document.addEventListener('click', (e) => {
+					if (e.target instanceof Node && !group.contains(e.target)) setOpen(false);
+				});
+				group.addEventListener('keydown', (e) => {
+					if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+						setOpen(false);
+						toggle.focus();
+					}
+				});
+				group.addEventListener('focusout', (e) => {
+					if (!(e.relatedTarget instanceof Node) || !group.contains(e.relatedTarget)) setOpen(false);
+				});
+			})();
+		</script>
 
 		<script is:inline>
 			(() => {
@@ -335,6 +431,156 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 		border-bottom-color: var(--ink);
 	}
 
+	.group {
+		position: relative;
+	}
+
+	.group-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.25rem 0;
+		border: 0;
+		border-bottom: 1.5px solid transparent;
+		background: none;
+		color: var(--ink-muted);
+		font: inherit;
+		font-size: 0.9375rem;
+		cursor: pointer;
+		transition: color 120ms ease;
+	}
+
+	.group-toggle:hover,
+	.group[data-open] .group-toggle {
+		color: var(--ink);
+	}
+
+	.group-toggle[data-current] {
+		color: var(--ink);
+		border-bottom-color: var(--ink);
+	}
+
+	.group-toggle:focus-visible {
+		outline: 2px solid var(--focus);
+		outline-offset: 3px;
+		border-radius: 2px;
+	}
+
+	.chevron {
+		transition: transform 150ms ease;
+	}
+
+	.group[data-open] .chevron {
+		transform: rotate(180deg);
+	}
+
+	nav .sub {
+		position: absolute;
+		top: calc(100% + 0.6rem);
+		left: -0.75rem;
+		z-index: 30;
+		display: none;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0.15rem;
+		width: 20rem;
+		padding: 0.4rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--surface);
+		box-shadow: var(--shadow-card), 0 12px 32px oklch(18% 0.008 260 / 0.08);
+	}
+
+	.group[data-open] .sub {
+		display: flex;
+	}
+
+	@media (hover: hover) {
+		.group:hover .sub {
+			display: flex;
+		}
+
+		.group::after {
+			content: '';
+			position: absolute;
+			inset: 100% -0.75rem auto;
+			height: 0.75rem;
+		}
+	}
+
+	nav .sub a {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.7rem;
+		padding: 0.6rem 0.65rem;
+		border: 0;
+		border-radius: var(--radius-sm);
+		color: var(--ink);
+		transition: background 120ms ease;
+	}
+
+	nav .sub a:hover,
+	nav .sub a:focus-visible {
+		background: var(--paper-sunken);
+	}
+
+	nav .sub a[aria-current='page'] {
+		background: var(--paper-sunken);
+	}
+
+	.sub-icon {
+		display: inline-flex;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--paper);
+		color: var(--ink-muted);
+	}
+
+	nav .sub a[aria-current='page'] .sub-icon {
+		border-color: var(--line-strong);
+		color: var(--ink);
+	}
+
+	.sub-text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		min-width: 0;
+	}
+
+	.sub-name {
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.sub-body {
+		font-size: 0.8125rem;
+		line-height: 1.45;
+		color: var(--ink-muted);
+	}
+
+	nav .sub-all {
+		margin-top: 0.2rem;
+		padding-top: 0.2rem;
+		border-top: 1px solid var(--line);
+	}
+
+	nav .sub-all a {
+		align-items: center;
+		justify-content: space-between;
+		font-size: 0.8125rem;
+		color: var(--ink-muted);
+	}
+
+	nav .sub-all a:hover {
+		color: var(--ink);
+	}
+
 	.tools {
 		display: flex;
 		gap: 0.5rem;
@@ -381,8 +627,21 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = { project: 'projects', art
 			gap: 0.35rem 0.75rem;
 		}
 
-		nav a {
+		nav a,
+		.group-toggle {
 			font-size: 0.8125rem;
+		}
+
+		.group {
+			position: static;
+		}
+
+		nav .sub {
+			left: 1rem;
+			right: 1rem;
+			top: auto;
+			width: auto;
+			margin-top: 0.5rem;
 		}
 
 		.tools {

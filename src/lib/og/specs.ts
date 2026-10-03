@@ -102,6 +102,30 @@ function fixedCards(lang: Lang): CardSpec[] {
 			portrait: false,
 			theme: 'light',
 			footer: strings.scanner.title
+		},
+		{
+			route: routeOf(lang, 'tools'),
+			lang,
+			eyebrow,
+			heading: strings.tools.title,
+			meta: strings.tools.lead,
+			areas: [],
+			accent: 'brand',
+			portrait: false,
+			theme: 'light',
+			footer: PERSON.name
+		},
+		{
+			route: routeOf(lang, 'schemaflow'),
+			lang,
+			eyebrow,
+			heading: strings.schemaflow.title,
+			meta: strings.schemaflow.lead,
+			areas: ['datos'],
+			accent: 'datos',
+			portrait: false,
+			theme: 'light',
+			footer: PERSON.name
 		}
 	];
 }

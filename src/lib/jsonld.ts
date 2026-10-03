@@ -281,7 +281,9 @@ const PAGE_TYPE: Record<RouteKey, string> = {
 	contact: 'ContactPage',
 	scanner: 'WebPage',
 	scannerAbout: 'WebPage',
-	scannerReport: 'WebPage'
+	scannerReport: 'WebPage',
+	tools: 'CollectionPage',
+	schemaflow: 'WebPage'
 };
 
 export async function buildGraph(input: GraphInput): Promise<string | null> {
