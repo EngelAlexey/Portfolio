@@ -25,6 +25,13 @@ export default defineConfig({
 	integrations: [mdx()],
 	vite: {
 		plugins: [tailwindcss()],
+		optimizeDeps: {
+			exclude: ['@electric-sql/pglite'],
+			include: ['@codemirror/commands', '@codemirror/lang-javascript', '@codemirror/lang-sql', '@codemirror/language', '@codemirror/lint', '@codemirror/state', '@codemirror/view', '@lezer/highlight', 'acorn']
+		},
+		worker: {
+			format: 'es'
+		},
 		build: {
 			assetsInlineLimit: (/** @type {string} */ file) =>
 				/\.(woff2?|ttf|otf|png|jpe?g|svg|webp|avif|ico|pdf)$/i.test(file) ? false : undefined
