@@ -26,6 +26,7 @@ interface Props {
 	analytics?: boolean;
 	published?: string | null;
 	updated?: string | null;
+	app?: boolean;
 }
 
 const {
@@ -39,7 +40,8 @@ const {
 	noindex = false,
 	analytics = true,
 	published = null,
-	updated = null
+	updated = null,
+	app = false
 } = Astro.props;
 
 const face = (family: string, weight: string, url: string, range: string) => `
@@ -159,7 +161,7 @@ const currentTool = current === null ? null : (toolSection[current] ?? null);
 		<Seo {lang} {key} {slug} {slugs} {title} {description} {image} {noindex} {published} {updated} />
 	</head>
 
-	<body>
+	<body data-app={app ? '' : undefined}>
 		{analytics && <Analytics />}
 		{analytics && <SpeedInsights />}
 		<script is:inline>
@@ -177,14 +179,19 @@ const currentTool = current === null ? null : (toolSection[current] ?? null);
 		<a class="skip" href="#main">{strings.a11y.skipToContent}</a>
 
 		<div class="shell">
-			<header class="header">
+			<header class:list={['header', { 'header-app': app }]}>
 				<a class="brand" href={path(lang, 'home')}>
 					<span class="brand-name">Alex Herrera</span>
 					<span class="brand-role">{strings.home.role}</span>
 				</a>
 
 				<div class="controls">
-					<nav aria-label={strings.nav.menu}>
+					{app && (
+						<button type="button" class="nav-menu" aria-expanded="false" aria-controls="site-nav" data-nav-menu>
+							{strings.nav.menu}
+						</button>
+					)}
+					<nav aria-label={strings.nav.menu} id="site-nav">
 						<ul>
 							{
 								links.map((link) =>
@@ -269,16 +276,40 @@ const currentTool = current === null ? null : (toolSection[current] ?? null);
 				<slot />
 			</main>
 
-			<footer class="footer">
+			{!app && <footer class="footer">
 				<p>© {new Date().getFullYear()} {PERSON.name}</p>
 				<p class="built">{strings.footer.builtWith}</p>
-			</footer>
+			</footer>}
 		</div>
 
 		<script is:inline>
 			(() => {
-				const group = document.querySelector('[data-nav-group]');
-				const toggle = group && group.querySelector('[data-nav-toggle]');
+				const button = /** @type {HTMLButtonElement | null} */ (document.querySelector('[data-nav-menu]'));
+				const header = button && button.closest('.header');
+				if (!button || !header) return;
+				/** @param {boolean} open */
+				const set = (open) => {
+					button.setAttribute('aria-expanded', String(open));
+					if (open) header.setAttribute('data-nav-open', '');
+					else header.removeAttribute('data-nav-open');
+				};
+				button.addEventListener('click', () => set(button.getAttribute('aria-expanded') !== 'true'));
+				document.addEventListener('click', (e) => {
+					if (e.target instanceof Node && !header.contains(e.target)) set(false);
+				});
+				document.addEventListener('keydown', (e) => {
+					if (e.key === 'Escape' && button.getAttribute('aria-expanded') === 'true') {
+						set(false);
+						button.focus();
+					}
+				});
+			})();
+		</script>
+
+		<script is:inline>
+			(() => {
+				const group = /** @type {HTMLElement | null} */ (document.querySelector('[data-nav-group]'));
+				const toggle = /** @type {HTMLElement | null} */ (group && group.querySelector('[data-nav-toggle]'));
 				if (!group || !toggle) return;
 
 				/** @param {boolean} open */
@@ -650,6 +681,99 @@ const currentTool = current === null ? null : (toolSection[current] ?? null);
 
 		.built {
 			flex-basis: 100%;
+		}
+	}
+
+	:global(html:has(body[data-app])) {
+		overflow: hidden;
+		overscroll-behavior: none;
+	}
+
+	:global(body[data-app]) .shell {
+		height: 100dvh;
+		min-height: 0;
+	}
+
+	:global(body[data-app]) main {
+		display: flex;
+		flex: 1;
+		min-height: 0;
+	}
+
+	.nav-menu {
+		display: none;
+	}
+
+	@media (max-width: 699px) {
+		.header-app {
+			flex-wrap: nowrap;
+			padding-block: 0.55rem;
+		}
+
+		.header-app .brand-role {
+			display: none;
+		}
+
+		.header-app .controls {
+			width: auto;
+			flex-wrap: nowrap;
+			margin-left: auto;
+		}
+
+		.header-app .nav-menu {
+			display: inline-flex;
+			align-items: center;
+			height: 2.25rem;
+			padding-inline: 0.75rem;
+			border: 1px solid var(--line);
+			border-radius: var(--radius-sm);
+			background: var(--surface);
+			color: var(--ink);
+			font: inherit;
+			font-size: 0.875rem;
+			cursor: pointer;
+		}
+
+		.header-app .nav-menu[aria-expanded='true'] {
+			background: var(--paper-sunken);
+		}
+
+		.header-app nav {
+			display: none;
+		}
+
+		.header-app[data-nav-open] nav {
+			position: absolute;
+			top: calc(100% + 1px);
+			left: 0;
+			right: 0;
+			z-index: 40;
+			display: block;
+			padding: 0.5rem 1rem 1rem;
+			border-bottom: 1px solid var(--line);
+			background: var(--paper);
+			box-shadow: var(--shadow-card);
+		}
+
+		.header-app[data-nav-open] nav ul {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 0.25rem;
+		}
+
+		.header-app[data-nav-open] nav a,
+		.header-app[data-nav-open] .group-toggle {
+			display: flex;
+			padding-block: 0.5rem;
+			font-size: 0.9375rem;
+		}
+
+		.header-app[data-nav-open] nav .sub {
+			position: static;
+			display: flex;
+			width: auto;
+			margin: 0.25rem 0 0;
+			box-shadow: none;
 		}
 	}
 </style>

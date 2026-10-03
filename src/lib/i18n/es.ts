@@ -1,3 +1,6 @@
+import { schemaflowEs } from './schemaflow-es';
+import { schemaflowUiEs } from './schemaflow-ui-es';
+
 export const es = {
 	nav: {
 		home: 'Inicio',
@@ -173,7 +176,7 @@ export const es = {
 	},
 	tools: {
 		title: 'Herramientas',
-		lead: 'Herramientas gratuitas para revisar la seguridad de un sitio web y documentar el esquema de una base de datos.',
+		lead: 'Herramientas gratuitas para revisar la seguridad de un sitio web y diseñar el esquema de una base de datos.',
 		open: 'Abrir',
 		items: {
 			scanner: {
@@ -182,122 +185,11 @@ export const es = {
 			},
 			schemaflow: {
 				name: 'SchemaFlow',
-				body: 'Diseña las tablas de una base de datos en un diagrama y genera el SQL, o convierte un SQL existente en diagrama.'
+				body: 'Genera el código de PostgreSQL, MySQL, SQL Server o MongoDB a partir de un diagrama que usted dibuja. También convierte código existente en diagrama.'
 			}
 		}
 	},
-	schemaflow: {
-		title: 'Diseñador de esquemas SQL',
-		heading: 'SchemaFlow',
-		lead: 'SchemaFlow le permite diseñar las tablas de una base de datos en un diagrama y genera el SQL a medida que las edita. También convierte un SQL existente en diagrama y revisa el diseño del esquema.',
-		templates: 'Plantillas',
-		modeDesign: 'Diseño',
-		modeSql: 'SQL',
-		addTable: 'Nueva tabla',
-		clearCanvas: 'Vaciar',
-		selectHint: 'Seleccione una tabla del diagrama para editarla, o cree una con «Nueva tabla».',
-		tableName: 'Nombre de la tabla',
-		columnsTitle: 'Columnas',
-		columnName: 'Nombre de la columna',
-		columnType: 'Tipo de dato',
-		addColumn: 'Añadir columna',
-		deleteColumn: 'Eliminar columna',
-		deleteTable: 'Eliminar tabla',
-		notNull: 'NOT NULL',
-		reference: 'Referencia',
-		noReference: 'Sin referencia',
-		onDelete: 'Al borrar',
-		newTable: 'nueva_tabla',
-		newColumn: 'columna',
-		editorLabel: 'SQL (CREATE TABLE)',
-		placeholder: 'Pegue aquí sus sentencias CREATE TABLE',
-		sqlHint: 'El SQL se genera a partir del diseño. Si lo edita o pega otro, pulse «Aplicar SQL» para actualizar el diagrama.',
-		copySql: 'Copiar SQL',
-		sqlCopied: 'SQL copiado al portapapeles.',
-		clear: 'Borrar',
-		render: 'Aplicar SQL',
-		rendering: 'Leyendo el SQL…',
-		score: (score: number) => `Diseño: ${score}/100`,
-		guideHint: 'Pulse una etiqueta PK, FK o UQ para ver qué significa.',
-		copyMermaid: 'Copiar Mermaid',
-		downloadSvg: 'Descargar SVG',
-		zoomIn: 'Acercar',
-		zoomOut: 'Alejar',
-		zoomReset: 'Restablecer la vista',
-		canvasLabel: 'Diagrama del esquema. Arrastre el fondo para desplazarse y una tabla para moverla.',
-		counts: (tables: number, relations: number) =>
-			`${tables === 1 ? '1 tabla' : `${tables} tablas`} · ${relations === 1 ? '1 relación' : `${relations} relaciones`}`,
-		columns: (n: number) => (n === 1 ? '1 columna' : `${n} columnas`),
-		empty: 'Pegue un esquema o elija una plantilla para ver el diagrama.',
-		reviewTitle: 'Revisión del diseño',
-		reviewEmpty: 'El esquema no tiene avisos.',
-		severity: { critical: 'Grave', warning: 'Aviso', info: 'Sugerencia' },
-		presets: {
-			ecommerce: { title: 'Tienda en línea', description: 'Clientes, categorías, productos, pedidos y líneas de pedido.' },
-			'saas-auth': { title: 'SaaS con organizaciones', description: 'Organizaciones, usuarios, membresías con rol y sesiones.' },
-			'blog-cms': { title: 'Blog con etiquetas', description: 'Autores, artículos, etiquetas y comentarios.' }
-		},
-		glossary: {
-			PRIMARY_KEY: {
-				term: 'Clave primaria',
-				basic: 'Identifica cada fila de la tabla de forma única. No admite valores repetidos ni nulos.',
-				advanced:
-					'La base de datos crea un índice único sobre la columna. En MySQL con InnoDB, ese índice decide además el orden en que se guardan las filas en disco.'
-			},
-			FOREIGN_KEY: {
-				term: 'Clave foránea',
-				basic: 'Enlaza la columna con la clave primaria de otra tabla. La base de datos rechaza cualquier valor que no exista en esa tabla.',
-				advanced:
-					'Cada INSERT, UPDATE o DELETE comprueba la relación. PostgreSQL no crea un índice para la clave foránea: sin él, las uniones entre las tablas y los borrados en la tabla padre recorren la tabla hija completa.'
-			},
-			UNIQUE: {
-				term: 'Restricción de unicidad',
-				basic: 'Impide que dos filas tengan el mismo valor en la columna. Se usa en correos, nombres de usuario o slugs.',
-				advanced:
-					'Se implementa con un índice único. La mayoría de las bases de datos admite varios NULL en la columna, salvo que se declare NOT NULL o, desde PostgreSQL 15, UNIQUE NULLS NOT DISTINCT.'
-			}
-		},
-		rules: {
-			'no-primary-key': {
-				title: 'La tabla «{table}» no tiene clave primaria',
-				explanation: 'Sin clave primaria, nada garantiza que cada fila sea única ni permite actualizar o borrar una fila concreta de forma fiable.',
-				detail: 'Cada UPDATE o DELETE sobre una fila concreta recorre la tabla completa, y la replicación lógica de PostgreSQL no puede replicar esos cambios.',
-				recommendation: 'Añada una columna id con PRIMARY KEY, por ejemplo de tipo UUID o BIGSERIAL.'
-			},
-			'contradictory-fk-action': {
-				title: '«{table}.{column}» es NOT NULL pero usa ON DELETE SET NULL',
-				explanation: 'Al borrar la fila padre, la base de datos intenta poner NULL en una columna que no lo admite.',
-				detail: 'El borrado en la tabla padre falla con un error de restricción NOT NULL y la transacción se cancela.',
-				recommendation: 'Cambie la acción a CASCADE o RESTRICT, o permita NULL en la columna.'
-			},
-			'unindexed-foreign-key': {
-				title: 'La clave foránea «{table}.{column}» no tiene índice',
-				explanation: 'PostgreSQL y SQLite no indexan las claves foráneas por su cuenta. Un índice acelera las consultas que unen las dos tablas.',
-				detail: 'Sin índice, cada unión y cada borrado en la tabla padre recorren la tabla hija completa y pueden bloquearla mientras dura la operación.',
-				recommendation: 'Cree un índice sobre la columna {column}.'
-			},
-			'orphan-table': {
-				title: 'La tabla «{table}» no tiene relaciones',
-				explanation: 'La tabla no enlaza con ninguna otra. Es normal en registros o configuraciones, pero a menudo indica que falta una clave foránea.',
-				detail: 'Compruebe si la tabla debería enlazar con la de usuarios, la de organizaciones u otra entidad central del esquema.',
-				recommendation: 'Revise si falta una clave foránea hacia esta tabla o desde ella.'
-			}
-		} as Record<string, { title: string; explanation: string; detail: string; recommendation: string }>,
-		recommendation: 'Recomendación',
-		fixSql: 'SQL de corrección',
-		basic: 'Qué es',
-		advanced: 'Efecto en la base de datos',
-		close: 'Cerrar',
-		copied: 'Diagrama Mermaid copiado al portapapeles.',
-		copyError: 'No se pudo copiar al portapapeles.',
-		errors: {
-			empty: 'Escriba al menos una sentencia CREATE TABLE.',
-			invalid: 'No se encontró ninguna sentencia CREATE TABLE válida. Revise la sintaxis.',
-			tooLarge: 'El SQL supera el límite de 250 KB.',
-			network: 'No se pudo contactar con el servicio. Compruebe su conexión e inténtelo de nuevo.',
-			unknown: 'No se pudo procesar el SQL. Vuelva a intentarlo.'
-		}
-	},
+	schemaflow: { ...schemaflowUiEs, engine: schemaflowEs },
 	scanner: {
 		title: 'Escáner de seguridad web',
 		heading: 'Escanee su sitio',

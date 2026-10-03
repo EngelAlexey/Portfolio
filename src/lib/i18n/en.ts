@@ -1,4 +1,6 @@
 import type { Dict } from './es';
+import { schemaflowEn } from './schemaflow-en';
+import { schemaflowUiEn } from './schemaflow-ui-en';
 
 export const en: Dict = {
 	nav: {
@@ -173,7 +175,7 @@ export const en: Dict = {
 	},
 	tools: {
 		title: 'Tools',
-		lead: 'Free tools to check the security of a website and document the schema of a database.',
+		lead: 'Free tools to check the security of a website and design the schema of a database.',
 		open: 'Open',
 		items: {
 			scanner: {
@@ -182,122 +184,11 @@ export const en: Dict = {
 			},
 			schemaflow: {
 				name: 'SchemaFlow',
-				body: 'Designs the tables of a database in a diagram and writes the SQL, or turns existing SQL into a diagram.'
+				body: 'Writes the PostgreSQL, MySQL, SQL Server or MongoDB code for a diagram that you draw. It also turns existing code into a diagram.'
 			}
 		}
 	},
-	schemaflow: {
-		title: 'SQL schema designer',
-		heading: 'SchemaFlow',
-		lead: 'SchemaFlow lets you design the tables of a database in a diagram and writes the SQL as you edit them. It also turns existing SQL into a diagram and reviews the schema design.',
-		templates: 'Templates',
-		modeDesign: 'Design',
-		modeSql: 'SQL',
-		addTable: 'New table',
-		clearCanvas: 'Clear',
-		selectHint: 'Select a table in the diagram to edit it, or create one with “New table”.',
-		tableName: 'Table name',
-		columnsTitle: 'Columns',
-		columnName: 'Column name',
-		columnType: 'Data type',
-		addColumn: 'Add column',
-		deleteColumn: 'Delete column',
-		deleteTable: 'Delete table',
-		notNull: 'NOT NULL',
-		reference: 'References',
-		noReference: 'No reference',
-		onDelete: 'On delete',
-		newTable: 'new_table',
-		newColumn: 'column',
-		editorLabel: 'SQL (CREATE TABLE)',
-		placeholder: 'Paste your CREATE TABLE statements here',
-		sqlHint: 'The SQL is generated from the design. If you edit it or paste other SQL, select “Apply SQL” to update the diagram.',
-		copySql: 'Copy SQL',
-		sqlCopied: 'SQL copied to the clipboard.',
-		clear: 'Clear',
-		render: 'Apply SQL',
-		rendering: 'Reading the SQL…',
-		score: (score: number) => `Design: ${score}/100`,
-		guideHint: 'Select a PK, FK or UQ label to see what it means.',
-		copyMermaid: 'Copy Mermaid',
-		downloadSvg: 'Download SVG',
-		zoomIn: 'Zoom in',
-		zoomOut: 'Zoom out',
-		zoomReset: 'Reset view',
-		canvasLabel: 'Schema diagram. Drag the background to pan and a table to move it.',
-		counts: (tables: number, relations: number) =>
-			`${tables === 1 ? '1 table' : `${tables} tables`} · ${relations === 1 ? '1 relationship' : `${relations} relationships`}`,
-		columns: (n: number) => (n === 1 ? '1 column' : `${n} columns`),
-		empty: 'Paste a schema or pick a template to see the diagram.',
-		reviewTitle: 'Design review',
-		reviewEmpty: 'The schema has no warnings.',
-		severity: { critical: 'Serious', warning: 'Warning', info: 'Suggestion' },
-		presets: {
-			ecommerce: { title: 'Online store', description: 'Customers, categories, products, orders and order items.' },
-			'saas-auth': { title: 'Multi-tenant SaaS', description: 'Organizations, users, memberships with roles and sessions.' },
-			'blog-cms': { title: 'Blog with tags', description: 'Authors, articles, tags and comments.' }
-		},
-		glossary: {
-			PRIMARY_KEY: {
-				term: 'Primary key',
-				basic: 'Identifies each row of the table uniquely. It accepts neither repeated values nor nulls.',
-				advanced:
-					'The database creates a unique index on the column. In MySQL with InnoDB, that index also sets the order in which rows are stored on disk.'
-			},
-			FOREIGN_KEY: {
-				term: 'Foreign key',
-				basic: 'Links the column to the primary key of another table. The database rejects any value that does not exist in that table.',
-				advanced:
-					'Every INSERT, UPDATE or DELETE checks the relationship. PostgreSQL does not create an index for a foreign key: without one, joins between the tables and deletes on the parent table scan the whole child table.'
-			},
-			UNIQUE: {
-				term: 'Unique constraint',
-				basic: 'Prevents two rows from having the same value in the column. Typical for emails, usernames or slugs.',
-				advanced:
-					'It is implemented with a unique index. Most databases accept several NULLs in the column unless it is declared NOT NULL or, from PostgreSQL 15, UNIQUE NULLS NOT DISTINCT.'
-			}
-		},
-		rules: {
-			'no-primary-key': {
-				title: 'Table “{table}” has no primary key',
-				explanation: 'Without a primary key, nothing guarantees that each row is unique or lets you update or delete a specific row reliably.',
-				detail: 'Each UPDATE or DELETE on a specific row scans the whole table, and PostgreSQL logical replication cannot replicate those changes.',
-				recommendation: 'Add an id column with PRIMARY KEY, for example of type UUID or BIGSERIAL.'
-			},
-			'contradictory-fk-action': {
-				title: '“{table}.{column}” is NOT NULL but uses ON DELETE SET NULL',
-				explanation: 'When the parent row is deleted, the database tries to set NULL in a column that does not accept it.',
-				detail: 'The delete on the parent table fails with a NOT NULL constraint error and the transaction is rolled back.',
-				recommendation: 'Change the action to CASCADE or RESTRICT, or allow NULL in the column.'
-			},
-			'unindexed-foreign-key': {
-				title: 'Foreign key “{table}.{column}” has no index',
-				explanation: 'PostgreSQL and SQLite do not index foreign keys on their own. An index speeds up queries that join the two tables.',
-				detail: 'Without an index, every join and every delete on the parent table scans the whole child table and can lock it while the operation runs.',
-				recommendation: 'Create an index on the {column} column.'
-			},
-			'orphan-table': {
-				title: 'Table “{table}” has no relationships',
-				explanation: 'The table does not link to any other. That is normal for logs or settings, but it often means a foreign key is missing.',
-				detail: 'Check whether the table should link to the users table, the organizations table or another central entity of the schema.',
-				recommendation: 'Check whether a foreign key to or from this table is missing.'
-			}
-		},
-		recommendation: 'Recommendation',
-		fixSql: 'Fix SQL',
-		basic: 'What it is',
-		advanced: 'Effect on the database',
-		close: 'Close',
-		copied: 'Mermaid diagram copied to the clipboard.',
-		copyError: 'Could not copy to the clipboard.',
-		errors: {
-			empty: 'Write at least one CREATE TABLE statement.',
-			invalid: 'No valid CREATE TABLE statement was found. Check the syntax.',
-			tooLarge: 'The SQL exceeds the 250 KB limit.',
-			network: 'Could not reach the service. Check your connection and try again.',
-			unknown: 'The SQL could not be processed. Try again.'
-		}
-	},
+	schemaflow: { ...schemaflowUiEn, engine: schemaflowEn },
 	scanner: {
 		title: 'Website security scanner',
 		heading: 'Scan your site',
