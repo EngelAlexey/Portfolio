@@ -61,7 +61,7 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 	},
 	empty: {
 		title: 'Create the first table',
-		body: 'Drag "Table" from the toolbar or double-click the canvas. You can also start from a template or from code you already have.',
+		body: 'Drag a table from the "Elements" panel or double-click the canvas. You can also start from a template or from code you already have.',
 		create: 'Create table',
 		template: 'Choose template',
 		import: 'Import code',
@@ -71,7 +71,7 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 	canvas: {
 		label: 'Schema diagram',
 		short: 'Diagram',
-		help: 'Drag on the background to select several tables and drag with the right mouse button to pan the canvas. Use Ctrl with the wheel to zoom in or out. With the keyboard, press Tab to move between tables, use the arrow keys to move one and press Enter to rename it. Press ? to see all shortcuts.',
+		help: 'Drag tables, columns and relationships from the "Elements" panel. Drag on the background to select several tables and drag with the right mouse button to pan the canvas. Use Ctrl with the wheel to zoom in or out. With the keyboard, press Tab to move between tables, use the arrow keys to move one and press Enter to rename it. Press ? to see all shortcuts.',
 		card: '{name}, {columns}, {relations}',
 		cardIssues: ', {issues}',
 		rowPk: ', primary key',
@@ -112,6 +112,51 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 		exists: 'That relationship already exists.',
 		sameColumn: 'Drop on another column.',
 		cancelled: 'To create a relationship, drop the connector on a column or on another table\'s name.'
+	},
+	palette: {
+		title: 'Elements',
+		hint: 'Drag an element onto the canvas or onto a table.',
+		show: 'Show the elements',
+		hide: 'Hide the elements',
+		groups: { tables: 'Tables', columns: 'Columns', relations: 'Relationships', notes: 'Annotations' },
+		tables: {
+			basic: { label: 'Table', tip: 'Table with the primary key id.' },
+			timestamps: { label: 'With dates', tip: 'Table with id, created_at and updated_at, which store when each row was created and when it last changed.' },
+			lookup: { label: 'Lookup', tip: 'Table of fixed values, such as categories or statuses, with id and a unique name.' }
+		},
+		columns: {
+			text: 'Text',
+			longText: 'Long text',
+			integer: 'Integer',
+			decimal: 'Decimal',
+			boolean: 'Boolean',
+			date: 'Date',
+			datetime: 'Date and time',
+			uuid: 'UUID',
+			json: 'JSON',
+			timestamps: 'Timestamps'
+		},
+		columnLabel: '{name} column',
+		columnTip: 'Drop the column on a table, at the row where you want it. If you click it, the column goes at the end of the selected table.',
+		relations: {
+			oneToMany: { label: '1:N', name: 'One-to-many' },
+			oneToOne: { label: '1:1', name: 'One-to-one' },
+			manyToMany: { label: 'N:M', name: 'Many-to-many' }
+		},
+		relationTip: '{name}. Drop it on the table that will hold the foreign key, then click the target table.',
+		manyTip: 'Many-to-many. Drop it on one table, then click the other to create the junction table.',
+		pickSource: 'Click the table that will hold the foreign key. Press Esc to cancel.',
+		pickFirst: 'Click the first table. Press Esc to cancel.',
+		pickTarget: 'Click the target table. Press Esc to cancel.',
+		sameTable: 'Choose another table.',
+		noKey: 'Table "{table}" has no primary key.',
+		oneToOneTag: '{text} (one-to-one)',
+		dropColumn: 'Drop the column on a table.',
+		dropRelation: 'Drop the relationship on a table.',
+		selectTable: 'Select a table to add the column.',
+		selectTableRelation: 'Select a table to create the relationship.',
+		timestampsExist: 'Table "{table}" already has created_at and updated_at.',
+		nameColumn: 'name'
 	},
 	ctx: {
 		rename: 'Rename',

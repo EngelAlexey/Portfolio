@@ -10,6 +10,7 @@ import { h, icon, isTextField, mod, modLabel } from './dom';
 import { Dock, type DockHost } from './dock';
 import type { Gallery } from './gallery';
 import { exportPng, exportSvg, mermaid, readFile, saveFile, shareContent } from './io';
+import { Palette, type PaletteItem } from './palette';
 import { Banners, Bubble, Live, Menus, Toasts, Tooltips } from './popups';
 import { Sheet, type SheetHost, type SheetTab } from './sheet';
 import { Store } from './store';
@@ -20,19 +21,21 @@ interface Prefs {
 	dockWidth: number;
 	sheetOpen: boolean;
 	sheetTab: SheetTab;
+	paletteOpen: boolean;
 }
 
 const PREFS_KEY = 'sf:ui';
 
 function loadPrefs(): Prefs {
-	const defaults: Prefs = { dockOpen: true, dockWidth: 400, sheetOpen: false, sheetTab: 'review' };
+	const defaults: Prefs = { dockOpen: true, dockWidth: 400, sheetOpen: false, sheetTab: 'review', paletteOpen: true };
 	try {
 		const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}') as Partial<Prefs>;
 		return {
 			dockOpen: typeof raw.dockOpen === 'boolean' ? raw.dockOpen : defaults.dockOpen,
 			dockWidth: typeof raw.dockWidth === 'number' && raw.dockWidth >= 320 && raw.dockWidth <= 640 ? raw.dockWidth : defaults.dockWidth,
 			sheetOpen: typeof raw.sheetOpen === 'boolean' ? raw.sheetOpen : defaults.sheetOpen,
-			sheetTab: raw.sheetTab === 'properties' ? 'properties' : 'review'
+			sheetTab: raw.sheetTab === 'properties' ? 'properties' : 'review',
+			paletteOpen: typeof raw.paletteOpen === 'boolean' ? raw.paletteOpen : defaults.paletteOpen
 		};
 	} catch {
 		return defaults;
@@ -87,6 +90,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 	let dock: Dock;
 	let sheet: Sheet;
 	let gallery: Gallery | null = null;
+	let palette: Palette | null = null;
 	let saveTimer: ReturnType<typeof setTimeout> | undefined;
 	let findingsTimer: ReturnType<typeof setTimeout> | undefined;
 	let lastFindings = '';
@@ -132,6 +136,8 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		return sheetEl.offsetWidth + 24;
 	};
 	const bottomInset = () => (mobile.matches && mobilePanel !== 'none' ? Math.round(canvasEl.clientHeight * 0.55) : 0);
+	const paletteEl = q<HTMLElement>(root, '[data-palette]');
+	const leftInset = () => (mobile.matches || !palette?.isOpen ? 0 : paletteEl.offsetLeft + paletteEl.offsetWidth + 12);
 
 	const canvasHost: CanvasHost = {
 		strings: t,
@@ -150,6 +156,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		openProperties: () => openSheet('properties'),
 		openGlossary: (term, anchor) => openGlossary(t, bubble, term, anchor),
 		sheetInset,
+		leftInset,
 		bottomInset,
 		toastUndo,
 		afterRename: (oldName) => {
@@ -348,25 +355,42 @@ export function mountSchemaFlow(root: HTMLElement): void {
 	});
 
 	let suppressToolClick = false;
+	const tableItem: PaletteItem = { kind: 'table', preset: 'basic' };
 	for (const tool of root.querySelectorAll<HTMLButtonElement>('[data-tool]')) {
-		const kind = tool.dataset.tool as 'table' | 'note' | 'area';
 		tool.addEventListener('pointerdown', (event) => {
 			if (event.button !== 0 || event.pointerType === 'touch') return;
 			event.preventDefault();
 			suppressToolClick = true;
 			window.addEventListener('pointerup', () => setTimeout(() => (suppressToolClick = false), 0), { once: true });
-			canvas.beginInsert(kind, event);
+			canvas.beginInsert(tableItem, event);
 		});
 		tool.addEventListener('click', () => {
 			if (suppressToolClick) {
 				suppressToolClick = false;
 				return;
 			}
-			if (kind === 'table') canvas.createTable();
-			else if (kind === 'note') canvas.createNote();
-			else canvas.createArea();
+			canvas.createTable();
 		});
 	}
+
+	const syncPalette = () => {
+		canvasEl.style.setProperty('--sf-left-inset', `${mobile.matches ? 0 : paletteEl.offsetLeft + paletteEl.offsetWidth}px`);
+	};
+	palette = new Palette(
+		{
+			strings: t,
+			drag: (item, event) => canvas.beginInsert(item, event),
+			activate: (item, keyboard) => canvas.activateItem(item, keyboard),
+			toggled: (open) => {
+				prefs.paletteOpen = open;
+				savePrefs(prefs);
+				syncPalette();
+			}
+		},
+		paletteEl,
+		prefs.paletteOpen
+	);
+	syncPalette();
 
 	const loadTemplate = (schema: Schema, name: string) => {
 		const named = { ...schema, name: designName() ? store.schema.name : name };
@@ -697,6 +721,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		if (!mobile.matches && prefs.sheetOpen) sheet.show(prefs.sheetTab);
 		else if (mobile.matches) sheet.close();
 		syncPanels();
+		syncPalette();
 	});
 	tablet.addEventListener('change', () => {
 		if (tablet.matches && !mobile.matches) prefs.dockOpen = false;

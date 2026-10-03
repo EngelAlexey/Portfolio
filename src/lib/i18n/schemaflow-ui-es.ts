@@ -59,7 +59,7 @@ export const schemaflowUiEs = {
 	},
 	empty: {
 		title: 'Cree la primera tabla',
-		body: 'Arrastre «Tabla» desde la barra o haga doble clic en el lienzo. También puede partir de una plantilla o de un código que ya tenga.',
+		body: 'Arrastre una tabla desde el panel «Elementos» o haga doble clic en el lienzo. También puede partir de una plantilla o de un código que ya tenga.',
 		create: 'Crear tabla',
 		template: 'Elegir plantilla',
 		import: 'Importar código',
@@ -69,7 +69,7 @@ export const schemaflowUiEs = {
 	canvas: {
 		label: 'Diagrama del esquema',
 		short: 'Diagrama',
-		help: 'Arrastre sobre el fondo para seleccionar varias tablas y arrastre con el botón derecho para desplazar el lienzo. Use Ctrl con la rueda para acercar o alejar. Con el teclado, pulse Tab para pasar de una tabla a otra, use las flechas para moverla y pulse Enter para cambiar su nombre. Pulse ? para ver todos los atajos.',
+		help: 'Arrastre tablas, columnas y relaciones desde el panel «Elementos». Arrastre sobre el fondo para seleccionar varias tablas y arrastre con el botón derecho para desplazar el lienzo. Use Ctrl con la rueda para acercar o alejar. Con el teclado, pulse Tab para pasar de una tabla a otra, use las flechas para moverla y pulse Enter para cambiar su nombre. Pulse ? para ver todos los atajos.',
 		card: '{name}, {columns}, {relations}',
 		cardIssues: ', {issues}',
 		rowPk: ', clave primaria',
@@ -110,6 +110,51 @@ export const schemaflowUiEs = {
 		exists: 'Esa relación ya existe.',
 		sameColumn: 'Suelte sobre otra columna.',
 		cancelled: 'Para crear una relación, suelte el conector sobre una columna o sobre el nombre de otra tabla.'
+	},
+	palette: {
+		title: 'Elementos',
+		hint: 'Arrastre un elemento al lienzo o sobre una tabla.',
+		show: 'Mostrar los elementos',
+		hide: 'Ocultar los elementos',
+		groups: { tables: 'Tablas', columns: 'Columnas', relations: 'Relaciones', notes: 'Anotaciones' },
+		tables: {
+			basic: { label: 'Tabla', tip: 'Tabla con la clave primaria id.' },
+			timestamps: { label: 'Con fechas', tip: 'Tabla con id, created_at y updated_at, que guardan cuándo se creó y cuándo se cambió cada fila.' },
+			lookup: { label: 'Catálogo', tip: 'Tabla de valores fijos, como categorías o estados, con id y un nombre único.' }
+		},
+		columns: {
+			text: 'Texto',
+			longText: 'Texto largo',
+			integer: 'Entero',
+			decimal: 'Decimal',
+			boolean: 'Booleano',
+			date: 'Fecha',
+			datetime: 'Fecha y hora',
+			uuid: 'UUID',
+			json: 'JSON',
+			timestamps: 'Fechas de registro'
+		},
+		columnLabel: 'Columna de tipo {name}',
+		columnTip: 'Suelte la columna sobre una tabla, en la fila donde la quiera. Si hace clic, la columna se añade al final de la tabla seleccionada.',
+		relations: {
+			oneToMany: { label: '1:N', name: 'Uno a muchos' },
+			oneToOne: { label: '1:1', name: 'Uno a uno' },
+			manyToMany: { label: 'N:M', name: 'Muchos a muchos' }
+		},
+		relationTip: '{name}. Suéltela sobre la tabla que tendrá la clave foránea y haga clic en la tabla de destino.',
+		manyTip: 'Muchos a muchos. Suéltela sobre una tabla y haga clic en la otra para crear la tabla puente.',
+		pickSource: 'Haga clic en la tabla que tendrá la clave foránea. Pulse Esc para cancelar.',
+		pickFirst: 'Haga clic en la primera tabla. Pulse Esc para cancelar.',
+		pickTarget: 'Haga clic en la tabla de destino. Pulse Esc para cancelar.',
+		sameTable: 'Elija otra tabla.',
+		noKey: 'La tabla «{table}» no tiene clave primaria.',
+		oneToOneTag: '{text} (uno a uno)',
+		dropColumn: 'Suelte la columna sobre una tabla.',
+		dropRelation: 'Suelte la relación sobre una tabla.',
+		selectTable: 'Seleccione una tabla para añadir la columna.',
+		selectTableRelation: 'Seleccione una tabla para crear la relación.',
+		timestampsExist: 'La tabla «{table}» ya tiene created_at y updated_at.',
+		nameColumn: 'nombre'
 	},
 	ctx: {
 		rename: 'Cambiar nombre',

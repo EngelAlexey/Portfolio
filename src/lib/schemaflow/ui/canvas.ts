@@ -18,6 +18,7 @@ import {
 	referencedKey,
 	renameTable,
 	sameType,
+	setOneToOne,
 	setPrimaryKey,
 	toggleUnique,
 	updateArea,
@@ -26,10 +27,11 @@ import {
 	updateTable,
 	type Selection
 } from '../model/ops';
-import { CARD_WIDTH, COLORS, LIMITS, ROW_HEIGHT, tableHeight, type Area, type Column, type Note, type Relation, type Schema, type Table } from '../model/types';
+import { CARD_WIDTH, COLORS, HEADER_HEIGHT, LIMITS, ROW_HEIGHT, tableHeight, type Area, type Column, type Note, type Relation, type Schema, type Table } from '../model/types';
 import type { Severity } from '../parse/issues';
 import { clearChildren, h, icon, isTextField, mod, modLabel, prefersReducedMotion, s } from './dom';
 import { edgeGeometry, rowCentre } from './geometry';
+import { COLUMN_TYPES, TIMESTAMP_COLUMNS, type ColumnPreset, type PaletteItem, type RelationKind, type TablePreset } from './palette';
 import type { Bubble, Live, MenuItem, Menus, Toasts } from './popups';
 import { isEmptySelection, type Store } from './store';
 import { fill, plural, type Strings } from './strings';
@@ -49,6 +51,7 @@ export interface CanvasHost {
 	openProperties(): void;
 	openGlossary(term: 'PRIMARY_KEY' | 'FOREIGN_KEY' | 'UNIQUE', anchor: HTMLElement): void;
 	sheetInset(): number;
+	leftInset(): number;
 	bottomInset(): number;
 	toastUndo(text: string): void;
 	afterRename(oldName: string): void;
@@ -69,7 +72,7 @@ type Drag =
 	| { kind: 'resize-note'; pointer: number; note: string; startX: number; startY: number; w: number; h: number }
 	| { kind: 'resize-area'; pointer: number; area: string; corner: string; startX: number; startY: number; box: { x: number; y: number; w: number; h: number }; last?: { x: number; y: number; w: number; h: number } }
 	| { kind: 'reorder'; pointer: number; table: string; column: string; startY: number; index: number; line: HTMLElement }
-	| { kind: 'insert'; pointer: number; tool: 'table' | 'note' | 'area'; startX: number; startY: number; ghost: HTMLElement | null };
+	| { kind: 'insert'; pointer: number; item: PaletteItem; startX: number; startY: number; ghost: HTMLElement | null; target: { table: string; index: number } | null; line: HTMLElement | null };
 
 interface Outcome {
 	valid: boolean;
@@ -107,6 +110,8 @@ export class Canvas {
 	private pinch: { distance: number; zoom: number; cx: number; cy: number; x: number; y: number } | null = null;
 	private longPress: ReturnType<typeof setTimeout> | undefined;
 	private menuGuard = 0;
+	private link: { relation: RelationKind; source: string | null; outcome: Outcome | null } | null = null;
+	private dropHints = 0;
 	private cancelHints = 0;
 	private autoPan: { dx: number; dy: number } = { dx: 0, dy: 0 };
 	private autoPanFrame = 0;
@@ -150,6 +155,13 @@ export class Canvas {
 
 	render(schema: Schema = this.store.schema): void {
 		const selection = this.store.selection;
+		const linkSource = this.link?.source;
+		if (linkSource && !schema.tables.some((x) => x.id === linkSource)) {
+			this.link = null;
+			this.root.classList.remove('is-linking');
+			this.preview.setAttribute('d', '');
+			this.tag.hidden = true;
+		}
 		const selectedTables = new Set(selection.tables);
 		const tableMap = new Map(schema.tables.map((t) => [t.id, t]));
 		const fkColumns = new Map<string, Relation>();
@@ -215,6 +227,7 @@ export class Canvas {
 				else if (focusCard) el.focus();
 			}
 			entry.el.style.transform = `translate(${table.x}px, ${table.y}px)`;
+			entry.el.classList.toggle('is-link-source', this.link?.source === table.id);
 		}
 		for (const [id, entry] of this.cards) if (!seenTables.has(id)) {
 			entry.el.remove();
@@ -287,6 +300,11 @@ export class Canvas {
 	private updatePill(schema: Schema): void {
 		const selection = this.store.selection;
 		const count = selection.tables.length + selection.notes.length + selection.areas.length;
+		this.pill.classList.toggle('is-hint', Boolean(this.link) || this.drag?.kind === 'connect');
+		if (this.link) {
+			this.pill.textContent = this.linkText();
+			return;
+		}
 		if (this.drag?.kind === 'connect') {
 			this.pill.textContent = this.strings.connect.hint;
 			return;
@@ -409,7 +427,8 @@ export class Canvas {
 
 	visibleRect(): { left: number; top: number; width: number; height: number } {
 		const rect = this.root.getBoundingClientRect();
-		return { left: 0, top: 0, width: Math.max(120, rect.width - this.host.sheetInset()), height: Math.max(120, rect.height - this.host.bottomInset()) };
+		const left = Math.min(this.host.leftInset(), Math.max(0, rect.width - 240));
+		return { left, top: 0, width: Math.max(120, rect.width - this.host.sheetInset() - left), height: Math.max(120, rect.height - this.host.bottomInset()) };
 	}
 
 	screenToWorld(clientX: number, clientY: number): { x: number; y: number } {
@@ -421,12 +440,12 @@ export class Canvas {
 	centreWorld(): { x: number; y: number } {
 		const visible = this.visibleRect();
 		const rect = this.root.getBoundingClientRect();
-		return this.screenToWorld(rect.left + visible.width / 2, rect.top + visible.height / 2);
+		return this.screenToWorld(rect.left + visible.left + visible.width / 2, rect.top + visible.height / 2);
 	}
 
 	setZoom(next: number, cx?: number, cy?: number): void {
 		const visible = this.visibleRect();
-		const px = cx ?? visible.width / 2;
+		const px = cx ?? visible.left + visible.width / 2;
 		const py = cy ?? visible.height / 2;
 		const { zoom, x, y } = this.store.view;
 		const z = Math.min(2, Math.max(0.25, next));
@@ -444,7 +463,7 @@ export class Canvas {
 		const width = Math.max(1, box.right - box.left);
 		const height = Math.max(1, box.bottom - box.top);
 		const zoom = Math.min(1.1, Math.max(0.25, Math.min((visible.width - pad * 2) / width, (visible.height - pad * 2) / height)));
-		const next = { zoom, x: (visible.width - width * zoom) / 2 - box.left * zoom, y: (visible.height - height * zoom) / 2 - box.top * zoom };
+		const next = { zoom, x: visible.left + (visible.width - width * zoom) / 2 - box.left * zoom, y: (visible.height - height * zoom) / 2 - box.top * zoom };
 		this.animateView(next, animate);
 	}
 
@@ -479,12 +498,12 @@ export class Canvas {
 		if (!box) return;
 		const { zoom, x, y } = this.store.view;
 		const visible = this.visibleRect();
-		const inside = box.left * zoom + x >= 0 && box.right * zoom + x <= visible.width && box.top * zoom + y >= 0 && box.bottom * zoom + y <= visible.height;
+		const inside = box.left * zoom + x >= visible.left && box.right * zoom + x <= visible.left + visible.width && box.top * zoom + y >= 0 && box.bottom * zoom + y <= visible.height;
 		if (!inside) {
 			const width = box.right - box.left;
 			const height = box.bottom - box.top;
 			const z = Math.min(zoom, Math.max(0.25, Math.min((visible.width - 96) / width, (visible.height - 96) / height)));
-			this.animateView({ zoom: z, x: (visible.width - width * z) / 2 - box.left * z, y: (visible.height - height * z) / 2 - box.top * z }, true);
+			this.animateView({ zoom: z, x: visible.left + (visible.width - width * z) / 2 - box.left * z, y: (visible.height - height * z) / 2 - box.top * z }, true);
 		}
 		const el = kind === 'table' ? this.cards.get(id)?.el : null;
 		if (el && !prefersReducedMotion()) {
@@ -505,8 +524,8 @@ export class Canvas {
 		const bottom = (table.y + tableHeight(table)) * zoom + y;
 		let dx = 0;
 		let dy = 0;
-		if (right > visible.width - 24) dx = visible.width - 24 - right;
-		if (left + dx < 24) dx = 24 - left;
+		if (right > visible.left + visible.width - 24) dx = visible.left + visible.width - 24 - right;
+		if (left + dx < visible.left + 24) dx = visible.left + 24 - left;
 		if (bottom > visible.height - 24) dy = visible.height - 24 - bottom;
 		if (top + dy < 24) dy = 24 - top;
 		if (dx || dy) this.animateView({ zoom, x: x + dx, y: y + dy }, true);
@@ -542,7 +561,7 @@ export class Canvas {
 		return { x: px, y: py };
 	}
 
-	createTable(at?: { x: number; y: number }, centre = true): string {
+	createTable(at?: { x: number; y: number }, centre = true, preset: TablePreset = 'basic'): string {
 		const t = this.strings;
 		if (this.store.schema.tables.length >= LIMITS.tables) {
 			this.host.toasts.show(t.canvas.limitTables);
@@ -551,8 +570,9 @@ export class Canvas {
 		const point = at ?? this.centreWorld();
 		const spot = at && !centre ? { x: Math.round(point.x / 8) * 8, y: Math.round(point.y / 8) * 8 } : this.freeSpot(point.x - CARD_WIDTH / 2, point.y - 40);
 		const result = addTable(this.store.schema, { name: t.canvas.newTable, x: spot.x, y: spot.y });
-		const table = findTable(result.schema, result.tableId);
-		this.host.commit(result.schema, this.label(t.history.createTable, { x: table?.name ?? '' }), { select: { ...emptySelection(), tables: [result.tableId] } });
+		const schema = this.applyTablePreset(result.schema, result.tableId, preset);
+		const table = findTable(schema, result.tableId);
+		this.host.commit(schema, this.label(t.history.createTable, { x: table?.name ?? '' }), { select: { ...emptySelection(), tables: [result.tableId] } });
 		this.host.live.say(this.label(t.live.tableCreated, { x: table?.name ?? '' }));
 		this.ensureVisible(result.tableId);
 		this.startRename(result.tableId);
@@ -626,7 +646,7 @@ export class Canvas {
 			if (next === 'add') this.cards.get(tableId)?.el.querySelector<HTMLElement>('[data-add-column]')?.focus();
 			else if (next === 'first') {
 				const first = findTable(this.store.schema, tableId)?.columns[0];
-				if (first) this.startColumnEdit(tableId, first.id, 'name', false);
+				if (first) this.startColumnEdit(tableId, first.id, 'name', 'existing');
 			} else if (mode === 'cancel') this.cards.get(tableId)?.el.focus();
 		};
 		input.addEventListener('keydown', (event) => {
@@ -651,7 +671,8 @@ export class Canvas {
 		this.render();
 	}
 
-	startColumnEdit(tableId: string, columnId: string, field: 'name' | 'type', fresh: boolean): void {
+	startColumnEdit(tableId: string, columnId: string, field: 'name' | 'type', origin: 'existing' | 'quick' | 'insert'): void {
+		const fresh = origin !== 'existing';
 		const entry = this.cards.get(tableId);
 		const table = findTable(this.store.schema, tableId);
 		const column = table?.columns.find((c) => c.id === columnId);
@@ -731,7 +752,7 @@ export class Canvas {
 				return;
 			}
 			if (mode === 'cancel') {
-				if (fresh && this.isPlaceholder(current)) this.dropColumn(tableId, columnId);
+				if (fresh && this.isDefaultName(current)) this.dropColumn(tableId, columnId);
 				else this.rebuild(tableId);
 				this.cards.get(tableId)?.el.focus();
 				return;
@@ -757,19 +778,19 @@ export class Canvas {
 			}
 			if (!changed) this.rebuild(tableId);
 			const after = findTable(this.store.schema, tableId)?.columns.find((c) => c.id === columnId);
-			if (fresh && next !== 'type' && next !== 'name' && after && this.isPlaceholder(after)) {
+			if (origin === 'quick' && next !== 'type' && next !== 'name' && after && this.isPlaceholder(after)) {
 				this.dropColumn(tableId, columnId);
 				if (!blurred) this.cards.get(tableId)?.el.querySelector<HTMLElement>('[data-add-column]')?.focus();
 				return;
 			}
 			const columns = findTable(this.store.schema, tableId)?.columns ?? [];
 			const index = columns.findIndex((c) => c.id === columnId);
-			if (next === 'type') this.startColumnEdit(tableId, columnId, 'type', fresh);
-			else if (next === 'name') this.startColumnEdit(tableId, columnId, 'name', fresh);
+			if (next === 'type') this.startColumnEdit(tableId, columnId, 'type', origin);
+			else if (next === 'name') this.startColumnEdit(tableId, columnId, 'name', origin);
 			else if (next === 'next') this.addColumnAndEdit(tableId);
 			else if (next === 'nextExisting') {
 				const following = columns[index + 1];
-				if (following) this.startColumnEdit(tableId, following.id, 'name', false);
+				if (following) this.startColumnEdit(tableId, following.id, 'name', 'existing');
 				else this.cards.get(tableId)?.el.querySelector<HTMLElement>('[data-add-column]')?.focus();
 			} else if (!blurred) this.cards.get(tableId)?.el.querySelector<HTMLElement>(`.sf-row[data-column="${columnId}"]`)?.focus();
 		};
@@ -789,8 +810,8 @@ export class Canvas {
 			}
 			if (event.key === 'Enter') {
 				event.preventDefault();
-				if (field === 'name') finish('commit', fresh ? 'type' : undefined);
-				else finish('commit', fresh ? 'next' : undefined);
+				if (field === 'name') finish('commit', origin === 'quick' ? 'type' : undefined);
+				else finish('commit', origin === 'quick' ? 'next' : undefined);
 			} else if (event.key === 'Tab') {
 				event.preventDefault();
 				if (field === 'name') finish('commit', event.shiftKey ? undefined : 'type');
@@ -803,8 +824,12 @@ export class Canvas {
 		input.addEventListener('blur', () => setTimeout(() => finish('commit', undefined, true), 0));
 	}
 
+	private isDefaultName(column: Column): boolean {
+		return new RegExp(`^${this.strings.canvas.newColumn}(_\\d+)?$`).test(column.name);
+	}
+
 	private isPlaceholder(column: Column): boolean {
-		return new RegExp(`^${this.strings.canvas.newColumn}(_\\d+)?$`).test(column.name) && column.type.kind === 'text';
+		return this.isDefaultName(column) && column.type.kind === 'text';
 	}
 
 	private dropColumn(tableId: string, columnId: string): void {
@@ -827,7 +852,221 @@ export class Canvas {
 		const name = findTable(result.schema, tableId)?.columns.find((c) => c.id === result.columnId)?.name ?? '';
 		this.host.commit(result.schema, this.label(this.strings.history.addColumn, { x: name }), { select: { ...emptySelection(), tables: [tableId] } });
 		this.host.live.say(this.label(this.strings.live.columnAdded, { x: name, t: table.name }));
-		this.startColumnEdit(tableId, result.columnId, 'name', true);
+		this.startColumnEdit(tableId, result.columnId, 'name', 'quick');
+	}
+
+	addPresetColumn(tableId: string, preset: ColumnPreset, index?: number): void {
+		const t = this.strings;
+		const table = findTable(this.store.schema, tableId);
+		if (!table) return;
+		if (preset === 'timestamps') {
+			const result = this.withTimestamps(this.store.schema, tableId, index);
+			if (result.names.length === 0) {
+				this.host.toasts.show(this.label(t.palette.timestampsExist, { table: table.name }));
+				return;
+			}
+			const names = result.names.join(', ');
+			this.host.commit(result.schema, this.label(t.history.addColumn, { x: names }), { select: { ...emptySelection(), tables: [tableId] } });
+			this.host.live.say(this.label(t.live.columnAdded, { x: names, t: table.name }));
+			this.ensureVisible(tableId);
+			return;
+		}
+		if (table.columns.length >= LIMITS.columns) {
+			this.host.toasts.show(t.canvas.limitColumns);
+			return;
+		}
+		const options = index === undefined ? { name: t.canvas.newColumn, type: COLUMN_TYPES[preset] } : { name: t.canvas.newColumn, type: COLUMN_TYPES[preset], index };
+		const result = addColumn(this.store.schema, tableId, options);
+		if (!result.columnId) return;
+		const name = findTable(result.schema, tableId)?.columns.find((c) => c.id === result.columnId)?.name ?? '';
+		this.host.commit(result.schema, this.label(t.history.addColumn, { x: name }), { select: { ...emptySelection(), tables: [tableId] } });
+		this.host.live.say(this.label(t.live.columnAdded, { x: name, t: table.name }));
+		this.ensureVisible(tableId);
+		this.startColumnEdit(tableId, result.columnId, 'name', 'insert');
+	}
+
+	private withTimestamps(schema: Schema, tableId: string, index?: number): { schema: Schema; names: string[] } {
+		let next = schema;
+		const names: string[] = [];
+		for (const name of TIMESTAMP_COLUMNS) {
+			const table = findTable(next, tableId);
+			if (!table || table.columns.some((c) => c.name.toLowerCase() === name)) continue;
+			const options = index === undefined ? { name, type: { kind: 'timestamptz' } as const } : { name, type: { kind: 'timestamptz' } as const, index: index + names.length };
+			const result = addColumn(next, tableId, options);
+			if (!result.columnId) break;
+			next = updateColumn(result.schema, tableId, result.columnId, { default: { kind: 'now' } });
+			names.push(name);
+		}
+		return { schema: next, names };
+	}
+
+	private applyTablePreset(schema: Schema, tableId: string, preset: TablePreset): Schema {
+		if (preset === 'timestamps') return this.withTimestamps(schema, tableId).schema;
+		if (preset === 'lookup') {
+			const result = addColumn(schema, tableId, { name: this.strings.palette.nameColumn, type: { kind: 'varchar', length: 100 } });
+			return result.columnId ? toggleUnique(result.schema, tableId, result.columnId) : schema;
+		}
+		return schema;
+	}
+
+	activateItem(item: PaletteItem, keyboard: boolean): void {
+		const t = this.strings;
+		if (item.kind === 'table') this.createTable(undefined, true, item.preset);
+		else if (item.kind === 'note') this.createNote();
+		else if (item.kind === 'area') this.createArea();
+		else if (item.kind === 'column') {
+			const tableId = this.singleTable();
+			if (tableId) this.addPresetColumn(tableId, item.preset);
+			else this.host.toasts.show(t.palette.selectTable);
+		} else if (keyboard) {
+			const tableId = this.singleTable();
+			if (tableId) this.host.openRelate(tableId);
+			else this.host.toasts.show(t.palette.selectTableRelation);
+		} else this.startLink(item.relation, null);
+	}
+
+	private singleTable(): string | null {
+		const tables = this.store.selection.tables;
+		return tables.length === 1 ? (tables[0] ?? null) : null;
+	}
+
+	startLink(relation: RelationKind, source: string | null): void {
+		this.cancelLink();
+		this.host.bubble.close(false);
+		this.link = { relation, source, outcome: null };
+		this.root.classList.add('is-linking');
+		this.root.focus({ preventScroll: true });
+		this.render();
+		if (this.lastPointer) this.linkMove(this.lastPointer);
+		this.host.live.say(this.linkText());
+	}
+
+	cancelLink(): void {
+		if (!this.link) return;
+		this.link = null;
+		this.root.classList.remove('is-linking');
+		this.preview.setAttribute('d', '');
+		this.tag.hidden = true;
+		this.clearDropTargets();
+		this.render();
+	}
+
+	private linkText(): string {
+		const t = this.strings.palette;
+		const link = this.link;
+		if (!link) return '';
+		if (link.source) return t.pickTarget;
+		return link.relation === 'manyToMany' ? t.pickFirst : t.pickSource;
+	}
+
+	private linkMove(e: PointerEvent): void {
+		const link = this.link;
+		if (!link) return;
+		this.clearDropTargets();
+		const schema = this.store.schema;
+		const under = document.elementFromPoint(e.clientX, e.clientY);
+		const card = under && this.root.contains(under) ? under.closest<HTMLElement>('.sf-card') : null;
+		const target = card?.dataset.table ? findTable(schema, card.dataset.table) : undefined;
+		const source = link.source ? findTable(schema, link.source) : undefined;
+		link.outcome = null;
+		if (!source) {
+			this.preview.setAttribute('d', '');
+			this.tag.hidden = true;
+			if (target) card?.querySelector('.sf-card-head')?.classList.add('is-drop-head');
+			return;
+		}
+		const point = this.screenToWorld(e.clientX, e.clientY);
+		let endX = point.x;
+		let endY = point.y;
+		if (target && target.id !== source.id) {
+			link.outcome = this.linkOutcome(link.relation, source, target);
+			if (link.outcome.valid) card?.querySelector('.sf-card-head')?.classList.add('is-drop-head');
+			endX = point.x < target.x + CARD_WIDTH / 2 ? target.x : target.x + CARD_WIDTH;
+			endY = target.y + HEADER_HEIGHT / 2;
+		} else if (target) {
+			link.outcome = { valid: false, text: this.strings.palette.sameTable };
+		}
+		const fromRight = endX > source.x + CARD_WIDTH / 2;
+		const fromX = fromRight ? source.x + CARD_WIDTH : source.x;
+		const fromY = source.y + HEADER_HEIGHT / 2;
+		const bend = fromRight ? 60 : -60;
+		this.preview.setAttribute('d', `M ${fromX} ${fromY} C ${fromX + bend} ${fromY}, ${endX - bend} ${endY}, ${endX} ${endY}`);
+		this.showTag(e, link.outcome);
+	}
+
+	private linkOutcome(relation: RelationKind, source: Table, target: Table): Outcome {
+		const t = this.strings;
+		if (relation === 'manyToMany') {
+			const name = `${source.name}_${target.name}`;
+			return {
+				valid: true,
+				text: this.label(t.connect.junction, { name }),
+				run: () => {
+					const result = createJunction(this.store.schema, source.id, target.id);
+					if (!result.tableId) return;
+					const created = findTable(result.schema, result.tableId);
+					this.host.commit(result.schema, this.label(t.history.junction, { x: created?.name ?? name }), { select: { ...emptySelection(), tables: [result.tableId] } });
+					this.host.live.say(this.label(t.live.junctionCreated, { x: created?.name ?? name }));
+				}
+			};
+		}
+		const key = referencedKey(target);
+		const keyColumn = target.columns.find((c) => c.id === key[0]);
+		if (key.length === 0 || !keyColumn) return { valid: false, text: this.label(t.palette.noKey, { table: target.name }) };
+		const column = `${target.name}_${keyColumn.name}`;
+		const text = this.label(t.connect.createColumn, { table: source.name, column, target: `${target.name}.${keyColumn.name}` });
+		return {
+			valid: true,
+			text: relation === 'oneToOne' ? this.label(t.palette.oneToOneTag, { text }) : text,
+			run: () => {
+				const result = connectWithNewColumns(this.store.schema, source.id, target.id);
+				if (!result.relationId) return;
+				const schema = relation === 'oneToOne' ? setOneToOne(result.schema, result.relationId, true) : result.schema;
+				const created = findTable(schema, source.id)?.columns.find((c) => c.id === result.columnIds[0])?.name ?? column;
+				const label = `${source.name}.${created} → ${target.name}.${keyColumn.name}`;
+				this.host.commit(schema, this.label(t.history.createRelation, { x: label }));
+				this.host.live.say(this.label(t.live.relationCreated, { x: label }));
+				this.flash(result.relationId);
+			}
+		};
+	}
+
+	private linkClick(e: PointerEvent, target: HTMLElement): void {
+		const link = this.link;
+		if (!link) return;
+		const tableId = target.closest<HTMLElement>('.sf-card')?.dataset.table;
+		if (!tableId) {
+			this.cancelLink();
+			return;
+		}
+		if (!link.source) {
+			link.source = tableId;
+			this.render();
+			this.linkMove(e);
+			this.host.live.say(this.linkText());
+			return;
+		}
+		if (tableId === link.source) return;
+		this.linkMove(e);
+		const outcome = link.outcome;
+		this.cancelLink();
+		if (outcome?.valid && outcome.run) outcome.run();
+		else if (outcome) this.host.toasts.show(outcome.text);
+	}
+
+	private showTag(e: PointerEvent, outcome: Outcome | null): void {
+		if (!outcome) {
+			this.tag.hidden = true;
+			return;
+		}
+		this.tag.hidden = false;
+		this.tag.className = `sf-connect-tag${outcome.warning || !outcome.valid ? ' is-warning' : ''}`;
+		this.tag.replaceChildren(h('span', { class: 'sf-connect-main', text: outcome.text }));
+		if (outcome.warning) this.tag.append(h('span', { class: 'sf-connect-warn', text: outcome.warning }));
+		const width = this.tag.offsetWidth;
+		const height = this.tag.offsetHeight;
+		this.tag.style.left = `${Math.min(e.clientX + 14, window.innerWidth - width - 8)}px`;
+		this.tag.style.top = `${Math.min(e.clientY + 18, window.innerHeight - height - 8)}px`;
 	}
 
 	startNoteEdit(noteId: string): void {
@@ -904,19 +1143,54 @@ export class Canvas {
 		return this.label(this.strings.history.editArea, { x: title });
 	}
 
-	beginInsert(tool: 'table' | 'note' | 'area', event: PointerEvent): void {
-		this.drag = { kind: 'insert', pointer: event.pointerId, tool, startX: event.clientX, startY: event.clientY, ghost: null };
+	beginInsert(item: PaletteItem, event: PointerEvent): void {
+		this.cancelLink();
+		this.drag = { kind: 'insert', pointer: event.pointerId, item, startX: event.clientX, startY: event.clientY, ghost: null, target: null, line: null };
 		this.holdSelection(true);
 		const move = (e: PointerEvent) => this.insertMove(e);
 		const up = (e: PointerEvent) => {
 			window.removeEventListener('pointermove', move);
 			window.removeEventListener('pointerup', up);
 			window.removeEventListener('pointercancel', up);
-			this.insertUp(e);
+			this.insertUp(e, e.type === 'pointercancel');
 		};
 		window.addEventListener('pointermove', move);
 		window.addEventListener('pointerup', up);
 		window.addEventListener('pointercancel', up);
+	}
+
+	private insideCanvas(x: number, y: number): boolean {
+		const el = document.elementFromPoint(x, y);
+		return Boolean(el && this.root.contains(el) && !el.closest('.sf-palette, .sf-zoom, .sf-sheet, .sf-banner'));
+	}
+
+	private ghostFor(item: PaletteItem): HTMLElement {
+		const t = this.strings;
+		const zoom = this.store.view.zoom;
+		if (item.kind === 'table') {
+			const ghost = h('div', { class: 'sf-ghost sf-ghost-table', 'aria-hidden': 'true' });
+			const rows = ['PK  id  bigint'];
+			if (item.preset === 'timestamps') rows.push(...TIMESTAMP_COLUMNS.map((name) => `    ${name}  timestamptz`));
+			if (item.preset === 'lookup') rows.push(`UQ  ${t.palette.nameColumn}  varchar(100)`);
+			ghost.append(h('div', { class: 'sf-ghost-head', text: t.canvas.newTable }), ...rows.map((text) => h('div', { class: 'sf-ghost-row', text })));
+			ghost.style.width = `${CARD_WIDTH * zoom}px`;
+			return ghost;
+		}
+		if (item.kind === 'note' || item.kind === 'area') {
+			const ghost = h('div', { class: `sf-ghost sf-ghost-${item.kind}`, 'aria-hidden': 'true' });
+			ghost.style.width = `${(item.kind === 'note' ? 220 : 480) * zoom}px`;
+			ghost.style.height = `${(item.kind === 'note' ? 140 : 320) * zoom}px`;
+			return ghost;
+		}
+		const text = item.kind === 'column' ? t.palette.columns[item.preset] : t.palette.relations[item.relation].name;
+		return h('div', { class: 'sf-ghost sf-ghost-chip', 'aria-hidden': 'true', text });
+	}
+
+	private clearInsertTarget(drag: Extract<Drag, { kind: 'insert' }>): void {
+		drag.line?.remove();
+		drag.line = null;
+		drag.target = null;
+		for (const el of this.root.querySelectorAll('.is-drop-target')) el.classList.remove('is-drop-target');
 	}
 
 	private insertMove(e: PointerEvent): void {
@@ -924,44 +1198,78 @@ export class Canvas {
 		if (drag?.kind !== 'insert') return;
 		if (!drag.ghost && Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 5) return;
 		if (!drag.ghost) {
-			const zoom = this.store.view.zoom;
-			const ghost = h('div', { class: `sf-ghost sf-ghost-${drag.tool}`, 'aria-hidden': 'true' });
-			if (drag.tool === 'table') {
-				ghost.append(h('div', { class: 'sf-ghost-head', text: this.strings.canvas.newTable }), h('div', { class: 'sf-ghost-row', text: 'PK  id  bigint' }));
-				ghost.style.width = `${CARD_WIDTH * zoom}px`;
-			} else if (drag.tool === 'note') {
-				ghost.style.width = `${220 * zoom}px`;
-				ghost.style.height = `${140 * zoom}px`;
-			} else {
-				ghost.style.width = `${480 * zoom}px`;
-				ghost.style.height = `${320 * zoom}px`;
-			}
-			document.body.append(ghost);
-			drag.ghost = ghost;
+			drag.ghost = this.ghostFor(drag.item);
+			document.body.append(drag.ghost);
 		}
-		const rect = this.root.getBoundingClientRect();
-		const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-		drag.ghost.hidden = !inside;
-		document.body.style.cursor = inside ? 'grabbing' : 'no-drop';
-		drag.ghost.style.left = `${e.clientX - 20}px`;
-		drag.ghost.style.top = `${e.clientY - 16}px`;
+		const inside = this.insideCanvas(e.clientX, e.clientY);
+		this.clearInsertTarget(drag);
+		const item = drag.item;
+		let valid = inside;
+		if (item.kind === 'column' || item.kind === 'relation') {
+			const card = inside ? (document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>('.sf-card') ?? null) : null;
+			const tableId = card?.dataset.table;
+			valid = Boolean(card && tableId);
+			if (card && tableId) {
+				card.classList.add('is-drop-target');
+				if (item.kind === 'column') {
+					const rows = [...card.querySelectorAll<HTMLElement>('.sf-row[data-column]')];
+					const headBottom = card.querySelector('.sf-card-head')?.getBoundingClientRect().bottom ?? 0;
+					let index = rows.findIndex((row) => {
+						const box = row.getBoundingClientRect();
+						return e.clientY < box.top + box.height / 2;
+					});
+					if (index === -1 || e.clientY <= headBottom) index = rows.length;
+					const zoom = this.store.view.zoom;
+					const cardTop = card.getBoundingClientRect().top;
+					const edge = rows[index]?.getBoundingClientRect().top ?? rows[rows.length - 1]?.getBoundingClientRect().bottom ?? cardTop + HEADER_HEIGHT * zoom;
+					const line = h('div', { class: 'sf-reorder-line', 'aria-hidden': 'true' });
+					line.style.top = `${Math.round((edge - cardTop) / zoom) - 1}px`;
+					card.append(line);
+					drag.line = line;
+					drag.target = { table: tableId, index };
+				} else drag.target = { table: tableId, index: -1 };
+			}
+			drag.ghost.classList.toggle('is-invalid', !valid);
+			drag.ghost.style.left = `${e.clientX + 14}px`;
+			drag.ghost.style.top = `${e.clientY + 12}px`;
+		} else {
+			drag.ghost.hidden = !inside;
+			drag.ghost.style.left = `${e.clientX - 20}px`;
+			drag.ghost.style.top = `${e.clientY - 16}px`;
+		}
+		document.body.style.cursor = valid ? 'copy' : 'no-drop';
 	}
 
-	private insertUp(e: PointerEvent): void {
+	private insertUp(e: PointerEvent, cancelled: boolean): void {
 		const drag = this.drag;
 		this.drag = null;
 		this.holdSelection(false);
 		document.body.style.cursor = '';
 		if (drag?.kind !== 'insert') return;
 		drag.ghost?.remove();
-		const rect = this.root.getBoundingClientRect();
-		const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-		const moved = Boolean(drag.ghost);
-		if (moved && !inside) return;
-		const point = moved ? this.screenToWorld(e.clientX - 20, e.clientY - 16) : undefined;
-		if (drag.tool === 'table') this.createTable(point, !moved);
-		else if (drag.tool === 'note') this.createNote(point ? { x: point.x + 110, y: point.y + 70 } : undefined);
-		else this.createArea(point ? { x: point.x + 240, y: point.y + 160 } : undefined);
+		const target = drag.target;
+		this.clearInsertTarget(drag);
+		if (cancelled) return;
+		const item = drag.item;
+		if (!drag.ghost) {
+			this.activateItem(item, false);
+			return;
+		}
+		if (!this.insideCanvas(e.clientX, e.clientY)) return;
+		const t = this.strings;
+		const point = this.screenToWorld(e.clientX - 20, e.clientY - 16);
+		if (item.kind === 'table') this.createTable(point, false, item.preset);
+		else if (item.kind === 'note') this.createNote({ x: point.x + 110, y: point.y + 70 });
+		else if (item.kind === 'area') this.createArea({ x: point.x + 240, y: point.y + 160 });
+		else if (!target) this.dropHint(item.kind === 'column' ? t.palette.dropColumn : t.palette.dropRelation);
+		else if (item.kind === 'column') this.addPresetColumn(target.table, item.preset, target.index);
+		else this.startLink(item.relation, target.table);
+	}
+
+	private dropHint(text: string): void {
+		if (this.dropHints >= 3) return;
+		this.dropHints++;
+		this.host.toasts.show(text);
 	}
 
 	private bind(): void {
@@ -1009,6 +1317,7 @@ export class Canvas {
 		window.addEventListener('keydown', (e) => {
 			if (e.key === 'Alt' && this.drag?.kind === 'connect' && this.lastPointer) this.updateConnect(this.lastPointer, true);
 			if (e.key === 'Escape' && this.drag?.kind === 'connect') this.cancelConnect(true);
+			if (e.key === 'Escape' && this.link) this.cancelLink();
 		});
 	}
 
@@ -1045,8 +1354,13 @@ export class Canvas {
 			}
 			return;
 		}
-		if (target.closest('input, textarea, select, .sf-add-btn, .sf-card-menu, .sf-zoom, .sf-sheet, .sf-banner, .sf-empty-actions, .sf-pill-wrap')) return;
+		if (target.closest('input, textarea, select, .sf-add-btn, .sf-card-menu, .sf-zoom, .sf-sheet, .sf-banner, .sf-empty-actions, .sf-pill-wrap, .sf-palette')) return;
 		if (target.closest('.sf-badge')) return;
+		if (this.link && e.button === 0 && !this.spaceDown) {
+			e.preventDefault();
+			this.linkClick(e, target);
+			return;
+		}
 		if (e.button === 2) {
 			if (e.pointerType !== 'mouse') return;
 			e.preventDefault();
@@ -1214,7 +1528,11 @@ export class Canvas {
 			return;
 		}
 		const drag = this.drag;
-		if (!drag || ('pointer' in drag && drag.pointer !== e.pointerId)) return;
+		if (!drag) {
+			if (this.link) this.linkMove(e);
+			return;
+		}
+		if ('pointer' in drag && drag.pointer !== e.pointerId) return;
 		if (Math.hypot(e.clientX - ('startX' in drag ? drag.startX : e.clientX), e.clientY - ('startY' in drag ? drag.startY : e.clientY)) > 6) clearTimeout(this.longPress);
 		const zoom = this.store.view.zoom;
 		switch (drag.kind) {
@@ -1413,8 +1731,8 @@ export class Canvas {
 		const speed = (d: number) => Math.max(-12, Math.min(12, d));
 		let dx = 0;
 		let dy = 0;
-		if (e.clientX < rect.left + margin) dx = speed((rect.left + margin - e.clientX) / 3);
-		else if (e.clientX > rect.left + visible.width - margin) dx = -speed((e.clientX - (rect.left + visible.width - margin)) / 3);
+		if (e.clientX < rect.left + visible.left + margin) dx = speed((rect.left + visible.left + margin - e.clientX) / 3);
+		else if (e.clientX > rect.left + visible.left + visible.width - margin) dx = -speed((e.clientX - (rect.left + visible.left + visible.width - margin)) / 3);
 		if (e.clientY < rect.top + margin) dy = speed((rect.top + margin - e.clientY) / 3);
 		else if (e.clientY > rect.top + visible.height - margin) dy = -speed((e.clientY - (rect.top + visible.height - margin)) / 3);
 		this.autoPan = { dx, dy };
@@ -1532,18 +1850,7 @@ export class Canvas {
 		drag.outcome = outcome;
 		this.preview.setAttribute('d', `M ${drag.fromX} ${drag.fromY} C ${drag.fromX + (endX > drag.fromX ? 60 : -60)} ${drag.fromY}, ${endX + (endX > drag.fromX ? -60 : 60)} ${endY}, ${endX} ${endY}`);
 		if (outcome?.highlight) outcome.highlight.classList.add(outcome.highlight.classList.contains('sf-card-head') ? 'is-drop-head' : outcome.warn ? 'is-drop-warn' : 'is-drop');
-		if (!outcome) {
-			this.tag.hidden = true;
-			return;
-		}
-		this.tag.hidden = false;
-		this.tag.className = `sf-connect-tag${outcome.warning || !outcome.valid ? ' is-warning' : ''}`;
-		this.tag.replaceChildren(h('span', { class: 'sf-connect-main', text: outcome.text }));
-		if (outcome.warning) this.tag.append(h('span', { class: 'sf-connect-warn', text: outcome.warning }));
-		const width = this.tag.offsetWidth;
-		const height = this.tag.offsetHeight;
-		this.tag.style.left = `${Math.min(e.clientX + 14, window.innerWidth - width - 8)}px`;
-		this.tag.style.top = `${Math.min(e.clientY + 18, window.innerHeight - height - 8)}px`;
+		this.showTag(e, outcome);
 	}
 
 	private columnOutcome(source: Table, sourceColumn: Column, target: Table, targetColumn: Column, row: HTMLElement): Outcome {
@@ -1620,13 +1927,13 @@ export class Canvas {
 		const hit = document.elementFromPoint(e.clientX, e.clientY);
 		const target = (hit instanceof Element && this.root.contains(hit) ? hit : e.target) as HTMLElement;
 		if (!this.root.contains(target)) return;
-		if (target.closest('input, textarea, button, .sf-zoom, .sf-sheet, .sf-empty')) return;
+		if (target.closest('input, textarea, button, .sf-zoom, .sf-sheet, .sf-empty, .sf-palette')) return;
 		const card = target.closest<HTMLElement>('.sf-card');
 		if (card?.dataset.table) {
 			const row = target.closest<HTMLElement>('.sf-row[data-column]');
 			if (row?.dataset.column) {
 				const field = target.closest('.sf-col-type') ? 'type' : 'name';
-				this.startColumnEdit(card.dataset.table, row.dataset.column, field, false);
+				this.startColumnEdit(card.dataset.table, row.dataset.column, field, 'existing');
 			} else if (target.closest('.sf-card-head')) this.startRename(card.dataset.table);
 			return;
 		}
@@ -1649,6 +1956,7 @@ export class Canvas {
 		const target = origin ?? (e.target as HTMLElement);
 		if (target.closest('input, textarea, .sf-sheet, .sf-zoom, .sf-banner')) return;
 		e.preventDefault();
+		if (target.closest('.sf-palette')) return;
 		if (!origin && e.button === 2 && ((this.drag?.kind === 'pan' && this.drag.menu) || performance.now() < this.menuGuard)) return;
 		const at = { x: e.clientX, y: e.clientY };
 		const t = this.strings;
@@ -1742,8 +2050,8 @@ export class Canvas {
 		if (!table || !column) return [];
 		const isPk = table.primaryKey.includes(columnId);
 		return [
-			{ label: t.ctx.rename, shortcut: 'F2', action: () => this.startColumnEdit(tableId, columnId, 'name', false) },
-			{ label: t.ctx.changeType, action: () => this.startColumnEdit(tableId, columnId, 'type', false) },
+			{ label: t.ctx.rename, shortcut: 'F2', action: () => this.startColumnEdit(tableId, columnId, 'name', 'existing') },
+			{ label: t.ctx.changeType, action: () => this.startColumnEdit(tableId, columnId, 'type', 'existing') },
 			{ kind: 'separator' },
 			{
 				kind: 'check',
@@ -1847,7 +2155,7 @@ export class Canvas {
 	}
 
 	private onWheel(e: WheelEvent): void {
-		if ((e.target as Element).closest('.sf-sheet, .sf-bubble, .sf-menu, textarea, .sf-typelist')) return;
+		if ((e.target as Element).closest('.sf-sheet, .sf-bubble, .sf-menu, textarea, .sf-typelist, .sf-palette')) return;
 		e.preventDefault();
 		const rect = this.root.getBoundingClientRect();
 		if (e.ctrlKey || e.metaKey) {
@@ -1864,6 +2172,7 @@ export class Canvas {
 
 	private onKeyDown(e: KeyboardEvent): void {
 		if (isTextField(e.target) || e.defaultPrevented) return;
+		if ((e.target as Element).closest?.('.sf-palette')) return;
 		if (this.host.menus.isOpen) return;
 		const t = this.strings;
 		const active = document.activeElement as HTMLElement | null;
@@ -1925,7 +2234,7 @@ export class Canvas {
 			}
 			if (key === 'Enter' || key === 'F2') {
 				e.preventDefault();
-				this.startColumnEdit(tableId, columnId, 'name', false);
+				this.startColumnEdit(tableId, columnId, 'name', 'existing');
 				return;
 			}
 			if (key === 'Delete' || key === 'Backspace') {
