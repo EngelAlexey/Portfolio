@@ -703,7 +703,8 @@ export class Canvas {
 				item.addEventListener('pointerdown', (event) => {
 					event.preventDefault();
 					input.value = option.text;
-					finish('commit', 'next');
+					active = i;
+					finish('commit');
 				});
 				list?.append(item);
 			});
@@ -719,7 +720,7 @@ export class Canvas {
 			list?.remove();
 			list = null;
 		};
-		const finish = (mode: 'commit' | 'cancel', next?: 'type' | 'name' | 'next' | 'nextExisting' | 'prev') => {
+		const finish = (mode: 'commit' | 'cancel', next?: 'type' | 'name' | 'next' | 'nextExisting', blurred = false) => {
 			if (done) return;
 			done = true;
 			close();
@@ -730,10 +731,8 @@ export class Canvas {
 				return;
 			}
 			if (mode === 'cancel') {
-				const untouched = new RegExp(`^${t.canvas.newColumn}(_\\d+)?$`).test(current.name) && current.type.kind === 'text';
-				if (fresh && untouched) {
-					this.host.commit(deleteColumn(this.store.schema, tableId, columnId), this.label(t.history.deleteColumn, { x: current.name }));
-				} else this.rebuild(tableId);
+				if (fresh && this.isPlaceholder(current)) this.dropColumn(tableId, columnId);
+				else this.rebuild(tableId);
 				this.cards.get(tableId)?.el.focus();
 				return;
 			}
@@ -757,6 +756,12 @@ export class Canvas {
 				}
 			}
 			if (!changed) this.rebuild(tableId);
+			const after = findTable(this.store.schema, tableId)?.columns.find((c) => c.id === columnId);
+			if (fresh && next !== 'type' && next !== 'name' && after && this.isPlaceholder(after)) {
+				this.dropColumn(tableId, columnId);
+				if (!blurred) this.cards.get(tableId)?.el.querySelector<HTMLElement>('[data-add-column]')?.focus();
+				return;
+			}
 			const columns = findTable(this.store.schema, tableId)?.columns ?? [];
 			const index = columns.findIndex((c) => c.id === columnId);
 			if (next === 'type') this.startColumnEdit(tableId, columnId, 'type', fresh);
@@ -766,7 +771,7 @@ export class Canvas {
 				const following = columns[index + 1];
 				if (following) this.startColumnEdit(tableId, following.id, 'name', false);
 				else this.cards.get(tableId)?.el.querySelector<HTMLElement>('[data-add-column]')?.focus();
-			} else this.cards.get(tableId)?.el.querySelector<HTMLElement>(`.sf-row[data-column="${columnId}"]`)?.focus();
+			} else if (!blurred) this.cards.get(tableId)?.el.querySelector<HTMLElement>(`.sf-row[data-column="${columnId}"]`)?.focus();
 		};
 		input.addEventListener('input', () => {
 			active = -1;
@@ -784,7 +789,8 @@ export class Canvas {
 			}
 			if (event.key === 'Enter') {
 				event.preventDefault();
-				finish('commit', field === 'name' ? 'type' : 'next');
+				if (field === 'name') finish('commit', fresh ? 'type' : undefined);
+				else finish('commit', fresh ? 'next' : undefined);
 			} else if (event.key === 'Tab') {
 				event.preventDefault();
 				if (field === 'name') finish('commit', event.shiftKey ? undefined : 'type');
@@ -794,7 +800,19 @@ export class Canvas {
 				finish('cancel');
 			}
 		});
-		input.addEventListener('blur', () => setTimeout(() => finish('commit'), 0));
+		input.addEventListener('blur', () => setTimeout(() => finish('commit', undefined, true), 0));
+	}
+
+	private isPlaceholder(column: Column): boolean {
+		return new RegExp(`^${this.strings.canvas.newColumn}(_\\d+)?$`).test(column.name) && column.type.kind === 'text';
+	}
+
+	private dropColumn(tableId: string, columnId: string): void {
+		const name = findTable(this.store.schema, tableId)?.columns.find((c) => c.id === columnId)?.name ?? '';
+		const without = deleteColumn(this.store.schema, tableId, columnId);
+		const expected = JSON.stringify(without);
+		if (this.store.discard((before) => JSON.stringify(before) === expected)) return;
+		this.host.commit(without, this.label(this.strings.history.deleteColumn, { x: name }));
 	}
 
 	addColumnAndEdit(tableId: string): void {

@@ -47,6 +47,15 @@ export class History {
 		return this.redoEntry(current)?.schema ?? null;
 	}
 
+	peek(): Schema | null {
+		return this.past[this.past.length - 1]?.schema ?? null;
+	}
+
+	drop(): void {
+		this.past.pop();
+		this.lastKey = undefined;
+	}
+
 	clear(): void {
 		this.past = [];
 		this.future = [];

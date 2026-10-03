@@ -70,6 +70,17 @@ export class Store {
 		return entry.label;
 	}
 
+	discard(matches: (before: Schema) => boolean): boolean {
+		const before = this.history.peek();
+		if (!before || !matches(before)) return false;
+		this.history.drop();
+		this.schema = before;
+		this.pruneSelection();
+		this.emit('schema');
+		this.emit('history');
+		return true;
+	}
+
 	select(selection: Selection, focusColumn: { table: string; column: string } | null = null): void {
 		this.selection = selection;
 		this.focusColumn = focusColumn;
