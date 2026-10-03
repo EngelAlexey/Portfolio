@@ -49,7 +49,9 @@ const PAGES = {
 	about: ['src/components/pages/About.astro', 'src/lib/about.ts', ...I18N],
 	contact: ['src/components/pages/Contact.astro', 'src/lib/site.ts', ...I18N],
 	scanner: ['src/components/pages/Scanner.astro', 'src/components/scanner/ScannerResult.astro', ...I18N],
-	scannerAbout: ['src/components/pages/ScannerAbout.astro', ...I18N]
+	scannerAbout: ['src/components/pages/ScannerAbout.astro', ...I18N],
+	tools: ['src/components/pages/Tools.astro', ...I18N],
+	schemaflow: ['src/components/pages/SchemaFlow.astro', 'src/lib/schemaflow', 'src/lib/i18n/schemaflow-ui-es.ts', 'src/lib/i18n/schemaflow-ui-en.ts', 'src/lib/i18n/schemaflow-es.ts', 'src/lib/i18n/schemaflow-en.ts', ...I18N]
 };
 
 /** @type {Record<string, string>} */
