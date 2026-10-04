@@ -2248,6 +2248,12 @@ const svg = (name: IconName, size = 16) =>
 		border-top: 1px solid var(--line);
 	}
 
+	.sf-type-fields {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+		gap: 0.45rem;
+	}
+
 	.sf-rel-btn {
 		width: 100%;
 		padding: 0.4rem 0.55rem;
@@ -2614,8 +2620,8 @@ const svg = (name: IconName, size = 16) =>
 
 	.sf-typelist {
 		position: fixed;
-		width: 15rem;
-		max-height: 240px;
+		width: 18rem;
+		max-height: min(22rem, 60dvh);
 		padding: 4px;
 		overflow-y: auto;
 		border: 1px solid var(--line);
@@ -2634,12 +2640,13 @@ const svg = (name: IconName, size = 16) =>
 
 	.sf-typelist-item {
 		display: flex;
+		align-items: center;
 		justify-content: space-between;
-		gap: 0.5rem;
-		padding: 5px 8px;
+		gap: 0.75rem;
+		padding: 6px 8px;
 		border-radius: 4px;
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		font-size: 0.8125rem;
+		line-height: 1.3;
 		cursor: pointer;
 	}
 
@@ -2648,8 +2655,41 @@ const svg = (name: IconName, size = 16) =>
 		background: var(--paper-sunken);
 	}
 
+	.sf-typelist-main {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	.sf-typelist-name {
+		color: var(--ink);
+	}
+
+	.sf-typelist-hint {
+		font-size: 0.6875rem;
+		color: var(--ink-muted);
+	}
+
 	.sf-typelist-native {
-		color: var(--ink-faint);
+		flex: none;
+		max-width: 45%;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		color: var(--ink-muted);
+		text-align: right;
+		overflow-wrap: anywhere;
+	}
+
+	.sf-typelist-more {
+		justify-content: flex-start;
+		color: var(--ink-muted);
+	}
+
+	.sf-typelist-empty {
+		padding: 8px;
+		font-size: 0.75rem;
+		color: var(--ink-muted);
 	}
 
 	dialog.sf-gallery,

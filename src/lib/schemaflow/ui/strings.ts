@@ -6,6 +6,10 @@ export type Plural = { one: string; other: string };
 
 export { fill };
 
+export function fold(text: string): string {
+	return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+}
+
 export function plural(entry: Plural, n: number, params: Record<string, string | number> = {}): string {
 	return fill(n === 1 ? entry.one : entry.other, { n, ...params });
 }

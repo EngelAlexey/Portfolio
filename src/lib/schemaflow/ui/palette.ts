@@ -1,9 +1,9 @@
-import type { LogicalType } from '../model/types';
 import { h, icon, s } from './dom';
 import { fill, type Strings } from './strings';
+import { choiceLabel, TYPE_BY_ID, type CommonTypeId } from './types';
 
 export type TablePreset = 'basic' | 'timestamps' | 'lookup';
-export type ColumnPreset = 'text' | 'longText' | 'integer' | 'decimal' | 'boolean' | 'date' | 'datetime' | 'uuid' | 'json' | 'timestamps';
+export type ColumnPreset = CommonTypeId | 'timestamps';
 export type RelationKind = 'oneToMany' | 'oneToOne' | 'manyToMany';
 
 export type PaletteItem =
@@ -13,32 +13,7 @@ export type PaletteItem =
 	| { kind: 'note' }
 	| { kind: 'area' };
 
-export const COLUMN_TYPES: Record<Exclude<ColumnPreset, 'timestamps'>, LogicalType> = {
-	text: { kind: 'varchar', length: 255 },
-	longText: { kind: 'text' },
-	integer: { kind: 'int' },
-	decimal: { kind: 'decimal', precision: 10, scale: 2 },
-	boolean: { kind: 'boolean' },
-	date: { kind: 'date' },
-	datetime: { kind: 'timestamptz' },
-	uuid: { kind: 'uuid' },
-	json: { kind: 'json' }
-};
-
 export const TIMESTAMP_COLUMNS = ['created_at', 'updated_at'] as const;
-
-const COLUMN_HINTS: Record<ColumnPreset, string> = {
-	text: 'varchar(255)',
-	longText: 'text',
-	integer: 'int',
-	decimal: 'decimal',
-	boolean: 'boolean',
-	date: 'date',
-	datetime: 'timestamptz',
-	uuid: 'uuid',
-	json: 'json',
-	timestamps: 'created_at, updated_at'
-};
 
 const TABLE_ROWS: Record<TablePreset, number> = { basic: 1, timestamps: 3, lookup: 2 };
 
@@ -105,11 +80,12 @@ export class Palette {
 
 		const columns = this.group(t.groups.columns, 'sf-palette-grid sf-palette-grid-2');
 		for (const preset of ['text', 'longText', 'integer', 'decimal', 'boolean', 'date', 'datetime', 'uuid', 'json', 'timestamps'] as const) {
-			const name = t.columns[preset];
+			const name = preset === 'timestamps' ? t.columns.timestamps : choiceLabel(this.host.strings, preset);
+			const hint = preset === 'timestamps' ? TIMESTAMP_COLUMNS.join(', ') : TYPE_BY_ID[preset].sql;
 			columns.append(
 				this.item(
 					{ kind: 'column', preset },
-					[h('span', { class: 'sf-palette-label', text: name }), h('span', { class: 'sf-palette-type', text: COLUMN_HINTS[preset] })],
+					[h('span', { class: 'sf-palette-label', text: name }), h('span', { class: 'sf-palette-type', text: hint })],
 					fill(t.columnLabel, { name }),
 					t.columnTip,
 					preset === 'timestamps' ? 'sf-palette-chip sf-palette-wide' : 'sf-palette-chip'

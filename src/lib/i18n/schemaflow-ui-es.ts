@@ -223,18 +223,7 @@ export const schemaflowUiEs = {
 			timestamps: { label: 'Con fechas', tip: 'Tabla con id, created_at y updated_at, que guardan cuándo se creó y cuándo se cambió cada fila.' },
 			lookup: { label: 'Catálogo', tip: 'Tabla de valores fijos, como categorías o estados, con id y un nombre único.' }
 		},
-		columns: {
-			text: 'Texto',
-			longText: 'Texto largo',
-			integer: 'Entero',
-			decimal: 'Decimal',
-			boolean: 'Booleano',
-			date: 'Fecha',
-			datetime: 'Fecha y hora',
-			uuid: 'UUID',
-			json: 'JSON',
-			timestamps: 'Fechas de registro'
-		},
+		columns: { timestamps: 'Fechas de registro' },
 		columnLabel: 'Columna de tipo {name}',
 		columnTip: 'Suelte la columna sobre una tabla, en la fila donde la quiera. Si hace clic, la columna se añade al final de la tabla seleccionada.',
 		relations: {
@@ -440,7 +429,33 @@ export const schemaflowUiEs = {
 	types: {
 		groups: { numbers: 'Números', text: 'Texto', dates: 'Fecha y hora', other: 'Otros' },
 		label: 'Tipo de dato',
-		invalid: 'El tipo no es válido. Elija uno de la lista o escriba el tipo de {dialect}.'
+		more: 'Más tipos',
+		less: 'Menos tipos',
+		use: 'Usar «{text}»',
+		none: 'Ningún tipo coincide con «{q}».',
+		invalid: 'El tipo no es válido. Elija uno de la lista o escriba el tipo de {dialect}.',
+		lengthInvalid: 'Escriba un número entero de 1 a 1 000 000.',
+		precisionInvalid: 'Escriba un número entero de 1 a 1000.',
+		scaleInvalid: 'Escriba un número entero de 0 a {max}.',
+		choices: {
+			text: { label: 'Texto', hint: 'Texto de hasta 255 caracteres' },
+			longText: { label: 'Texto largo', hint: 'Texto de cualquier longitud' },
+			integer: { label: 'Entero', hint: 'Números sin decimales' },
+			decimal: { label: 'Decimal', hint: 'Números con decimales exactos' },
+			boolean: { label: 'Sí o no', hint: 'Solo dos valores: sí o no' },
+			date: { label: 'Fecha', hint: 'Un día del calendario' },
+			datetime: { label: 'Fecha y hora', hint: 'Un día y una hora, con zona horaria' },
+			uuid: { label: 'UUID', hint: 'Un código único de 36 caracteres' },
+			json: { label: 'JSON', hint: 'Datos con estructura libre' },
+			smallint: { label: 'Entero pequeño', hint: 'Números enteros pequeños, hasta 32 767' },
+			bigint: { label: 'Entero grande', hint: 'Números enteros muy grandes' },
+			real: { label: 'Decimal aproximado', hint: 'Números con decimales aproximados' },
+			double: { label: 'Decimal aproximado doble', hint: 'Números con decimales aproximados y más cifras' },
+			char: { label: 'Texto de longitud fija', hint: 'Texto que siempre tiene la misma longitud' },
+			time: { label: 'Hora', hint: 'Una hora del día, sin fecha' },
+			timestamp: { label: 'Fecha y hora sin zona', hint: 'Un día y una hora, sin zona horaria' },
+			binary: { label: 'Datos binarios', hint: 'Datos en bruto, que no son texto' }
+		}
 	},
 	glossary: {
 		PRIMARY_KEY: {

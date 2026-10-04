@@ -2,32 +2,65 @@ import { sqlType } from '../dialects/sql-generate';
 import type { DialectId, LogicalType } from '../model/types';
 import { mapType } from '../parse/sql-types';
 import { typeLabel } from '../validate/rules';
+import { fold, type Strings } from './strings';
 
-export interface TypeOption {
-	text: string;
+export type TypeGroup = 'numbers' | 'text' | 'dates' | 'other';
+export type CommonTypeId = 'text' | 'longText' | 'integer' | 'decimal' | 'boolean' | 'date' | 'datetime' | 'uuid' | 'json';
+export type TypeChoiceId = CommonTypeId | 'smallint' | 'bigint' | 'real' | 'double' | 'char' | 'time' | 'timestamp' | 'binary';
+
+export interface TypeChoice {
+	id: TypeChoiceId;
 	type: LogicalType;
-	group: 'numbers' | 'text' | 'dates' | 'other';
+	group: TypeGroup;
+	common: boolean;
+	sql: string;
+	keywords: readonly string[];
 }
 
-export const TYPE_OPTIONS: TypeOption[] = [
-	{ text: 'smallint', type: { kind: 'smallint' }, group: 'numbers' },
-	{ text: 'int', type: { kind: 'int' }, group: 'numbers' },
-	{ text: 'bigint', type: { kind: 'bigint' }, group: 'numbers' },
-	{ text: 'decimal(10, 2)', type: { kind: 'decimal', precision: 10, scale: 2 }, group: 'numbers' },
-	{ text: 'real', type: { kind: 'real' }, group: 'numbers' },
-	{ text: 'double', type: { kind: 'double' }, group: 'numbers' },
-	{ text: 'varchar(255)', type: { kind: 'varchar', length: 255 }, group: 'text' },
-	{ text: 'char(1)', type: { kind: 'char', length: 1 }, group: 'text' },
-	{ text: 'text', type: { kind: 'text' }, group: 'text' },
-	{ text: 'date', type: { kind: 'date' }, group: 'dates' },
-	{ text: 'time', type: { kind: 'time' }, group: 'dates' },
-	{ text: 'timestamp', type: { kind: 'timestamp' }, group: 'dates' },
-	{ text: 'timestamptz', type: { kind: 'timestamptz' }, group: 'dates' },
-	{ text: 'uuid', type: { kind: 'uuid' }, group: 'other' },
-	{ text: 'boolean', type: { kind: 'boolean' }, group: 'other' },
-	{ text: 'json', type: { kind: 'json' }, group: 'other' },
-	{ text: 'binary', type: { kind: 'binary' }, group: 'other' }
+export const TYPE_CHOICES: readonly TypeChoice[] = [
+	{ id: 'text', type: { kind: 'varchar', length: 255 }, group: 'text', common: true, sql: 'varchar(255)', keywords: ['texto', 'text', 'cadena', 'string', 'varchar', 'nombre', 'name', 'correo', 'email', 'titulo', 'title'] },
+	{ id: 'longText', type: { kind: 'text' }, group: 'text', common: true, sql: 'text', keywords: ['texto largo', 'long text', 'descripcion', 'description', 'comentario', 'comment', 'contenido', 'content'] },
+	{ id: 'integer', type: { kind: 'int' }, group: 'numbers', common: true, sql: 'int', keywords: ['entero', 'integer', 'numero', 'number', 'cantidad', 'quantity', 'contador', 'count', 'edad', 'age'] },
+	{ id: 'decimal', type: { kind: 'decimal', precision: 10, scale: 2 }, group: 'numbers', common: true, sql: 'decimal', keywords: ['decimal', 'numeric', 'numerico', 'dinero', 'money', 'precio', 'price', 'importe', 'amount', 'moneda', 'currency'] },
+	{ id: 'boolean', type: { kind: 'boolean' }, group: 'other', common: true, sql: 'boolean', keywords: ['si o no', 'yes or no', 'booleano', 'boolean', 'bool', 'verdadero', 'falso', 'true', 'false', 'activo', 'active', 'bandera', 'flag'] },
+	{ id: 'date', type: { kind: 'date' }, group: 'dates', common: true, sql: 'date', keywords: ['fecha', 'date', 'dia', 'day', 'cumpleanos', 'birthday', 'vencimiento', 'due'] },
+	{ id: 'datetime', type: { kind: 'timestamptz' }, group: 'dates', common: true, sql: 'timestamptz', keywords: ['fecha y hora', 'date and time', 'datetime', 'momento', 'creado', 'created', 'actualizado', 'updated', 'zona horaria', 'time zone'] },
+	{ id: 'uuid', type: { kind: 'uuid' }, group: 'other', common: true, sql: 'uuid', keywords: ['uuid', 'guid', 'identificador', 'identifier', 'unico', 'unique', 'clave', 'key'] },
+	{ id: 'json', type: { kind: 'json' }, group: 'other', common: true, sql: 'json', keywords: ['json', 'jsonb', 'objeto', 'object', 'datos', 'data', 'configuracion', 'settings'] },
+	{ id: 'smallint', type: { kind: 'smallint' }, group: 'numbers', common: false, sql: 'smallint', keywords: ['entero pequeno', 'small integer', 'int2', 'pequeno', 'small'] },
+	{ id: 'bigint', type: { kind: 'bigint' }, group: 'numbers', common: false, sql: 'bigint', keywords: ['entero grande', 'big integer', 'int8', 'grande', 'big', 'long'] },
+	{ id: 'real', type: { kind: 'real' }, group: 'numbers', common: false, sql: 'real', keywords: ['float', 'float4', 'flotante', 'decimal aproximado', 'approximate'] },
+	{ id: 'double', type: { kind: 'double' }, group: 'numbers', common: false, sql: 'double', keywords: ['double precision', 'float8', 'doble', 'decimal aproximado', 'approximate'] },
+	{ id: 'char', type: { kind: 'char', length: 1 }, group: 'text', common: false, sql: 'char(1)', keywords: ['texto de longitud fija', 'fixed length', 'fixed-length text', 'codigo', 'code'] },
+	{ id: 'time', type: { kind: 'time' }, group: 'dates', common: false, sql: 'time', keywords: ['hora', 'hour'] },
+	{ id: 'timestamp', type: { kind: 'timestamp' }, group: 'dates', common: false, sql: 'timestamp', keywords: ['fecha y hora sin zona', 'without time zone', 'sin zona', 'datetime'] },
+	{ id: 'binary', type: { kind: 'binary' }, group: 'other', common: false, sql: 'binary', keywords: ['binario', 'blob', 'bytea', 'varbinary', 'archivo', 'file', 'bytes'] }
 ];
+
+export const TYPE_BY_ID = Object.fromEntries(TYPE_CHOICES.map((choice) => [choice.id, choice])) as Record<TypeChoiceId, TypeChoice>;
+export const COMMON_TYPES = Object.fromEntries(TYPE_CHOICES.filter((choice) => choice.common).map((choice) => [choice.id, choice.type])) as Record<CommonTypeId, LogicalType>;
+
+export function choiceLabel(strings: Strings, id: TypeChoiceId): string {
+	return strings.types.choices[id].label;
+}
+
+export function searchTypes(query: string, labelOf: (id: TypeChoiceId) => string, dialect: DialectId): TypeChoice[] {
+	const needle = fold(query.replace(/\(.*$/, '')).trim();
+	if (!needle) return TYPE_CHOICES.filter((choice) => choice.common);
+	const scored: { choice: TypeChoice; rank: number; order: number }[] = [];
+	TYPE_CHOICES.forEach((choice, order) => {
+		const terms = [labelOf(choice.id), choice.sql, renderType(choice.type, dialect), ...choice.keywords].map(fold);
+		let rank = Number.POSITIVE_INFINITY;
+		for (const term of terms) {
+			if (term === needle) rank = Math.min(rank, 0);
+			else if (term.startsWith(needle)) rank = Math.min(rank, 1);
+			else if (term.split(/[^a-z0-9]+/).some((word) => word.startsWith(needle))) rank = Math.min(rank, 2);
+			else if (term.includes(needle)) rank = Math.min(rank, 3);
+		}
+		if (rank !== Number.POSITIVE_INFINITY) scored.push({ choice, rank, order });
+	});
+	return scored.sort((a, b) => a.rank - b.rank || a.order - b.order).map((entry) => entry.choice);
+}
 
 const BSON: Record<string, string> = {
 	uuid: 'objectId',

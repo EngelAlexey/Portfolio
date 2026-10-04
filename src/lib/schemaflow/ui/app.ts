@@ -197,6 +197,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 
 	const sheetHost: SheetHost = {
 		...bubbleHost,
+		overlay,
 		toasts,
 		openRelate: canvasHost.openRelate,
 		openRelationBubble: (id, at) => openRelationBubble(store, bubbleHost, id, at),

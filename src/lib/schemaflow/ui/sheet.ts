@@ -5,6 +5,7 @@ import {
 	emptySelection,
 	findTable,
 	isUnique,
+	sameType,
 	setPrimaryKey,
 	toggleUnique,
 	updateArea,
@@ -14,7 +15,7 @@ import {
 	updateTable,
 	renameTable
 } from '../model/ops';
-import { COLORS, LIMITS, type Column, type DefaultValue, type Table } from '../model/types';
+import { COLORS, LIMITS, type Column, type DefaultValue, type LogicalType, type Table } from '../model/types';
 import type { Severity } from '../parse/issues';
 import { applyFix } from '../validate/fixes';
 import type { DesignIssue } from '../validate/rules';
@@ -24,11 +25,13 @@ import { h, icon } from './dom';
 import { ruleMessage } from './messages';
 import type { Store } from './store';
 import { fill, plural, summarize } from './strings';
-import { displayType, parseTypeText } from './types';
+import { TypePicker } from './type-picker';
+import { displayType } from './types';
 
 export type SheetTab = 'properties' | 'review';
 
 export interface SheetHost extends BubbleHost {
+	overlay: HTMLElement;
 	toasts: { show(text: string): void };
 	openRelate(tableId: string, columnId?: string): void;
 	openRelationBubble(relationId: string, at: Element): void;
@@ -418,15 +421,39 @@ export class Sheet {
 		name.addEventListener('change', () => {
 			if (name.value.trim()) this.host.commit(updateColumn(this.store.schema, table.id, column.id, { name: name.value }), fill(t.history.rename, { x: column.name }));
 		});
-		const type = h('input', { class: 'sf-input sf-mono sf-type-input', value: displayType(column.type), 'aria-label': t.props.type, 'data-key': `col-type:${column.id}`, spellcheck: 'false' });
-		type.addEventListener('change', () => {
-			const parsed = parseTypeText(type.value, this.store.dialect);
-			if (parsed) this.host.commit(updateColumn(this.store.schema, table.id, column.id, { type: parsed }), fill(t.history.changeType, { x: column.name }));
-			else {
+		const type = h('input', { class: 'sf-input sf-mono sf-type-input', value: displayType(column.type), 'aria-label': t.props.type, 'data-key': `col-type:${column.id}`, spellcheck: 'false', autocomplete: 'off' });
+		let settled = false;
+		const settle = (mode: 'enter' | 'blur') => {
+			if (settled) return;
+			settled = true;
+			const parsed = picker.resolve(mode);
+			picker.close();
+			if (!parsed) {
 				this.host.toasts.show(fill(t.types.invalid, { dialect: DIALECT_LABELS[this.store.dialect] }));
+				type.value = displayType(column.type);
+			} else if (sameType(parsed, column.type)) type.value = displayType(column.type);
+			else this.host.commit(updateColumn(this.store.schema, table.id, column.id, { type: parsed }), fill(t.history.changeType, { x: column.name }));
+		};
+		const picker = new TypePicker({ input: type, strings: t, overlay: this.host.overlay, dialect: () => this.store.dialect, onPick: () => settle('enter') });
+		type.addEventListener('input', () => (settled = false));
+		type.addEventListener('click', () => {
+			settled = false;
+			picker.open();
+		});
+		type.addEventListener('focus', () => type.select());
+		type.addEventListener('keydown', (event) => {
+			if (picker.handleKey(event)) return;
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				settle('enter');
+			} else if (event.key === 'Escape' && picker.isOpen) {
+				event.stopPropagation();
+				settled = true;
+				picker.close();
 				type.value = displayType(column.type);
 			}
 		});
+		type.addEventListener('blur', () => settle('blur'));
 		const expand = h('button', { type: 'button', class: 'sf-icon-btn', 'aria-expanded': String(this.expanded.has(column.id)), 'aria-label': fill(t.props.expand, { name: column.name }), 'data-key': `expand:${column.id}` });
 		expand.append(icon('chevron', 14));
 		expand.addEventListener('click', () => {
@@ -454,9 +481,42 @@ export class Sheet {
 		return li;
 	}
 
+	private typeFields(table: Table, column: Column, label: string): HTMLElement | null {
+		const t = this.host.strings;
+		const type = column.type;
+		if (type.kind !== 'varchar' && type.kind !== 'char' && type.kind !== 'decimal') return null;
+		const numeric = (title: string, id: string, value: number | undefined, min: number, max: number, locked: boolean, invalid: string, apply: (n: number | undefined) => LogicalType): HTMLElement => {
+			const input = h('input', { class: 'sf-input sf-mono', id, inputmode: 'numeric', value: value === undefined ? '' : String(value), disabled: locked ? true : null, 'data-key': id });
+			input.addEventListener('change', () => {
+				const raw = input.value.trim();
+				const n = raw === '' ? undefined : Number(raw);
+				if (n !== undefined && (!Number.isInteger(n) || n < min || n > max)) {
+					this.host.toasts.show(invalid);
+					input.value = value === undefined ? '' : String(value);
+					return;
+				}
+				this.host.commit(updateColumn(this.store.schema, table.id, column.id, { type: apply(n) }), label);
+			});
+			return this.field(title, input, id);
+		};
+		const box = h('div', { class: 'sf-type-fields' });
+		if (type.kind === 'decimal') {
+			const precision = type.precision;
+			box.append(
+				numeric(t.props.precision, `sf-prec-${column.id}`, precision, 1, 1000, false, t.types.precisionInvalid, (n) => (n === undefined ? { kind: 'decimal' } : { kind: 'decimal', precision: n, scale: Math.min(type.scale ?? 0, n) })),
+				numeric(t.props.scale, `sf-scale-${column.id}`, type.scale, 0, precision ?? 0, precision === undefined, fill(t.types.scaleInvalid, { max: precision ?? 0 }), (n) => ({ kind: 'decimal', precision: precision ?? 0, scale: n ?? 0 }))
+			);
+		} else {
+			box.append(numeric(t.props.length, `sf-len-${column.id}`, type.length, 1, 1_000_000, false, t.types.lengthInvalid, (n) => (n === undefined ? { kind: type.kind } : { kind: type.kind, length: n })));
+		}
+		return box;
+	}
+
 	private columnDetails(table: Table, column: Column, label: string): HTMLElement {
 		const t = this.host.strings;
 		const box = h('div', { class: 'sf-col-details' });
+		const typeFields = this.typeFields(table, column, label);
+		if (typeFields) box.append(typeFields);
 		const id = `sf-default-${column.id}`;
 		const select = h('select', { class: 'sf-select', id, 'data-key': `default:${column.id}` });
 		const kinds: DefaultValue['kind'][] = ['none', 'now', 'uuid', 'autoincrement', 'literal'];

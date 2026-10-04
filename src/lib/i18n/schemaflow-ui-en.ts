@@ -225,18 +225,7 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 			timestamps: { label: 'With dates', tip: 'Table with id, created_at and updated_at, which store when each row was created and when it last changed.' },
 			lookup: { label: 'Lookup', tip: 'Table of fixed values, such as categories or statuses, with id and a unique name.' }
 		},
-		columns: {
-			text: 'Text',
-			longText: 'Long text',
-			integer: 'Integer',
-			decimal: 'Decimal',
-			boolean: 'Boolean',
-			date: 'Date',
-			datetime: 'Date and time',
-			uuid: 'UUID',
-			json: 'JSON',
-			timestamps: 'Timestamps'
-		},
+		columns: { timestamps: 'Timestamps' },
 		columnLabel: '{name} column',
 		columnTip: 'Drop the column on a table, at the row where you want it. If you click it, the column goes at the end of the selected table.',
 		relations: {
@@ -442,7 +431,33 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 	types: {
 		groups: { numbers: 'Numbers', text: 'Text', dates: 'Date and time', other: 'Other' },
 		label: 'Data type',
-		invalid: 'The type is not valid. Choose one from the list or write the {dialect} type.'
+		more: 'More types',
+		less: 'Fewer types',
+		use: 'Use "{text}"',
+		none: 'No type matches "{q}".',
+		invalid: 'The type is not valid. Choose one from the list or write the {dialect} type.',
+		lengthInvalid: 'Enter a whole number from 1 to 1,000,000.',
+		precisionInvalid: 'Enter a whole number from 1 to 1,000.',
+		scaleInvalid: 'Enter a whole number from 0 to {max}.',
+		choices: {
+			text: { label: 'Text', hint: 'Text of up to 255 characters' },
+			longText: { label: 'Long text', hint: 'Text of any length' },
+			integer: { label: 'Integer', hint: 'Whole numbers, without decimals' },
+			decimal: { label: 'Decimal', hint: 'Numbers with exact decimals' },
+			boolean: { label: 'Yes or no', hint: 'Only two values: yes or no' },
+			date: { label: 'Date', hint: 'A day on the calendar' },
+			datetime: { label: 'Date and time', hint: 'A day and a time, with time zone' },
+			uuid: { label: 'UUID', hint: 'A unique code of 36 characters' },
+			json: { label: 'JSON', hint: 'Data with a free structure' },
+			smallint: { label: 'Small integer', hint: 'Small whole numbers, up to 32,767' },
+			bigint: { label: 'Big integer', hint: 'Very large whole numbers' },
+			real: { label: 'Approximate decimal', hint: 'Numbers with approximate decimals' },
+			double: { label: 'Approximate decimal (double)', hint: 'Numbers with approximate decimals and more digits' },
+			char: { label: 'Fixed-length text', hint: 'Text that always has the same length' },
+			time: { label: 'Time', hint: 'A time of day, without a date' },
+			timestamp: { label: 'Date and time without time zone', hint: 'A day and a time, without time zone' },
+			binary: { label: 'Binary data', hint: 'Raw data that is not text' }
+		}
 	},
 	glossary: {
 		PRIMARY_KEY: {

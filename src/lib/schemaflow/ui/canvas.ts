@@ -29,13 +29,15 @@ import {
 } from '../model/ops';
 import { CARD_WIDTH, COLORS, HEADER_HEIGHT, LIMITS, ROW_HEIGHT, tableHeight, type Area, type Column, type Note, type Relation, type Schema, type Table } from '../model/types';
 import type { Severity } from '../parse/issues';
-import { clearChildren, h, icon, isTextField, mod, modLabel, prefersReducedMotion, s } from './dom';
+import { DIALECT_LABELS } from '../dialects';
+import { h, icon, isTextField, mod, modLabel, prefersReducedMotion, s } from './dom';
 import { edgeGeometry, rowCentre } from './geometry';
-import { COLUMN_TYPES, TIMESTAMP_COLUMNS, type ColumnPreset, type PaletteItem, type RelationKind, type TablePreset } from './palette';
+import { TIMESTAMP_COLUMNS, type ColumnPreset, type PaletteItem, type RelationKind, type TablePreset } from './palette';
 import type { Bubble, Live, MenuItem, Menus, Toasts } from './popups';
 import { isEmptySelection, type Store } from './store';
 import { fill, plural, type Strings } from './strings';
-import { displayType, parseTypeText, renderType, TYPE_OPTIONS } from './types';
+import { TypePicker } from './type-picker';
+import { choiceLabel, COMMON_TYPES, displayType } from './types';
 
 export interface CanvasHost {
 	strings: Strings;
@@ -694,57 +696,12 @@ export class Canvas {
 		target.replaceWith(input);
 		input.focus();
 		input.select();
-		let list: HTMLElement | null = null;
-		let active = -1;
-		let options: { text: string; type: Column['type'] }[] = [];
-		const listId = `sf-types-${columnId}`;
-		const renderList = () => {
-			if (field !== 'type') return;
-			const query = input.value.trim().toLowerCase();
-			options = TYPE_OPTIONS.filter((o) => !query || o.text.includes(query) || query === displayType(column.type)).map((o) => ({ text: o.text, type: o.type }));
-			if (options.length === 0) options = TYPE_OPTIONS.map((o) => ({ text: o.text, type: o.type }));
-			if (!list) {
-				list = h('div', { class: 'sf-typelist', role: 'listbox', id: listId, 'aria-label': t.types.label });
-				this.host.overlay.append(list);
-				input.setAttribute('role', 'combobox');
-				input.setAttribute('aria-expanded', 'true');
-				input.setAttribute('aria-controls', listId);
-				input.setAttribute('aria-autocomplete', 'list');
-			}
-			clearChildren(list);
-			let group = '';
-			options.forEach((option, i) => {
-				const def = TYPE_OPTIONS.find((o) => o.text === option.text);
-				if (def && def.group !== group) {
-					group = def.group;
-					list?.append(h('div', { class: 'sf-typelist-group', role: 'presentation', text: t.types.groups[def.group] }));
-				}
-				const item = h('div', { class: `sf-typelist-item${i === active ? ' is-active' : ''}`, role: 'option', id: `${listId}-${i}`, 'aria-selected': i === active ? 'true' : 'false' });
-				item.append(h('span', { text: option.text }), h('span', { class: 'sf-typelist-native', text: renderType(option.type, this.store.dialect) }));
-				item.addEventListener('pointerdown', (event) => {
-					event.preventDefault();
-					input.value = option.text;
-					active = i;
-					finish('commit');
-				});
-				list?.append(item);
-			});
-			if (active >= 0) input.setAttribute('aria-activedescendant', `${listId}-${active}`);
-			else input.removeAttribute('aria-activedescendant');
-			const rect = input.getBoundingClientRect();
-			list.style.left = `${Math.min(rect.left, window.innerWidth - 260)}px`;
-			const below = rect.bottom + 248 < window.innerHeight;
-			list.style.top = below ? `${rect.bottom + 4}px` : `${Math.max(8, rect.top - Math.min(244, list.offsetHeight) - 4)}px`;
-		};
-		if (field === 'type') renderList();
-		const close = () => {
-			list?.remove();
-			list = null;
-		};
+		const picker = field === 'type' ? new TypePicker({ input, strings: t, overlay: this.host.overlay, dialect: () => this.store.dialect, onPick: () => finish('commit') }) : null;
+		picker?.open();
 		const finish = (mode: 'commit' | 'cancel', next?: 'type' | 'name' | 'next' | 'nextExisting', blurred = false) => {
 			if (done) return;
 			done = true;
-			close();
+			picker?.close();
 			this.edit = null;
 			const current = findTable(this.store.schema, tableId)?.columns.find((c) => c.id === columnId);
 			if (!current) {
@@ -768,9 +725,8 @@ export class Canvas {
 					changed = true;
 				}
 			} else {
-				const chosen = active >= 0 ? options[active]?.type : null;
-				const type = chosen ?? parseTypeText(raw, this.store.dialect);
-				if (!type) this.host.toasts.show(this.label(t.types.invalid, { dialect: this.store.dialect }));
+				const type = picker?.resolve(blurred ? 'blur' : 'enter') ?? null;
+				if (!type) this.host.toasts.show(this.label(t.types.invalid, { dialect: DIALECT_LABELS[this.store.dialect] }));
 				else if (!sameType(type, current.type)) {
 					this.host.commit(updateColumn(this.store.schema, tableId, columnId, { type }), this.label(t.history.changeType, { x: current.name }));
 					changed = true;
@@ -794,20 +750,9 @@ export class Canvas {
 				else this.cards.get(tableId)?.el.querySelector<HTMLElement>('[data-add-column]')?.focus();
 			} else if (!blurred) this.cards.get(tableId)?.el.querySelector<HTMLElement>(`.sf-row[data-column="${columnId}"]`)?.focus();
 		};
-		input.addEventListener('input', () => {
-			active = -1;
-			renderList();
-		});
 		input.addEventListener('keydown', (event) => {
 			event.stopPropagation();
-			if (field === 'type' && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
-				event.preventDefault();
-				const count = options.length;
-				active = event.key === 'ArrowDown' ? (active + 1) % count : (active - 1 + count) % count;
-				renderList();
-				list?.querySelector('.is-active')?.scrollIntoView({ block: 'nearest' });
-				return;
-			}
+			if (picker?.handleKey(event)) return;
 			if (event.key === 'Enter') {
 				event.preventDefault();
 				if (field === 'name') finish('commit', origin === 'quick' ? 'type' : undefined);
@@ -875,7 +820,7 @@ export class Canvas {
 			this.host.toasts.show(t.canvas.limitColumns);
 			return;
 		}
-		const options = index === undefined ? { name: t.canvas.newColumn, type: COLUMN_TYPES[preset] } : { name: t.canvas.newColumn, type: COLUMN_TYPES[preset], index };
+		const options = index === undefined ? { name: t.canvas.newColumn, type: COMMON_TYPES[preset] } : { name: t.canvas.newColumn, type: COMMON_TYPES[preset], index };
 		const result = addColumn(this.store.schema, tableId, options);
 		if (!result.columnId) return;
 		const name = findTable(result.schema, tableId)?.columns.find((c) => c.id === result.columnId)?.name ?? '';
@@ -1182,7 +1127,7 @@ export class Canvas {
 			ghost.style.height = `${(item.kind === 'note' ? 140 : 320) * zoom}px`;
 			return ghost;
 		}
-		const text = item.kind === 'column' ? t.palette.columns[item.preset] : t.palette.relations[item.relation].name;
+		const text = item.kind === 'column' ? (item.preset === 'timestamps' ? t.palette.columns.timestamps : choiceLabel(t, item.preset)) : t.palette.relations[item.relation].name;
 		return h('div', { class: 'sf-ghost sf-ghost-chip', 'aria-hidden': 'true', text });
 	}
 

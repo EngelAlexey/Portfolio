@@ -4,15 +4,13 @@ import { CARD_WIDTH, tableHeight, type Schema } from '../model/types';
 import { parseSql } from '../parse/sql-parse';
 import { loadTemplates, type TemplateEntry } from '../templates/template';
 import { h, icon, s } from './dom';
-import { fill, plural, type Strings } from './strings';
+import { fill, fold, plural, type Strings } from './strings';
 
 interface Prepared {
 	entry: TemplateEntry;
 	schema: Schema;
 	search: string;
 }
-
-const fold = (text: string) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
 export function layoutTemplate(sql: string): Schema {
 	const schema = parseSql('postgres', sql).schema;
