@@ -73,6 +73,11 @@ describe('interface texts for migrations, exports and queries', () => {
 		}
 	});
 
+	it('has the same texts in both languages', () => {
+		const paths = (ui: typeof schemaflowUiEs) => leaves(parts(ui)).map(([path]) => path).sort();
+		expect(paths(schemaflowUiEn)).toEqual(paths(schemaflowUiEs));
+	});
+
 	it('keeps the same placeholders in both languages', () => {
 		const en = new Map(leaves(parts(schemaflowUiEn)));
 		for (const [path, text] of leaves(parts(schemaflowUiEs))) expect(holes(en.get(path) ?? ''), path).toBe(holes(text));

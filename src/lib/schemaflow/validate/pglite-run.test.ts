@@ -82,6 +82,23 @@ SELECT bio, meta, born, avatar, ARRAY[10000000000000000::int8, 1] AS big, true A
 		const result = await execute(db, { sql: SCHEMA, query: 'SELECT * FROM nope' });
 		expect(result).toMatchObject({ ok: false, stage: 'query', message: expect.stringContaining('nope') });
 	}, 60_000);
+
+	it('counts the position of a query error from the start of the whole text', async () => {
+		const text = 'SELECT 1;\nSELECT 2;\nSELEC 3;';
+		const result = await execute(db, { sql: '', query: text });
+		expect(result).toMatchObject({ ok: false, stage: 'query', code: '42601' });
+		if (!result.ok) expect(text.slice((result.position ?? 1) - 1, (result.position ?? 1) - 1 + 5)).toBe('SELEC');
+	}, 60_000);
+
+	it('keeps two columns that have the same name', async () => {
+		const result = await execute(db, {
+			sql: SCHEMA,
+			query: `INSERT INTO users (id, email) VALUES (1, 'a@x.com');
+INSERT INTO posts (id, user_id, title) VALUES (7, 1, 'x');
+SELECT * FROM posts JOIN users ON users.id = posts.user_id;`
+		});
+		expect(result).toMatchObject({ ok: true, query: { fields: ['id', 'user_id', 'title', 'id', 'email', 'bio', 'meta', 'born', 'avatar'], rows: [['7', '1', 'x', '1', 'a@x.com', null, null, null, null]], total: 1 } });
+	}, 60_000);
 });
 
 describe('an engine that runs many requests', () => {

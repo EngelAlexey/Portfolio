@@ -1,10 +1,11 @@
+import { autocompletion } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { javascript } from '@codemirror/lang-javascript';
-import { MSSQL, MySQL, PostgreSQL, sql } from '@codemirror/lang-sql';
+import { MSSQL, MySQL, PostgreSQL, sql, type SQLNamespace } from '@codemirror/lang-sql';
 import { bracketMatching, HighlightStyle, indentOnInput, syntaxHighlighting } from '@codemirror/language';
 import { lintGutter, setDiagnostics, type Diagnostic } from '@codemirror/lint';
-import { Compartment, EditorState } from '@codemirror/state';
-import { drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers, placeholder } from '@codemirror/view';
+import { Compartment, EditorState, Prec } from '@codemirror/state';
+import { drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers, placeholder, tooltips } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import type { DialectId } from '../model/types';
 
@@ -47,9 +48,99 @@ const theme = EditorView.theme({
 	'.cm-diagnostic': { fontFamily: 'var(--font-sans)', fontSize: '12.5px', padding: '6px 10px' }
 });
 
+const queryTheme = EditorView.theme({
+	'&': { height: 'auto', minHeight: '6.5rem', maxHeight: '14rem', border: '1px solid var(--line)', borderRadius: 'var(--radius-sm)' },
+	'&.cm-focused': { outline: '2px solid var(--focus)', outlineOffset: '1px' },
+	'.cm-scroller': { overflow: 'auto', minHeight: '6.5rem' },
+	'.cm-content': { minHeight: '6.5rem' },
+	'.cm-tooltip.cm-tooltip-autocomplete > ul': { fontFamily: 'var(--font-mono)', fontSize: '12.5px' },
+	'.cm-tooltip.cm-tooltip-autocomplete > ul > li': { padding: '3px 8px' },
+	'.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]': { backgroundColor: 'color-mix(in oklab, var(--focus) 18%, transparent)', color: 'var(--ink)' },
+	'.cm-completionDetail': { color: 'var(--ink-faint)' }
+});
+
 function language(dialect: DialectId) {
 	if (dialect === 'mongodb') return javascript();
 	return sql({ dialect: dialect === 'postgres' ? PostgreSQL : dialect === 'mysql' ? MySQL : MSSQL, upperCaseKeywords: true });
+}
+
+function queryLanguage(schema: SQLNamespace) {
+	return sql({ dialect: PostgreSQL, schema, upperCaseKeywords: true });
+}
+
+export interface QueryEditor {
+	view: EditorView;
+	getValue(): string;
+	setValue(value: string): void;
+	setSchema(schema: SQLNamespace): void;
+	setPlaceholder(text: string): void;
+	setDiagnostics(list: Diagnostic[]): void;
+	focus(): void;
+	destroy(): void;
+}
+
+export function createQueryEditor(parent: HTMLElement, options: { value: string; label: string; placeholder: string; schema: SQLNamespace; onChange: (value: string) => void; onRun: () => void }): QueryEditor {
+	const lang = new Compartment();
+	const hint = new Compartment();
+	let silent = false;
+	const view = new EditorView({
+		parent,
+		state: EditorState.create({
+			doc: options.value,
+			extensions: [
+				history(),
+				drawSelection(),
+				bracketMatching(),
+				syntaxHighlighting(highlight),
+				EditorView.lineWrapping,
+				autocompletion({ icons: false }),
+				tooltips({ parent: document.body }),
+				Prec.highest(
+					keymap.of([
+						{
+							key: 'Mod-Enter',
+							run: () => {
+								options.onRun();
+								return true;
+							}
+						}
+					])
+				),
+				keymap.of([...defaultKeymap, ...historyKeymap]),
+				lang.of(queryLanguage(options.schema)),
+				hint.of(placeholder(options.placeholder)),
+				EditorView.contentAttributes.of({ 'aria-label': options.label }),
+				theme,
+				queryTheme,
+				EditorView.updateListener.of((update) => {
+					if (update.docChanged && !silent) options.onChange(update.state.doc.toString());
+				})
+			]
+		})
+	});
+	return {
+		view,
+		getValue: () => view.state.doc.toString(),
+		setValue(value: string) {
+			if (value === view.state.doc.toString()) return;
+			silent = true;
+			view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: value }, selection: { anchor: value.length }, scrollIntoView: true });
+			silent = false;
+		},
+		setSchema(schema: SQLNamespace) {
+			view.dispatch({ effects: lang.reconfigure(queryLanguage(schema)) });
+		},
+		setPlaceholder(text: string) {
+			view.dispatch({ effects: hint.reconfigure(placeholder(text)) });
+		},
+		setDiagnostics(list: Diagnostic[]) {
+			const length = view.state.doc.length;
+			const clamped = list.map((d) => ({ ...d, from: Math.min(d.from, length), to: Math.min(Math.max(d.to, d.from), length) }));
+			view.dispatch(setDiagnostics(view.state, clamped));
+		},
+		focus: () => view.focus(),
+		destroy: () => view.destroy()
+	};
 }
 
 export function createCodeEditor(parent: HTMLElement, options: { dialect: DialectId; value: string; label: string; placeholder: string; onChange: (value: string) => void }): CodeEditor {

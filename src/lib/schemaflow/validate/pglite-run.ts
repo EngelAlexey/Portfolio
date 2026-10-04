@@ -98,10 +98,10 @@ async function attempt(db: PGlite, request: RunRequest, waited: number): Promise
 	if (request.query === undefined) return { ok: true, tables };
 	const applied = performance.now();
 	try {
-		const results = await db.exec(request.query, { parsers: rawParsers(db) });
+		const results = await db.exec(request.query, { parsers: rawParsers(db), rowMode: 'array' });
 		const last = [...results].reverse().find((r) => r.fields.length > 0) ?? results[results.length - 1];
 		const fields = last ? last.fields.map((f) => f.name) : [];
-		const rows = last ? last.rows.slice(0, MAX_ROWS).map((row) => fields.map((name) => cell((row as Record<string, unknown>)[name]))) : [];
+		const rows = last ? last.rows.slice(0, MAX_ROWS).map((row) => (row as unknown[]).map((value) => cell(value))) : [];
 		const before = last ? (results[results.indexOf(last) - 1]?.affectedRows ?? 0) : 0;
 		return {
 			ok: true,

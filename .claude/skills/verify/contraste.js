@@ -1,5 +1,5 @@
 (() => {
-	const scope = '.sf, .sf-overlay, dialog[open]';
+	const scope = '.sf, .sf-overlay, dialog[open], .cm-tooltip';
 	const controls = 'button, a[href], summary, [role="button"], [role="menuitem"], [role="tab"], [role="option"]';
 	const canvas = document.createElement('canvas');
 	canvas.width = 1;

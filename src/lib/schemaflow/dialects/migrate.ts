@@ -1,5 +1,6 @@
 import { classifyTypeChange, diffSchemas, notNull, type ColumnChange, type SchemaDiff, type TableDiff } from '../model/diff';
-import type { Column, Index, Relation, Schema, SqlDialectId, Table, UniqueConstraint } from '../model/types';
+import { dropOrder } from '../model/order';
+import type { Column, Index, Schema, SqlDialectId, Table, UniqueConstraint } from '../model/types';
 import { constraintName, quote } from './names';
 import { columnLine, comments, createIndex, createIndexes, createTable, defaultSql, foreignKey, identitySql, indexLabel, keyList, relationName, sqlType, stringLiteral } from './sql-generate';
 
@@ -62,33 +63,6 @@ function needsUsing(from: Column, to: Column): boolean {
 	const a = CATEGORY[from.type.kind] ?? from.type.kind;
 	const b = CATEGORY[to.type.kind] ?? to.type.kind;
 	return a !== b;
-}
-
-export function dropOrder(tables: readonly Table[], relations: readonly Relation[]): { order: Table[]; cyclic: Relation[] } {
-	const ids = new Set(tables.map((t) => t.id));
-	const referencing = new Map<string, Relation[]>();
-	for (const r of relations) {
-		if (!ids.has(r.fromTable) || !ids.has(r.toTable) || r.fromTable === r.toTable) continue;
-		referencing.set(r.toTable, [...(referencing.get(r.toTable) ?? []), r]);
-	}
-	const byId = new Map(tables.map((t) => [t.id, t]));
-	const order: Table[] = [];
-	const cyclic: Relation[] = [];
-	const state = new Map<string, 'open' | 'done'>();
-	const visit = (table: Table) => {
-		if (state.has(table.id)) return;
-		state.set(table.id, 'open');
-		for (const r of referencing.get(table.id) ?? []) {
-			const from = byId.get(r.fromTable);
-			if (!from) continue;
-			if (state.get(from.id) === 'open') cyclic.push(r);
-			else visit(from);
-		}
-		state.set(table.id, 'done');
-		order.push(table);
-	};
-	tables.forEach(visit);
-	return { order, cyclic };
 }
 
 export function buildMigration(d: SqlDialectId, diff: SchemaDiff): Migration {

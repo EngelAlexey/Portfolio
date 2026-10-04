@@ -513,6 +513,29 @@ const svg = (name: IconName, size = 16) =>
 		flex-shrink: 0;
 	}
 
+	.sf-query-tools {
+		display: grid;
+		grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+		gap: 0.5rem;
+	}
+
+	.sf-query-field {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		min-width: 0;
+	}
+
+	.sf-query-field .sf-select {
+		width: 100%;
+		min-width: 0;
+	}
+
+	.sf-query-editor textarea {
+		width: 100%;
+		min-height: 6.5rem;
+	}
+
 	.sf-dock:has(.sf-query[open]) {
 		overflow-y: auto;
 	}
