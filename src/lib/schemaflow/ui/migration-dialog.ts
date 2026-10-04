@@ -59,11 +59,11 @@ export class MigrationDialog {
 		this.transaction = h('input', { type: 'checkbox', checked: true });
 		this.transaction.addEventListener('change', () => this.renderResult());
 		const check = h('label', { class: 'sf-check' }, this.transaction, h('span', { text: t.transaction }));
-		const controls = h('div', { class: 'sf-tool-row' }, h('label', { class: 'sf-tool-label', for: 'sf-migration-dialect', text: t.dialect }), this.select, check);
+		const controls = h('div', { class: 'sf-tool-row' }, h('label', { class: 'sf-dlg-label', for: 'sf-migration-dialect', text: t.dialect }), this.select, check);
 		this.mongoNote = h('p', { class: 'sf-help', text: t.mongoNote, hidden: true });
 		this.result = h('div', { class: 'sf-tool-result', 'aria-live': 'polite' });
 		const intro = h('p', { class: 'sf-help', text: t.intro });
-		const tools = h('div', { class: 'sf-gallery-tools' }, intro, h('p', { class: 'sf-tool-label', text: t.source }), this.sourceChips, this.panel, controls, this.mongoNote);
+		const tools = h('div', { class: 'sf-gallery-tools' }, intro, h('p', { class: 'sf-dlg-label', text: t.source }), this.sourceChips, this.panel, controls, this.mongoNote);
 		const scroller = h('div', { class: 'sf-gallery-scroll' }, this.result);
 		this.frame = createToolDialog({ id: 'sf-migration', title: t.title, closeLabel: strings.close, className: 'sf-migration' }, tools, scroller);
 	}
@@ -104,7 +104,7 @@ export class MigrationDialog {
 			area.addEventListener('input', () => (this.pasted = area.value));
 			const use = h('button', { type: 'button', class: 'sf-btn sf-btn-primary', text: t.paste.use });
 			use.addEventListener('click', () => void this.usePasted());
-			this.panel.append(h('label', { class: 'sf-tool-label', for: 'sf-migration-sql', text: fill(t.paste.label, { dialect: DIALECT_LABELS[this.dialect] }) }), area, h('div', { class: 'sf-tool-row' }, use));
+			this.panel.append(h('label', { class: 'sf-dlg-label', for: 'sf-migration-sql', text: fill(t.paste.label, { dialect: DIALECT_LABELS[this.dialect] }) }), area, h('div', { class: 'sf-tool-row' }, use));
 		} else {
 			const input = h('input', { type: 'file', accept: '.json,.sql,.ddl,.txt', hidden: true }) as HTMLInputElement;
 			const choose = h('button', { type: 'button', class: 'sf-btn sf-btn-primary', text: t.file.choose });
