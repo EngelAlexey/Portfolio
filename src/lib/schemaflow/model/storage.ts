@@ -50,3 +50,36 @@ export function onExternalChange(listener: () => void): void {
 		if (event.key === KEY) listener();
 	});
 }
+
+const BASE_KEY = 'sf:base';
+
+export function loadBase(): Saved | null {
+	try {
+		const raw = localStorage.getItem(BASE_KEY);
+		if (!raw) return null;
+		const value = JSON.parse(raw) as { schema?: unknown; dialect?: unknown; savedAt?: unknown };
+		const schema = readSchema(value.schema);
+		if (!schema) return null;
+		const dialect = DIALECTS.includes(value.dialect as DialectId) ? (value.dialect as DialectId) : 'postgres';
+		return { schema, dialect, savedAt: typeof value.savedAt === 'number' ? value.savedAt : 0 };
+	} catch {
+		return null;
+	}
+}
+
+export function saveBase(schema: Schema, dialect: DialectId): boolean {
+	try {
+		localStorage.setItem(BASE_KEY, JSON.stringify({ schema, dialect, savedAt: Date.now() }));
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export function clearBase(): void {
+	try {
+		localStorage.removeItem(BASE_KEY);
+	} catch {
+		return;
+	}
+}

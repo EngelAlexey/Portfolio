@@ -3,6 +3,9 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { schemaflowEn } from '../i18n/schemaflow-en';
 import { schemaflowEs } from '../i18n/schemaflow-es';
+import { schemaflowUiEn } from '../i18n/schemaflow-ui-en';
+import { schemaflowUiEs } from '../i18n/schemaflow-ui-es';
+import { WARNING_CODES } from './dialects/migrate';
 import { RULE_IDS } from './validate/rules';
 
 const parseDir = join(__dirname, 'parse');
@@ -54,5 +57,29 @@ describe('messages', () => {
 		const all = (o: unknown): string[] => (typeof o === 'string' ? [o] : o && typeof o === 'object' ? Object.values(o).flatMap(all) : []);
 		for (const text of all(schemaflowEs)) expect(text, text).not.toMatch(/"[^"]*\{[^}]+\}[^"]*"/);
 		for (const text of all(schemaflowEn)) expect(text, text).not.toMatch(/[«»]/);
+	});
+});
+
+describe('interface texts for migrations, exports and queries', () => {
+	const leaves = (o: unknown, path = ''): [string, string][] =>
+		typeof o === 'string' ? [[path, o]] : o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => leaves(v, path ? `${path}.${k}` : k)) : [];
+	const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join();
+	const parts = (ui: typeof schemaflowUiEs) => ({ migration: ui.migration, exportCode: ui.exportCode, query: ui.pg.query });
+
+	it('has a text for every migration warning in both languages', () => {
+		for (const code of WARNING_CODES) {
+			expect(schemaflowUiEs.migration.warnings, code).toHaveProperty([code]);
+			expect(schemaflowUiEn.migration.warnings, code).toHaveProperty([code]);
+		}
+	});
+
+	it('keeps the same placeholders in both languages', () => {
+		const en = new Map(leaves(parts(schemaflowUiEn)));
+		for (const [path, text] of leaves(parts(schemaflowUiEs))) expect(holes(en.get(path) ?? ''), path).toBe(holes(text));
+	});
+
+	it('uses the quotation marks of each language', () => {
+		for (const [path, text] of leaves(parts(schemaflowUiEn))) expect(text, path).not.toMatch(/[«»]/);
+		for (const [path, text] of leaves(parts(schemaflowUiEs))) expect(text, path).not.toMatch(/"/);
 	});
 });

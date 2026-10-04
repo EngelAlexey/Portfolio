@@ -185,7 +185,7 @@ export const es = {
 			},
 			schemaflow: {
 				name: 'SchemaFlow',
-				body: 'Genera el código de PostgreSQL, MySQL, SQL Server o MongoDB a partir de un diagrama que usted dibuja. También convierte código existente en diagrama.'
+				body: 'Genera el código de PostgreSQL, MySQL, SQL Server o MongoDB a partir de un diagrama que usted dibuja. También genera migraciones, exporta a Prisma o Drizzle y convierte código existente en diagrama.'
 			}
 		}
 	},

@@ -63,7 +63,8 @@ export const ICONS = {
 	link: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
 	keyboard: 'M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10',
 	shapes: 'M4 4h7v7H4zM17.5 4a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7zM13 13h7v7h-7zM7.5 13l3.5 7H4z',
-	spinner: 'M12 3a9 9 0 1 0 9 9'
+	spinner: 'M12 3a9 9 0 1 0 9 9',
+	migrate: 'M7 20V4M7 4 4 7M7 4l3 3M17 4v16M17 20l-3-3M17 20l3-3'
 } as const;
 
 export type IconName = keyof typeof ICONS;

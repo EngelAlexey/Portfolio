@@ -1,4 +1,4 @@
-import type { Column, DefaultValue, Extra, LogicalType, Relation, Schema, SqlDialectId, Table } from '../model/types';
+import type { Column, DefaultValue, Extra, Index, LogicalType, Relation, Schema, SqlDialectId, Table } from '../model/types';
 import { constraintName, quote } from './names';
 
 export const INTEGER_KINDS = new Set(['smallint', 'int', 'bigint']);
@@ -140,7 +140,7 @@ export function identitySql(dialect: SqlDialectId, column: Column): string | nul
 	return 'IDENTITY(1,1)';
 }
 
-function columnById(table: Table, id: string): Column | undefined {
+export function columnById(table: Table, id: string): Column | undefined {
 	return table.columns.find((c) => c.id === id);
 }
 
@@ -152,7 +152,7 @@ function keyColumn(dialect: SqlDialectId, table: Table, id: string): string {
 	return name;
 }
 
-function keyList(dialect: SqlDialectId, table: Table, ids: string[]): string {
+export function keyList(dialect: SqlDialectId, table: Table, ids: string[]): string {
 	return ids.map((id) => keyColumn(dialect, table, id)).filter(Boolean).join(', ');
 }
 
@@ -161,7 +161,7 @@ function inlineSafe(dialect: SqlDialectId, table: Table, id: string): boolean {
 	return !(dialect === 'mysql' && column && (column.type.kind === 'text' || column.type.kind === 'binary'));
 }
 
-function columnLine(dialect: SqlDialectId, table: Table, column: Column, inlinePk: boolean, inlineUnique: boolean): string {
+export function columnLine(dialect: SqlDialectId, table: Table, column: Column, inlinePk: boolean, inlineUnique: boolean): string {
 	const computed = column.default.kind === 'computed' && column.default.dialect === dialect ? column.default.sql : null;
 	if (computed !== null && dialect === 'sqlserver') return `${quote(dialect, column.name)} ${computed}`;
 	const parts = [quote(dialect, column.name), sqlType(dialect, column.type)];
@@ -182,7 +182,7 @@ function columnLine(dialect: SqlDialectId, table: Table, column: Column, inlineP
 	return parts.join(' ');
 }
 
-function createTable(dialect: SqlDialectId, table: Table): string {
+export function createTable(dialect: SqlDialectId, table: Table): string {
 	const lines: string[] = [];
 	const singlePk = table.primaryKey.length === 1 && !table.primaryKeyName ? table.primaryKey[0] : undefined;
 	const pkInline = singlePk !== undefined && inlineSafe(dialect, table, singlePk);
@@ -213,18 +213,21 @@ function createTable(dialect: SqlDialectId, table: Table): string {
 	return `CREATE TABLE ${quote(dialect, table.name)} (${body})${suffix};`;
 }
 
-function indexName(dialect: SqlDialectId, table: Table, ids: string[], unique: boolean): string {
+export function indexName(dialect: SqlDialectId, table: Table, ids: string[], unique: boolean): string {
 	const names = ids.map((id) => columnById(table, id)?.name ?? id).join('_');
 	return constraintName(dialect, `${unique ? 'ux' : 'ix'}_${table.name}_${names}`);
 }
 
-function createIndexes(dialect: SqlDialectId, table: Table): string[] {
-	return table.indexes
-		.filter((i) => i.columns.length > 0)
-		.map((index) => {
-			const name = index.name ?? indexName(dialect, table, index.columns, index.unique);
-			return `CREATE ${index.unique ? 'UNIQUE ' : ''}INDEX ${quote(dialect, name)} ON ${quote(dialect, table.name)} (${keyList(dialect, table, index.columns)});`;
-		});
+export function indexLabel(dialect: SqlDialectId, table: Table, index: Index): string {
+	return index.name ?? indexName(dialect, table, index.columns, index.unique);
+}
+
+export function createIndex(dialect: SqlDialectId, table: Table, index: Index): string {
+	return `CREATE ${index.unique ? 'UNIQUE ' : ''}INDEX ${quote(dialect, indexLabel(dialect, table, index))} ON ${quote(dialect, table.name)} (${keyList(dialect, table, index.columns)});`;
+}
+
+export function createIndexes(dialect: SqlDialectId, table: Table): string[] {
+	return table.indexes.filter((i) => i.columns.length > 0).map((index) => createIndex(dialect, table, index));
 }
 
 export function relationName(dialect: SqlDialectId | 'mongodb', relation: Relation, from: Table): string {
@@ -239,7 +242,7 @@ function actionSql(dialect: SqlDialectId, kind: 'DELETE' | 'UPDATE', action: Rel
 	return ` ON ${kind} ${action}`;
 }
 
-function foreignKey(dialect: SqlDialectId, schema: Schema, relation: Relation): string | null {
+export function foreignKey(dialect: SqlDialectId, schema: Schema, relation: Relation): string | null {
 	const from = schema.tables.find((t) => t.id === relation.fromTable);
 	const to = schema.tables.find((t) => t.id === relation.toTable);
 	if (!from || !to) return null;
@@ -254,7 +257,7 @@ function foreignKey(dialect: SqlDialectId, schema: Schema, relation: Relation): 
 	].join('\n');
 }
 
-function comments(dialect: SqlDialectId, table: Table): string[] {
+export function comments(dialect: SqlDialectId, table: Table): string[] {
 	const out: string[] = [];
 	if (dialect === 'postgres') {
 		if (table.comment) out.push(`COMMENT ON TABLE ${quote(dialect, table.name)} IS ${stringLiteral(dialect, table.comment)};`);

@@ -184,7 +184,7 @@ export const en: Dict = {
 			},
 			schemaflow: {
 				name: 'SchemaFlow',
-				body: 'Writes the PostgreSQL, MySQL, SQL Server or MongoDB code for a diagram that you draw. It also turns existing code into a diagram.'
+				body: 'Writes the PostgreSQL, MySQL, SQL Server or MongoDB code for a diagram that you draw. It also generates migrations, exports to Prisma or Drizzle and turns existing code into a diagram.'
 			}
 		}
 	},

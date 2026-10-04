@@ -1,7 +1,7 @@
 import { autoLayout } from '../model/layout';
 import { emptySelection, type Selection } from '../model/ops';
 import { decodeShare } from '../model/share';
-import { loadSaved, onExternalChange, save } from '../model/storage';
+import { clearBase, loadSaved, onExternalChange, save } from '../model/storage';
 import { LIMITS, emptySchema, type Relation, type Schema } from '../model/types';
 import type { Severity } from '../parse/issues';
 import { openGlossary, openRelateBubble, openRelationBubble, type BubbleHost } from './bubbles';
@@ -408,6 +408,24 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		await gallery.open();
 	};
 
+	let exportDialog: import('./export-dialog').ExportDialog | null = null;
+	const openExport = async () => {
+		if (!exportDialog) {
+			const { ExportDialog } = await import('./export-dialog');
+			exportDialog = new ExportDialog(t, { schema: () => store.schema, dialect: () => store.dialect, fileBase });
+		}
+		exportDialog.open();
+	};
+
+	let migrationDialog: import('./migration-dialog').MigrationDialog | null = null;
+	const openMigration = async () => {
+		if (!migrationDialog) {
+			const { MigrationDialog } = await import('./migration-dialog');
+			migrationDialog = new MigrationDialog(t, lang, { schema: () => store.schema, dialect: () => store.dialect, fileBase });
+		}
+		migrationDialog.open();
+	};
+
 	const openFile = () => fileInput.click();
 	fileInput.addEventListener('change', async () => {
 		const file = fileInput.files?.[0];
@@ -444,6 +462,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		});
 		confirm.addEventListener('click', () => {
 			bubble.close(false);
+			clearBase();
 			commit(emptySchema(''), t.history.newDesign, { select: emptySelection() });
 			store.setView({ zoom: 1, x: 60, y: 60 });
 			canvasEl.focus({ preventScroll: true });
@@ -480,6 +499,9 @@ export function mountSchemaFlow(root: HTMLElement): void {
 					const ok = await navigator.clipboard.writeText(mermaid(store.schema)).then(() => true, () => false);
 					toasts.show(ok ? t.export.mermaid : t.copyFailed, undefined, ok ? 'info' : 'error');
 				} },
+				{ kind: 'separator' },
+				{ label: t.menu.exportCode, icon: 'code', disabled: store.schema.tables.length === 0, action: () => void openExport() },
+				{ label: t.menu.migration, icon: 'migrate', action: () => void openMigration() },
 				{ kind: 'separator' },
 				{ label: t.menu.shortcuts, icon: 'keyboard', shortcut: '?', action: () => shortcuts() }
 			],
@@ -738,6 +760,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 	} else if (restored) {
 		store.schema = restored.schema;
 		store.dialect = restored.dialect;
+		dock.refresh();
 	}
 	const hash = location.hash.startsWith('#s=') ? location.hash.slice(3) : '';
 	const clearHash = () => history.replaceState(null, '', location.pathname + location.search);

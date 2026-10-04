@@ -7,6 +7,7 @@ import type { EngineResult } from '../validate/pglite';
 import type { CodeEditor } from './code-editor';
 import { copyText, download, h, icon, mod } from './dom';
 import { codeMessage } from './messages';
+import { QueryPanel } from './query-panel';
 import type { Bubble, Live, Toasts } from './popups';
 import type { Store } from './store';
 import { fill, plural, type Strings } from './strings';
@@ -78,6 +79,7 @@ export class Dock {
 	private copyButton: HTMLButtonElement;
 	private downloadButton: HTMLButtonElement;
 	private select: HTMLSelectElement;
+	private queryPanel: QueryPanel;
 
 	constructor(
 		private readonly store: Store,
@@ -125,9 +127,14 @@ export class Dock {
 		this.editorHost.append(this.fallback);
 		this.findings = h('div', { class: 'sf-findings', 'aria-live': 'polite' });
 		this.actions = h('div', { class: 'sf-dock-actions' });
-		root.append(h('h2', { class: 'sr-only', text: t.code.title }), tablist, this.select, status, this.mongoNote, this.hintLine, this.editorHost, this.findings, this.actions);
+		this.queryPanel = new QueryPanel(t, () => this.text());
+		root.append(h('h2', { class: 'sr-only', text: t.code.title }), tablist, this.select, status, this.mongoNote, this.hintLine, this.editorHost, this.findings, this.actions, this.queryPanel.element);
 		store.on('schema', () => this.onModel());
 		store.on('dialect', () => this.onDialect());
+		this.onDialect();
+	}
+
+	refresh(): void {
 		this.onDialect();
 	}
 
@@ -215,6 +222,7 @@ export class Dock {
 		this.select.value = this.dialect;
 		this.editorHost.setAttribute('aria-labelledby', `sf-tab-${this.dialect}`);
 		this.mongoNote.hidden = this.dialect !== 'mongodb';
+		this.queryPanel.setVisible(this.dialect === 'postgres');
 		const file = FILE_NAMES[this.dialect];
 		this.downloadButton.setAttribute('aria-label', fill(t.code.download, { file }));
 		this.downloadButton.dataset.tip = fill(t.code.download, { file });

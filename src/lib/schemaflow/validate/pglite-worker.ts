@@ -1,32 +1,42 @@
 import { PGlite } from '@electric-sql/pglite';
+import { execute, failure, fingerprint, reusable, settle } from './pglite-run';
+import type { RunRequest, WorkerMessage } from './pglite-types';
 
-interface EngineError {
-	message?: string;
-	position?: string | number;
-	hint?: string;
-	code?: string;
+const send = (message: WorkerMessage) => postMessage(message);
+
+const booting = (async () => {
+	const db = new PGlite();
+	await db.waitReady;
+	const baseline = await fingerprint(db).catch(() => null);
+	send({ kind: 'ready' });
+	return { db, baseline };
+})();
+
+booting.catch((error: unknown) => send({ kind: 'failed', message: String((error as Error | undefined)?.message ?? error) }));
+
+let runs = 0;
+let queue: Promise<void> = Promise.resolve();
+
+async function handle(request: RunRequest): Promise<void> {
+	const received = performance.now();
+	let engine: Awaited<typeof booting>;
+	try {
+		engine = await booting;
+	} catch {
+		return;
+	}
+	const waited = Math.round(performance.now() - received);
+	send({ kind: 'running' });
+	try {
+		const result = await execute(engine.db, request, waited);
+		runs++;
+		const clean = await settle(engine.db, engine.baseline);
+		send({ kind: 'done', result, reusable: clean && reusable(result, runs) });
+	} catch (error) {
+		send({ kind: 'done', result: failure(error, 'ddl'), reusable: false });
+	}
 }
 
-self.addEventListener('message', async (event: MessageEvent<{ sql: string }>) => {
-	let db: PGlite | null = null;
-	try {
-		db = new PGlite();
-		await db.waitReady;
-		postMessage({ stage: 'running' });
-		await db.exec(event.data.sql);
-		const result = await db.query<{ n: number }>("SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema') AND table_type = 'BASE TABLE'");
-		postMessage({ ok: true, tables: result.rows[0]?.n ?? 0 });
-	} catch (error) {
-		const e = error as EngineError;
-		const position = Number(e.position);
-		postMessage({
-			ok: false,
-			message: String(e.message ?? error),
-			position: Number.isFinite(position) && position > 0 ? position : null,
-			hint: e.hint ?? null,
-			code: e.code ?? null
-		});
-	} finally {
-		await db?.close().catch(() => undefined);
-	}
+self.addEventListener('message', (event: MessageEvent<RunRequest>) => {
+	queue = queue.then(() => handle(event.data));
 });
