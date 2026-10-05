@@ -1,7 +1,7 @@
 import type { SQLNamespace } from '@codemirror/lang-sql';
 import { quote } from '../dialects/names';
 import type { Schema } from '../model/types';
-import type { EngineResult, QueryOutput } from '../validate/pglite';
+import type { EngineResult, Failure, QueryOutput } from '../validate/pglite';
 import type { QueryEditor } from './code-editor';
 import { h, icon } from './dom';
 import { buildSnippets, sampleScript, SNIPPET_GROUPS, type Snippet } from './query-snippets';
@@ -13,6 +13,8 @@ type Engine = typeof import('../validate/pglite');
 
 const READY_MS = 100;
 const SLOW_MS = 250;
+const DATA_ERROR = /^(22|23)|^42(804|703|P01)$/;
+const KEPT_SCRIPTS = 20;
 
 function namespace(schema: Schema): SQLNamespace {
 	return Object.fromEntries(schema.tables.map((table) => [table.name, table.columns.map((column) => column.name)]));
@@ -32,12 +34,15 @@ export class QueryPanel {
 	private upgrading = false;
 	private marked = false;
 	private snippets: Snippet[] = [];
+	private generated: string[] = [];
+	private shown: Schema | null = null;
 
 	constructor(
 		private readonly strings: Strings,
 		private readonly store: Store,
 		private readonly lang: SampleLang,
-		private readonly getDdl: () => string
+		private readonly getDdl: () => string,
+		private readonly getSchema: () => Schema
 	) {
 		const t = strings.pg.query;
 		this.root = h('details', { class: 'sf-query', hidden: true }) as HTMLDetailsElement;
@@ -87,11 +92,14 @@ export class QueryPanel {
 	}
 
 	refresh(): void {
-		const schema = this.store.schema;
+		const schema = this.getSchema();
+		if (schema === this.shown) return;
 		const selected = this.store.selection.tables;
-		const wanted = selected.length === 1 ? selected[0] : this.tableSelect.value;
+		const picked = selected.length === 1 ? this.store.schema.tables.find((table) => table.id === selected[0])?.name : undefined;
+		const wanted = picked ?? this.tableSelect.selectedOptions[0]?.text;
+		this.shown = schema;
 		this.tableSelect.replaceChildren(...schema.tables.map((table) => h('option', { value: table.id, text: table.name })));
-		this.tableSelect.value = schema.tables.some((table) => table.id === wanted) ? (wanted ?? '') : (schema.tables[0]?.id ?? '');
+		this.tableSelect.value = (schema.tables.find((table) => table.name === wanted) ?? schema.tables[0])?.id ?? '';
 		this.tableSelect.disabled = schema.tables.length === 0;
 		this.rebuild();
 		this.editor?.setSchema(namespace(schema));
@@ -99,9 +107,10 @@ export class QueryPanel {
 
 	private follow(): void {
 		const selected = this.store.selection.tables;
-		const id = selected.length === 1 ? selected[0] : undefined;
-		if (id === undefined || id === this.tableSelect.value || !this.store.schema.tables.some((table) => table.id === id)) return;
-		this.tableSelect.value = id;
+		const name = selected.length === 1 ? this.store.schema.tables.find((table) => table.id === selected[0])?.name : undefined;
+		const target = name === undefined ? undefined : this.getSchema().tables.find((table) => table.name === name);
+		if (!target || target.id === this.tableSelect.value) return;
+		this.tableSelect.value = target.id;
 		this.rebuild();
 	}
 
@@ -111,7 +120,7 @@ export class QueryPanel {
 
 	private rebuild(): void {
 		const t = this.strings.pg.query;
-		const schema = this.store.schema;
+		const schema = this.getSchema();
 		this.snippets = buildSnippets(schema, this.tableSelect.value, t.snippets, this.lang);
 		this.snippetSelect.replaceChildren(h('option', { value: '', text: this.snippets.length > 0 ? t.snippetPick : t.snippetNone }));
 		for (const group of SNIPPET_GROUPS) {
@@ -130,10 +139,24 @@ export class QueryPanel {
 		const snippet = this.snippets.find((candidate) => candidate.id === this.snippetSelect.value);
 		this.snippetSelect.value = '';
 		if (!snippet) return;
+		if (snippet.id === 'sample' || snippet.id === 'sample-all') this.remember(snippet.sql);
 		const current = this.text().replace(/\s+$/, '');
 		this.put(current ? `${current}\n\n${snippet.sql}` : snippet.sql);
 		this.clearMarks();
 		this.focus();
+	}
+
+	private remember(script: string): void {
+		this.generated = [script, ...this.generated.filter((kept) => kept !== script)].slice(0, KEPT_SCRIPTS);
+	}
+
+	private sampleOrigin(failure: Failure, query: string): { table: string | null } | null {
+		if (failure.stage !== 'query' || !failure.code || !DATA_ERROR.test(failure.code)) return null;
+		const present = this.generated.filter((script) => query.includes(script));
+		if (present.length === 0) return null;
+		if (!failure.table) return { table: null };
+		const target = `INSERT INTO ${quote('postgres', failure.table)}`;
+		return present.some((script) => script.includes(target)) ? { table: failure.table } : null;
 	}
 
 	private async upgrade(): Promise<void> {
@@ -245,8 +268,11 @@ export class QueryPanel {
 			else if (result.failed) this.say(t.failed, 'error');
 			else {
 				const friendly = result.stage === 'query' && result.code ? (t.query.errors as Record<string, string>)[result.code] : undefined;
+				const origin = this.sampleOrigin(result, query);
 				const box = h('div', { class: 'sf-finding sf-finding-error sf-engine' });
-				box.append(h('span', { class: 'sf-finding-text', text: friendly ?? (result.stage === 'query' ? t.query.queryError : t.query.schemaError) }), h('code', { class: 'sf-engine-message', text: result.message }));
+				box.append(h('span', { class: 'sf-finding-text', text: friendly ?? (result.stage === 'query' ? t.query.queryError : t.query.schemaError) }));
+				if (origin) box.append(h('span', { class: 'sf-finding-text', text: origin.table ? fill(t.query.generatedIn, { table: origin.table }) : t.query.generated }));
+				box.append(h('code', { class: 'sf-engine-message', text: result.message }));
 				if (result.hint) box.append(h('span', { class: 'sf-finding-text', text: fill(t.hint, { hint: result.hint }) }));
 				this.output.replaceChildren(box);
 				if (result.stage === 'query') this.mark(result.position, friendly ?? result.message);
@@ -258,7 +284,7 @@ export class QueryPanel {
 		const nodes: HTMLElement[] = [];
 		if (result.timings) nodes.push(h('p', { class: 'sf-help', text: fill(result.timings.boot < READY_MS ? t.query.timingReady : t.query.timing, { ...result.timings }) }));
 		nodes.push(out.fields.length > 0 ? this.table(out) : h('p', { class: 'sf-finding sf-finding-ok', text: plural(t.query.affected, out.affected) }));
-		if (out.fields.length > 0 && out.total === 0 && !/\binsert\b/i.test(query) && this.store.schema.tables.length > 0) nodes.push(this.sampleHint());
+		if (out.fields.length > 0 && out.total === 0 && !/\binsert\b/i.test(query) && this.getSchema().tables.length > 0) nodes.push(this.sampleHint());
 		this.output.replaceChildren(...nodes);
 	}
 
@@ -266,7 +292,8 @@ export class QueryPanel {
 		const t = this.strings.pg.query;
 		const add = h('button', { type: 'button', class: 'sf-btn', text: t.snippets.sampleAll });
 		add.addEventListener('click', () => {
-			const script = sampleScript(this.store.schema, null, t.snippets.sampleAll, t.snippets, this.lang);
+			const script = sampleScript(this.getSchema(), null, t.snippets.sampleAll, t.snippets, this.lang);
+			this.remember(script);
 			this.put(`${script}\n\n${this.text()}`.trimEnd());
 			void this.execute();
 		});

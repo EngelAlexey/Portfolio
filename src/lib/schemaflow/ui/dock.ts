@@ -127,7 +127,7 @@ export class Dock {
 		this.editorHost.append(this.fallback);
 		this.findings = h('div', { class: 'sf-findings', 'aria-live': 'polite' });
 		this.actions = h('div', { class: 'sf-dock-actions' });
-		this.queryPanel = new QueryPanel(t, store, host.lang, () => this.text());
+		this.queryPanel = new QueryPanel(t, store, host.lang, () => this.text(), () => this.querySchema());
 		root.append(h('h2', { class: 'sr-only', text: t.code.title }), tablist, this.select, status, this.mongoNote, this.hintLine, this.editorHost, this.findings, this.actions, this.queryPanel.element);
 		store.on('schema', () => this.onModel());
 		store.on('dialect', () => this.onDialect());
@@ -184,6 +184,10 @@ export class Dock {
 
 	private text(): string {
 		return this.editor ? this.editor.getValue() : this.generated;
+	}
+
+	private querySchema(): Schema {
+		return this.state === 'edited' && this.result ? this.result.schema : this.store.schema;
 	}
 
 	private regenerate(): void {
@@ -456,6 +460,7 @@ export class Dock {
 	render(): void {
 		const t = this.host.strings;
 		const state = this.state;
+		this.queryPanel.refresh();
 		this.chip.className = `sf-chip sf-chip-${state}`;
 		this.chip.replaceChildren(h('span', { class: 'sf-chip-dot', 'aria-hidden': 'true' }), state === 'synced' ? t.code.synced : state === 'edited' ? t.code.edited : t.code.applying);
 		this.chip.dataset.tip = state === 'edited' ? t.code.editedTip : t.code.syncedTip;
