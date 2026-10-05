@@ -19,11 +19,10 @@ const updated = new Intl.DateTimeFormat(lang === 'es' ? 'es' : 'en-GB', {
 }).format(new Date(`${PRIVACY_UPDATED}T00:00:00Z`));
 ---
 
-<Layout {lang} key="privacy" title={strings.meta.titleTemplate(text.title)} description={text.lead}>
+<Layout {lang} key="privacy" title={strings.meta.titleTemplate(text.title)} description={text.description}>
 	<Container as="header" size="text">
 		<div class="head">
 			<h1>{text.title}</h1>
-			<p>{text.lead}</p>
 			<p class="updated"><time datetime={PRIVACY_UPDATED}>{text.updated(updated)}</time></p>
 		</div>
 	</Container>

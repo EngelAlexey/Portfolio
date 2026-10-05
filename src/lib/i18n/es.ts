@@ -174,7 +174,7 @@ export const es = {
 	},
 	cookies: {
 		title: 'Cookies',
-		body: 'Este sitio usa cookies de Google Analytics para medir qué páginas se visitan. Son de un tercero y solo se guardan si usted las acepta.',
+		body: 'Las cookies de Google Analytics cuentan las visitas a este sitio. Solo se guardan si usted las acepta.',
 		more: 'Más información',
 		accept: 'Aceptar cookies',
 		reject: 'Rechazar cookies',
