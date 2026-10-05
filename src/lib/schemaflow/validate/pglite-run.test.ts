@@ -51,9 +51,14 @@ SELECT bio, meta, born, avatar, ARRAY[10000000000000000::int8, 1] AS big, true A
 		expect(result.ok && result.query?.rows).toEqual([[null, '{"k": [1, 2]}', '2026-10-03 12:30:00', '\\x0aff', '{10000000000000000,1}', 'true', '1.50', 'Infinity', '2026-10-03']]);
 	}, 60_000);
 
-	it('reports the rows an UPDATE touched when no statement returns rows', async () => {
+	it('adds up the rows the statements touched when none returns rows', async () => {
 		const result = await execute(db, { sql: SCHEMA, query: "INSERT INTO users (id, email) VALUES (1, 'a'), (2, 'b'); UPDATE users SET bio = 'x';" });
-		expect(result).toMatchObject({ ok: true, query: { fields: [], rows: [], affected: 2 } });
+		expect(result).toMatchObject({ ok: true, query: { fields: [], rows: [], affected: 4 } });
+	}, 60_000);
+
+	it('keeps the count of a script that ends in a statement that touches no rows', async () => {
+		const result = await execute(db, { sql: SCHEMA, query: "INSERT INTO users (id, email) VALUES (1, 'a'), (2, 'b'), (3, 'c'); DO $$ BEGIN PERFORM 1; END $$;" });
+		expect(result).toMatchObject({ ok: true, query: { fields: [], rows: [], affected: 3 } });
 	}, 60_000);
 
 	it('takes the last statement that returns rows', async () => {

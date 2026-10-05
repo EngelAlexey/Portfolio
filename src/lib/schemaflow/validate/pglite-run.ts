@@ -102,11 +102,11 @@ async function attempt(db: PGlite, request: RunRequest, waited: number): Promise
 		const last = [...results].reverse().find((r) => r.fields.length > 0) ?? results[results.length - 1];
 		const fields = last ? last.fields.map((f) => f.name) : [];
 		const rows = last ? last.rows.slice(0, MAX_ROWS).map((row) => (row as unknown[]).map((value) => cell(value))) : [];
-		const before = last ? (results[results.indexOf(last) - 1]?.affectedRows ?? 0) : 0;
+		const affected = last && last.fields.length === 0 ? (results[results.length - 1]?.affectedRows ?? 0) : 0;
 		return {
 			ok: true,
 			tables,
-			query: { fields, rows, total: last ? last.rows.length : 0, affected: last ? (last.affectedRows ?? 0) - before : 0 },
+			query: { fields, rows, total: last ? last.rows.length : 0, affected },
 			timings: { boot: waited, schema: Math.round(applied - started), query: Math.round(performance.now() - applied) }
 		};
 	} catch (error) {
