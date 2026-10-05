@@ -1,0 +1,28 @@
+{
+	"findings": {
+		"link-file-download": { "section": "links", "severity": "high" },
+		"link-macro-document": { "section": "links", "severity": "high" },
+		"link-archive-download": { "section": "links", "severity": "medium" },
+		"link-download-parameter": { "section": "links", "severity": "low" },
+		"link-scheme-dangerous": { "section": "links", "severity": "critical" },
+		"link-scheme-handoff": { "section": "links", "severity": "critical" },
+		"link-cloud-hosted": { "section": "links", "severity": "info" },
+		"link-text-mismatch": { "section": "links", "severity": "high" },
+		"link-userinfo": { "section": "links", "severity": "high" },
+		"link-ip-host": { "section": "links", "severity": "high" },
+		"link-punycode": { "section": "links", "severity": "medium" },
+		"link-mixed-script": { "section": "links", "severity": "high" },
+		"link-brand-lookalike": { "section": "links", "severity": "high" },
+		"link-brand-in-subdomain": { "section": "links", "severity": "high" },
+		"link-brand-in-domain": { "section": "links", "severity": "medium" },
+		"link-shortener": { "section": "links", "severity": "medium" },
+		"link-redirect-parameter": { "section": "links", "severity": "medium" },
+		"link-nonstandard-port": { "section": "links", "severity": "medium" },
+		"link-email-in-url": { "section": "links", "severity": "medium" },
+		"link-risky-tld": { "section": "links", "severity": "low" },
+		"link-http": { "section": "links", "severity": "low" },
+		"link-many-subdomains": { "section": "links", "severity": "low" },
+		"link-random-host": { "section": "links", "severity": "low" },
+		"link-wrapper-unwrapped": { "section": "links", "severity": "info" }
+	}
+}
