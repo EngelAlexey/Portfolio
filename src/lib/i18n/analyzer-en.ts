@@ -4,6 +4,58 @@ export const analyzerEn: AnalyzerStrings = {
 	title: 'Message analyser',
 	description: 'Signs of fraud in a message, its links and its sender, without opening any link.',
 	lead: 'Signs of fraud in a message, its links and its sender.',
+	aboutLink: 'About the Analyser',
+	about: {
+		title: 'About the Analyser',
+		description: 'What the message analyser checks, what it does not do, how it handles the message and what its limits are.',
+		privacyLink: 'Privacy and cookies',
+		sections: [
+			{
+				id: 'checks',
+				title: 'What it checks',
+				items: [
+					'Links: the file type, the domain, the resemblance to well-known brands, shorteners and redirects.',
+					'Text: pressure phrases, requests for passwords or payments and commands to run on the computer.',
+					'Sender: whether the name and the domain match and whether the domain imitates a brand.',
+					'Headers: SPF, DKIM and DMARC, the reply addresses and the times of the mail hops.'
+				]
+			},
+			{
+				id: 'does-not',
+				title: 'What it does not do',
+				items: [
+					'It does not open any link or request any address from the message.',
+					'It does not run or draw the content of the message.',
+					'It does not give a verdict: it shows signals and their explanation.',
+					'It does not analyse attached files.',
+					'It does not store the message.'
+				]
+			},
+			{
+				id: 'handling',
+				title: 'How it handles the message',
+				items: [
+					'The text is written on the page as text, never as HTML code.',
+					'The HTML that the clipboard carries is only read to get the addresses of the links. It is never inserted into the page.',
+					'Links are shown with the address altered, such as hxxps://domain[.]com, and cannot be clicked.',
+					'The analysis runs in a separate process with a limit of 10 seconds.',
+					'The input is limited to 200,000 characters and 200 links.',
+					'The content security policy of the page limits scripts to its own and to those of the visit statistics.'
+				]
+			},
+			{
+				id: 'limits',
+				title: 'Limits',
+				items: [
+					'The lists of brands, domain endings and phrases are an estimate and can fail.',
+					'A legitimate message can trigger pressure signals.',
+					'Without the real address of the links, the analysis only sees the visible text.',
+					'A result for SPF, DKIM or DMARC only counts if your mail server added it, in the topmost Authentication-Results field.',
+					'No signals does not mean safe.'
+				]
+			}
+		]
+	},
 	form: {
 		messageLabel: 'Message',
 		messageHint: 'Paste the message as you received it.',

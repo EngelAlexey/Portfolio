@@ -1,0 +1,98 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Container from '../Container.astro';
+import { path, t, type Lang } from '../../lib/i18n';
+
+interface Props {
+	lang: Lang;
+}
+
+const { lang } = Astro.props;
+const strings = t(lang);
+const text = strings.analyzer;
+---
+
+<Layout {lang} key="analyzerAbout" title={strings.meta.titleTemplate(text.about.title)} description={text.about.description}>
+	<Container as="header" size="text">
+		<div class="head">
+			<h1>{text.about.title}</h1>
+		</div>
+	</Container>
+
+	<Container size="text">
+		<div class="doc">
+			{
+				text.about.sections.map((section) => (
+					<section id={section.id} aria-labelledby={`${section.id}-title`}>
+						<h2 id={`${section.id}-title`}>{section.title}</h2>
+						<ul>
+							{section.items.map((item) => (
+								<li>{item}</li>
+							))}
+						</ul>
+					</section>
+				))
+			}
+			<p class="links">
+				<a href={path(lang, 'analyzer')}>{text.title}</a>
+				<a href={path(lang, 'privacy')}>{text.about.privacyLink}</a>
+			</p>
+		</div>
+	</Container>
+</Layout>
+
+<style>
+	.head {
+		padding-block: clamp(2.5rem, 7vw, 4rem) 1.5rem;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: var(--h1);
+		font-weight: 600;
+		letter-spacing: -0.03em;
+	}
+
+	.doc {
+		padding-bottom: 4rem;
+		font-size: 1.0625rem;
+		line-height: 1.7;
+	}
+
+	section {
+		scroll-margin-top: 5rem;
+	}
+
+	h2 {
+		margin: 2.25rem 0 0.75rem;
+		font-size: 1.3125rem;
+		font-weight: 600;
+		letter-spacing: -0.015em;
+	}
+
+	section:first-child h2 {
+		margin-top: 1rem;
+	}
+
+	ul {
+		margin: 0 0 1rem;
+		padding-left: 1.25rem;
+		max-width: var(--measure);
+	}
+
+	li {
+		margin-bottom: 0.4rem;
+	}
+
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 1.5rem;
+		margin: 2.25rem 0 0;
+	}
+
+	a {
+		color: var(--ink);
+		text-underline-offset: 0.2em;
+	}
+</style>

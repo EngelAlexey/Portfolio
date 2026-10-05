@@ -14,7 +14,7 @@ export const t = (lang: Lang): Dict => DICTS[lang];
 
 export const other = (lang: Lang): Lang => (lang === 'es' ? 'en' : 'es');
 
-export type RouteKey = 'home' | 'projects' | 'project' | 'blog' | 'article' | 'about' | 'contact' | 'scanner' | 'scannerAbout' | 'scannerReport' | 'tools' | 'schemaflow' | 'analyzer' | 'privacy';
+export type RouteKey = 'home' | 'projects' | 'project' | 'blog' | 'article' | 'about' | 'contact' | 'scanner' | 'scannerAbout' | 'scannerReport' | 'tools' | 'schemaflow' | 'analyzer' | 'analyzerAbout' | 'privacy';
 
 const SEGMENTS: Record<RouteKey, Record<Lang, string>> = {
 	home: { es: '', en: '' },
@@ -30,6 +30,7 @@ const SEGMENTS: Record<RouteKey, Record<Lang, string>> = {
 	tools: { es: 'herramientas', en: 'tools' },
 	schemaflow: { es: 'herramientas/schemaflow', en: 'tools/schemaflow' },
 	analyzer: { es: 'herramientas/analizador', en: 'tools/analyzer' },
+	analyzerAbout: { es: 'herramientas/analizador/acerca', en: 'tools/analyzer/about' },
 	privacy: { es: 'privacidad', en: 'privacy' }
 };
 

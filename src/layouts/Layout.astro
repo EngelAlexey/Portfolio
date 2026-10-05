@@ -101,7 +101,8 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = {
 	scannerAbout: 'tools',
 	scannerReport: 'tools',
 	schemaflow: 'tools',
-	analyzer: 'tools'
+	analyzer: 'tools',
+	analyzerAbout: 'tools'
 };
 
 const toolLinks = [
@@ -110,7 +111,7 @@ const toolLinks = [
 	{ key: 'analyzer', href: path(lang, 'analyzer'), label: strings.nav.analyzer, icon: 'mail' }
 ] as const;
 
-const toolSection: Partial<Record<RouteKey, RouteKey>> = { scanner: 'scanner', scannerAbout: 'scanner', scannerReport: 'scanner', schemaflow: 'schemaflow', analyzer: 'analyzer' };
+const toolSection: Partial<Record<RouteKey, RouteKey>> = { scanner: 'scanner', scannerAbout: 'scanner', scannerReport: 'scanner', schemaflow: 'schemaflow', analyzer: 'analyzer', analyzerAbout: 'analyzer' };
 const currentTool = current === null ? null : (toolSection[current] ?? null);
 ---
 

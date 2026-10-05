@@ -148,10 +148,16 @@ function breadcrumbNode(input: GraphInput, key: RouteKey): Node | null {
 
 	const trail: Node[] = [home];
 
-	if (key === 'project' || key === 'article' || key === 'scannerAbout' || key === 'scannerReport') {
-		const parent = key === 'project' ? 'projects' : key === 'article' ? 'blog' : 'scanner';
+	if (key === 'project' || key === 'article' || key === 'scannerAbout' || key === 'scannerReport' || key === 'analyzerAbout') {
+		const parent = key === 'project' ? 'projects' : key === 'article' ? 'blog' : key === 'analyzerAbout' ? 'analyzer' : 'scanner';
 		const name =
-			key === 'scannerAbout' ? strings.scanner.about.title : key === 'scannerReport' ? strings.scanner.report.title : input.title;
+			key === 'scannerAbout'
+				? strings.scanner.about.title
+				: key === 'scannerReport'
+					? strings.scanner.report.title
+					: key === 'analyzerAbout'
+						? strings.analyzer.about.title
+						: input.title;
 		trail.push({
 			'@type': 'ListItem',
 			position: 2,
@@ -286,6 +292,7 @@ const PAGE_TYPE: Record<RouteKey, string> = {
 	tools: 'CollectionPage',
 	schemaflow: 'WebPage',
 	analyzer: 'WebPage',
+	analyzerAbout: 'WebPage',
 	privacy: 'WebPage'
 };
 

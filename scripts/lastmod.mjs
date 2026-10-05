@@ -51,6 +51,7 @@ const PAGES = {
 	scanner: ['src/components/pages/Scanner.astro', 'src/components/scanner/ScannerResult.astro', ...I18N],
 	scannerAbout: ['src/components/pages/ScannerAbout.astro', ...I18N],
 	tools: ['src/components/pages/Tools.astro', ...I18N],
+	analyzerAbout: ['src/components/pages/AnalyzerAbout.astro', 'src/lib/i18n/analyzer-es.ts', 'src/lib/i18n/analyzer-en.ts', ...I18N],
 	analyzer: ['src/components/pages/Analyzer.astro', 'src/lib/analyzer', 'src/content/analyzer', 'src/lib/i18n/analyzer-es.ts', 'src/lib/i18n/analyzer-en.ts', ...I18N],
 	privacy: ['src/components/pages/Privacy.astro', 'src/lib/i18n/privacy-es.ts', 'src/lib/i18n/privacy-en.ts', ...I18N],
 	schemaflow: ['src/components/pages/SchemaFlow.astro', 'src/lib/schemaflow', 'src/lib/i18n/schemaflow-ui-es.ts', 'src/lib/i18n/schemaflow-ui-en.ts', 'src/lib/i18n/schemaflow-es.ts', 'src/lib/i18n/schemaflow-en.ts', ...I18N]

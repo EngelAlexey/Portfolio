@@ -4,6 +4,17 @@ export type AnalyzerStrings = {
 	readonly title: string;
 	readonly description: string;
 	readonly lead: string;
+	readonly aboutLink: string;
+	readonly about: {
+		readonly title: string;
+		readonly description: string;
+		readonly privacyLink: string;
+		readonly sections: readonly {
+			readonly id: string;
+			readonly title: string;
+			readonly items: readonly string[];
+		}[];
+	};
 	readonly form: {
 		readonly messageLabel: string;
 		readonly messageHint: string;
@@ -56,6 +67,58 @@ export const analyzerEs: AnalyzerStrings = {
 	title: 'Analizador de mensajes',
 	description: 'Señales de fraude en un mensaje, sus enlaces y su remitente, sin abrir ningún enlace.',
 	lead: 'Señales de fraude en un mensaje, sus enlaces y su remitente.',
+	aboutLink: 'Acerca del Analizador',
+	about: {
+		title: 'Acerca del Analizador',
+		description: 'Qué revisa el Analizador de mensajes, qué no hace, cómo trata el mensaje y cuáles son sus límites.',
+		privacyLink: 'Privacidad y cookies',
+		sections: [
+			{
+				id: 'revisa',
+				title: 'Qué revisa',
+				items: [
+					'Enlaces: el tipo de archivo, el dominio, el parecido con marcas conocidas, los acortadores y las redirecciones.',
+					'Texto: frases de presión, peticiones de claves o pagos y órdenes para ejecutar en el equipo.',
+					'Remitente: si el nombre y el dominio coinciden y si el dominio imita a una marca.',
+					'Cabeceras: SPF, DKIM y DMARC, las direcciones de respuesta y las horas de los saltos del correo.'
+				]
+			},
+			{
+				id: 'no-hace',
+				title: 'Qué no hace',
+				items: [
+					'No abre ningún enlace ni pide ninguna dirección del mensaje.',
+					'No ejecuta ni dibuja el contenido del mensaje.',
+					'No da un veredicto: muestra señales y su explicación.',
+					'No analiza archivos adjuntos.',
+					'No guarda el mensaje.'
+				]
+			},
+			{
+				id: 'trato',
+				title: 'Cómo trata el mensaje',
+				items: [
+					'El texto se escribe en la página como texto, nunca como código HTML.',
+					'El HTML que trae el portapapeles solo se lee para obtener las direcciones de los enlaces. Nunca se inserta en la página.',
+					'Los enlaces se muestran con la dirección alterada, como hxxps://dominio[.]com, y no se pueden pulsar.',
+					'El análisis corre en un proceso aparte con un límite de 10 segundos.',
+					'La entrada tiene un límite de 200 000 caracteres y de 200 enlaces.',
+					'La política de seguridad de contenido de la página limita los scripts a los propios y a los de medición.'
+				]
+			},
+			{
+				id: 'limites',
+				title: 'Límites',
+				items: [
+					'Las listas de marcas, de finales de dominio y de frases son una estimación y pueden fallar.',
+					'Un mensaje legítimo puede activar señales de presión.',
+					'Sin la dirección real de los enlaces, el análisis solo ve el texto visible.',
+					'Un resultado de SPF, DKIM o DMARC solo vale si lo añadió su servidor de correo, en el campo Authentication-Results más alto.',
+					'Sin señales no significa seguro.'
+				]
+			}
+		]
+	},
 	form: {
 		messageLabel: 'Mensaje',
 		messageHint: 'Pegue el mensaje tal como lo recibió.',

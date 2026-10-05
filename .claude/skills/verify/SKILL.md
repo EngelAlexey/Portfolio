@@ -47,6 +47,18 @@ Una regla de CSS con un nombre de clase repetido dejó el texto de un botón del
 
 El resultado esperado es `"failed":0`. Cada fallo trae el control, el texto y la razón medida.
 
+## Analizador de mensajes
+
+La garantía es que el mensaje se lee y se analiza, y que nada de él se ejecuta, se dibuja ni se pide por red. Se comprueba así.
+
+1. `pnpm test`: `safety.test.ts` busca sumideros de HTML y de red en `src/lib/analyzer` y en las páginas del analizador, y `content.test.ts` comprueba que cada código tenga título y una explicación en los dos idiomas.
+2. Abra `/es/herramientas/analizador?notrack=1` y pulse «Usar ejemplo». Deben salir 10 señales y la lista «Qué hacer ahora».
+3. Pegue un `ClipboardEvent` sintético con `text/html` en el cuadro del mensaje: `new ClipboardEvent('paste', { clipboardData })` con un `DataTransfer` que lleve `<a href="https://evil.example/login">www.paypal.com</a>`. Debe salir `link-text-mismatch`. Un evento sintético no inserta el texto, así que asigne el `value` a mano.
+4. Abra la pestaña de red, vacíela y vuelva a pulsar el ejemplo. La única petición es la del archivo del worker.
+5. Compile con `.astro/` como destino (un `astro.config.mjs` temporal con `outDir: './.astro/csp-dist'`), ejecute `node scripts/csp.mjs .astro/csp-dist` y sirva esa carpeta con `python -m http.server`. Abra `analizador.html?notrack=1`: el ejemplo, las explicaciones y el menú deben funcionar sin avisos de CSP en la consola. Borre la carpeta y detenga el servidor al terminar.
+
+El perfil de Chrome es compartido con otras sesiones, y alguna fija `notrack=1`, que oculta el aviso de cookies. `resize_window` no cambia `innerWidth`: para el ancho de móvil, cargue la página en un iframe de 390 px.
+
 ## Veracidad
 
 Cada cifra se contrasta contra el texto extraído del paper, no contra un resumen de búsqueda. Los PDF se extraen con `pymupdf` (`pdftoppm` no está instalado). Los DOI devuelven 403 a curl por el muro del editor: comprobar con `curl -sI` que el 302 apunta al sitio correcto.
