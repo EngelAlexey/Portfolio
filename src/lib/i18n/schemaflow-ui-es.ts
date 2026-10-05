@@ -414,6 +414,8 @@ export const schemaflowUiEs = {
 			timingReady: 'Esquema aplicado en {schema} ms y consulta ejecutada en {query} ms.',
 			queryError: 'PostgreSQL rechazó la consulta.',
 			schemaError: 'El código del panel falla antes de la consulta. Corríjalo con «Probar en PostgreSQL».',
+			generated: 'El error viene de las filas de ejemplo. Se generan a partir del diseño y no siempre cumplen todas sus reglas. Edite los valores de esa consulta o inserte solo las tablas que no fallan.',
+			generatedIn: 'El error viene de las filas de ejemplo de «{table}». Se generan a partir del diseño y no siempre cumplen todas sus reglas. Edite sus valores o inserte solo las tablas que no fallan.',
 			errors: {
 				'42P01': 'Una de las tablas de la consulta no existe. Revise los nombres.',
 				'42703': 'Una de las columnas de la consulta no existe. Revise los nombres.',
@@ -424,7 +426,12 @@ export const schemaflowUiEs = {
 				'23502': 'Falta un valor en una columna obligatoria.',
 				'23503': 'La operación incumple una relación entre tablas: el valor no existe en la otra tabla, o aún hay filas que dependen de esta fila.',
 				'23001': 'La operación incumple una relación entre tablas: aún hay filas que dependen de esta fila.',
-				'23505': 'Ese valor ya existe en una columna que no admite valores repetidos.'
+				'23505': 'Ese valor ya existe en una columna que no admite valores repetidos.',
+				'23514': 'Un valor incumple una restricción CHECK de la tabla. Revise los valores que esa restricción permite.',
+				'22001': 'Un texto es más largo de lo que admite su columna.',
+				'22003': 'Un número queda fuera del rango que admite su columna.',
+				'22007': 'Una fecha o una hora no tiene el formato que pide su columna.',
+				'42804': 'Un valor no tiene el tipo de dato que pide su columna.'
 			},
 			snippets: {
 				groups: { view: 'Ver datos', filter: 'Filtrar y ordenar', join: 'Unir tablas', group: 'Contar y agrupar', change: 'Cambiar datos', structure: 'Estructura' },
@@ -445,9 +452,14 @@ export const schemaflowUiEs = {
 				remove: 'Eliminar una fila',
 				columns: 'Ver las columnas de la tabla',
 				plan: 'Ver el plan de ejecución',
-				skipped: 'No se pudieron crear filas de ejemplo para {table}.',
+				skipped: 'No se crearon filas de ejemplo para {table}: {reason}.',
+				skipReasons: {
+					'unknown-type': 'tiene una columna obligatoria con un tipo de dato sin valor de ejemplo',
+					cycle: 'depende de otra tabla que depende de ella',
+					parent: 'depende de una tabla sin filas de ejemplo',
+					'generated-key': 'su clave se calcula en la base de datos'
+				},
 				word: 'ejemplo',
-				newValue: 'valor nuevo',
 				average: 'promedio',
 				remaining: 'restantes'
 			}

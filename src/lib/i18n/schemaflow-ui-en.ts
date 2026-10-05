@@ -416,6 +416,8 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 			timingReady: 'Schema applied in {schema} ms and query run in {query} ms.',
 			queryError: 'PostgreSQL rejected the query.',
 			schemaError: 'The code in the panel fails before the query. Fix it with "Test in PostgreSQL".',
+			generated: 'The error comes from the sample rows. They are generated from the design and do not always meet all of its rules. Edit the values in that query or insert only the tables that do not fail.',
+			generatedIn: 'The error comes from the sample rows of "{table}". They are generated from the design and do not always meet all of its rules. Edit their values or insert only the tables that do not fail.',
 			errors: {
 				'42P01': 'One of the tables in the query does not exist. Check the names.',
 				'42703': 'One of the columns in the query does not exist. Check the names.',
@@ -426,7 +428,12 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 				'23502': 'A required column has no value.',
 				'23503': 'The operation breaks a relationship between tables: the value does not exist in the other table, or other rows still depend on this row.',
 				'23001': 'The operation breaks a relationship between tables: other rows still depend on this row.',
-				'23505': 'That value already exists in a column that does not allow repeated values.'
+				'23505': 'That value already exists in a column that does not allow repeated values.',
+				'23514': 'A value breaks a CHECK constraint on the table. Check the values that constraint allows.',
+				'22001': 'A text is longer than its column allows.',
+				'22003': 'A number is outside the range its column allows.',
+				'22007': 'A date or time does not have the format its column needs.',
+				'42804': 'A value does not have the data type its column needs.'
 			},
 			snippets: {
 				groups: { view: 'View data', filter: 'Filter and sort', join: 'Join tables', group: 'Count and group', change: 'Change data', structure: 'Structure' },
@@ -447,9 +454,14 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 				remove: 'Delete a row',
 				columns: 'View the columns of the table',
 				plan: 'View the execution plan',
-				skipped: 'Sample rows could not be created for {table}.',
+				skipped: 'Sample rows were not created for {table}: {reason}.',
+				skipReasons: {
+					'unknown-type': 'it has a required column with a data type that has no sample value',
+					cycle: 'it depends on another table that depends on it',
+					parent: 'it depends on a table without sample rows',
+					'generated-key': 'its key is calculated by the database'
+				},
 				word: 'example',
-				newValue: 'new value',
 				average: 'average',
 				remaining: 'remaining'
 			}

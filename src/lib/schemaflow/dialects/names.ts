@@ -16,6 +16,18 @@ export function byteLength(value: string): number {
 	return encoder.encode(value).length;
 }
 
+export function clipIdentifier(dialect: DialectId, name: string): string {
+	const max = MAX_IDENTIFIER[dialect];
+	let bytes = 0;
+	let out = '';
+	for (const char of name) {
+		bytes += byteLength(char);
+		if (bytes > max) break;
+		out += char;
+	}
+	return out;
+}
+
 export function hash(value: string): string {
 	let h = 0x811c9dc5;
 	for (let i = 0; i < value.length; i++) {

@@ -1,7 +1,7 @@
-import { quote } from '../dialects/names';
+import { clipIdentifier, quote } from '../dialects/names';
 import { isUnique } from '../model/ops';
 import type { Column, Relation, Schema, Table } from '../model/types';
-import { insertedColumns, sampleSql, sampleValue, type SampleLang } from './sample-rows';
+import { checkedColumns, sampledColumns, sampleSql, sampleValue, type SampleLang } from './sample-rows';
 import { fill, type Strings } from './strings';
 
 export type SnippetGroup = 'view' | 'filter' | 'join' | 'group' | 'change' | 'structure';
@@ -30,16 +30,41 @@ const note = (text: string) => `-- ${text.replace(/[\r\n\u2028\u2029]+/g, ' ')}`
 
 export function sampleScript(schema: Schema, tableIds: readonly string[] | null, label: string, texts: SnippetTexts, lang: SampleLang): string {
 	const result = sampleSql(schema, tableIds, lang);
-	return [note(label), ...result.skipped.map((table) => note(fill(texts.skipped, { table }))), result.sql].join('\n');
+	const names = new Map(schema.tables.map((table) => [table.id, table.name]));
+	const skipped = Object.entries(result.reasons).map(([id, reason]) => note(fill(texts.skipped, { table: names.get(id) ?? '', reason: texts.skipReasons[reason] })));
+	return [note(label), ...skipped, result.sql].join('\n');
 }
 
-function cascadesCleanly(schema: Schema, tableId: string, seen = new Set<string>()): boolean {
+function nullable(table: Table | undefined, ids: readonly string[]): boolean {
+	return ids.every((id) => table?.columns.find((column) => column.id === id)?.nullable === true && !table.primaryKey.includes(id));
+}
+
+function survivesChange(schema: Schema, tableId: string, ids: readonly string[], seen: Set<string>): boolean {
+	const mark = `${tableId}:${[...ids].sort().join()}`;
+	if (seen.has(mark)) return true;
+	seen.add(mark);
+	const tables = new Map(schema.tables.map((candidate) => [candidate.id, candidate]));
+	for (const relation of schema.relations) {
+		if (relation.toTable !== tableId || !relation.toColumns.some((id) => ids.includes(id))) continue;
+		if (relation.onUpdate !== 'CASCADE' && relation.onUpdate !== 'SET NULL') return false;
+		if (!nullable(tables.get(relation.fromTable), relation.fromColumns)) return false;
+		if (!survivesChange(schema, relation.fromTable, relation.fromColumns, seen)) return false;
+	}
+	return true;
+}
+
+function removable(schema: Schema, tableId: string, seen = new Set<string>()): boolean {
 	if (seen.has(tableId)) return true;
 	seen.add(tableId);
+	const tables = new Map(schema.tables.map((candidate) => [candidate.id, candidate]));
 	for (const relation of schema.relations) {
 		if (relation.toTable !== tableId) continue;
-		if (relation.onDelete !== 'CASCADE' && relation.onDelete !== 'SET NULL') return false;
-		if (relation.onDelete === 'CASCADE' && !cascadesCleanly(schema, relation.fromTable, seen)) return false;
+		if (relation.onDelete === 'CASCADE') {
+			if (!removable(schema, relation.fromTable, seen)) return false;
+		} else if (relation.onDelete === 'SET NULL') {
+			if (!nullable(tables.get(relation.fromTable), relation.fromColumns)) return false;
+			if (!survivesChange(schema, relation.fromTable, relation.fromColumns, new Set())) return false;
+		} else return false;
 	}
 	return true;
 }
@@ -57,18 +82,22 @@ export function buildSnippets(schema: Schema, tableId: string, texts: SnippetTex
 	const sources = schema.relations.filter((relation) => relation.fromTable === table.id);
 	const targets = schema.relations.filter((relation) => relation.toTable === table.id);
 	const linked = new Set(sources.flatMap((relation) => relation.fromColumns));
+	const targeted = new Set(targets.flatMap((relation) => relation.toColumns));
+	const unique = new Set([...table.primaryKey, ...table.uniques.flatMap((constraint) => constraint.columns), ...table.indexes.filter((index) => index.unique).flatMap((index) => index.columns)]);
 	const plainColumns = table.columns.filter((column) => !table.primaryKey.includes(column.id) && !linked.has(column.id) && column.type.kind !== 'raw' && column.type.kind !== 'json' && column.type.kind !== 'binary');
-	const filled = new Set((insertedColumns(table) ?? []).map((column) => column.id));
+	const filled = new Set((sampledColumns(schema, table, lang) ?? []).map((column) => column.id));
+	const checked = checkedColumns(schema, table, lang);
 	const sampled = plainColumns.filter((column) => filled.has(column.id));
 	const textColumn = sampled.find((column) => isText(column) && NAME_LIKE.test(column.name)) ?? sampled.find(isText);
 	const groupColumn = plainColumns.find((column) => isText(column) && STATE_LIKE.test(column.name)) ?? plainColumns.find((column) => column.type.kind === 'boolean') ?? plainColumns.find((column) => isText(column) && !isUnique(table, column.id));
 	const numberColumn = plainColumns.find(isNumber);
 	const dateColumn = plainColumns.find((column) => isTemporal(column) && /(^|_)(created|updated|date|fecha)/i.test(column.name)) ?? plainColumns.find(isTemporal);
 	const keys = columnsOf(table, table.primaryKey);
-	const valueColumn = sampled[0] ?? keys[0] ?? table.columns[0];
+	const valueColumn = sampled[0] ?? keys[0];
 	const sample = (column: Column, n = 1) => sampleValue(schema, table, column, n, lang);
 	const rowMatch = (columns: Column[]) => (columns.length > 0 ? columns.map((column) => `${q(column.name)} = ${sample(column)}`).join(' AND ') : 'true');
-	const where = rowMatch(keys.length > 0 ? keys : valueColumn ? [valueColumn] : []);
+	const matching = keys.length > 0 ? keys : valueColumn ? [valueColumn] : [];
+	const where = rowMatch(matching);
 	const out: Snippet[] = [];
 	const add = (id: string, group: SnippetGroup, text: string, params: Record<string, string>, sql: string) => {
 		const label = fill(text, params);
@@ -133,16 +162,13 @@ export function buildSnippets(schema: Schema, tableId: string, texts: SnippetTex
 
 	out.push({ id: 'sample', group: 'change', label: texts.sample, sql: sampleScript(schema, [table.id], texts.sample, texts, lang) });
 	out.push({ id: 'sample-all', group: 'change', label: texts.sampleAll, sql: sampleScript(schema, null, texts.sampleAll, texts, lang) });
-	const changeable = plainColumns.find((column) => isText(column) || isNumber(column) || column.type.kind === 'boolean' || isTemporal(column));
-	if (changeable) {
-		const fresh = isText(changeable) ? quoted(texts.newValue.slice(0, changeable.type.kind === 'varchar' || changeable.type.kind === 'char' ? (changeable.type.length ?? 255) : 255)) : isNumber(changeable) ? '99' : changeable.type.kind === 'boolean' ? (sample(changeable) === 'true' ? 'false' : 'true') : "'2026-12-31'";
-		add('update', 'change', texts.update, { column: changeable.name }, `UPDATE ${name} SET ${q(changeable.name)} = ${fresh} WHERE ${where};\nSELECT * FROM ${name} WHERE ${where};`);
-	}
-	if (cascadesCleanly(schema, table.id)) {
+	const changeable = plainColumns.find((column) => !unique.has(column.id) && !targeted.has(column.id) && !checked.has(column.id) && !matching.includes(column) && column.default.kind !== 'computed' && column.default.kind !== 'autoincrement' && (isText(column) || isNumber(column) || column.type.kind === 'boolean' || isTemporal(column)));
+	if (changeable) add('update', 'change', texts.update, { column: changeable.name }, `UPDATE ${name} SET ${q(changeable.name)} = ${sample(changeable, 2)} WHERE ${where};\nSELECT * FROM ${name} WHERE ${where};`);
+	if (removable(schema, table.id)) {
 		add('remove', 'change', texts.remove, {}, `DELETE FROM ${name} WHERE ${where};\nSELECT count(*) AS ${texts.remaining} FROM ${name};`);
 	}
 
-	add('columns', 'structure', texts.columns, {}, `SELECT column_name, data_type, is_nullable\nFROM information_schema.columns\nWHERE table_name = ${quoted(table.name)}\nORDER BY ordinal_position;`);
+	add('columns', 'structure', texts.columns, {}, `SELECT column_name, data_type, is_nullable\nFROM information_schema.columns\nWHERE table_name = ${quoted(clipIdentifier('postgres', table.name))}\nORDER BY ordinal_position;`);
 	add('plan', 'structure', texts.plan, {}, `EXPLAIN SELECT * FROM ${name} WHERE ${where};`);
 	return out;
 }
