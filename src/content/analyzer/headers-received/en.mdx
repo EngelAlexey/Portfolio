@@ -1,0 +1,23 @@
+---
+codes:
+  - hdr-received-anomaly
+sources:
+  - text: 'RFC 5321: SMTP'
+    url: https://www.rfc-editor.org/rfc/rfc5321
+---
+
+## What it means
+
+The times of the mail hops, which each server records in the `Received` field, do not add up:
+
+- a hop is earlier than the one before it;
+- there is a long delay;
+- the date of the message is far from the first hop.
+
+## What the risk is
+
+It can indicate a message that was held or forwarded. It also happens in legitimate mail with failures or queues.
+
+## What to do
+
+Take it as a weak signal. Give it more weight if it appears together with others.

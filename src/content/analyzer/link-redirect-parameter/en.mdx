@@ -1,0 +1,19 @@
+---
+codes:
+  - link-redirect-parameter
+sources:
+  - text: 'OWASP: unvalidated redirects and forwards'
+    url: https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html
+---
+
+## What it means
+
+The address contains another address inside a parameter, such as `?url=` or `?redirect=`. The site of the first address redirects to the second.
+
+## What the risk is
+
+The site of the first address can be legitimate and still lead somewhere else. An attacker uses it so that the link looks like it belongs to a trusted site.
+
+## What to do
+
+Read the second address: that is where the link goes. If you do not recognise it, do not click.

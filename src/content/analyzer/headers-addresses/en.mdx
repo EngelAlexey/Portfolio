@@ -1,0 +1,20 @@
+---
+codes:
+  - hdr-from-return-path-mismatch
+  - hdr-reply-to-mismatch
+sources:
+  - text: 'RFC 7489: DMARC'
+    url: https://www.rfc-editor.org/rfc/rfc7489
+---
+
+## What it means
+
+The reply address or the bounce address belongs to a domain different from the sender's.
+
+## What the risk is
+
+If you reply, the reply goes to someone else. Legitimate bulk mailings also use another domain for bounces.
+
+## What to do
+
+Before replying, check which address your reply goes to.

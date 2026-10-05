@@ -1,0 +1,24 @@
+---
+codes:
+  - link-scheme-dangerous
+  - link-scheme-handoff
+sources:
+  - text: 'CISA: alert on the Follina vulnerability'
+    url: https://www.cisa.gov/news-events/alerts/2022/05/31/microsoft-releases-workaround-guidance-msdt-follina-vulnerability
+  - text: 'MITRE ATT&CK: T1204.001, malicious link'
+    url: https://attack.mitre.org/techniques/T1204/001/
+---
+
+## What it means
+
+The link does not point to a web page. Some types of link run code, such as `javascript:` or `data:`. Others open another application on your computer, such as `ms-msdt:` or `search-ms:`.
+
+## What the risk is
+
+The `ms-msdt:` type opens the Windows diagnostic tool. The Follina vulnerability (CVE-2022-30190) was in that tool and was actively exploited.
+
+A `data:` or `javascript:` link can show a fake page or run code without leaving the message.
+
+## What to do
+
+Do not click the link. A legitimate message almost never uses these types of link.

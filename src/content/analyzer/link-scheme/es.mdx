@@ -1,0 +1,24 @@
+---
+codes:
+  - link-scheme-dangerous
+  - link-scheme-handoff
+sources:
+  - text: 'CISA: alerta sobre la vulnerabilidad Follina'
+    url: https://www.cisa.gov/news-events/alerts/2022/05/31/microsoft-releases-workaround-guidance-msdt-follina-vulnerability
+  - text: 'MITRE ATT&CK: T1204.001, enlace malicioso'
+    url: https://attack.mitre.org/techniques/T1204/001/
+---
+
+## Qué significa
+
+El enlace no apunta a una página web. Algunos tipos de enlace ejecutan código, como `javascript:` o `data:`. Otros abren otra aplicación del equipo, como `ms-msdt:` o `search-ms:`.
+
+## Qué riesgo tiene
+
+El tipo `ms-msdt:` abre la herramienta de diagnóstico de Windows. La vulnerabilidad Follina (CVE-2022-30190) estuvo en esa herramienta y se explotó de forma activa.
+
+Un enlace `data:` o `javascript:` puede mostrar una página falsa o ejecutar código sin salir del mensaje.
+
+## Qué hacer
+
+No pulse el enlace. Un mensaje legítimo casi nunca usa estos tipos de enlace.

@@ -1,3 +1,4 @@
+import { analyzerEs } from './analyzer-es';
 import { privacyEs } from './privacy-es';
 import { schemaflowEs } from './schemaflow-es';
 import { schemaflowUiEs } from './schemaflow-ui-es';
@@ -12,6 +13,7 @@ export const es = {
 		tools: 'Herramientas',
 		scanner: 'Escáner',
 		schemaflow: 'SchemaFlow',
+		analyzer: 'Analizador',
 		menu: 'Menú'
 	},
 	a11y: {
@@ -189,7 +191,7 @@ export const es = {
 	},
 	tools: {
 		title: 'Herramientas',
-		lead: 'Herramientas gratuitas para revisar la seguridad de un sitio web y diseñar el esquema de una base de datos.',
+		lead: 'Herramientas gratuitas para revisar la seguridad de un sitio web, diseñar el esquema de una base de datos y analizar un mensaje sospechoso.',
 		open: 'Abrir',
 		items: {
 			scanner: {
@@ -199,10 +201,15 @@ export const es = {
 			schemaflow: {
 				name: 'SchemaFlow',
 				body: 'Genera el código de PostgreSQL, MySQL, SQL Server o MongoDB a partir de un diagrama que usted dibuja. También genera migraciones, exporta a Prisma o Drizzle y convierte código existente en diagrama. Ofrece plantillas para empezar y permite probar consultas en PostgreSQL desde el navegador.'
+			},
+			analyzer: {
+				name: 'Analizador de mensajes',
+				body: 'Busca señales de fraude en un mensaje sospechoso, sus enlaces y su remitente, y explica cada una. No abre ningún enlace.'
 			}
 		}
 	},
 	schemaflow: { ...schemaflowUiEs, engine: schemaflowEs },
+	analyzer: analyzerEs,
 	scanner: {
 		title: 'Escáner de seguridad web',
 		heading: 'Escanee su sitio',

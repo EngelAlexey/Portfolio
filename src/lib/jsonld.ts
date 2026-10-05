@@ -285,6 +285,7 @@ const PAGE_TYPE: Record<RouteKey, string> = {
 	scannerReport: 'WebPage',
 	tools: 'CollectionPage',
 	schemaflow: 'WebPage',
+	analyzer: 'WebPage',
 	privacy: 'WebPage'
 };
 

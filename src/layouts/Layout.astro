@@ -100,15 +100,17 @@ const parentOf: Partial<Record<RouteKey, RouteKey>> = {
 	scanner: 'tools',
 	scannerAbout: 'tools',
 	scannerReport: 'tools',
-	schemaflow: 'tools'
+	schemaflow: 'tools',
+	analyzer: 'tools'
 };
 
 const toolLinks = [
 	{ key: 'scanner', href: path(lang, 'scanner'), label: strings.nav.scanner, icon: 'shield' },
-	{ key: 'schemaflow', href: path(lang, 'schemaflow'), label: strings.nav.schemaflow, icon: 'diagram' }
+	{ key: 'schemaflow', href: path(lang, 'schemaflow'), label: strings.nav.schemaflow, icon: 'diagram' },
+	{ key: 'analyzer', href: path(lang, 'analyzer'), label: strings.nav.analyzer, icon: 'mail' }
 ] as const;
 
-const toolSection: Partial<Record<RouteKey, RouteKey>> = { scanner: 'scanner', scannerAbout: 'scanner', scannerReport: 'scanner', schemaflow: 'schemaflow' };
+const toolSection: Partial<Record<RouteKey, RouteKey>> = { scanner: 'scanner', scannerAbout: 'scanner', scannerReport: 'scanner', schemaflow: 'schemaflow', analyzer: 'analyzer' };
 const currentTool = current === null ? null : (toolSection[current] ?? null);
 ---
 
@@ -209,6 +211,11 @@ const currentTool = current === null ? null : (toolSection[current] ?? null);
 																	<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 																		<path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3Z" />
 																		<path d="m9 12 2 2 4-4" />
+																	</svg>
+																) : tool.icon === 'mail' ? (
+																	<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+																		<rect x="3" y="5" width="18" height="14" rx="2" />
+																		<path d="m3 7 9 6 9-6" />
 																	</svg>
 																) : (
 																	<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

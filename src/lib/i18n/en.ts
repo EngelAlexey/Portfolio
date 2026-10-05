@@ -1,4 +1,5 @@
 import type { Dict } from './es';
+import { analyzerEn } from './analyzer-en';
 import { privacyEn } from './privacy-en';
 import { schemaflowEn } from './schemaflow-en';
 import { schemaflowUiEn } from './schemaflow-ui-en';
@@ -13,6 +14,7 @@ export const en: Dict = {
 		tools: 'Tools',
 		scanner: 'Scanner',
 		schemaflow: 'SchemaFlow',
+		analyzer: 'Analyser',
 		menu: 'Menu'
 	},
 	a11y: {
@@ -188,7 +190,7 @@ export const en: Dict = {
 	},
 	tools: {
 		title: 'Tools',
-		lead: 'Free tools to check the security of a website and design the schema of a database.',
+		lead: 'Free tools to check the security of a website, design the schema of a database and analyse a suspicious message.',
 		open: 'Open',
 		items: {
 			scanner: {
@@ -198,10 +200,15 @@ export const en: Dict = {
 			schemaflow: {
 				name: 'SchemaFlow',
 				body: 'Writes the PostgreSQL, MySQL, SQL Server or MongoDB code for a diagram that you draw. It also generates migrations, exports to Prisma or Drizzle and turns existing code into a diagram. It offers templates to start from and lets you try queries in PostgreSQL from the browser.'
+			},
+			analyzer: {
+				name: 'Message analyser',
+				body: 'Looks for signs of fraud in a suspicious message, its links and its sender, and explains each one. It does not open any link.'
 			}
 		}
 	},
 	schemaflow: { ...schemaflowUiEn, engine: schemaflowEn },
+	analyzer: analyzerEn,
 	scanner: {
 		title: 'Website security scanner',
 		heading: 'Scan your site',

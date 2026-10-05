@@ -3,6 +3,7 @@ import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
 import { AREA_IDS } from './lib/areas';
 import { CATEGORY_IDS } from './lib/categories';
+import analyzerCodes from './lib/analyzer/codes.json';
 import scannerCodes from './lib/scanner/codes.json';
 
 const url = z.url();
@@ -199,4 +200,28 @@ const scanner = defineCollection({
 	schema: explanationSchema
 });
 
-export const collections = { projects, articles, scanner };
+export const ANALYZER_CODES = Object.keys(analyzerCodes.findings) as [string, ...string[]];
+
+const analyzerExplanationSchema = z.object({
+	codes: z.array(z.enum(ANALYZER_CODES)).min(1),
+	sources: z
+		.array(
+			z.object({
+				text: z.string().min(3),
+				url
+			})
+		)
+		.min(1)
+		.max(3)
+});
+
+const analyzer = defineCollection({
+	loader: glob({
+		base: './src/content/analyzer',
+		pattern: '*/{es,en}.mdx',
+		generateId: ({ entry }) => entry.replace(/\.mdx$/, '')
+	}),
+	schema: analyzerExplanationSchema
+});
+
+export const collections = { projects, articles, scanner, analyzer };

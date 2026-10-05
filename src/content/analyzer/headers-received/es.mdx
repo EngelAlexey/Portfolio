@@ -1,0 +1,23 @@
+---
+codes:
+  - hdr-received-anomaly
+sources:
+  - text: 'RFC 5321: protocolo SMTP'
+    url: https://www.rfc-editor.org/rfc/rfc5321
+---
+
+## Qué significa
+
+Las horas de los saltos del correo, que cada servidor anota en el campo `Received`, no cuadran:
+
+- un salto es anterior al que lo precede;
+- hay una demora larga;
+- la fecha del mensaje queda lejos del primer salto.
+
+## Qué riesgo tiene
+
+Puede indicar un mensaje retenido o reenviado. También pasa en correos legítimos con fallos o colas.
+
+## Qué hacer
+
+Tómelo como una señal débil. Dele más peso si aparece junto a otras.

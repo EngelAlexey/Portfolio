@@ -1,0 +1,28 @@
+---
+codes:
+  - link-file-download
+  - link-macro-document
+  - link-archive-download
+  - link-download-parameter
+sources:
+  - text: 'MITRE ATT&CK: T1204.001, malicious link'
+    url: https://attack.mitre.org/techniques/T1204/001/
+  - text: 'Microsoft: macros from the Internet are blocked by default in Office'
+    url: https://learn.microsoft.com/en-us/microsoft-365-apps/security/internet-macros-blocked
+---
+
+## What it means
+
+The address ends in a file type that is downloaded and opened on your computer, such as `.exe`, `.js` or `.docm`. It can also be a compressed file or carry a parameter that asks for a download.
+
+This analysis does not open the link. It does not know which file the server delivers.
+
+## What the risk is
+
+An executable or a script can install harmful programs when it is opened. A document with macros can run code when you enable its content. A compressed file can hold either of the two.
+
+## What to do
+
+Do not download the file from the message. If you expected it, ask the sender for it through another channel.
+
+Office blocks macros in files that come from the Internet. Do not remove that block on a file you do not know.

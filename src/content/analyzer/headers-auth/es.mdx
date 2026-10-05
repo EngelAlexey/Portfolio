@@ -1,0 +1,30 @@
+---
+codes:
+  - hdr-auth-fail
+  - hdr-auth-missing
+  - hdr-auth-untrusted
+  - hdr-dkim-misaligned
+sources:
+  - text: 'RFC 8601: Authentication-Results'
+    url: https://www.rfc-editor.org/rfc/rfc8601
+  - text: 'RFC 7489: DMARC'
+    url: https://www.rfc-editor.org/rfc/rfc7489
+  - text: 'RFC 7208: SPF'
+    url: https://www.rfc-editor.org/rfc/rfc7208
+---
+
+## Qué significa
+
+Las cabeceras dicen si el servidor que recibió el mensaje pudo comprobar SPF, DKIM y DMARC. Un `fail` o un `softfail` indica que el dominio no autorizó ese envío. Una firma DKIM desalineada es de un dominio distinto al del remitente.
+
+## Qué riesgo tiene
+
+Un mensaje que falla estas comprobaciones puede estar falsificado. Un `pass` no prueba que el mensaje sea legítimo.
+
+Solo el campo `Authentication-Results` más alto lo añadió su propio servidor. Cualquiera puede escribir los demás.
+
+## Qué hacer
+
+Tome el resultado como una pista más. Si duda, confirme el mensaje por otro canal.
+
+Sin ese campo no se puede leer la autenticación.

@@ -1,0 +1,30 @@
+---
+codes:
+  - hdr-auth-fail
+  - hdr-auth-missing
+  - hdr-auth-untrusted
+  - hdr-dkim-misaligned
+sources:
+  - text: 'RFC 8601: Authentication-Results'
+    url: https://www.rfc-editor.org/rfc/rfc8601
+  - text: 'RFC 7489: DMARC'
+    url: https://www.rfc-editor.org/rfc/rfc7489
+  - text: 'RFC 7208: SPF'
+    url: https://www.rfc-editor.org/rfc/rfc7208
+---
+
+## What it means
+
+The headers say whether the server that received the message could check SPF, DKIM and DMARC. A `fail` or a `softfail` means the domain did not authorise that sending. A misaligned DKIM signature belongs to a domain different from the sender's.
+
+## What the risk is
+
+A message that fails these checks can be forged. A `pass` does not prove that the message is legitimate.
+
+Only the topmost `Authentication-Results` field was added by your own server. Anyone can write the others.
+
+## What to do
+
+Take the result as one more hint. If in doubt, confirm the message through another channel.
+
+Without that field the authentication cannot be read.

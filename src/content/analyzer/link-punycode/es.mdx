@@ -1,0 +1,22 @@
+---
+codes:
+  - link-punycode
+  - link-mixed-script
+sources:
+  - text: 'RFC 3492: Punycode'
+    url: https://www.rfc-editor.org/rfc/rfc3492
+  - text: 'Unicode UTS n.º 39: mecanismos de seguridad'
+    url: https://www.unicode.org/reports/tr39/
+---
+
+## Qué significa
+
+El nombre del sitio usa letras que no son del alfabeto latino básico. Se guarda con el prefijo `xn--`. En el otro caso, mezcla alfabetos en una misma palabra, como una «а» cirílica dentro de una palabra en letras latinas.
+
+## Qué riesgo tiene
+
+Hay letras de alfabetos distintos que se ven iguales, así que un nombre puede parecer el de una marca sin serlo. Un nombre con `xn--` también puede ser legítimo, por ejemplo si lleva eñes o tildes.
+
+## Qué hacer
+
+Si no reconoce el sitio, no pulse el enlace. Escriba usted la dirección.
