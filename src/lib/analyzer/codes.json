@@ -23,6 +23,27 @@
 		"link-http": { "section": "links", "severity": "low" },
 		"link-many-subdomains": { "section": "links", "severity": "low" },
 		"link-random-host": { "section": "links", "severity": "low" },
-		"link-wrapper-unwrapped": { "section": "links", "severity": "info" }
+		"link-wrapper-unwrapped": { "section": "links", "severity": "info" },
+		"text-urgency": { "section": "text", "severity": "low" },
+		"text-threat": { "section": "text", "severity": "low" },
+		"text-reward": { "section": "text", "severity": "low" },
+		"text-authority": { "section": "text", "severity": "low" },
+		"text-secrecy": { "section": "text", "severity": "low" },
+		"text-generic-greeting": { "section": "text", "severity": "low" },
+		"text-credentials-request": { "section": "text", "severity": "medium" },
+		"text-payment-request": { "section": "text", "severity": "medium" },
+		"text-callback-number": { "section": "text", "severity": "medium" },
+		"text-run-command": { "section": "text", "severity": "high" },
+		"text-password-for-attachment": { "section": "text", "severity": "medium" },
+		"sender-name-address-mismatch": { "section": "sender", "severity": "high" },
+		"sender-lookalike": { "section": "sender", "severity": "high" },
+		"sender-freemail-brand": { "section": "sender", "severity": "medium" },
+		"hdr-from-return-path-mismatch": { "section": "headers", "severity": "medium" },
+		"hdr-reply-to-mismatch": { "section": "headers", "severity": "medium" },
+		"hdr-auth-fail": { "section": "headers", "severity": "high" },
+		"hdr-dkim-misaligned": { "section": "headers", "severity": "medium" },
+		"hdr-received-anomaly": { "section": "headers", "severity": "low" },
+		"hdr-auth-missing": { "section": "headers", "severity": "info" },
+		"hdr-auth-untrusted": { "section": "headers", "severity": "info" }
 	}
 }

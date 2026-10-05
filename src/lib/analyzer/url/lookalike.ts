@@ -1,4 +1,4 @@
-import { BRANDS } from '../data/brands';
+import { BRANDS, type Brand } from '../data/brands';
 import { GENERIC_CCTLDS, RISKY_TLDS } from '../data/tlds';
 import type { HostParts } from './registrable';
 
@@ -86,6 +86,11 @@ function isCountryVariant(suffix: string): boolean {
 	return /^[a-z]{2}$/.test(last) && !GENERIC_CCTLDS.has(last) && !RISKY_TLDS.has(last);
 }
 
+export function ownsDomain(brand: Brand, parts: HostParts): boolean {
+	if (brand.domains.includes(parts.registrable)) return true;
+	return [...brand.tokens, ...brand.words].includes(parts.label) && isCountryVariant(parts.suffix);
+}
+
 export function matchBrand(parts: HostParts): BrandMatch | null {
 	const { registrable, label, suffix, subdomains } = parts;
 	if (label === '' || LEGIT_DOMAINS.has(registrable)) return null;
@@ -94,6 +99,7 @@ export function matchBrand(parts: HostParts): BrandMatch | null {
 	const variants = labelVariants(label);
 	const compact = variants.map((variant) => variant.replace(/-/g, ''));
 	const pieces = variants.flatMap((variant) => variant.split('-'));
+	const plainPieces = label.split('-');
 
 	let subdomain: BrandMatch | null = null;
 	let inDomain: BrandMatch | null = null;
@@ -126,12 +132,13 @@ export function matchBrand(parts: HostParts): BrandMatch | null {
 					}
 				}
 			}
-			if (inDomain === null) {
-				if (pieces.some((piece) => piece === token)) {
-					inDomain = { brand: brand.name, kind: 'in-domain', how: 'word' };
-				} else if (!word && token.length >= 5 && pieces.some((piece) => piece.includes(token))) {
-					inDomain = { brand: brand.name, kind: 'in-domain', how: 'contains' };
-				}
+			const exact = pieces.some((piece) => piece === token);
+			const inside = !word && token.length >= 5 && pieces.some((piece) => piece.includes(token));
+			if (exact || inside) {
+				const plainExact = plainPieces.some((piece) => piece === token);
+				const plainInside = !word && token.length >= 5 && plainPieces.some((piece) => piece.includes(token));
+				if (!plainExact && !plainInside) return { brand: brand.name, kind: 'lookalike', how: 'characters' };
+				if (inDomain === null) inDomain = { brand: brand.name, kind: 'in-domain', how: exact ? 'word' : 'contains' };
 			}
 		}
 	}

@@ -64,7 +64,7 @@ export const BRANDS: readonly Brand[] = [
 		name: 'Amazon',
 		tokens: ['amazon'],
 		words: [],
-		domains: ['amazon.com', 'primevideo.com', 'amazonaws.com', 'a.co', 'amzn.to']
+		domains: ['amazon.com', 'primevideo.com', 'amazonaws.com', 'amazonses.com', 'amazon-adsystem.com', 'a.co', 'amzn.to']
 	},
 	{
 		name: 'PayPal',

@@ -287,7 +287,7 @@ describe('analyzeLinks', () => {
 		for (const code of FINDING_CODES) {
 			const item = finding(code);
 			expect(['critical', 'high', 'medium', 'low', 'info']).toContain(item.severity);
-			expect(item.section).toBe('links');
+			expect(['links', 'text', 'sender', 'headers', 'files']).toContain(item.section);
 		}
 	});
 
