@@ -1,0 +1,24 @@
+---
+codes:
+  - file-macro
+  - file-dde
+sources:
+  - text: 'Microsoft: macros de Internet bloqueadas por defecto en Office'
+    url: https://learn.microsoft.com/en-us/microsoft-365-apps/security/internet-macros-blocked
+  - text: 'MITRE ATT&CK: T1059.005, Visual Basic'
+    url: https://attack.mitre.org/techniques/T1059/005/
+  - text: 'MITRE ATT&CK: T1559.002, intercambio dinámico de datos'
+    url: https://attack.mitre.org/techniques/T1559/002/
+---
+
+## Qué significa
+
+El documento de Office trae instrucciones que pueden ejecutarse al abrirlo. Una forma son las macros, que son pequeños programas guardados dentro del documento. Otra es un campo DDE, una función antigua de Office capaz de lanzar un programa del equipo.
+
+## Qué riesgo tiene
+
+Una macro o un campo DDE puede instalar un programa dañino en su equipo. Office pide permiso antes de ejecutarlas, y los atacantes lo piden con textos como «Habilite el contenido para ver el documento».
+
+## Qué hacer
+
+No pulse «Habilitar contenido» ni acepte actualizar vínculos o campos. Si esperaba el documento, confirme con quien lo envió, por otro medio, que debe traer macros.

@@ -1,0 +1,29 @@
+---
+codes:
+  - file-archive-executable-inside
+  - file-encrypted
+  - file-archive-bomb
+sources:
+  - text: 'MITRE ATT&CK: T1204.002, archivo malicioso'
+    url: https://attack.mitre.org/techniques/T1204/002/
+  - text: 'MITRE ATT&CK: T1027.013, archivo cifrado o codificado'
+    url: https://attack.mitre.org/techniques/T1027/013/
+  - text: 'CWE-409: manejo incorrecto de datos muy comprimidos'
+    url: https://cwe.mitre.org/data/definitions/409.html
+---
+
+## Qué significa
+
+El archivo tiene algo fuera de lo normal. Puede ser:
+
+- un programa o un script dentro de un archivo comprimido, como `factura.pdf.exe`;
+- un archivo protegido con contraseña, que este análisis no puede leer por dentro;
+- un archivo comprimido que, al abrirse, ocupa una cantidad enorme de espacio.
+
+## Qué riesgo tiene
+
+Un programa dentro de un archivo comprimido se ejecuta cuando usted lo abre. Los atacantes usan la contraseña para que el antivirus del correo no pueda revisar el contenido. Un archivo que se expande demasiado puede dejar su equipo sin memoria.
+
+## Qué hacer
+
+No abra ni descomprima el archivo. Si lo esperaba, confirme con quien lo envió, por otro medio, que lo mandó y qué contiene. No use una contraseña que venga en el mismo mensaje sin esa confirmación.

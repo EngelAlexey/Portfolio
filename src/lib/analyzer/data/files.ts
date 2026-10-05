@@ -58,6 +58,24 @@ export const DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set([
 	'mp4'
 ]);
 
+export const OFFICE_EXTENSIONS: ReadonlySet<string> = new Set([
+	'docx',
+	'docm',
+	'dotx',
+	'dotm',
+	'xlsx',
+	'xlsm',
+	'xltx',
+	'xltm',
+	'xlsb',
+	'pptx',
+	'pptm',
+	'potx',
+	'potm',
+	'ppsx',
+	'ppsm'
+]);
+
 export const EXPECTED_KINDS: Readonly<Record<string, readonly string[]>> = {
 	pdf: ['pdf'],
 	doc: ['ole'],

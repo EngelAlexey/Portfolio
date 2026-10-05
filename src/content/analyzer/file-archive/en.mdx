@@ -1,0 +1,29 @@
+---
+codes:
+  - file-archive-executable-inside
+  - file-encrypted
+  - file-archive-bomb
+sources:
+  - text: 'MITRE ATT&CK: T1204.002, malicious file'
+    url: https://attack.mitre.org/techniques/T1204/002/
+  - text: 'MITRE ATT&CK: T1027.013, encrypted or encoded file'
+    url: https://attack.mitre.org/techniques/T1027/013/
+  - text: 'CWE-409: improper handling of highly compressed data'
+    url: https://cwe.mitre.org/data/definitions/409.html
+---
+
+## What it means
+
+The file has something out of the ordinary. It can be:
+
+- a program or a script inside a compressed file, such as `invoice.pdf.exe`;
+- a password-protected file, which this analysis cannot read inside;
+- a compressed file that takes up an enormous amount of space when opened.
+
+## What the risk is
+
+A program inside a compressed file runs when you open it. Attackers use the password so that the email antivirus cannot check the content. A file that expands too much can leave your computer without memory.
+
+## What to do
+
+Do not open or unpack the file. If you expected it, confirm with the sender, through another channel, that they sent it and what it contains. Do not use a password that comes in the same message without that confirmation.

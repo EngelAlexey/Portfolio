@@ -19,7 +19,7 @@ export const analyzerEn: AnalyzerStrings = {
 					'Text: pressure phrases, requests for passwords or payments and steps to run something on the computer.',
 					'Sender: whether the name and the address match and whether the address imitates a brand.',
 					'Technical data of the email: whether the email passed the authenticity checks and whether the times of its journey add up.',
-					'File: its name, its real type and its digital fingerprint (SHA-256).'
+					'File: its name, its real type, its digital fingerprint (SHA-256) and, in compressed files and Office documents, what they carry inside: programs, macros, objects and external addresses.'
 				]
 			},
 			{
@@ -162,7 +162,11 @@ export const analyzerEn: AnalyzerStrings = {
 			days: 'Days',
 			detected: 'Detected type',
 			size: 'Size in bytes',
-			limit: 'Limit in bytes'
+			limit: 'Limit in bytes',
+			part: 'Part of the file',
+			target: 'External address',
+			unpacked: 'Size when unpacked',
+			packed: 'Size of the file'
 		},
 		doTitle: 'What to do now',
 		doItems: [
@@ -231,7 +235,16 @@ export const analyzerEn: AnalyzerStrings = {
 		'file-script': 'The file is a file of instructions (a script)',
 		'file-shortcut': 'The file is a shortcut',
 		'file-disk-image': 'The file is a disk image, a virtual disk',
-		'file-too-large': 'The file exceeds the maximum size and was not analysed'
+		'file-too-large': 'The file exceeds the maximum size and was not analysed',
+		'file-encrypted': 'The file is password protected and cannot be checked inside',
+		'file-archive-executable-inside': 'The compressed file contains a program or a script',
+		'file-archive-bomb': 'The compressed file expands to an enormous size',
+		'file-macro': 'The document has macros, which are programs hidden inside it',
+		'file-dde': 'The document can run a program on your computer when opened',
+		'file-embedded-object': 'The document carries another file stored inside',
+		'file-external-template': 'The document downloads a template from another site when opened',
+		'file-external-link': 'The document loads content from an external address',
+		'file-parse-error': 'The whole content of the file could not be read'
 	},
 	sample: {
 		message:

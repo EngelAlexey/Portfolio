@@ -1,0 +1,29 @@
+---
+codes:
+  - file-embedded-object
+  - file-external-template
+  - file-external-link
+sources:
+  - text: 'MITRE ATT&CK: T1221, inyección de plantillas'
+    url: https://attack.mitre.org/techniques/T1221/
+  - text: 'MITRE ATT&CK: T1187, autenticación forzada'
+    url: https://attack.mitre.org/techniques/T1187/
+  - text: 'MITRE ATT&CK: T1204.002, archivo malicioso'
+    url: https://attack.mitre.org/techniques/T1204/002/
+---
+
+## Qué significa
+
+El documento de Office incluye algo que viene de fuera. Puede ser:
+
+- un objeto incrustado, que es otro archivo guardado dentro del documento;
+- una plantilla que se descarga de internet o de una carpeta compartida de la red al abrirlo;
+- una imagen u otro contenido que se carga desde una dirección externa.
+
+## Qué riesgo tiene
+
+Una plantilla externa puede traer macros que se descargan al abrir el documento. Un objeto incrustado puede ser un programa disfrazado. Una dirección externa avisa al atacante de que usted abrió el documento. Si apunta a una carpeta compartida de Windows, también puede enviar datos de su inicio de sesión.
+
+## Qué hacer
+
+No abra el documento. Si ya lo abrió, no habilite el contenido y ciérrelo sin guardar. Si necesita su contenido, pida a quien lo envió que lo mande en PDF.

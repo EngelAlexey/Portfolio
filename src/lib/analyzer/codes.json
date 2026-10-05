@@ -52,6 +52,15 @@
 		"file-script": { "section": "files", "severity": "high" },
 		"file-shortcut": { "section": "files", "severity": "high" },
 		"file-disk-image": { "section": "files", "severity": "medium" },
-		"file-too-large": { "section": "files", "severity": "info" }
+		"file-too-large": { "section": "files", "severity": "info" },
+		"file-encrypted": { "section": "files", "severity": "medium" },
+		"file-archive-executable-inside": { "section": "files", "severity": "high" },
+		"file-archive-bomb": { "section": "files", "severity": "medium" },
+		"file-macro": { "section": "files", "severity": "high" },
+		"file-dde": { "section": "files", "severity": "high" },
+		"file-embedded-object": { "section": "files", "severity": "medium" },
+		"file-external-template": { "section": "files", "severity": "high" },
+		"file-external-link": { "section": "files", "severity": "medium" },
+		"file-parse-error": { "section": "files", "severity": "info" }
 	}
 }

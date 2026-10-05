@@ -1,0 +1,24 @@
+---
+codes:
+  - file-macro
+  - file-dde
+sources:
+  - text: 'Microsoft: macros from the Internet are blocked by default in Office'
+    url: https://learn.microsoft.com/en-us/microsoft-365-apps/security/internet-macros-blocked
+  - text: 'MITRE ATT&CK: T1059.005, Visual Basic'
+    url: https://attack.mitre.org/techniques/T1059/005/
+  - text: 'MITRE ATT&CK: T1559.002, dynamic data exchange'
+    url: https://attack.mitre.org/techniques/T1559/002/
+---
+
+## What it means
+
+The Office document carries instructions that can run when it is opened. One form is macros, which are small programs stored inside the document. Another is a DDE field, an old Office function able to launch a program on the computer.
+
+## What the risk is
+
+A macro or a DDE field can install a harmful program on your computer. Office asks for permission before running them, and attackers ask for it with texts such as "Enable content to view the document".
+
+## What to do
+
+Do not click "Enable content" and do not agree to update links or fields. If you expected the document, confirm with the sender, through another channel, that it should have macros.

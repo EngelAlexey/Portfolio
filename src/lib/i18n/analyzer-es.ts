@@ -97,7 +97,7 @@ export const analyzerEs: AnalyzerStrings = {
 					'Texto: frases de presión, peticiones de claves o pagos y pasos para ejecutar algo en el equipo.',
 					'Remitente: si el nombre y la dirección coinciden y si la dirección imita a una marca.',
 					'Datos técnicos del correo: si el correo pasó las comprobaciones de autenticidad y si las horas de su recorrido cuadran.',
-					'Archivo: su nombre, su tipo real y su huella digital (SHA-256).'
+					'Archivo: su nombre, su tipo real, su huella digital (SHA-256) y, en los archivos comprimidos y los documentos de Office, lo que llevan dentro: programas, macros, objetos y direcciones externas.'
 				]
 			},
 			{
@@ -240,7 +240,11 @@ export const analyzerEs: AnalyzerStrings = {
 			days: 'Días',
 			detected: 'Tipo detectado',
 			size: 'Tamaño en bytes',
-			limit: 'Límite en bytes'
+			limit: 'Límite en bytes',
+			part: 'Parte del archivo',
+			target: 'Dirección externa',
+			unpacked: 'Tamaño al descomprimir',
+			packed: 'Tamaño del archivo'
 		},
 		doTitle: 'Qué hacer ahora',
 		doItems: [
@@ -309,7 +313,16 @@ export const analyzerEs: AnalyzerStrings = {
 		'file-script': 'El archivo es un archivo de instrucciones (un script)',
 		'file-shortcut': 'El archivo es un acceso directo',
 		'file-disk-image': 'El archivo es una imagen de disco, un disco virtual',
-		'file-too-large': 'El archivo supera el tamaño máximo y no se analizó'
+		'file-too-large': 'El archivo supera el tamaño máximo y no se analizó',
+		'file-encrypted': 'El archivo está protegido con contraseña y no se puede revisar por dentro',
+		'file-archive-executable-inside': 'El archivo comprimido contiene un programa o un script',
+		'file-archive-bomb': 'El archivo comprimido se expande hasta un tamaño enorme',
+		'file-macro': 'El documento trae macros, que son programas escondidos dentro de él',
+		'file-dde': 'El documento puede ejecutar un programa de su equipo al abrirse',
+		'file-embedded-object': 'El documento lleva otro archivo guardado dentro',
+		'file-external-template': 'El documento descarga una plantilla de otro sitio al abrirse',
+		'file-external-link': 'El documento carga contenido desde una dirección externa',
+		'file-parse-error': 'No se pudo leer todo el contenido del archivo'
 	},
 	sample: {
 		message:

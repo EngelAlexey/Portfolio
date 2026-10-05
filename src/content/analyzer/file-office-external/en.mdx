@@ -1,0 +1,29 @@
+---
+codes:
+  - file-embedded-object
+  - file-external-template
+  - file-external-link
+sources:
+  - text: 'MITRE ATT&CK: T1221, template injection'
+    url: https://attack.mitre.org/techniques/T1221/
+  - text: 'MITRE ATT&CK: T1187, forced authentication'
+    url: https://attack.mitre.org/techniques/T1187/
+  - text: 'MITRE ATT&CK: T1204.002, malicious file'
+    url: https://attack.mitre.org/techniques/T1204/002/
+---
+
+## What it means
+
+The Office document includes something that comes from outside. It can be:
+
+- an embedded object, which is another file stored inside the document;
+- a template that is downloaded from the internet or from a shared network folder when it is opened;
+- an image or other content that is loaded from an external address.
+
+## What the risk is
+
+An external template can bring macros that are downloaded when the document is opened. An embedded object can be a disguised program. An external address tells the attacker that you opened the document. If it points to a shared Windows folder, it can also send data from your sign-in.
+
+## What to do
+
+Do not open the document. If you already opened it, do not enable the content and close it without saving. If you need its content, ask the sender to send it as a PDF.
