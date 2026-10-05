@@ -7,8 +7,8 @@ export const privacyEn: Privacy = {
 	contactLabel: 'Email',
 	choice: {
 		current: 'Your current choice',
-		granted: 'You accepted the Google Analytics cookies.',
-		denied: 'You rejected the Google Analytics cookies.',
+		granted: 'You accepted the measurement cookies.',
+		denied: 'You rejected the measurement cookies.',
 		none: 'You have not decided yet.',
 		change: 'Change cookies'
 	},
@@ -33,7 +33,7 @@ export const privacyEn: Privacy = {
 				{ kind: 'h3', text: 'Google Analytics' },
 				{
 					kind: 'p',
-					text: 'If you accept the cookies, Google Analytics records the pages you visit, where the visit came from, the device and the browser. Google receives your IP address along with that data. Google signals and ad personalisation are turned off. The data is only used to count visits.'
+					text: 'If you accept the measurement cookies, Google Analytics records the pages you visit, where the visit came from, the device and the browser. Google receives your IP address along with that data. Google signals and ad personalisation are turned off. The data is only used to count visits.'
 				},
 				{ kind: 'h3', text: 'Scanner' },
 				{
@@ -74,7 +74,7 @@ export const privacyEn: Privacy = {
 					caption: 'Retention period of each piece of data',
 					head: ['Data', 'Where it is stored', 'Period'],
 					rows: [
-						['Google Analytics cookies', 'Your browser', 'Up to 2 years. The browser may shorten it.'],
+						['Measurement cookies (Google Analytics)', 'Your browser', 'Up to 2 years. The browser may shorten it.'],
 						['Data for each visit in Google Analytics', 'Google servers', 'At most 14 months.'],
 						['Aggregated Google Analytics reports', 'Google servers', 'No limit. They do not identify anyone.'],
 						[
@@ -101,7 +101,7 @@ export const privacyEn: Privacy = {
 			blocks: [
 				{
 					kind: 'p',
-					text: 'Google cookies are only stored if you accept them. The rest is browser local storage, needed for the features you use. It does not depend on your choice.'
+					text: 'The measurement cookies are the two from Google and are only stored if you accept them. The rest is browser local storage, needed for the features you use. It does not depend on your choice.'
 				},
 				{
 					kind: 'table',
@@ -152,7 +152,7 @@ export const privacyEn: Privacy = {
 				{
 					kind: 'list',
 					items: [
-						'Google LLC: Google Analytics, if you accept the cookies, and email.',
+						'Google LLC: Google Analytics, if you accept the measurement cookies, and email.',
 						'Vercel Inc.: site hosting, visit statistics and the Scanner server.',
 						'Cloudflare, Inc.: Turnstile, in the Scanner.',
 						'Neon, part of Databricks: the Scanner database.'
@@ -211,7 +211,7 @@ export const privacyEn: Privacy = {
 				},
 				{
 					kind: 'p',
-					text: 'When you reject, the site deletes any Google Analytics cookies it had stored. You can also delete them in the browser settings.'
+					text: 'When you reject, the site deletes any measurement cookies it had stored. You can also delete them in the browser settings.'
 				}
 			]
 		},

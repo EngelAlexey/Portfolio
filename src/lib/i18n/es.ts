@@ -174,7 +174,7 @@ export const es = {
 	},
 	cookies: {
 		title: 'Aceptar políticas de privacidad y cookies',
-		body: 'Las cookies de Google Analytics cuentan las visitas a este sitio. Solo se guardan si usted las acepta.',
+		body: 'Este sitio usa cookies y almacenamiento local para medir las visitas y recordar sus preferencias. Las cookies de medición solo se guardan si usted las acepta.',
 		more: 'Política de privacidad',
 		accept: 'Aceptar cookies',
 		reject: 'Rechazar cookies',

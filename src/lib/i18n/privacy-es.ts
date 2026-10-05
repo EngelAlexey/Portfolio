@@ -43,8 +43,8 @@ export const privacyEs: Privacy = {
 	contactLabel: 'Correo',
 	choice: {
 		current: 'Su decisión actual',
-		granted: 'Aceptó las cookies de Google Analytics.',
-		denied: 'Rechazó las cookies de Google Analytics.',
+		granted: 'Aceptó las cookies de medición.',
+		denied: 'Rechazó las cookies de medición.',
 		none: 'Todavía no ha decidido.',
 		change: 'Cambiar cookies'
 	},
@@ -69,7 +69,7 @@ export const privacyEs: Privacy = {
 				{ kind: 'h3', text: 'Google Analytics' },
 				{
 					kind: 'p',
-					text: 'Si usted acepta las cookies, Google Analytics registra las páginas que visita, el origen de la visita, el dispositivo y el navegador. Google recibe su dirección IP junto con esos datos. Las señales de Google y la personalización de anuncios están desactivadas. Los datos solo sirven para contar visitas.'
+					text: 'Si usted acepta las cookies de medición, Google Analytics registra las páginas que visita, el origen de la visita, el dispositivo y el navegador. Google recibe su dirección IP junto con esos datos. Las señales de Google y la personalización de anuncios están desactivadas. Los datos solo sirven para contar visitas.'
 				},
 				{ kind: 'h3', text: 'Escáner' },
 				{
@@ -110,7 +110,7 @@ export const privacyEs: Privacy = {
 					caption: 'Plazo de conservación de cada dato',
 					head: ['Dato', 'Dónde se guarda', 'Plazo'],
 					rows: [
-						['Cookies de Google Analytics', 'Su navegador', 'Hasta 2 años. El navegador puede acortarlo.'],
+						['Cookies de medición (Google Analytics)', 'Su navegador', 'Hasta 2 años. El navegador puede acortarlo.'],
 						['Datos de cada visita en Google Analytics', 'Servidores de Google', 'Como máximo 14 meses.'],
 						['Informes agregados de Google Analytics', 'Servidores de Google', 'Sin plazo. No identifican a nadie.'],
 						[
@@ -137,7 +137,7 @@ export const privacyEs: Privacy = {
 			blocks: [
 				{
 					kind: 'p',
-					text: 'Las cookies de Google solo se guardan si usted las acepta. El resto es almacenamiento local del navegador, necesario para las funciones que usted usa. No depende de su decisión.'
+					text: 'Las cookies de medición son las dos de Google y solo se guardan si usted las acepta. El resto es almacenamiento local del navegador, necesario para las funciones que usted usa. No depende de su decisión.'
 				},
 				{
 					kind: 'table',
@@ -188,7 +188,7 @@ export const privacyEs: Privacy = {
 				{
 					kind: 'list',
 					items: [
-						'Google LLC: Google Analytics, si usted acepta las cookies, y el correo.',
+						'Google LLC: Google Analytics, si usted acepta las cookies de medición, y el correo.',
 						'Vercel Inc.: alojamiento del sitio, estadísticas de visitas y servidor del Escáner.',
 						'Cloudflare, Inc.: Turnstile, en el Escáner.',
 						'Neon, del grupo Databricks: base de datos del Escáner.'
@@ -247,7 +247,7 @@ export const privacyEs: Privacy = {
 				},
 				{
 					kind: 'p',
-					text: 'Al rechazar, el sitio borra las cookies de Google Analytics que haya guardado. También puede borrarlas en los ajustes del navegador.'
+					text: 'Al rechazar, el sitio borra las cookies de medición que haya guardado. También puede borrarlas en los ajustes del navegador.'
 				}
 			]
 		},
