@@ -175,7 +175,7 @@ export const es = {
 	cookies: {
 		title: 'Aceptar cookies y política de privacidad',
 		body: 'Este sitio usa cookies para medir las visitas.',
-		more: 'Política de privacidad',
+		more: 'Más información',
 		accept: 'Aceptar cookies',
 		reject: 'Rechazar cookies',
 		savedGranted: 'Cookies aceptadas',

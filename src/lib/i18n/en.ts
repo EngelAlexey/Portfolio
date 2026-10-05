@@ -174,7 +174,7 @@ export const en: Dict = {
 	cookies: {
 		title: 'Accept cookies and privacy policy',
 		body: 'This site uses cookies to measure visits.',
-		more: 'Privacy policy',
+		more: 'More information',
 		accept: 'Accept cookies',
 		reject: 'Reject cookies',
 		savedGranted: 'Cookies accepted',
