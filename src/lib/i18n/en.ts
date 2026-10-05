@@ -14,7 +14,7 @@ export const en: Dict = {
 		tools: 'Tools',
 		scanner: 'Scanner',
 		schemaflow: 'SchemaFlow',
-		analyzer: 'Analyser',
+		analyzer: 'Phishing detector',
 		menu: 'Menu'
 	},
 	a11y: {
@@ -202,7 +202,7 @@ export const en: Dict = {
 				body: 'Writes the PostgreSQL, MySQL, SQL Server or MongoDB code for a diagram that you draw. It also generates migrations, exports to Prisma or Drizzle and turns existing code into a diagram. It offers templates to start from and lets you try queries in PostgreSQL from the browser.'
 			},
 			analyzer: {
-				name: 'Message analyser',
+				name: 'Phishing detector',
 				body: 'Looks for signs of fraud in a suspicious message, its links and its sender, and explains each one. It does not open any link.'
 			}
 		}

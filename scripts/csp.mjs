@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { missingHashes, withPolicy } from './csp-lib.mjs';
 
 const dist = process.argv[2] ?? 'dist';
-const PAGES = ['es/herramientas/analizador.html', 'en/tools/analyzer.html'];
+const PAGES = ['es/herramientas/phishing.html', 'en/tools/phishing.html'];
 
 let failed = false;
 

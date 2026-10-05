@@ -15,16 +15,16 @@ sources:
 
 ## Qué significa
 
-Las cabeceras dicen si el servidor que recibió el mensaje pudo comprobar SPF, DKIM y DMARC. Un `fail` o un `softfail` indica que el dominio no autorizó ese envío. Una firma DKIM desalineada es de un dominio distinto al del remitente.
+Los datos técnicos del correo dicen si el servidor que lo recibió pudo comprobar que es auténtico. Esas comprobaciones se llaman SPF, DKIM y DMARC. Un `fail` o un `softfail` indica que el sitio del remitente no autorizó ese envío. Una firma digital de otro sitio indica que la firma no corresponde al remitente.
 
 ## Qué riesgo tiene
 
-Un mensaje que falla estas comprobaciones puede estar falsificado. Un `pass` no prueba que el mensaje sea legítimo.
+Un correo que falla estas comprobaciones puede ser falso. Un `pass` no prueba que el correo sea legítimo.
 
-Solo el campo `Authentication-Results` más alto lo añadió su propio servidor. Cualquiera puede escribir los demás.
+Solo el primer campo `Authentication-Results` lo añadió su propio servidor de correo. Cualquiera puede escribir los demás.
 
 ## Qué hacer
 
-Tome el resultado como una pista más. Si duda, confirme el mensaje por otro canal.
+Tome el resultado como una pista más. Si duda, confirme el mensaje por otro medio.
 
-Sin ese campo no se puede leer la autenticación.
+Si los datos técnicos no traen ese campo, no se puede leer la autenticidad del correo.

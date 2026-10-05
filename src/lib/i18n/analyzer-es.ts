@@ -2,6 +2,7 @@ import type { Severity } from '../analyzer/types';
 
 export type AnalyzerStrings = {
 	readonly title: string;
+	readonly name: string;
 	readonly description: string;
 	readonly lead: string;
 	readonly aboutLink: string;
@@ -78,34 +79,34 @@ export type AnalyzerStrings = {
 };
 
 export const analyzerEs: AnalyzerStrings = {
-	title: 'Analizador de mensajes',
-	description: 'Señales de fraude en un mensaje, sus enlaces y su remitente, sin abrir ningún enlace.',
-	lead: 'Señales de fraude en un mensaje, sus enlaces y su remitente.',
-	aboutLink: 'Acerca del Analizador',
+	title: '¿Es phishing?',
+	name: 'Detector de phishing',
+	description: 'Detector de phishing. Muestra señales de fraude en un mensaje, sus enlaces y su remitente, sin abrir ningún enlace.',
+	lead: 'Pegue un mensaje sospechoso y vea qué señales de fraude tiene.',
+	aboutLink: 'Acerca del detector',
 	about: {
-		title: 'Acerca del Analizador',
-		description: 'Qué revisa el Analizador de mensajes, qué no hace, cómo trata el mensaje y cuáles son sus límites.',
+		title: 'Acerca del detector de phishing',
+		description: 'Qué revisa el detector de phishing, qué no hace, cómo trata el mensaje y cuáles son sus límites.',
 		privacyLink: 'Privacidad y cookies',
 		sections: [
 			{
 				id: 'revisa',
 				title: 'Qué revisa',
 				items: [
-					'Enlaces: el tipo de archivo, el dominio, el parecido con marcas conocidas, los acortadores y las redirecciones.',
-					'Texto: frases de presión, peticiones de claves o pagos y órdenes para ejecutar en el equipo.',
-					'Remitente: si el nombre y el dominio coinciden y si el dominio imita a una marca.',
-					'Cabeceras: SPF, DKIM y DMARC, las direcciones de respuesta y las horas de los saltos del correo.',
-					'Archivo: el nombre, el tipo real y el SHA-256.'
+					'Enlaces: a dónde llevan, si imitan a una marca conocida y si están acortados o reenvían a otro sitio.',
+					'Texto: frases de presión, peticiones de claves o pagos y pasos para ejecutar algo en el equipo.',
+					'Remitente: si el nombre y la dirección coinciden y si la dirección imita a una marca.',
+					'Datos técnicos del correo: si el correo pasó las comprobaciones de autenticidad y si las horas de su recorrido cuadran.',
+					'Archivo: su nombre, su tipo real y su huella digital (SHA-256).'
 				]
 			},
 			{
 				id: 'no-hace',
 				title: 'Qué no hace',
 				items: [
-					'No abre ningún enlace ni pide ninguna dirección del mensaje.',
-					'No ejecuta ni dibuja el contenido del mensaje.',
-					'No da un veredicto: muestra señales y su explicación.',
+					'No abre ningún enlace.',
 					'No abre ni ejecuta el archivo.',
+					'No da un veredicto: muestra señales y las explica.',
 					'No guarda el mensaje.'
 				]
 			},
@@ -113,22 +114,20 @@ export const analyzerEs: AnalyzerStrings = {
 				id: 'trato',
 				title: 'Cómo trata el mensaje',
 				items: [
-					'El texto se escribe en la página como texto, nunca como código HTML.',
-					'El HTML que trae el portapapeles solo se lee para obtener las direcciones de los enlaces. Nunca se inserta en la página.',
-					'Los enlaces se muestran con la dirección alterada, como hxxps://dominio[.]com, y no se pueden pulsar.',
-					'El análisis corre en un proceso aparte con un límite de 10 segundos.',
-					'La entrada tiene un límite de 200 000 caracteres y de 200 enlaces.',
-					'La política de seguridad de contenido de la página limita los scripts a los propios y a los de medición.'
+					'El texto del mensaje se muestra como texto. Nunca se ejecuta.',
+					'Los enlaces se muestran con la dirección alterada, como hxxps://sitio[.]com, para que no se puedan pulsar por error.',
+					'El análisis tiene un límite de tamaño y de tiempo, para que un mensaje enorme no bloquee su navegador.',
+					'La página solo permite programas propios y los de la medición de visitas.'
 				]
 			},
 			{
 				id: 'limites',
 				title: 'Límites',
 				items: [
-					'Las listas de marcas, de finales de dominio y de frases son una estimación y pueden fallar.',
+					'Las listas de marcas, de terminaciones y de frases son estimaciones y pueden fallar.',
 					'Un mensaje legítimo puede activar señales de presión.',
-					'Sin la dirección real de los enlaces, el análisis solo ve el texto visible.',
-					'Un resultado de SPF, DKIM o DMARC solo vale si lo añadió su servidor de correo, en el campo Authentication-Results más alto.',
+					'Si el mensaje no trae la dirección real de los enlaces, el análisis solo ve el texto visible.',
+					'Las comprobaciones de autenticidad del correo solo valen si las añadió su propio servidor de correo.',
 					'Sin señales no significa seguro.'
 				]
 			}
@@ -147,8 +146,8 @@ export const analyzerEs: AnalyzerStrings = {
 		],
 		senderLabel: 'Remitente',
 		senderHint: 'Opcional. Tal como aparece, con nombre y dirección.',
-		advancedTitle: 'Cabeceras del correo',
-		headersLabel: 'Cabeceras',
+		advancedTitle: 'Datos técnicos del correo',
+		headersLabel: 'Datos técnicos',
 		headersHint: 'Opcional. En Gmail, abra el mensaje, pulse los tres puntos y elija «Mostrar original». Copie el texto del principio.',
 		fileLabel: 'Archivo adjunto',
 		fileHint: 'Opcional. Se lee sin abrirlo ni ejecutarlo. Tamaño máximo: 25 MB.',
@@ -203,32 +202,32 @@ export const analyzerEs: AnalyzerStrings = {
 		none: 'Este análisis no encontró señales.',
 		closing: 'Sin señales no significa seguro.',
 		explain: 'Qué significa',
-		sections: { links: 'Enlaces', text: 'Texto', sender: 'Remitente', headers: 'Cabeceras', files: 'Archivo' },
+		sections: { links: 'Enlaces', text: 'Texto', sender: 'Remitente', headers: 'Datos técnicos del correo', files: 'Archivo' },
 		severity: { critical: 'Crítica', high: 'Alta', medium: 'Media', low: 'Baja', info: 'Informativa' },
 		evidence: {
 			url: 'Enlace',
-			host: 'Dominio',
+			host: 'Sitio',
 			unicode: 'Nombre completo',
 			brand: 'Marca',
 			wrapper: 'Servicio',
 			destination: 'Destino',
-			scheme: 'Tipo',
+			scheme: 'Tipo de enlace',
 			file: 'Archivo',
 			extension: 'Extensión',
-			port: 'Puerto',
+			port: 'Número extra',
 			parameter: 'Parámetro',
 			service: 'Servicio',
-			tld: 'Final',
-			userinfo: 'Usuario',
+			tld: 'Terminación',
+			userinfo: 'Nombre antes de la arroba',
 			shownText: 'Texto del enlace',
-			shownDomain: 'Dominio que muestra',
-			realDomain: 'Dominio real',
+			shownDomain: 'Sitio que muestra',
+			realDomain: 'Sitio real',
 			email: 'Correo',
 			phrase: 'Frase',
 			count: 'Veces',
 			name: 'Nombre',
 			address: 'Dirección',
-			domain: 'Dominio',
+			domain: 'Sitio',
 			shown: 'Muestra',
 			mechanism: 'Comprobación',
 			result: 'Resultado',
@@ -254,7 +253,7 @@ export const analyzerEs: AnalyzerStrings = {
 		skippedItems: [
 			'El contenido de los enlaces. Ningún enlace se abre.',
 			'Los archivos que no suelte aquí.',
-			'Que el remitente sea quien dice ser, si no pega las cabeceras.'
+			'Que el remitente sea quien dice ser, si no pega los datos técnicos del correo.'
 		]
 	},
 	findings: {
@@ -266,20 +265,20 @@ export const analyzerEs: AnalyzerStrings = {
 		'link-scheme-handoff': 'El enlace abre otra aplicación del equipo',
 		'link-cloud-hosted': 'El enlace va a un servicio de alojamiento o de documentos compartidos',
 		'link-text-mismatch': 'El texto del enlace muestra una dirección y el enlace lleva a otra',
-		'link-userinfo': 'La dirección lleva un nombre antes de la arroba',
-		'link-ip-host': 'La dirección usa una dirección IP en lugar de un nombre',
+		'link-userinfo': 'El sitio real está después de la arroba de la dirección',
+		'link-ip-host': 'La dirección usa números en lugar del nombre de un sitio',
 		'link-punycode': 'El nombre del sitio usa letras de otros alfabetos',
 		'link-mixed-script': 'El nombre del sitio mezcla alfabetos',
 		'link-brand-lookalike': 'El nombre del sitio imita a una marca',
-		'link-brand-in-subdomain': 'El nombre de una marca está en un subdominio ajeno',
-		'link-brand-in-domain': 'El dominio contiene el nombre de una marca',
+		'link-brand-in-subdomain': 'El nombre de una marca aparece al principio de la dirección, pero el sitio es otro',
+		'link-brand-in-domain': 'El nombre del sitio contiene el nombre de una marca',
 		'link-shortener': 'El enlace está acortado',
 		'link-redirect-parameter': 'La dirección contiene otra dirección de destino',
-		'link-nonstandard-port': 'La dirección usa un puerto poco común',
+		'link-nonstandard-port': 'La dirección lleva un número extra poco común después del nombre del sitio',
 		'link-email-in-url': 'La dirección incluye un correo electrónico',
-		'link-risky-tld': 'El final del dominio tiene muchos abusos',
-		'link-http': 'El enlace no usa HTTPS',
-		'link-many-subdomains': 'La dirección tiene muchos subdominios',
+		'link-risky-tld': 'La terminación de la dirección se usa mucho en abusos',
+		'link-http': 'La conexión con el sitio no está cifrada',
+		'link-many-subdomains': 'La dirección tiene muchas partes antes del nombre del sitio',
 		'link-random-host': 'La dirección tiene un nombre largo de aspecto aleatorio',
 		'link-wrapper-unwrapped': 'El enlace pasa por un servicio de protección de correo',
 		'text-urgency': 'El texto pide actuar con urgencia',
@@ -291,18 +290,18 @@ export const analyzerEs: AnalyzerStrings = {
 		'text-credentials-request': 'El texto pide verificar la cuenta o dar claves o códigos',
 		'text-payment-request': 'El texto pide un pago difícil de revertir',
 		'text-callback-number': 'El texto pide llamar a un número del mensaje',
-		'text-run-command': 'El texto pide ejecutar una orden en el equipo',
+		'text-run-command': 'El texto pide pegar y ejecutar una orden en su equipo',
 		'text-password-for-attachment': 'El texto da una contraseña para abrir un archivo',
 		'sender-name-address-mismatch': 'El nombre del remitente no coincide con su dirección',
-		'sender-lookalike': 'El dominio del remitente imita a una marca',
+		'sender-lookalike': 'La dirección del remitente imita a una marca',
 		'sender-freemail-brand': 'Una marca escribe desde un correo gratuito',
-		'hdr-from-return-path-mismatch': 'La dirección de rebote es de otro dominio',
-		'hdr-reply-to-mismatch': 'La dirección de respuesta es de otro dominio',
-		'hdr-auth-fail': 'El servidor no pudo comprobar el envío',
-		'hdr-dkim-misaligned': 'La firma DKIM es de otro dominio',
-		'hdr-received-anomaly': 'Las horas de los saltos del correo no cuadran',
-		'hdr-auth-missing': 'Las cabeceras no traen un resultado de autenticación',
-		'hdr-auth-untrusted': 'Hay varios resultados de autenticación',
+		'hdr-from-return-path-mismatch': 'Los avisos de error del correo van a otro sitio',
+		'hdr-reply-to-mismatch': 'Su respuesta iría a otro sitio distinto al del remitente',
+		'hdr-auth-fail': 'El correo no pasó una comprobación de autenticidad',
+		'hdr-dkim-misaligned': 'La firma digital del correo es de otro sitio',
+		'hdr-received-anomaly': 'Las horas del recorrido del correo no cuadran',
+		'hdr-auth-missing': 'Los datos técnicos no traen comprobaciones de autenticidad',
+		'hdr-auth-untrusted': 'Hay varias comprobaciones de autenticidad y solo la primera es fiable',
 		'file-type-mismatch': 'El tipo real del archivo no coincide con su extensión',
 		'file-double-extension': 'El nombre del archivo oculta una extensión peligrosa',
 		'file-rtlo': 'El nombre del archivo usa caracteres que invierten el texto',

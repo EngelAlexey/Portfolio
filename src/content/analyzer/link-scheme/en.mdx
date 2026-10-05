@@ -11,14 +11,12 @@ sources:
 
 ## What it means
 
-The link does not point to a web page. Some types of link run code, such as `javascript:` or `data:`. Others open another application on your computer, such as `ms-msdt:` or `search-ms:`.
+The link does not open a web page. Some links run instructions directly and others open a program on your computer.
 
 ## What the risk is
 
-The `ms-msdt:` type opens the Windows diagnostic tool. The Follina vulnerability (CVE-2022-30190) was in that tool and was actively exploited.
-
-A `data:` or `javascript:` link can show a fake page or run code without leaving the message.
+A link of this kind can show a fake page or run instructions without leaving the message. One of them, `ms-msdt:`, opens the Windows diagnostic tool. That tool had a serious flaw, called Follina, which attackers exploited.
 
 ## What to do
 
-Do not click the link. A legitimate message almost never uses these types of link.
+Do not click the link. A legitimate message almost never uses this type of link.

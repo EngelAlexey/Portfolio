@@ -29,8 +29,8 @@ const SEGMENTS: Record<RouteKey, Record<Lang, string>> = {
 	scannerReport: { es: 'herramientas/escaner/reporte', en: 'tools/scanner/report' },
 	tools: { es: 'herramientas', en: 'tools' },
 	schemaflow: { es: 'herramientas/schemaflow', en: 'tools/schemaflow' },
-	analyzer: { es: 'herramientas/analizador', en: 'tools/analyzer' },
-	analyzerAbout: { es: 'herramientas/analizador/acerca', en: 'tools/analyzer/about' },
+	analyzer: { es: 'herramientas/phishing', en: 'tools/phishing' },
+	analyzerAbout: { es: 'herramientas/phishing/acerca', en: 'tools/phishing/about' },
 	privacy: { es: 'privacidad', en: 'privacy' }
 };
 

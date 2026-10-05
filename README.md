@@ -428,7 +428,7 @@ Las plantillas solo usan lo que el lienzo permite. Un lector también pega códi
 - **El botón «+ Tabla» de la barra se quedó sin texto** al entregar las migraciones. La regla `.sf-tool-label { color: var(--ink) }` era para las etiquetas de los diálogos, pero también alcanzaba al texto de los botones de la barra, que ya usaban esa clase. `--ink` es el mismo tono que el fondo `--action`. Las etiquetas de los diálogos pasaron a `sf-dlg-label`. `.claude/skills/verify/contraste.js` calcula la razón de contraste WCAG de cada control, etiqueta y texto de ayuda visibles, en los dos temas y con cada diálogo abierto, y debe dar `"failed":0`.
 - **Clases de los diálogos.** Los diálogos de exportación y migración llevaban la clase `sf-tool` de los botones de la barra, y un reinicio (`dialog.sf-tool`) compensaba parte de sus reglas. Con esa clase, el diálogo también se pintaba con el fondo de un botón al pasar el puntero y mostraba el cursor de un botón. Ahora llevan `sf-dlg` y sus partes `sf-dlg-*` (`sf-controls` para una fila de controles); el tamaño de letra, la altura de línea y el espacio entre bloques se conservan.
 
-## Analizador de mensajes
+## Detector de phishing
 
 El código está en `src/lib/analyzer/`, la página en `src/components/pages/Analyzer.astro` y las explicaciones en `src/content/analyzer/`. No tiene servidor. La página pide texto, enlaces, remitente y cabeceras, y devuelve señales con su evidencia y una explicación. Nunca devuelve un veredicto: el cierre fijo es «Sin señales no significa seguro».
 

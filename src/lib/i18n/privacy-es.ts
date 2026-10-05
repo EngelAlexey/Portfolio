@@ -94,10 +94,10 @@ export const privacyEs: Privacy = {
 					kind: 'p',
 					text: 'SchemaFlow guarda su diseño y sus preferencias en el almacenamiento local del navegador. Las consultas SQL se ejecutan en el navegador. SchemaFlow no envía datos a ningún servidor.'
 				},
-				{ kind: 'h3', text: 'Analizador de mensajes' },
+				{ kind: 'h3', text: 'Detector de phishing' },
 				{
 					kind: 'p',
-					text: 'El Analizador revisa en su navegador el mensaje, los enlaces, el remitente y las cabeceras que usted escribe o pega. No guarda ni envía ese contenido. No abre ningún enlace.'
+					text: 'El detector de phishing revisa en su navegador el mensaje, los enlaces, el remitente y las cabeceras que usted escribe o pega. No guarda ni envía ese contenido. No abre ningún enlace.'
 				},
 				{ kind: 'h3', text: 'Correo' },
 				{
@@ -262,7 +262,7 @@ export const privacyEs: Privacy = {
 			blocks: [
 				{
 					kind: 'p',
-					text: 'Los resultados del Escáner, de SchemaFlow y del Analizador son orientativos y pueden ser incompletos o inexactos. No sustituyen una auditoría de seguridad ni una asesoría profesional.'
+					text: 'Los resultados del Escáner, de SchemaFlow y del detector de phishing son orientativos y pueden ser incompletos o inexactos. No sustituyen una auditoría de seguridad ni una asesoría profesional.'
 				},
 				{
 					kind: 'p',
@@ -270,7 +270,7 @@ export const privacyEs: Privacy = {
 				},
 				{
 					kind: 'p',
-					text: 'El Analizador usa nombres de marcas solo para compararlos con los de un mensaje. No tiene relación con esas marcas.'
+					text: 'El detector de phishing usa nombres de marcas solo para compararlos con los de un mensaje. No tiene relación con esas marcas.'
 				}
 			]
 		},

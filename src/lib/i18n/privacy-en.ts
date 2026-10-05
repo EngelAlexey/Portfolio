@@ -58,10 +58,10 @@ export const privacyEn: Privacy = {
 					kind: 'p',
 					text: 'SchemaFlow stores your design and preferences in the browser local storage. SQL queries run in the browser. SchemaFlow does not send data to any server.'
 				},
-				{ kind: 'h3', text: 'Message analyser' },
+				{ kind: 'h3', text: 'Phishing detector' },
 				{
 					kind: 'p',
-					text: 'The Analyser checks, in your browser, the message, links, sender and headers that you type or paste. It does not store or send that content. It does not open any link.'
+					text: 'The phishing detector checks, in your browser, the message, links, sender and headers that you type or paste. It does not store or send that content. It does not open any link.'
 				},
 				{ kind: 'h3', text: 'Email' },
 				{
@@ -226,7 +226,7 @@ export const privacyEn: Privacy = {
 			blocks: [
 				{
 					kind: 'p',
-					text: 'The results of the Scanner, SchemaFlow and the Analyser are indicative and may be incomplete or inaccurate. They do not replace a security audit or professional advice.'
+					text: 'The results of the Scanner, SchemaFlow and the phishing detector are indicative and may be incomplete or inaccurate. They do not replace a security audit or professional advice.'
 				},
 				{
 					kind: 'p',
@@ -234,7 +234,7 @@ export const privacyEn: Privacy = {
 				},
 				{
 					kind: 'p',
-					text: 'The Analyser uses brand names only to compare them with those in a message. It has no relationship with those brands.'
+					text: 'The phishing detector uses brand names only to compare them with those in a message. It has no relationship with those brands.'
 				}
 			]
 		},

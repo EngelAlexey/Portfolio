@@ -13,7 +13,7 @@ export const es = {
 		tools: 'Herramientas',
 		scanner: 'Escáner',
 		schemaflow: 'SchemaFlow',
-		analyzer: 'Analizador',
+		analyzer: 'Detector de phishing',
 		menu: 'Menú'
 	},
 	a11y: {
@@ -203,7 +203,7 @@ export const es = {
 				body: 'Genera el código de PostgreSQL, MySQL, SQL Server o MongoDB a partir de un diagrama que usted dibuja. También genera migraciones, exporta a Prisma o Drizzle y convierte código existente en diagrama. Ofrece plantillas para empezar y permite probar consultas en PostgreSQL desde el navegador.'
 			},
 			analyzer: {
-				name: 'Analizador de mensajes',
+				name: 'Detector de phishing',
 				body: 'Busca señales de fraude en un mensaje sospechoso, sus enlaces y su remitente, y explica cada una. No abre ningún enlace.'
 			}
 		}

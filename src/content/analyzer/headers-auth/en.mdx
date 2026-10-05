@@ -15,16 +15,16 @@ sources:
 
 ## What it means
 
-The headers say whether the server that received the message could check SPF, DKIM and DMARC. A `fail` or a `softfail` means the domain did not authorise that sending. A misaligned DKIM signature belongs to a domain different from the sender's.
+The technical data of the email says whether the server that received it could check that it is authentic. Those checks are called SPF, DKIM and DMARC. A `fail` or a `softfail` means the sender's site did not authorise that sending. A digital signature from another site means the signature does not belong to the sender.
 
 ## What the risk is
 
-A message that fails these checks can be forged. A `pass` does not prove that the message is legitimate.
+An email that fails these checks can be forged. A `pass` does not prove that the email is legitimate.
 
-Only the topmost `Authentication-Results` field was added by your own server. Anyone can write the others.
+Only the first `Authentication-Results` field was added by your own mail server. Anyone can write the others.
 
 ## What to do
 
 Take the result as one more hint. If in doubt, confirm the message through another channel.
 
-Without that field the authentication cannot be read.
+If the technical data has no such field, the authenticity of the email cannot be read.
