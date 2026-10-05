@@ -6,7 +6,7 @@ export default {
 	name: { es: 'Clínica y citas', en: 'Clinic and appointments' },
 	description: {
 		es: 'Pacientes, médicos, especialidades, citas, recetas y medicamentos.',
-		en: 'Patients, doctors, specialties, appointments, prescriptions and medications.'
+		en: 'Patients, doctors, specialities, appointments, prescriptions and medications.'
 	},
 	tags: ['bookings', 'states'],
 	sql: `CREATE TABLE specialties (
