@@ -2,24 +2,22 @@ import type { RelationKind } from '../model/relate';
 import { fold } from './strings';
 import type { CommonTypeId } from './types';
 
-export const TABLE_PRESETS = ['basic', 'timestamps', 'lookup'] as const;
 export const COLUMN_PRESETS = ['text', 'longText', 'integer', 'decimal', 'boolean', 'date', 'datetime', 'uuid', 'json', 'timestamps'] as const satisfies readonly (CommonTypeId | 'timestamps')[];
 export const RELATION_KINDS = ['oneToMany', 'oneToOne', 'manyToMany'] as const satisfies readonly RelationKind[];
 
-export type TablePreset = (typeof TABLE_PRESETS)[number];
 export type ColumnPreset = CommonTypeId | 'timestamps';
 
 export type PaletteItem =
-	| { kind: 'table'; preset: TablePreset }
+	| { kind: 'table' }
 	| { kind: 'column'; preset: ColumnPreset }
 	| { kind: 'relation'; relation: RelationKind }
 	| { kind: 'note' }
 	| { kind: 'area' };
 
-export type ElementKey = `table:${TablePreset}` | `column:${(typeof COLUMN_PRESETS)[number]}` | `relation:${RelationKind}` | 'note' | 'area';
+export type ElementKey = 'table' | `column:${(typeof COLUMN_PRESETS)[number]}` | `relation:${RelationKind}` | 'note' | 'area';
 
 export const ELEMENT_KEYS: readonly ElementKey[] = [
-	...TABLE_PRESETS.map((preset) => `table:${preset}` as const),
+	'table',
 	...COLUMN_PRESETS.map((preset) => `column:${preset}` as const),
 	...RELATION_KINDS.map((kind) => `relation:${kind}` as const),
 	'note',
@@ -27,9 +25,7 @@ export const ELEMENT_KEYS: readonly ElementKey[] = [
 ];
 
 export const ELEMENT_ALIASES: Record<ElementKey, string> = {
-	'table:basic': 'table tabla basica basic entidad entity',
-	'table:timestamps': 'con fechas with dates timestamps created_at updated_at auditoria audit registro',
-	'table:lookup': 'catalogo lookup valores fijos fixed values categorias categories estados statuses lista list',
+	table: 'table tabla entidad entity',
 	'column:text': 'text texto corto short varchar string cadena nombre name',
 	'column:longText': 'text texto largo long descripcion description contenido body comentario comment',
 	'column:integer': 'integer int entero numero number contador counter cantidad quantity',
@@ -49,8 +45,6 @@ export const ELEMENT_ALIASES: Record<ElementKey, string> = {
 
 export function itemKey(item: PaletteItem): ElementKey {
 	switch (item.kind) {
-		case 'table':
-			return `table:${item.preset}`;
 		case 'column':
 			return `column:${item.preset}`;
 		case 'relation':

@@ -1,6 +1,6 @@
 (() => {
 	const scope = '.sf, .sf-overlay, dialog[open], .cm-tooltip';
-	const controls = 'button, a[href], summary, [role="button"], [role="menuitem"], [role="tab"], [role="option"], label, legend, .sf-help, .sf-bubble-text, .sf-relate-preview, .sf-relate-warning, .sf-palette-hint, .sf-palette-empty, .sf-palette-group-title';
+	const controls = 'button, a[href], summary, [role="button"], [role="menuitem"], [role="tab"], [role="option"], label, legend, .sf-help, .sf-bubble-text, .sf-relate-preview, .sf-relate-warning, .sf-palette-hint, .sf-palette-empty, .sf-palette-group-title, .sf-finder-hint, .sf-finder-none, .sf-row-more';
 	const canvas = document.createElement('canvas');
 	canvas.width = 1;
 	canvas.height = 1;

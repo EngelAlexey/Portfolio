@@ -452,9 +452,9 @@ export function moveSelection(schema: Schema, selection: Selection, dx: number, 
 	};
 }
 
-export function bounds(schema: Schema): { left: number; top: number; right: number; bottom: number } | null {
+export function bounds(schema: Schema, heightOf: (table: Table) => number = tableHeight): { left: number; top: number; right: number; bottom: number } | null {
 	const boxes = [
-		...schema.tables.map((t) => ({ x: t.x, y: t.y, w: CARD_WIDTH, h: tableHeight(t) })),
+		...schema.tables.map((t) => ({ x: t.x, y: t.y, w: CARD_WIDTH, h: heightOf(t) })),
 		...schema.notes.map((n) => ({ x: n.x, y: n.y, w: n.w, h: n.h })),
 		...schema.areas.map((a) => ({ x: a.x, y: a.y, w: a.w, h: a.h }))
 	];

@@ -5,10 +5,7 @@ export type Strings = typeof schemaflowUiEs & { engine: Catalog };
 export type Plural = { one: string; other: string };
 
 export { fill };
-
-export function fold(text: string): string {
-	return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-}
+export { fold } from '../model/fold';
 
 export function plural(entry: Plural, n: number, params: Record<string, string | number> = {}): string {
 	return fill(n === 1 ? entry.one : entry.other, { n, ...params });

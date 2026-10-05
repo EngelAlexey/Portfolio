@@ -64,6 +64,10 @@ export const ICONS = {
 	keyboard: 'M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10',
 	shapes: 'M4 4h7v7H4zM17.5 4a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7zM13 13h7v7h-7zM7.5 13l3.5 7H4z',
 	spinner: 'M12 3a9 9 0 1 0 9 9',
+	column: 'M8 4h8v16H8zM8 9h8M8 14h8',
+	rows: 'M4 6h16M4 10h16M4 14h16M4 18h16',
+	rowsKeys: 'M4 7h16M4 12h16M4 17h8',
+	rowsNames: 'M4 12h16',
 	migrate: 'M7 20V4M7 4 4 7M7 4l3 3M17 4v16M17 20l-3-3M17 20l3-3'
 } as const;
 

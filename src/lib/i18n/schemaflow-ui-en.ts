@@ -47,7 +47,9 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 		templates: 'Templates',
 		share: 'Share',
 		file: 'File',
-		more: 'More actions'
+		more: 'More actions',
+		find: 'Search',
+		findTip: 'Search for a table or a column ({shortcut})'
 	},
 	menu: {
 		newDesign: 'New design',
@@ -160,6 +162,33 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 			'identity-manual': 'SQL Server does not allow changing IDENTITY on an existing column. Recreate the table for "{table}.{column}".'
 		}
 	},
+	density: {
+		full: 'all columns',
+		keys: 'keys only',
+		names: 'names only',
+		label: 'Visible columns: {current}',
+		tip: 'Visible columns: {current}. Click to switch to "{next}" (V).',
+		changed: 'Visible columns: {current}.'
+	},
+	finder: {
+		title: 'Search the design',
+		label: 'Search for a table or a column',
+		placeholder: 'Search for a table or a column',
+		hint: 'Use the arrow keys to choose and Enter to go.',
+		none: 'No results for "{query}".',
+		empty: 'The design has no tables yet.',
+		results: { one: '1 result', other: '{n} results' }
+	},
+	align: {
+		title: 'Align and distribute',
+		left: 'Align left',
+		top: 'Align top',
+		middle: 'Centre vertically',
+		bottom: 'Align bottom',
+		horizontal: 'Distribute horizontally',
+		vertical: 'Distribute vertically',
+		arrange: 'Arrange the selection'
+	},
 	empty: {
 		title: 'Create the first table',
 		body: 'Drag a table from the "Elements" panel or double-click the canvas. You can also start from a template or from code you already have.',
@@ -223,11 +252,7 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 		show: 'Show the elements',
 		hide: 'Hide the elements',
 		groups: { tables: 'Tables', columns: 'Columns', relations: 'Relationships', notes: 'Annotations' },
-		tables: {
-			basic: { label: 'Table', tip: 'Table with the primary key id.' },
-			timestamps: { label: 'With dates', tip: 'Table with id, created_at and updated_at, which store when each row was created and when it last changed.' },
-			lookup: { label: 'Lookup', tip: 'Table of fixed values, such as categories or statuses, with id and a unique name.' }
-		},
+		table: { label: 'Table', tip: 'Table with the primary key id. Drag it onto the canvas or click to add it.' },
 		columns: { timestamps: 'Timestamps' },
 		columnLabel: '{name} column',
 		columnTip: 'Drop the column on a table, at the row where you want it. If you click it, the column goes at the end of the selected table.',
@@ -249,7 +274,6 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 		selectTable: 'Select a table to add the column.',
 		noTables: 'Create a table before you create a relationship.',
 		timestampsExist: 'Table "{table}" already has created_at and updated_at.',
-		nameColumn: 'name'
 	},
 	ctx: {
 		rename: 'Rename',
@@ -630,6 +654,9 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 		deleteRelation: 'delete relationship {x}',
 		junction: 'create junction table {x}',
 		move: 'move {items}',
+		align: 'align {x}',
+		distribute: 'distribute {x}',
+		arrangeSelection: 'arrange {x}',
 		applyCode: 'apply the code',
 		template: 'load template {x}',
 		arrange: 'arrange the diagram',
@@ -666,6 +693,8 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 			area: 'New area (around the selection, if any)',
 			relate: 'Relate tables (uses the focused table or column as the source)',
 			column: 'Add a column to the focused table',
+			find: 'Search for a table or a column',
+			density: 'Change the visible columns (all, keys only, names only)',
 			rename: 'Rename the focused item',
 			properties: 'Open Properties',
 			moveColumn: 'Move the focused column',

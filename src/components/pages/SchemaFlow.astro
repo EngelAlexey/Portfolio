@@ -33,6 +33,7 @@ const svg = (name: IconName, size = 16) =>
 				<button type="button" class="sf-icon-btn" data-action="undo" aria-label={text.bar.undo} data-tip={text.bar.nothingToUndo} disabled><Fragment set:html={svg('undo')} /></button>
 				<button type="button" class="sf-icon-btn" data-action="redo" aria-label={text.bar.redo} data-tip={text.bar.nothingToRedo} disabled><Fragment set:html={svg('redo')} /></button>
 				<button type="button" class="sf-tool sf-only-wide" data-action="arrange" data-tip={text.bar.arrangeTip} aria-label={text.bar.arrange}><Fragment set:html={svg('arrange')} /><span class="sf-tool-label sf-label-xl">{text.bar.arrange}</span></button>
+				<button type="button" class="sf-icon-btn sf-only-wide" data-action="find" aria-label={text.bar.find} data-tip={text.bar.findTip.replace('{shortcut}', 'Ctrl+K')}><Fragment set:html={svg('search')} /></button>
 			</div>
 			<span class="sf-spacer"></span>
 			<div class="sf-bar-group" role="group" aria-label={text.bar.groupOutput}>
@@ -77,6 +78,7 @@ const svg = (name: IconName, size = 16) =>
 					<button type="button" class="sf-zoom-value" data-action="zoom-reset" data-zoom-value aria-label={text.canvas.zoomReset} data-tip={text.canvas.zoomReset}>{text.canvas.zoomValue.replace('{n}', '100')}</button>
 					<button type="button" class="sf-icon-btn" data-action="zoom-in" aria-label={text.canvas.zoomIn} data-tip={text.canvas.zoomIn}><Fragment set:html={svg('plus')} /></button>
 					<button type="button" class="sf-icon-btn" data-action="zoom-fit" aria-label={text.canvas.zoomFit} data-tip={text.canvas.zoomFit}><Fragment set:html={svg('fit')} /></button>
+					<button type="button" class="sf-icon-btn" data-action="density" aria-label={text.density.label.replace('{current}', text.density.full)} data-tip={text.density.tip.replace('{current}', text.density.full).replace('{next}', text.density.keys)}><Fragment set:html={svg('rows')} /></button>
 				</div>
 				<aside class="sf-sheet" data-sheet hidden aria-label={text.props.sheet}></aside>
 			</section>
@@ -1094,6 +1096,38 @@ const svg = (name: IconName, size = 16) =>
 		margin-left: 1px;
 	}
 
+	.sf-row-more {
+		display: none;
+		align-items: center;
+		height: 28px;
+		padding: 0 0.7rem;
+		font-size: 0.75rem;
+		color: var(--ink-muted);
+		pointer-events: none;
+	}
+
+	.sf-canvas[data-density='keys'] .sf-row[data-column]:not([data-key]) {
+		display: none;
+	}
+
+	.sf-canvas[data-density='keys'] .sf-row-more {
+		display: flex;
+	}
+
+	.sf-canvas[data-density='names'] .sf-rows {
+		display: none;
+	}
+
+	.sf-canvas[data-density='names'] .sf-card-head {
+		border-bottom: 0;
+		border-radius: var(--radius-sm);
+	}
+
+	.sf-canvas[data-density='keys'] .sf-grip,
+	.sf-canvas[data-density='names'] .sf-grip {
+		display: none;
+	}
+
 	.sf-conn {
 		position: absolute;
 		top: 50%;
@@ -1554,6 +1588,18 @@ const svg = (name: IconName, size = 16) =>
 		gap: 0.3rem;
 		min-height: 62px;
 		padding: 0.45rem 0.2rem 0.4rem;
+	}
+
+	.sf-palette-tile-wide {
+		flex-direction: row;
+		justify-content: flex-start;
+		gap: 0.7rem;
+		min-height: 52px;
+		padding: 0.45rem 0.75rem;
+	}
+
+	.sf-palette-tile-wide .sf-palette-label {
+		text-align: left;
 	}
 
 	.sf-palette-chip {
@@ -2891,6 +2937,125 @@ const svg = (name: IconName, size = 16) =>
 	dialog.sf-gallery::backdrop,
 	dialog.sf-shortcuts::backdrop {
 		background: oklch(18% 0.008 260 / 0.32);
+	}
+
+	dialog.sf-finder {
+		position: fixed;
+		inset: 12vh 0 auto 0;
+		box-sizing: border-box;
+		width: min(34rem, calc(100vw - 2rem));
+		max-height: min(32rem, 72dvh);
+		margin: 0 auto;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--surface);
+		color: var(--ink);
+		box-shadow: var(--shadow-card), 0 24px 64px oklch(18% 0.008 260 / 0.18);
+	}
+
+	dialog.sf-finder:not([open]) {
+		display: none;
+	}
+
+	dialog.sf-finder::backdrop {
+		background: oklch(18% 0.008 260 / 0.32);
+	}
+
+	.sf-finder-field {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0 0.95rem;
+		border-bottom: 1px solid var(--line);
+		color: var(--ink-faint);
+	}
+
+	.sf-finder-field:focus-within {
+		box-shadow: inset 0 -2px 0 var(--focus);
+	}
+
+	.sf-finder-input {
+		flex: 1;
+		min-width: 0;
+		min-height: 48px;
+		border: 0;
+		outline: 0;
+		background: transparent;
+		color: var(--ink);
+		font: inherit;
+		font-size: 0.9375rem;
+	}
+
+	.sf-finder-list {
+		margin: 0;
+		padding: 0.35rem;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		list-style: none;
+	}
+
+	.sf-finder-list:empty {
+		display: none;
+	}
+
+	.sf-finder-item {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.45rem 0.6rem;
+		border-radius: var(--radius-sm);
+		font-size: 0.875rem;
+		cursor: pointer;
+	}
+
+	.sf-finder-item[aria-selected='true'] {
+		background: color-mix(in oklab, var(--focus) 12%, var(--surface));
+	}
+
+	.sf-finder-item .sf-icon {
+		flex: none;
+		color: var(--ink-muted);
+	}
+
+	.sf-finder-name {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.sf-finder-table {
+		color: var(--ink-muted);
+	}
+
+	.sf-finder-meta {
+		flex: none;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--ink-muted);
+	}
+
+	.sf-finder-none {
+		margin: 0;
+		padding: 1rem;
+		font-size: 0.8125rem;
+		color: var(--ink-muted);
+	}
+
+	.sf-finder-none[hidden] {
+		display: none;
+	}
+
+	.sf-finder-hint {
+		margin: 0;
+		padding: 0.5rem 0.95rem;
+		border-top: 1px solid var(--line);
+		font-size: 0.75rem;
+		color: var(--ink-muted);
 	}
 
 	.sf-gallery-head {

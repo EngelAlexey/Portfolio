@@ -8,6 +8,8 @@ import { openGlossary, openRelateBubble, openRelationBubble, type BubbleHost } f
 import { Canvas, type CanvasHost } from './canvas';
 import { h, icon, isTextField, mod, modLabel } from './dom';
 import { Dock, type DockHost } from './dock';
+import { Finder } from './finder';
+import { DENSITIES, type Density } from './geometry';
 import type { Gallery } from './gallery';
 import { exportPng, exportSvg, mermaid, readFile, saveFile, shareContent } from './io';
 import { Palette, type PaletteItem } from './palette';
@@ -22,12 +24,13 @@ interface Prefs {
 	sheetOpen: boolean;
 	sheetTab: SheetTab;
 	paletteOpen: boolean;
+	density: Density;
 }
 
 const PREFS_KEY = 'sf:ui';
 
 function loadPrefs(): Prefs {
-	const defaults: Prefs = { dockOpen: true, dockWidth: 400, sheetOpen: false, sheetTab: 'review', paletteOpen: true };
+	const defaults: Prefs = { dockOpen: true, dockWidth: 400, sheetOpen: false, sheetTab: 'review', paletteOpen: true, density: 'full' };
 	try {
 		const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}') as Partial<Prefs>;
 		return {
@@ -35,7 +38,8 @@ function loadPrefs(): Prefs {
 			dockWidth: typeof raw.dockWidth === 'number' && raw.dockWidth >= 320 && raw.dockWidth <= 640 ? raw.dockWidth : defaults.dockWidth,
 			sheetOpen: typeof raw.sheetOpen === 'boolean' ? raw.sheetOpen : defaults.sheetOpen,
 			sheetTab: raw.sheetTab === 'properties' ? 'properties' : 'review',
-			paletteOpen: typeof raw.paletteOpen === 'boolean' ? raw.paletteOpen : defaults.paletteOpen
+			paletteOpen: typeof raw.paletteOpen === 'boolean' ? raw.paletteOpen : defaults.paletteOpen,
+			density: DENSITIES.find((value) => value === raw.density) ?? defaults.density
 		};
 	} catch {
 		return defaults;
@@ -154,6 +158,8 @@ export function mountSchemaFlow(root: HTMLElement): void {
 			const at = anchor ?? card?.querySelector<HTMLElement>(request.columnId ? `.sf-row[data-column="${request.columnId}"]` : '.sf-card-head') ?? canvasEl;
 			openRelateBubble(store, bubbleHost, request, at);
 		},
+		setDensity: (density) => setDensity(density),
+		cycleDensity: () => cycleDensity(),
 		openProperties: () => openSheet('properties'),
 		openGlossary: (term, anchor) => openGlossary(t, bubble, term, anchor),
 		sheetInset,
@@ -206,6 +212,9 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		createArea: () => canvas.createArea(),
 		duplicateSelected: () => canvas.duplicateSelected(),
 		deleteSelected: () => canvas.deleteSelectionWithToast(),
+		align: (mode) => canvas.alignSelected(mode),
+		distribute: (axis) => canvas.distributeSelected(axis),
+		arrangeSelected: () => canvas.arrangeSelected(),
 		addColumn: (tableId) => canvas.addColumnAndEdit(tableId),
 		deleteColumn: (tableId, columnId) => canvas.deleteColumnWithToast(tableId, columnId),
 		onClose: () => {
@@ -357,7 +366,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 	});
 
 	let suppressToolClick = false;
-	const tableItem: PaletteItem = { kind: 'table', preset: 'basic' };
+	const tableItem: PaletteItem = { kind: 'table' };
 	for (const tool of root.querySelectorAll<HTMLButtonElement>('[data-tool]')) {
 		tool.addEventListener('pointerdown', (event) => {
 			if (event.button !== 0 || event.pointerType === 'touch') return;
@@ -409,6 +418,44 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		}
 		await gallery.open();
 	};
+
+	let finder: Finder | null = null;
+	const openFinder = () => {
+		finder ??= new Finder(t, {
+			schema: () => store.schema,
+			jump: (hit) => {
+				if (mobile.matches && mobilePanel !== 'none') setMobilePanel('none');
+				store.select({ ...emptySelection(), tables: [hit.table] }, hit.kind === 'column' ? { table: hit.table, column: hit.column } : null);
+				canvas.frame('table', hit.table);
+				canvas.focusTable(hit.table, hit.kind === 'column' ? hit.column : undefined);
+			}
+		});
+		finder.open();
+	};
+
+	const densityButton = q<HTMLButtonElement>(root, '[data-action="density"]');
+	const DENSITY_ICONS = { full: 'rows', keys: 'rowsKeys', names: 'rowsNames' } as const;
+	const nextDensity = () => DENSITIES[(DENSITIES.indexOf(prefs.density) + 1) % DENSITIES.length] ?? 'full';
+	const syncDensity = () => {
+		const words = t.density;
+		densityButton.setAttribute('aria-label', fill(words.label, { current: words[prefs.density] }));
+		densityButton.dataset.tip = fill(words.tip, { current: words[prefs.density], next: words[nextDensity()] });
+		densityButton.replaceChildren(icon(DENSITY_ICONS[prefs.density], 16));
+	};
+	function setDensity(density: Density, announce = false): void {
+		if (density === prefs.density) return;
+		prefs.density = density;
+		savePrefs(prefs);
+		canvas.setDensity(density);
+		syncDensity();
+		if (announce) live.say(fill(t.density.changed, { current: t.density[density] }));
+	}
+	function cycleDensity(): void {
+		setDensity(nextDensity(), true);
+	}
+	canvas.setDensity(prefs.density);
+	syncDensity();
+	q<HTMLButtonElement>(root, '[data-action="find"]').dataset.tip = fill(t.bar.findTip, { shortcut: `${modLabel}+K` });
 
 	let elements: { dialog: HTMLDialogElement; palette: Palette } | null = null;
 	const openElements = () => {
@@ -572,7 +619,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 			const groups: [string, [string, string][]][] = [
 				[t.shortcuts.create, [['T', k.table], ['N', k.note], ['Z', k.area], ['R', k.relate], ['C', k.column], [`Alt + ${keys.drag}`, k.manyToMany]]],
 				[t.shortcuts.edit, [['Enter · F2', k.rename], ['Alt + Enter', k.properties], ['Alt + ↑ ↓', k.moveColumn], [keys.arrows, k.nudge], [keys.del, k.delete], [`${modLabel} + D`, k.duplicate], [`${modLabel} + A`, k.selectAll], [`${modLabel} + Z`, k.undo], [`${modLabel} + Y`, k.redo]]],
-				[t.shortcuts.view, [['F', k.fit], ['+ −', k.zoom], ['0', k.zoomReset], [`${keys.rightDrag} · ${keys.space} + ${keys.drag} · ${keys.wheel}`, k.pan], [keys.backgroundDrag, k.marquee]]],
+				[t.shortcuts.view, [[`${modLabel} + K · /`, k.find], ['F', k.fit], ['V', k.density], ['+ −', k.zoom], ['0', k.zoomReset], [`${keys.rightDrag} · ${keys.space} + ${keys.drag} · ${keys.wheel}`, k.pan], [keys.backgroundDrag, k.marquee]]],
 				[t.shortcuts.fileCode, [[`${modLabel} + Enter`, k.apply], [`${modLabel} + S`, k.save], [`${modLabel} + O`, k.open], ['?', k.help]]]
 			];
 			shortcutsDialog = h('dialog', { class: 'sf-shortcuts', 'aria-labelledby': 'sf-shortcuts-title' }) as HTMLDialogElement;
@@ -623,7 +670,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 				redo();
 				break;
 			case 'arrange': {
-				const positions = autoLayout(store.schema);
+				const positions = autoLayout(store.schema, undefined, undefined, canvas.heightOf);
 				commit({ ...store.schema, tables: store.schema.tables.map((x) => ({ ...x, ...(positions.get(x.id) ?? {}) })) }, t.history.arrange);
 				canvas.fit(null, true);
 				break;
@@ -648,6 +695,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 			case 'more':
 				menus.open(target, [
 					{ label: t.palette.title, icon: 'shapes', action: () => openElements() },
+					{ label: t.bar.find, icon: 'search', action: () => openFinder() },
 					{ label: t.bar.note, icon: 'note', action: () => canvas.createNote() },
 					{ label: t.bar.area, icon: 'area', action: () => canvas.createArea() },
 					{ label: t.bar.arrange, icon: 'arrange', disabled: store.schema.tables.length === 0, action: () => root.querySelector<HTMLButtonElement>('[data-action="arrange"]')?.click() },
@@ -668,6 +716,12 @@ export function mountSchemaFlow(root: HTMLElement): void {
 				break;
 			case 'empty-open':
 				openFile();
+				break;
+			case 'find':
+				openFinder();
+				break;
+			case 'density':
+				cycleDensity();
 				break;
 			case 'zoom-in':
 				canvas.setZoom(store.view.zoom * 1.2);
@@ -745,6 +799,11 @@ export function mountSchemaFlow(root: HTMLElement): void {
 			openFile();
 			return;
 		}
+		if (ctrl && key === 'k') {
+			event.preventDefault();
+			openFinder();
+			return;
+		}
 		if (event.key === 'F6') {
 			event.preventDefault();
 			const list = regions();
@@ -767,6 +826,11 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		if ((ctrl && key === 'y') || (ctrl && key === 'z' && event.shiftKey)) {
 			event.preventDefault();
 			redo();
+			return;
+		}
+		if (event.key === '/' && canvasEl.contains(document.activeElement)) {
+			event.preventDefault();
+			openFinder();
 			return;
 		}
 		if (event.key === '?' && canvasEl.contains(document.activeElement)) {

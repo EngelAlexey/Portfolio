@@ -15,6 +15,7 @@ import {
 	updateTable,
 	renameTable
 } from '../model/ops';
+import type { Align, Distribute } from '../model/align';
 import { COLORS, LIMITS, type Column, type DefaultValue, type LogicalType, type Table } from '../model/types';
 import type { Severity } from '../parse/issues';
 import { applyFix } from '../validate/fixes';
@@ -35,6 +36,9 @@ export interface SheetHost extends BubbleHost {
 	overlay: HTMLElement;
 	toasts: { show(text: string): void };
 	openRelate(request: RelateRequest, anchor?: Anchor): void;
+	align(mode: Align): void;
+	distribute(axis: Distribute): void;
+	arrangeSelected(): void;
 	openRelationBubble(relationId: string, at: Element): void;
 	frame(kind: 'table' | 'relation', id: string): void;
 	createArea(): void;
@@ -287,6 +291,26 @@ export class Sheet {
 		remove.addEventListener('click', () => this.host.deleteSelected());
 		row.append(wrap, duplicate, remove);
 		box.append(row);
+		const tables = this.store.selection.tables.length;
+		if (tables >= 2) {
+			box.append(h('h3', { class: 'sf-props-title', text: t.align.title }));
+			const tools = h('div', { class: 'sf-props-actions' });
+			const tool = (text: string, enough: boolean, run: () => void) => {
+				const button = h('button', { type: 'button', class: 'sf-btn', text, disabled: enough ? null : true });
+				button.addEventListener('click', run);
+				return button;
+			};
+			tools.append(
+				tool(t.align.left, true, () => this.host.align('left')),
+				tool(t.align.top, true, () => this.host.align('top')),
+				tool(t.align.middle, true, () => this.host.align('middle')),
+				tool(t.align.bottom, true, () => this.host.align('bottom')),
+				tool(t.align.horizontal, tables >= 3, () => this.host.distribute('horizontal')),
+				tool(t.align.vertical, tables >= 3, () => this.host.distribute('vertical')),
+				tool(t.align.arrange, true, () => this.host.arrangeSelected())
+			);
+			box.append(tools);
+		}
 		return box;
 	}
 

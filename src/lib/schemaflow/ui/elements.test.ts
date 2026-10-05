@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { schemaflowUiEn } from '../../i18n/schemaflow-ui-en';
 import { schemaflowUiEs } from '../../i18n/schemaflow-ui-es';
-import { COLUMN_PRESETS, ELEMENT_ALIASES, ELEMENT_KEYS, itemKey, matchesQuery, RELATION_KINDS, searchText, TABLE_PRESETS, type ElementKey } from './elements';
+import { COLUMN_PRESETS, ELEMENT_ALIASES, ELEMENT_KEYS, itemKey, matchesQuery, RELATION_KINDS, searchText, type ElementKey } from './elements';
 import { COMMON_TYPES } from './types';
 
 const find = (query: string) => ELEMENT_KEYS.filter((key) => matchesQuery(query, searchText(key)));
@@ -9,7 +9,7 @@ const find = (query: string) => ELEMENT_KEYS.filter((key) => matchesQuery(query,
 describe('palette elements', () => {
 	it('lists every table, column and relation preset once', () => {
 		expect(new Set(ELEMENT_KEYS).size).toBe(ELEMENT_KEYS.length);
-		expect(ELEMENT_KEYS).toHaveLength(TABLE_PRESETS.length + COLUMN_PRESETS.length + RELATION_KINDS.length + 2);
+		expect(ELEMENT_KEYS).toHaveLength(1 + COLUMN_PRESETS.length + RELATION_KINDS.length + 2);
 		for (const key of ELEMENT_KEYS) expect(ELEMENT_ALIASES[key].trim().length).toBeGreaterThan(0);
 		expect(Object.keys(ELEMENT_ALIASES).sort()).toEqual([...ELEMENT_KEYS].sort());
 	});
@@ -20,7 +20,7 @@ describe('palette elements', () => {
 	});
 
 	it('derives the key of an item', () => {
-		expect(itemKey({ kind: 'table', preset: 'lookup' })).toBe('table:lookup');
+		expect(itemKey({ kind: 'table' })).toBe('table');
 		expect(itemKey({ kind: 'column', preset: 'uuid' })).toBe('column:uuid');
 		expect(itemKey({ kind: 'relation', relation: 'manyToMany' })).toBe('relation:manyToMany');
 		expect(itemKey({ kind: 'note' })).toBe('note');
@@ -42,8 +42,8 @@ describe('palette elements', () => {
 	});
 
 	it('finds columns and tables by what they hold', () => {
-		expect(find('fecha')).toEqual(['table:timestamps', 'column:date', 'column:datetime', 'column:timestamps']);
-		expect(find('catálogo')).toEqual(['table:lookup']);
+		expect(find('fecha')).toEqual(['column:date', 'column:datetime', 'column:timestamps']);
+		expect(find('tabla')).toEqual(['table', 'relation:manyToMany']);
 		expect(find('dinero')).toEqual(['column:decimal']);
 		expect(find('zona')).toEqual(['area']);
 	});
@@ -62,6 +62,6 @@ describe('palette elements', () => {
 		expect(matchesQuery('calendario', text('column:date', 'Fecha'))).toBe(true);
 		expect(matchesQuery('columna', text('column:date', 'Fecha', schemaflowUiEs.palette.groups.columns))).toBe(true);
 		expect(matchesQuery('columns', text('column:date', 'Date', schemaflowUiEn.palette.groups.columns))).toBe(true);
-		expect(matchesQuery('columns', text('table:basic', 'Table', schemaflowUiEn.palette.groups.tables))).toBe(false);
+		expect(matchesQuery('columns', text('table', 'Table', schemaflowUiEn.palette.groups.tables))).toBe(false);
 	});
 });

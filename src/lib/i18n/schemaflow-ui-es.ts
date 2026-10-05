@@ -45,7 +45,9 @@ export const schemaflowUiEs = {
 		templates: 'Plantillas',
 		share: 'Compartir',
 		file: 'Archivo',
-		more: 'Más acciones'
+		more: 'Más acciones',
+		find: 'Buscar',
+		findTip: 'Buscar una tabla o una columna ({shortcut})'
 	},
 	menu: {
 		newDesign: 'Nuevo diseño',
@@ -158,6 +160,33 @@ export const schemaflowUiEs = {
 			'identity-manual': 'SQL Server no permite cambiar IDENTITY en una columna existente. Recree la tabla para «{table}.{column}».'
 		}
 	},
+	density: {
+		full: 'todas las columnas',
+		keys: 'solo las claves',
+		names: 'solo los nombres',
+		label: 'Columnas visibles: {current}',
+		tip: 'Columnas visibles: {current}. Haga clic para cambiar a «{next}» (V).',
+		changed: 'Columnas visibles: {current}.'
+	},
+	finder: {
+		title: 'Buscar en el diseño',
+		label: 'Buscar una tabla o una columna',
+		placeholder: 'Buscar una tabla o una columna',
+		hint: 'Use las flechas para elegir y Enter para ir.',
+		none: 'Ningún resultado para «{query}».',
+		empty: 'El diseño todavía no tiene tablas.',
+		results: { one: '1 resultado', other: '{n} resultados' }
+	},
+	align: {
+		title: 'Alinear y repartir',
+		left: 'Alinear a la izquierda',
+		top: 'Alinear arriba',
+		middle: 'Centrar en vertical',
+		bottom: 'Alinear abajo',
+		horizontal: 'Repartir en horizontal',
+		vertical: 'Repartir en vertical',
+		arrange: 'Ordenar la selección'
+	},
 	empty: {
 		title: 'Cree la primera tabla',
 		body: 'Arrastre una tabla desde el panel «Elementos» o haga doble clic en el lienzo. También puede partir de una plantilla o de un código que ya tenga.',
@@ -221,11 +250,7 @@ export const schemaflowUiEs = {
 		show: 'Mostrar los elementos',
 		hide: 'Ocultar los elementos',
 		groups: { tables: 'Tablas', columns: 'Columnas', relations: 'Relaciones', notes: 'Anotaciones' },
-		tables: {
-			basic: { label: 'Tabla', tip: 'Tabla con la clave primaria id.' },
-			timestamps: { label: 'Con fechas', tip: 'Tabla con id, created_at y updated_at, que guardan cuándo se creó y cuándo se cambió cada fila.' },
-			lookup: { label: 'Catálogo', tip: 'Tabla de valores fijos, como categorías o estados, con id y un nombre único.' }
-		},
+		table: { label: 'Tabla', tip: 'Tabla con la clave primaria id. Arrástrela al lienzo o haga clic para añadirla.' },
 		columns: { timestamps: 'Fechas de registro' },
 		columnLabel: 'Columna de tipo {name}',
 		columnTip: 'Suelte la columna sobre una tabla, en la fila donde la quiera. Si hace clic, la columna se añade al final de la tabla seleccionada.',
@@ -247,7 +272,6 @@ export const schemaflowUiEs = {
 		selectTable: 'Seleccione una tabla para añadir la columna.',
 		noTables: 'Cree una tabla antes de crear una relación.',
 		timestampsExist: 'La tabla «{table}» ya tiene created_at y updated_at.',
-		nameColumn: 'nombre'
 	},
 	ctx: {
 		rename: 'Cambiar nombre',
@@ -628,6 +652,9 @@ export const schemaflowUiEs = {
 		deleteRelation: 'eliminar la relación {x}',
 		junction: 'crear la tabla puente {x}',
 		move: 'mover {items}',
+		align: 'alinear {x}',
+		distribute: 'repartir {x}',
+		arrangeSelection: 'ordenar {x}',
 		applyCode: 'aplicar el código',
 		template: 'cargar la plantilla {x}',
 		arrange: 'ordenar el diagrama',
@@ -664,6 +691,8 @@ export const schemaflowUiEs = {
 			area: 'Nueva zona (alrededor de la selección, si la hay)',
 			relate: 'Relacionar tablas (usa la tabla o la columna enfocada como origen)',
 			column: 'Añadir una columna a la tabla enfocada',
+			find: 'Buscar una tabla o una columna',
+			density: 'Cambiar las columnas visibles (todas, solo claves, solo nombres)',
 			rename: 'Cambiar el nombre del elemento enfocado',
 			properties: 'Abrir «Propiedades»',
 			moveColumn: 'Mover la columna enfocada',

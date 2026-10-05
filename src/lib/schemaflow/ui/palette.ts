@@ -1,14 +1,12 @@
 import { h, icon, s } from './dom';
-import { COLUMN_PRESETS, itemKey, matchesQuery, RELATION_KINDS, searchText, TABLE_PRESETS, type PaletteItem, type TablePreset } from './elements';
+import { COLUMN_PRESETS, itemKey, matchesQuery, RELATION_KINDS, searchText, type PaletteItem } from './elements';
 import type { RelationKind } from '../model/relate';
 import { fill, plural, type Strings } from './strings';
 import { choiceLabel, TYPE_BY_ID } from './types';
 
-export type { ColumnPreset, PaletteItem, TablePreset } from './elements';
+export type { ColumnPreset, PaletteItem } from './elements';
 
 export const TIMESTAMP_COLUMNS = ['created_at', 'updated_at'] as const;
-
-const TABLE_ROWS: Record<TablePreset, number> = { basic: 1, timestamps: 3, lookup: 2 };
 
 export interface PaletteHost {
 	strings: Strings;
@@ -23,7 +21,7 @@ interface Entry {
 	text: string;
 }
 
-function tableThumb(rows: number): SVGSVGElement {
+function tableThumb(rows = 1): SVGSVGElement {
 	const height = 12 + rows * 7 + 3;
 	const svg = s('svg', { class: 'sf-palette-thumb', width: 46, height, viewBox: `0 0 46 ${height}`, 'aria-hidden': 'true' });
 	svg.append(s('rect', { class: 'sf-thumb-card', x: 0.5, y: 0.5, width: 45, height: height - 1, rx: 3 }), s('rect', { class: 'sf-thumb-head', x: 0.5, y: 0.5, width: 45, height: 10, rx: 3 }));
@@ -83,11 +81,8 @@ export class Palette {
 		const body = h('div', { class: 'sf-palette-body', id: this.sheet ? 'sf-elements-body' : 'sf-palette-body' });
 		body.append(h('p', { class: 'sf-palette-hint', text: this.sheet ? t.sheetHint : t.hint }), this.searchBox());
 
-		const tables = this.group(t.groups.tables, 'sf-palette-grid sf-palette-grid-3');
-		for (const preset of TABLE_PRESETS) {
-			const label = t.tables[preset];
-			tables.grid.append(this.item({ kind: 'table', preset }, [tableThumb(TABLE_ROWS[preset]), h('span', { class: 'sf-palette-label', text: label.label })], label.label, label.tip, 'sf-palette-tile', [label.label, t.groups.tables]));
-		}
+		const tables = this.group(t.groups.tables, 'sf-palette-grid');
+		tables.grid.append(this.item({ kind: 'table' }, [tableThumb(), h('span', { class: 'sf-palette-label', text: t.table.label })], t.table.label, t.table.tip, 'sf-palette-tile sf-palette-tile-wide', [t.table.label, t.groups.tables]));
 
 		const columns = this.group(t.groups.columns, 'sf-palette-grid sf-palette-grid-2');
 		for (const preset of COLUMN_PRESETS) {

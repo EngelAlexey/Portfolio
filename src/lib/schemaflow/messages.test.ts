@@ -60,11 +60,11 @@ describe('messages', () => {
 	});
 });
 
-describe('interface texts for migrations, exports, queries, templates and elements', () => {
+describe('interface texts for migrations, exports, queries, templates, elements and canvas tools', () => {
 	const leaves = (o: unknown, path = ''): [string, string][] =>
 		typeof o === 'string' ? [[path, o]] : o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => leaves(v, path ? `${path}.${k}` : k)) : [];
 	const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join();
-	const parts = (ui: typeof schemaflowUiEs) => ({ migration: ui.migration, exportCode: ui.exportCode, query: ui.pg.query, types: ui.types, gallery: ui.gallery, palette: ui.palette, relate: ui.relate });
+	const parts = (ui: typeof schemaflowUiEs) => ({ migration: ui.migration, exportCode: ui.exportCode, query: ui.pg.query, types: ui.types, gallery: ui.gallery, palette: ui.palette, relate: ui.relate, density: ui.density, finder: ui.finder, align: ui.align, history: ui.history, shortcuts: ui.shortcuts });
 
 	it('has a text for every migration warning in both languages', () => {
 		for (const code of WARNING_CODES) {

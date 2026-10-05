@@ -1,9 +1,9 @@
-import { CARD_WIDTH, tableHeight, type Schema } from './types';
+import { CARD_WIDTH, tableHeight, type Schema, type Table } from './types';
 
 const GAP_X = 110;
 const GAP_Y = 48;
 
-export function autoLayout(schema: Schema, origin = { x: 40, y: 40 }, onlyIds?: ReadonlySet<string>): Map<string, { x: number; y: number }> {
+export function autoLayout(schema: Schema, origin = { x: 40, y: 40 }, onlyIds?: ReadonlySet<string>, heightOf: (table: Table) => number = tableHeight): Map<string, { x: number; y: number }> {
 	const tables = schema.tables.filter((t) => !onlyIds || onlyIds.has(t.id));
 	const ids = new Set(tables.map((t) => t.id));
 	const parents = new Map<string, Set<string>>();
@@ -65,7 +65,7 @@ export function autoLayout(schema: Schema, origin = { x: 40, y: 40 }, onlyIds?: 
 			const table = byId.get(id);
 			if (!table) continue;
 			positions.set(id, { x: origin.x + l * (CARD_WIDTH + GAP_X), y });
-			y += tableHeight(table) + GAP_Y;
+			y += heightOf(table) + GAP_Y;
 		}
 		bottom = Math.max(bottom, y);
 	});
@@ -77,7 +77,7 @@ export function autoLayout(schema: Schema, origin = { x: 40, y: 40 }, onlyIds?: 
 			let tallest = 0;
 			row.forEach((table, k) => {
 				positions.set(table.id, { x: origin.x + k * (CARD_WIDTH + GAP_X), y: rowTop });
-				tallest = Math.max(tallest, tableHeight(table));
+				tallest = Math.max(tallest, heightOf(table));
 			});
 			rowTop += tallest + GAP_Y;
 		}
