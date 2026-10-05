@@ -130,7 +130,7 @@ function cell(ctx: Context, table: Table, column: Column, n: number, trail = new
 	}
 }
 
-function inserted(table: Table): Column[] | null {
+export function insertedColumns(table: Table): Column[] | null {
 	const columns: Column[] = [];
 	for (const column of table.columns) {
 		const key = table.primaryKey.includes(column.id);
@@ -154,7 +154,7 @@ function sequence(table: Table, column: Column): string {
 }
 
 function statements(ctx: Context, table: Table): string | null {
-	const columns = inserted(table);
+	const columns = insertedColumns(table);
 	if (!columns) return null;
 	const rows: Cell[][] = [];
 	for (let n = 1; n <= SAMPLE_ROWS; n++) {

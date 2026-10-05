@@ -2834,6 +2834,32 @@ const svg = (name: IconName, size = 16) =>
 		list-style: none;
 	}
 
+	.sf-gallery-topic {
+		grid-column: 1 / -1;
+		margin-top: 0.75rem;
+	}
+
+	.sf-gallery-topic:first-child {
+		margin-top: 0;
+	}
+
+	.sf-gallery-topic-title {
+		display: flex;
+		align-items: baseline;
+		gap: 0.6rem;
+		margin: 0;
+		padding-bottom: 0.35rem;
+		border-bottom: 1px solid var(--line);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.sf-gallery-topic-count {
+		font-size: 0.75rem;
+		font-weight: 400;
+		color: var(--ink-muted);
+	}
+
 	.sf-gallery-empty {
 		display: flex;
 		flex-direction: column;

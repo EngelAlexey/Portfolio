@@ -1,13 +1,14 @@
 import type { Template } from '../template';
 
 export default {
-	order: 2,
+	order: 1,
+	topic: 'work',
 	name: { es: 'SaaS con organizaciones', en: 'Multi-tenant SaaS' },
 	description: {
 		es: 'Organizaciones, usuarios, membresías con rol y sesiones.',
-		en: 'Organizations, users, memberships with roles and sessions.'
+		en: 'Organisations, users, memberships with roles and sessions.'
 	},
-	tags: { es: ['autenticación', 'SaaS'], en: ['authentication', 'SaaS'] },
+	tags: ['authentication', 'multiTenant', 'roles'],
 	sql: `CREATE TABLE organizations (
 	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	name VARCHAR(100) NOT NULL,
@@ -30,12 +31,14 @@ CREATE TABLE memberships (
 	role VARCHAR(20) NOT NULL DEFAULT 'member',
 	CONSTRAINT uq_org_user UNIQUE (organization_id, user_id)
 );
+CREATE INDEX ix_memberships_user_id ON memberships (user_id);
 
 CREATE TABLE sessions (
-	id TEXT PRIMARY KEY,
+	id VARCHAR(64) PRIMARY KEY,
 	user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	expires_at TIMESTAMPTZ NOT NULL,
 	ip_address VARCHAR(45)
 );
+CREATE INDEX ix_sessions_user_id ON sessions (user_id);
 `
 } satisfies Template;

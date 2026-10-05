@@ -2,7 +2,7 @@ import { autoLayout } from '../model/layout';
 import { bounds } from '../model/ops';
 import { CARD_WIDTH, tableHeight, type Schema } from '../model/types';
 import { parseSql } from '../parse/sql-parse';
-import { loadTemplates, type TemplateEntry } from '../templates/template';
+import { loadTemplates, TOPICS, type TemplateEntry, type TopicId } from '../templates/template';
 import { h, icon, s } from './dom';
 import { fill, fold, plural, type Strings } from './strings';
 
@@ -50,7 +50,7 @@ export class Gallery {
 	private count: HTMLElement;
 	private footer: HTMLElement;
 	private prepared: Prepared[] | null = null;
-	private tag = '';
+	private topic: TopicId | '' = '';
 	private returnFocus: HTMLElement | null = null;
 
 	constructor(
@@ -107,9 +107,10 @@ export class Gallery {
 			this.count.textContent = this.strings.gallery.loading;
 			try {
 				const entries = await loadTemplates();
+				const labels = this.strings.gallery;
 				this.prepared = entries.map((entry) => {
 					const schema = layoutTemplate(entry.sql);
-					const search = fold([entry.name[this.lang], entry.description[this.lang], ...entry.tags[this.lang], ...schema.tables.map((t) => t.name)].join(' '));
+					const search = fold([entry.name[this.lang], entry.description[this.lang], labels.topics[entry.topic], ...entry.tags.map((tag) => labels.tags[tag]), ...schema.tables.map((t) => t.name)].join(' '));
 					return { entry, schema, search };
 				});
 			} catch {
@@ -127,12 +128,12 @@ export class Gallery {
 
 	private renderChips(): void {
 		const t = this.strings;
-		const tags = [...new Set((this.prepared ?? []).flatMap((p) => p.entry.tags[this.lang]))].sort((a, b) => a.localeCompare(b, this.lang));
+		const present = TOPICS.filter((topic) => (this.prepared ?? []).some((p) => p.entry.topic === topic));
 		this.chips.replaceChildren();
-		for (const tag of ['', ...tags]) {
-			const chip = h('button', { type: 'button', class: 'sf-chip-btn', 'aria-pressed': String(tag === this.tag), text: tag || t.gallery.all });
+		for (const topic of ['' as const, ...present]) {
+			const chip = h('button', { type: 'button', class: 'sf-chip-btn', 'aria-pressed': String(topic === this.topic), text: topic ? t.gallery.topics[topic] : t.gallery.all });
 			chip.addEventListener('click', () => {
-				this.tag = tag;
+				this.topic = topic;
 				for (const other of this.chips.querySelectorAll('button')) other.setAttribute('aria-pressed', String(other === chip));
 				this.renderGrid();
 			});
@@ -143,7 +144,7 @@ export class Gallery {
 	private renderGrid(): void {
 		const t = this.strings;
 		const query = fold(this.search.value.trim());
-		const list = (this.prepared ?? []).filter((p) => (!query || p.search.includes(query)) && (!this.tag || p.entry.tags[this.lang].includes(this.tag)));
+		const list = (this.prepared ?? []).filter((p) => (!query || p.search.includes(query)) && (!this.topic || p.entry.topic === this.topic));
 		this.grid.replaceChildren();
 		this.count.textContent = plural(t.count.templates, list.length);
 		if (list.length === 0 && query) {
@@ -158,7 +159,15 @@ export class Gallery {
 			this.grid.append(empty);
 			return;
 		}
-		list.forEach((item, index) => {
+		const grouped = !query && !this.topic;
+		let section: TopicId | null = null;
+		for (const [index, item] of list.entries()) {
+			if (grouped && item.entry.topic !== section) {
+				section = item.entry.topic;
+				const inside = list.filter((p) => p.entry.topic === section).length;
+				const title = h('h3', { class: 'sf-gallery-topic-title' }, h('span', { text: t.gallery.topics[section] }), h('span', { class: 'sf-gallery-topic-count', text: plural(t.count.templates, inside) }));
+				this.grid.append(h('li', { class: 'sf-gallery-topic', role: 'presentation' }, title));
+			}
 			const counts = `${plural(t.count.tables, item.schema.tables.length)} · ${plural(t.count.relations, item.schema.relations.length)}`;
 			const name = item.entry.name[this.lang];
 			const description = item.entry.description[this.lang];
@@ -166,14 +175,14 @@ export class Gallery {
 			const preview = h('span', { class: 'sf-template-preview', 'aria-hidden': 'true' });
 			preview.append(thumbnail(item.schema));
 			const tags = h('span', { class: 'sf-template-tags', 'aria-hidden': 'true' });
-			for (const tag of item.entry.tags[this.lang]) tags.append(h('span', { class: 'sf-tag', text: tag }));
+			for (const tag of item.entry.tags) tags.append(h('span', { class: 'sf-tag', text: t.gallery.tags[tag] }));
 			card.append(preview, h('span', { class: 'sf-template-name', text: name }), h('span', { class: 'sf-template-desc', text: description }), h('span', { class: 'sf-template-counts', text: counts }), tags);
 			card.addEventListener('click', () => {
 				this.close();
 				this.onUse(item.schema, name);
 			});
 			this.grid.append(h('li', {}, card));
-		});
+		}
 	}
 
 	private onGridKey(event: KeyboardEvent): void {

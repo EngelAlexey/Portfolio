@@ -526,6 +526,28 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 		searchPlaceholder: 'Search by name, table or topic',
 		filter: 'Filter by topic',
 		all: 'All',
+		topics: {
+			commerce: 'Commerce',
+			logistics: 'Logistics and inventory',
+			finance: 'Finance and invoicing',
+			education: 'Education',
+			health: 'Health and wellbeing',
+			services: 'Bookings and services',
+			content: 'Content and social',
+			work: 'Work and platforms'
+		},
+		tags: {
+			manyToMany: 'many-to-many',
+			hierarchy: 'hierarchy',
+			states: 'statuses',
+			history: 'history',
+			payments: 'payments',
+			bookings: 'bookings',
+			ratings: 'ratings',
+			roles: 'roles',
+			authentication: 'authentication',
+			multiTenant: 'multi-tenant'
+		},
 		none: 'No template matches "{q}".',
 		clear: 'Clear search',
 		replaceNote: 'The template replaces the current design. You can undo it with Ctrl+Z.',

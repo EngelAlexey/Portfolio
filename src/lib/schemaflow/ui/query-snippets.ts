@@ -1,7 +1,7 @@
 import { quote } from '../dialects/names';
 import { isUnique } from '../model/ops';
 import type { Column, Relation, Schema, Table } from '../model/types';
-import { sampleSql, sampleValue, type SampleLang } from './sample-rows';
+import { insertedColumns, sampleSql, sampleValue, type SampleLang } from './sample-rows';
 import { fill, type Strings } from './strings';
 
 export type SnippetGroup = 'view' | 'filter' | 'join' | 'group' | 'change' | 'structure';
@@ -33,6 +33,17 @@ export function sampleScript(schema: Schema, tableIds: readonly string[] | null,
 	return [note(label), ...result.skipped.map((table) => note(fill(texts.skipped, { table }))), result.sql].join('\n');
 }
 
+function cascadesCleanly(schema: Schema, tableId: string, seen = new Set<string>()): boolean {
+	if (seen.has(tableId)) return true;
+	seen.add(tableId);
+	for (const relation of schema.relations) {
+		if (relation.toTable !== tableId) continue;
+		if (relation.onDelete !== 'CASCADE' && relation.onDelete !== 'SET NULL') return false;
+		if (relation.onDelete === 'CASCADE' && !cascadesCleanly(schema, relation.fromTable, seen)) return false;
+	}
+	return true;
+}
+
 function columnsOf(table: Table, ids: readonly string[]): Column[] {
 	return ids.map((id) => table.columns.find((column) => column.id === id)).filter((column): column is Column => column !== undefined);
 }
@@ -47,12 +58,14 @@ export function buildSnippets(schema: Schema, tableId: string, texts: SnippetTex
 	const targets = schema.relations.filter((relation) => relation.toTable === table.id);
 	const linked = new Set(sources.flatMap((relation) => relation.fromColumns));
 	const plainColumns = table.columns.filter((column) => !table.primaryKey.includes(column.id) && !linked.has(column.id) && column.type.kind !== 'raw' && column.type.kind !== 'json' && column.type.kind !== 'binary');
-	const textColumn = plainColumns.find((column) => isText(column) && NAME_LIKE.test(column.name)) ?? plainColumns.find(isText);
+	const filled = new Set((insertedColumns(table) ?? []).map((column) => column.id));
+	const sampled = plainColumns.filter((column) => filled.has(column.id));
+	const textColumn = sampled.find((column) => isText(column) && NAME_LIKE.test(column.name)) ?? sampled.find(isText);
 	const groupColumn = plainColumns.find((column) => isText(column) && STATE_LIKE.test(column.name)) ?? plainColumns.find((column) => column.type.kind === 'boolean') ?? plainColumns.find((column) => isText(column) && !isUnique(table, column.id));
 	const numberColumn = plainColumns.find(isNumber);
 	const dateColumn = plainColumns.find((column) => isTemporal(column) && /(^|_)(created|updated|date|fecha)/i.test(column.name)) ?? plainColumns.find(isTemporal);
-	const valueColumn = plainColumns[0] ?? table.columns[0];
 	const keys = columnsOf(table, table.primaryKey);
+	const valueColumn = sampled[0] ?? keys[0] ?? table.columns[0];
 	const sample = (column: Column, n = 1) => sampleValue(schema, table, column, n, lang);
 	const rowMatch = (columns: Column[]) => (columns.length > 0 ? columns.map((column) => `${q(column.name)} = ${sample(column)}`).join(' AND ') : 'true');
 	const where = rowMatch(keys.length > 0 ? keys : valueColumn ? [valueColumn] : []);
@@ -125,7 +138,7 @@ export function buildSnippets(schema: Schema, tableId: string, texts: SnippetTex
 		const fresh = isText(changeable) ? quoted(texts.newValue.slice(0, changeable.type.kind === 'varchar' || changeable.type.kind === 'char' ? (changeable.type.length ?? 255) : 255)) : isNumber(changeable) ? '99' : changeable.type.kind === 'boolean' ? (sample(changeable) === 'true' ? 'false' : 'true') : "'2026-12-31'";
 		add('update', 'change', texts.update, { column: changeable.name }, `UPDATE ${name} SET ${q(changeable.name)} = ${fresh} WHERE ${where};\nSELECT * FROM ${name} WHERE ${where};`);
 	}
-	if (targets.every((relation) => relation.fromTable === table.id || relation.onDelete === 'CASCADE' || relation.onDelete === 'SET NULL')) {
+	if (cascadesCleanly(schema, table.id)) {
 		add('remove', 'change', texts.remove, {}, `DELETE FROM ${name} WHERE ${where};\nSELECT count(*) AS ${texts.remaining} FROM ${name};`);
 	}
 

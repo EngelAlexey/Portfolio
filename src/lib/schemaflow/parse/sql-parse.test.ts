@@ -11,10 +11,6 @@ const line = (input: string, offset: number) => input.slice(0, offset).split('\n
 describe('templates', async () => {
 	const templates = await loadTemplates();
 
-	it('has the three original templates', () => {
-		expect(templates.map((t) => t.id)).toEqual(['ecommerce', 'saas', 'blog']);
-	});
-
 	for (const template of templates) {
 		it(`${template.id} parses as PostgreSQL without errors`, () => {
 			const result = parseSql('postgres', template.sql);

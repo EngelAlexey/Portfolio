@@ -524,6 +524,28 @@ export const schemaflowUiEs = {
 		searchPlaceholder: 'Buscar por nombre, tabla o tema',
 		filter: 'Filtrar por tema',
 		all: 'Todas',
+		topics: {
+			commerce: 'Comercio',
+			logistics: 'Logística e inventario',
+			finance: 'Finanzas y facturación',
+			education: 'Educación',
+			health: 'Salud y bienestar',
+			services: 'Reservas y servicios',
+			content: 'Contenido y redes',
+			work: 'Trabajo y plataformas'
+		},
+		tags: {
+			manyToMany: 'muchos a muchos',
+			hierarchy: 'jerarquía',
+			states: 'estados',
+			history: 'historial',
+			payments: 'pagos',
+			bookings: 'reservas',
+			ratings: 'valoraciones',
+			roles: 'roles',
+			authentication: 'autenticación',
+			multiTenant: 'multiempresa'
+		},
 		none: 'Ninguna plantilla coincide con «{q}».',
 		clear: 'Borrar búsqueda',
 		replaceNote: 'La plantilla reemplaza el diseño actual. Puede deshacerlo con Ctrl+Z.',

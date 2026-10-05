@@ -1,10 +1,17 @@
 import type { Lang } from '../../i18n';
 
+export const TOPICS = ['commerce', 'logistics', 'finance', 'education', 'health', 'services', 'content', 'work'] as const;
+export type TopicId = (typeof TOPICS)[number];
+
+export const TAGS = ['manyToMany', 'hierarchy', 'states', 'history', 'payments', 'bookings', 'ratings', 'roles', 'authentication', 'multiTenant'] as const;
+export type TagId = (typeof TAGS)[number];
+
 export interface Template {
+	order: number;
+	topic: TopicId;
 	name: Record<Lang, string>;
 	description: Record<Lang, string>;
-	tags: Record<Lang, string[]>;
-	order?: number;
+	tags: readonly TagId[];
 	sql: string;
 }
 
@@ -12,15 +19,9 @@ export interface TemplateEntry extends Template {
 	id: string;
 }
 
-const modules = import.meta.glob<{ default: Template }>('./library/*.ts');
+const modules = import.meta.glob<{ default: Template }>('./library/*.ts', { eager: true });
 
 export async function loadTemplates(): Promise<TemplateEntry[]> {
-	const entries = await Promise.all(
-		Object.entries(modules).map(async ([path, load]) => {
-			const module = await load();
-			const id = path.replace(/^.*\//, '').replace(/\.ts$/, '');
-			return { id, ...module.default };
-		})
-	);
-	return entries.sort((a, b) => (a.order ?? 100) - (b.order ?? 100) || a.id.localeCompare(b.id));
+	const entries = Object.entries(modules).map(([path, module]) => ({ id: path.replace(/^.*\//, '').replace(/\.ts$/, ''), ...module.default }));
+	return entries.sort((a, b) => TOPICS.indexOf(a.topic) - TOPICS.indexOf(b.topic) || a.order - b.order || a.id.localeCompare(b.id));
 }
