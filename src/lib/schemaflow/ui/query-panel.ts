@@ -4,12 +4,13 @@ import type { Schema } from '../model/types';
 import type { EngineResult, Failure, QueryOutput } from '../validate/pglite';
 import type { QueryEditor } from './code-editor';
 import { h, icon } from './dom';
-import { buildSnippets, sampleScript, SNIPPET_GROUPS, type Snippet } from './query-snippets';
+import type { Snippet } from './query-snippets';
 import type { SampleLang } from './sample-rows';
 import type { Store } from './store';
 import { fill, plural, type Strings } from './strings';
 
 type Engine = typeof import('../validate/pglite');
+type Library = typeof import('./query-snippets');
 
 const READY_MS = 100;
 const SLOW_MS = 250;
@@ -33,6 +34,7 @@ export class QueryPanel {
 	private editor: QueryEditor | null = null;
 	private upgrading = false;
 	private marked = false;
+	private library: Library | null = null;
 	private snippets: Snippet[] = [];
 	private generated: string[] = [];
 	private shown: Schema | null = null;
@@ -47,8 +49,10 @@ export class QueryPanel {
 		const t = strings.pg.query;
 		this.root = h('details', { class: 'sf-query', hidden: true }) as HTMLDetailsElement;
 		this.root.addEventListener('toggle', () => {
-			if (this.root.open) void this.upgrade();
-			else this.engine?.releasePostgres();
+			if (this.root.open) {
+				void this.load();
+				void this.upgrade();
+			} else this.engine?.releasePostgres();
 		});
 		this.area = h('textarea', { class: 'sf-input sf-mono', id: 'sf-query-text', rows: '4', spellcheck: 'false', 'aria-label': t.label }) as HTMLTextAreaElement;
 		this.area.addEventListener('keydown', (event) => {
@@ -118,12 +122,23 @@ export class QueryPanel {
 		return h('div', { class: 'sf-query-field' }, h('label', { class: 'sf-label', for: control.id, text: label }), control);
 	}
 
+	private async load(): Promise<void> {
+		if (this.library) return;
+		try {
+			this.library = await import('./query-snippets');
+		} catch {
+			return;
+		}
+		this.rebuild();
+	}
+
 	private rebuild(): void {
 		const t = this.strings.pg.query;
 		const schema = this.getSchema();
-		this.snippets = buildSnippets(schema, this.tableSelect.value, t.snippets, this.lang);
-		this.snippetSelect.replaceChildren(h('option', { value: '', text: this.snippets.length > 0 ? t.snippetPick : t.snippetNone }));
-		for (const group of SNIPPET_GROUPS) {
+		const library = this.library;
+		this.snippets = library ? library.buildSnippets(schema, this.tableSelect.value, t.snippets, this.lang) : [];
+		this.snippetSelect.replaceChildren(h('option', { value: '', text: this.snippets.length > 0 || !library ? t.snippetPick : t.snippetNone }));
+		for (const group of library?.SNIPPET_GROUPS ?? []) {
 			const items = this.snippets.filter((snippet) => snippet.group === group);
 			if (items.length > 0) this.snippetSelect.append(h('optgroup', { label: t.snippets.groups[group] }, ...items.map((snippet) => h('option', { value: snippet.id, text: snippet.label }))));
 		}
@@ -284,15 +299,15 @@ export class QueryPanel {
 		const nodes: HTMLElement[] = [];
 		if (result.timings) nodes.push(h('p', { class: 'sf-help', text: fill(result.timings.boot < READY_MS ? t.query.timingReady : t.query.timing, { ...result.timings }) }));
 		nodes.push(out.fields.length > 0 ? this.table(out) : h('p', { class: 'sf-finding sf-finding-ok', text: plural(t.query.affected, out.affected) }));
-		if (out.fields.length > 0 && out.total === 0 && !/\binsert\b/i.test(query) && this.getSchema().tables.length > 0) nodes.push(this.sampleHint());
+		if (out.fields.length > 0 && out.total === 0 && !/\binsert\b/i.test(query) && this.getSchema().tables.length > 0 && this.library) nodes.push(this.sampleHint(this.library));
 		this.output.replaceChildren(...nodes);
 	}
 
-	private sampleHint(): HTMLElement {
+	private sampleHint(library: Library): HTMLElement {
 		const t = this.strings.pg.query;
 		const add = h('button', { type: 'button', class: 'sf-btn', text: t.snippets.sampleAll });
 		add.addEventListener('click', () => {
-			const script = sampleScript(this.getSchema(), null, t.snippets.sampleAll, t.snippets, this.lang);
+			const script = library.sampleScript(this.getSchema(), null, t.snippets.sampleAll, t.snippets, this.lang);
 			this.remember(script);
 			this.put(`${script}\n\n${this.text()}`.trimEnd());
 			void this.execute();
