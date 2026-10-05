@@ -1,6 +1,6 @@
 import { h, icon, prefersReducedMotion, type IconName } from './dom';
 
-type Anchor = Element | { x: number; y: number };
+export type Anchor = Element | { x: number; y: number };
 
 function rectOf(anchor: Anchor): DOMRect {
 	if (anchor instanceof Element) return anchor.getBoundingClientRect();

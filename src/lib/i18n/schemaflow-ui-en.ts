@@ -217,6 +217,9 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 	palette: {
 		title: 'Elements',
 		hint: 'Drag an element onto the canvas or onto a table.',
+		sheetHint: 'Tap an element to add it.',
+		search: 'Search elements',
+		noResults: 'No element matches your search.',
 		show: 'Show the elements',
 		hide: 'Hide the elements',
 		groups: { tables: 'Tables', columns: 'Columns', relations: 'Relationships', notes: 'Annotations' },
@@ -233,8 +236,8 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 			oneToOne: { label: '1:1', name: 'One-to-one' },
 			manyToMany: { label: 'N:M', name: 'Many-to-many' }
 		},
-		relationTip: '{name}. Drop it on the table that will hold the foreign key, then click the target table.',
-		manyTip: 'Many-to-many. Drop it on one table, then click the other to create the junction table.',
+		relationTip: '{name}. Click to choose the tables, or drag it onto the source table and click the target table.',
+		manyTip: 'Many-to-many. Click to choose the tables, or drag it onto one table and click the other. A junction table is created.',
 		pickSource: 'Click the table that will hold the foreign key. Press Esc to cancel.',
 		pickFirst: 'Click the first table. Press Esc to cancel.',
 		pickTarget: 'Click the target table. Press Esc to cancel.',
@@ -244,7 +247,7 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 		dropColumn: 'Drop the column on a table.',
 		dropRelation: 'Drop the relationship on a table.',
 		selectTable: 'Select a table to add the column.',
-		selectTableRelation: 'Select a table to create the relationship.',
+		noTables: 'Create a table before you create a relationship.',
 		timestampsExist: 'Table "{table}" already has created_at and updated_at.',
 		nameColumn: 'name'
 	},
@@ -269,12 +272,20 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 	},
 	colours: { slate: 'Grey', blue: 'Blue', teal: 'Teal', green: 'Green', amber: 'Amber', red: 'Red', violet: 'Violet', none: 'No colour' },
 	relate: {
-		title: 'Relate {table} to…',
+		title: 'Relate tables',
+		kindLabel: 'Type of relationship',
+		kinds: {
+			oneToMany: { name: 'One-to-many', text: 'Each row in {to} can have several rows in {from}.' },
+			oneToOne: { name: 'One-to-one', text: 'Each row in {to} has at most one row in {from}.' },
+			manyToMany: { name: 'Many-to-many', text: 'Each row in {from} can be related to several rows in {to}, and the other way round. The junction table {name} is created.' }
+		},
+		sourceTable: 'Source table',
 		targetTable: 'Target table',
+		selfMany: 'Choose two different tables to create the junction table.',
+		advanced: 'Advanced options',
 		targetColumn: 'Target column',
 		sourceColumn: 'Column in {table}',
 		newColumn: 'Create {column} (new)',
-		manyToMany: 'Many-to-many (creates a junction table)',
 		submit: 'Create relationship'
 	},
 	rel: {
@@ -653,7 +664,7 @@ export const schemaflowUiEn: typeof schemaflowUiEs = {
 			table: 'New table',
 			note: 'New note',
 			area: 'New area (around the selection, if any)',
-			relate: 'Relate the focused table or column',
+			relate: 'Relate tables (uses the focused table or column as the source)',
 			column: 'Add a column to the focused table',
 			rename: 'Rename the focused item',
 			properties: 'Open Properties',

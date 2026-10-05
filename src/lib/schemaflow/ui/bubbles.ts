@@ -1,9 +1,5 @@
 import {
-	addColumn,
-	connectColumns,
-	connectWithNewColumns,
 	convertToJunction,
-	createJunction,
 	emptySelection,
 	findTable,
 	isOneToOne,
@@ -14,10 +10,11 @@ import {
 	updateColumn,
 	updateRelation
 } from '../model/ops';
-import { ACTIONS, type Action, type Relation, type Schema } from '../model/types';
+import { planRelation, type RelationKind, type RelationPlan, type RelationRequest } from '../model/relate';
+import { ACTIONS, LIMITS, type Action, type Relation, type Schema, type Table } from '../model/types';
 import type { Selection } from '../model/ops';
 import { h, icon } from './dom';
-import type { Bubble, Live } from './popups';
+import type { Anchor, Bubble, Live } from './popups';
 import type { Store } from './store';
 import { fill, type Strings } from './strings';
 import { displayType } from './types';
@@ -142,133 +139,185 @@ export function openRelationBubble(store: Store, host: BubbleHost, relationId: s
 	host.bubble.open(anchor, render(), { label: host.relationLabel(relation), key: `relation:${relationId}`, className: 'sf-bubble-relation' });
 }
 
-export function openRelateBubble(store: Store, host: BubbleHost, tableId: string, columnId: string | undefined, anchor: Element): void {
+export interface RelateRequest {
+	tableId?: string;
+	columnId?: string;
+	kind?: RelationKind;
+}
+
+export function applyRelationPlan(host: Pick<BubbleHost, 'strings' | 'live' | 'commit' | 'flash'>, plan: RelationPlan): void {
 	const t = host.strings;
-	const table = findTable(store.schema, tableId);
-	if (!table) return;
-	const others = store.schema.tables;
+	if (plan.tableId) {
+		host.commit(plan.schema, fill(t.history.junction, { x: plan.label }), { select: { ...emptySelection(), tables: [plan.tableId] } });
+		host.live.say(fill(t.live.junctionCreated, { x: plan.label }));
+		return;
+	}
+	host.commit(plan.schema, fill(t.history.createRelation, { x: plan.label }));
+	host.live.say(fill(t.live.relationCreated, { x: plan.label }));
+	host.flash(plan.relationId);
+}
+
+const KIND_ORDER: readonly RelationKind[] = ['oneToMany', 'oneToOne', 'manyToMany'];
+
+export function openRelateBubble(store: Store, host: BubbleHost, request: RelateRequest, anchor: Anchor): void {
+	const t = host.strings;
+	const tables = store.schema.tables;
+	const first = tables.find((table) => table.id === request.tableId) ?? tables.find((table) => store.selection.tables.includes(table.id)) ?? tables[0];
+	if (!first) return;
+	const nextId = [...store.selection.tables, ...tables.map((table) => table.id)].find((id) => id !== first.id);
+	const second = tables.find((table) => table.id === nextId) ?? first;
+
 	const form = h('form', { class: 'sf-relate' });
-	form.append(h('p', { class: 'sf-bubble-title', text: fill(t.relate.title, { table: table.name }) }));
-	const targetTable = h('select', { class: 'sf-select', id: 'sf-relate-table' });
-	for (const other of others) targetTable.append(h('option', { value: other.id, text: other.name }));
-	const firstOther = others.find((o) => o.id !== tableId) ?? table;
-	targetTable.value = firstOther.id;
-	const targetColumn = h('select', { class: 'sf-select', id: 'sf-relate-column' });
-	const sourceColumn = h('select', { class: 'sf-select', id: 'sf-relate-source' });
-	const many = h('input', { type: 'checkbox', id: 'sf-relate-many' });
+	form.append(h('p', { class: 'sf-bubble-title', text: t.relate.title }));
+
+	const tableOption = (table: Table) => h('option', { value: table.id, text: table.name });
+	const sourceTable = h('select', { class: 'sf-select', id: 'sf-relate-source-table' }, ...tables.map(tableOption));
+	const targetTable = h('select', { class: 'sf-select', id: 'sf-relate-table' }, ...tables.map(tableOption));
+	sourceTable.value = first.id;
+	targetTable.value = second.id;
+	const field = (label: HTMLElement, control: HTMLElement) => h('div', { class: 'sf-field' }, label, control);
+	const pair = h(
+		'div',
+		{ class: 'sf-relate-pair' },
+		field(h('label', { class: 'sf-label', for: 'sf-relate-source-table', text: t.relate.sourceTable }), sourceTable),
+		field(h('label', { class: 'sf-label', for: 'sf-relate-table', text: t.relate.targetTable }), targetTable)
+	);
+
+	const kinds = h('fieldset', { class: 'sf-kinds' }, h('legend', { class: 'sf-label', text: t.relate.kindLabel }));
+	const radios = new Map<RelationKind, HTMLInputElement>();
+	const sentences = new Map<RelationKind, HTMLElement>();
+	for (const kind of KIND_ORDER) {
+		const radio = h('input', { type: 'radio', name: 'sf-relate-kind', value: kind, checked: kind === (request.kind ?? 'oneToMany') ? true : null, 'aria-labelledby': `sf-kind-name-${kind}`, 'aria-describedby': `sf-kind-text-${kind}` });
+		const sentence = h('span', { class: 'sf-kind-text', id: `sf-kind-text-${kind}` });
+		const name = h('span', { class: 'sf-kind-name', id: `sf-kind-name-${kind}`, text: t.relate.kinds[kind].name });
+		kinds.append(h('label', { class: 'sf-kind' }, radio, h('span', { class: 'sf-kind-body' }, name, sentence)));
+		radios.set(kind, radio);
+		sentences.set(kind, sentence);
+	}
+
 	const preview = h('p', { class: 'sf-relate-preview sf-mono', 'aria-live': 'polite' });
 	const warning = h('p', { class: 'sf-relate-warning', 'aria-live': 'polite' });
-	const fillTarget = () => {
-		const target = findTable(store.schema, targetTable.value);
+
+	const targetColumn = h('select', { class: 'sf-select', id: 'sf-relate-column' });
+	const sourceColumn = h('select', { class: 'sf-select', id: 'sf-relate-source' });
+	const sourceLabel = h('label', { class: 'sf-label', for: 'sf-relate-source' });
+	const advanced = h(
+		'details',
+		{ class: 'sf-relate-advanced', open: request.columnId ? true : null },
+		h('summary', { text: t.relate.advanced }),
+		h('div', { class: 'sf-relate-more' }, field(h('label', { class: 'sf-label', for: 'sf-relate-column', text: t.relate.targetColumn }), targetColumn), field(sourceLabel, sourceColumn))
+	);
+
+	let touchedTarget = false;
+	let newColumn: HTMLOptionElement | null = null;
+
+	const fillColumns = () => {
+		const from = findTable(store.schema, sourceTable.value);
+		const to = findTable(store.schema, targetTable.value);
 		targetColumn.replaceChildren();
-		if (!target) return;
-		const key = referencedKey(target);
-		for (const column of target.columns) {
-			const flags = [displayType(column.type), target.primaryKey.includes(column.id) ? 'PK' : isUnique(target, column.id) ? 'UQ' : ''].filter(Boolean).join(', ');
+		sourceColumn.replaceChildren();
+		if (!from || !to) return;
+		sourceLabel.textContent = fill(t.relate.sourceColumn, { table: from.name });
+		const key = referencedKey(to);
+		for (const column of to.columns) {
+			const flags = [displayType(column.type), to.primaryKey.includes(column.id) ? 'PK' : isUnique(to, column.id) ? 'UQ' : ''].filter(Boolean).join(', ');
 			targetColumn.append(h('option', { value: column.id, text: `${column.name} (${flags})`, selected: key[0] === column.id ? true : null }));
 		}
-		sourceColumn.replaceChildren();
-		const keyColumn = target.columns.find((c) => c.id === targetColumn.value);
-		sourceColumn.append(h('option', { value: '', text: fill(t.relate.newColumn, { column: `${target.name}_${keyColumn?.name ?? 'id'}` }) }));
-		for (const column of table.columns) sourceColumn.append(h('option', { value: column.id, text: column.name, selected: column.id === columnId ? true : null }));
-		update();
+		newColumn = h('option', { value: '' });
+		sourceColumn.append(newColumn);
+		const wanted = from.id === first.id ? request.columnId : undefined;
+		for (const column of from.columns) sourceColumn.append(h('option', { value: column.id, text: column.name, selected: column.id === wanted ? true : null }));
 	};
-	const update = () => {
-		const target = findTable(store.schema, targetTable.value);
-		const tc = target?.columns.find((c) => c.id === targetColumn.value);
-		const sc = table.columns.find((c) => c.id === sourceColumn.value);
-		sourceColumn.disabled = many.checked;
-		targetColumn.disabled = many.checked;
-		if (!target || !tc) {
-			preview.textContent = '';
-			return;
-		}
-		if (many.checked) {
-			preview.textContent = fill(t.connect.junction, { name: `${table.name}_${target.name}` });
-			warning.textContent = '';
-			return;
-		}
-		const sourceName = sc ? sc.name : `${target.name}_${tc.name}`;
-		preview.textContent = `${table.name}.${sourceName} → ${target.name}.${tc.name}`;
+
+	const chosenKind = (): RelationKind => KIND_ORDER.find((kind) => radios.get(kind)?.checked) ?? 'oneToMany';
+
+	const submit = h('button', { type: 'submit', class: 'sf-btn sf-btn-primary', text: t.relate.submit });
+
+	const compute = () => {
+		const from = findTable(store.schema, sourceTable.value);
+		const to = findTable(store.schema, targetTable.value);
+		const kind = chosenKind();
 		const warnings: string[] = [];
-		if (sc && !sameType(sc.type, tc.type)) warnings.push(fill(t.connect.typeMismatch, { a: displayType(sc.type), b: displayType(tc.type) }));
-		const isKey = (target.primaryKey.length === 1 && target.primaryKey[0] === tc.id) || isUnique(target, tc.id);
-		if (!isKey) warnings.push(fill(t.connect.notKey, { column: `${target.name}.${tc.name}` }));
-		warning.textContent = warnings.join(' ');
+		if (!from || !to) return { from, to, kind, target: undefined, plan: null, blocker: '', warnings };
+		const spec: RelationRequest = { kind, from: from.id, to: to.id };
+		const key = referencedKey(to);
+		const source = from.columns.find((column) => column.id === sourceColumn.value);
+		const explicit = touchedTarget || key.length === 0;
+		const target = to.columns.find((column) => column.id === (touchedTarget ? targetColumn.value : (key[0] ?? targetColumn.value)));
+		if (kind !== 'manyToMany') {
+			if (source) spec.fromColumn = source.id;
+			if (touchedTarget) spec.toColumn = targetColumn.value;
+		}
+		const plan = planRelation(store.schema, spec);
+		let blocker = '';
+		if (kind === 'manyToMany') {
+			const missing = [from, to].find((table) => referencedKey(table).length === 0);
+			if (from.id === to.id) blocker = t.relate.selfMany;
+			else if (store.schema.tables.length >= LIMITS.tables) blocker = t.canvas.limitTables;
+			else if (missing) blocker = fill(t.palette.noKey, { table: missing.name });
+		} else {
+			if (!plan) blocker = fill(t.palette.noKey, { table: to.name });
+			else if (store.schema.relations.some((relation) => relation.id === plan.relationId)) blocker = t.connect.exists;
+			else if (!source && from.columns.length >= LIMITS.columns) blocker = t.canvas.limitColumns;
+			if (source && target && !sameType(source.type, target.type)) warnings.push(fill(t.connect.typeMismatch, { a: displayType(source.type), b: displayType(target.type) }));
+			const isKey = target && ((to.primaryKey.length === 1 && to.primaryKey[0] === target.id) || isUnique(to, target.id));
+			if (explicit && target && !isKey) warnings.push(fill(t.connect.notKey, { column: `${to.name}.${target.name}` }));
+		}
+		return { from, to, kind, target, plan, blocker, warnings };
 	};
-	targetTable.addEventListener('change', fillTarget);
-	targetColumn.addEventListener('change', () => {
-		const target = findTable(store.schema, targetTable.value);
-		const keyColumn = target?.columns.find((c) => c.id === targetColumn.value);
-		const first = sourceColumn.querySelector('option');
-		if (first && target) first.textContent = fill(t.relate.newColumn, { column: `${target.name}_${keyColumn?.name ?? 'id'}` });
+
+	const update = () => {
+		const { from, to, kind, target, plan, blocker, warnings } = compute();
+		if (!from || !to) return;
+		const same = from.id === to.id;
+		const junction = kind === 'manyToMany' && plan ? plan.label : (planRelation(store.schema, { kind: 'manyToMany', from: from.id, to: to.id })?.label ?? `${from.name}_${to.name}`);
+		for (const option of KIND_ORDER) {
+			const sentence = sentences.get(option);
+			if (!sentence) continue;
+			sentence.textContent = option === 'manyToMany' && same ? t.relate.selfMany : fill(t.relate.kinds[option].text, { from: from.name, to: to.name, name: junction });
+		}
+		const many = radios.get('manyToMany');
+		if (many) {
+			many.disabled = same;
+			many.closest('.sf-kind')?.classList.toggle('is-disabled', same);
+		}
+		sourceColumn.disabled = kind === 'manyToMany';
+		targetColumn.disabled = kind === 'manyToMany';
+		if (newColumn) newColumn.textContent = fill(t.relate.newColumn, { column: `${to.name}_${target?.name ?? 'id'}` });
+		preview.textContent = plan ? (kind === 'manyToMany' ? fill(t.connect.junction, { name: junction }) : plan.label) : '';
+		warning.textContent = blocker || warnings.join(' ');
+		submit.disabled = !plan || blocker !== '';
+		host.bubble.reposition();
+	};
+
+	form.addEventListener('change', (event) => {
+		const control = event.target;
+		if (control === sourceTable || control === targetTable) {
+			touchedTarget = false;
+			fillColumns();
+		} else if (control === targetColumn) touchedTarget = true;
 		update();
 	});
-	sourceColumn.addEventListener('change', update);
-	many.addEventListener('change', update);
-	const field = (label: string, control: HTMLElement, id: string) => {
-		const f = h('div', { class: 'sf-field' });
-		f.append(h('label', { class: 'sf-label', for: id, text: label }), control);
-		return f;
-	};
-	form.append(field(t.relate.targetTable, targetTable, 'sf-relate-table'), field(t.relate.targetColumn, targetColumn, 'sf-relate-column'), field(fill(t.relate.sourceColumn, { table: table.name }), sourceColumn, 'sf-relate-source'));
-	const check = h('label', { class: 'sf-check', for: 'sf-relate-many' });
-	check.append(many, h('span', { text: t.relate.manyToMany }));
-	form.append(check, preview, warning);
+
+	advanced.addEventListener('toggle', () => host.bubble.reposition());
+	form.append(pair, kinds, preview, warning, advanced);
 	const row = h('div', { class: 'sf-bubble-actions' });
 	const cancel = h('button', { type: 'button', class: 'sf-btn sf-btn-ghost', text: t.cancel });
 	cancel.addEventListener('click', () => host.bubble.close(true));
-	const submit = h('button', { type: 'submit', class: 'sf-btn sf-btn-primary', text: t.relate.submit });
 	row.append(h('span', { class: 'sf-spacer' }), cancel, submit);
 	form.append(row);
+
 	form.addEventListener('submit', (event) => {
 		event.preventDefault();
-		const target = findTable(store.schema, targetTable.value);
-		const tc = target?.columns.find((c) => c.id === targetColumn.value);
-		if (!target || !tc) return;
-		if (many.checked) {
-			const result = createJunction(store.schema, table.id, target.id);
-			if (!result.tableId) return;
-			const created = findTable(result.schema, result.tableId)?.name ?? '';
-			host.bubble.close(false);
-			host.commit(result.schema, fill(t.history.junction, { x: created }), { select: { ...emptySelection(), tables: [result.tableId] } });
-			host.live.say(fill(t.live.junctionCreated, { x: created }));
-			return;
-		}
-		let next: Schema;
-		let relationId = '';
-		let label = '';
-		if (sourceColumn.value) {
-			const sc = table.columns.find((c) => c.id === sourceColumn.value);
-			const result = connectColumns(store.schema, { fromTable: table.id, fromColumns: [sourceColumn.value], toTable: target.id, toColumns: [tc.id] });
-			next = result.schema;
-			relationId = result.relationId;
-			label = `${table.name}.${sc?.name ?? ''} → ${target.name}.${tc.name}`;
-		} else {
-			const key = referencedKey(target);
-			if (key.length === 1 && key[0] === tc.id) {
-				const result = connectWithNewColumns(store.schema, table.id, target.id);
-				next = result.schema;
-				relationId = result.relationId;
-				const created = findTable(next, table.id)?.columns.find((c) => c.id === result.columnIds[0])?.name ?? '';
-				label = `${table.name}.${created} → ${target.name}.${tc.name}`;
-			} else {
-				const added = addColumn(store.schema, table.id, { name: `${target.name}_${tc.name}`, type: tc.type });
-				const result = connectColumns(added.schema, { fromTable: table.id, fromColumns: [added.columnId], toTable: target.id, toColumns: [tc.id] });
-				next = result.schema;
-				relationId = added.columnId ? result.relationId : '';
-				const created = findTable(next, table.id)?.columns.find((c) => c.id === added.columnId)?.name ?? '';
-				label = `${table.name}.${created} → ${target.name}.${tc.name}`;
-			}
-		}
-		if (!relationId) return;
+		const { plan, blocker } = compute();
+		if (!plan || blocker) return;
 		host.bubble.close(false);
-		host.commit(next, fill(t.history.createRelation, { x: label }));
-		host.live.say(fill(t.live.relationCreated, { x: label }));
-		host.flash(relationId);
+		applyRelationPlan(host, plan);
 	});
-	fillTarget();
-	host.bubble.open(anchor, withClose(t, host.bubble, form), { label: fill(t.relate.title, { table: table.name }), key: `relate:${tableId}`, className: 'sf-bubble-relate' });
+
+	fillColumns();
+	update();
+	host.bubble.open(anchor, withClose(t, host.bubble, form), { label: t.relate.title, key: 'relate', className: 'sf-bubble-relate' });
 	targetTable.focus();
 }
 

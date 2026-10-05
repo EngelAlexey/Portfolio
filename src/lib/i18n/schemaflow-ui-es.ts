@@ -215,6 +215,9 @@ export const schemaflowUiEs = {
 	palette: {
 		title: 'Elementos',
 		hint: 'Arrastre un elemento al lienzo o sobre una tabla.',
+		sheetHint: 'Toque un elemento para añadirlo.',
+		search: 'Buscar elementos',
+		noResults: 'Ningún elemento coincide con la búsqueda.',
 		show: 'Mostrar los elementos',
 		hide: 'Ocultar los elementos',
 		groups: { tables: 'Tablas', columns: 'Columnas', relations: 'Relaciones', notes: 'Anotaciones' },
@@ -231,8 +234,8 @@ export const schemaflowUiEs = {
 			oneToOne: { label: '1:1', name: 'Uno a uno' },
 			manyToMany: { label: 'N:M', name: 'Muchos a muchos' }
 		},
-		relationTip: '{name}. Suéltela sobre la tabla que tendrá la clave foránea y haga clic en la tabla de destino.',
-		manyTip: 'Muchos a muchos. Suéltela sobre una tabla y haga clic en la otra para crear la tabla puente.',
+		relationTip: '{name}. Haga clic para elegir las tablas, o arrástrela hasta la tabla de origen y haga clic en la de destino.',
+		manyTip: 'Muchos a muchos. Haga clic para elegir las tablas, o arrástrela hasta una tabla y haga clic en la otra. Se crea la tabla puente.',
 		pickSource: 'Haga clic en la tabla que tendrá la clave foránea. Pulse Esc para cancelar.',
 		pickFirst: 'Haga clic en la primera tabla. Pulse Esc para cancelar.',
 		pickTarget: 'Haga clic en la tabla de destino. Pulse Esc para cancelar.',
@@ -242,7 +245,7 @@ export const schemaflowUiEs = {
 		dropColumn: 'Suelte la columna sobre una tabla.',
 		dropRelation: 'Suelte la relación sobre una tabla.',
 		selectTable: 'Seleccione una tabla para añadir la columna.',
-		selectTableRelation: 'Seleccione una tabla para crear la relación.',
+		noTables: 'Cree una tabla antes de crear una relación.',
 		timestampsExist: 'La tabla «{table}» ya tiene created_at y updated_at.',
 		nameColumn: 'nombre'
 	},
@@ -267,12 +270,20 @@ export const schemaflowUiEs = {
 	},
 	colours: { slate: 'Gris', blue: 'Azul', teal: 'Turquesa', green: 'Verde', amber: 'Ámbar', red: 'Rojo', violet: 'Violeta', none: 'Sin color' },
 	relate: {
-		title: 'Relacionar {table} con…',
+		title: 'Relacionar tablas',
+		kindLabel: 'Tipo de relación',
+		kinds: {
+			oneToMany: { name: 'Uno a muchos', text: 'Cada fila de {to} puede tener varias filas en {from}.' },
+			oneToOne: { name: 'Uno a uno', text: 'Cada fila de {to} tiene como máximo una fila en {from}.' },
+			manyToMany: { name: 'Muchos a muchos', text: 'Cada fila de {from} puede estar relacionada con varias filas de {to}, y al revés. Se crea la tabla puente {name}.' }
+		},
+		sourceTable: 'Tabla de origen',
 		targetTable: 'Tabla de destino',
+		selfMany: 'Elija dos tablas distintas para crear la tabla puente.',
+		advanced: 'Opciones avanzadas',
 		targetColumn: 'Columna de destino',
 		sourceColumn: 'Columna en {table}',
 		newColumn: 'Crear {column} (nueva)',
-		manyToMany: 'Muchos a muchos (crea una tabla puente)',
 		submit: 'Crear relación'
 	},
 	rel: {
@@ -651,7 +662,7 @@ export const schemaflowUiEs = {
 			table: 'Nueva tabla',
 			note: 'Nueva nota',
 			area: 'Nueva zona (alrededor de la selección, si la hay)',
-			relate: 'Relacionar la tabla o la columna enfocada',
+			relate: 'Relacionar tablas (usa la tabla o la columna enfocada como origen)',
 			column: 'Añadir una columna a la tabla enfocada',
 			rename: 'Cambiar el nombre del elemento enfocado',
 			properties: 'Abrir «Propiedades»',

@@ -5,8 +5,6 @@ import {
 	addTable,
 	bounds,
 	connectColumns,
-	connectWithNewColumns,
-	createJunction,
 	deleteColumn,
 	deleteSelection,
 	duplicateTable,
@@ -18,7 +16,6 @@ import {
 	referencedKey,
 	renameTable,
 	sameType,
-	setOneToOne,
 	setPrimaryKey,
 	toggleUnique,
 	updateArea,
@@ -27,13 +24,15 @@ import {
 	updateTable,
 	type Selection
 } from '../model/ops';
+import { planRelation, type RelationKind, type RelationPlan } from '../model/relate';
 import { CARD_WIDTH, COLORS, HEADER_HEIGHT, LIMITS, ROW_HEIGHT, tableHeight, type Area, type Column, type Note, type Relation, type Schema, type Table } from '../model/types';
 import type { Severity } from '../parse/issues';
 import { DIALECT_LABELS } from '../dialects';
 import { h, icon, isTextField, mod, modLabel, prefersReducedMotion, s } from './dom';
 import { edgeGeometry, rowCentre } from './geometry';
-import { TIMESTAMP_COLUMNS, type ColumnPreset, type PaletteItem, type RelationKind, type TablePreset } from './palette';
-import type { Bubble, Live, MenuItem, Menus, Toasts } from './popups';
+import { applyRelationPlan, type RelateRequest } from './bubbles';
+import { TIMESTAMP_COLUMNS, type ColumnPreset, type PaletteItem, type TablePreset } from './palette';
+import type { Anchor, Bubble, Live, MenuItem, Menus, Toasts } from './popups';
 import { isEmptySelection, type Store } from './store';
 import { fill, plural, type Strings } from './strings';
 import { TypePicker } from './type-picker';
@@ -49,7 +48,7 @@ export interface CanvasHost {
 	commit(next: Schema, label: string, options?: { coalesce?: string; select?: Selection }): void;
 	undo(): void;
 	openRelationBubble(relationId: string, at: { x: number; y: number } | Element): void;
-	openRelate(tableId: string, columnId?: string): void;
+	openRelate(request: RelateRequest, anchor?: Anchor): void;
 	openProperties(): void;
 	openGlossary(term: 'PRIMARY_KEY' | 'FOREIGN_KEY' | 'UNIQUE', anchor: HTMLElement): void;
 	sheetInset(): number;
@@ -854,7 +853,7 @@ export class Canvas {
 		return schema;
 	}
 
-	activateItem(item: PaletteItem, keyboard: boolean): void {
+	activateItem(item: PaletteItem): void {
 		const t = this.strings;
 		if (item.kind === 'table') this.createTable(undefined, true, item.preset);
 		else if (item.kind === 'note') this.createNote();
@@ -863,11 +862,22 @@ export class Canvas {
 			const tableId = this.singleTable();
 			if (tableId) this.addPresetColumn(tableId, item.preset);
 			else this.host.toasts.show(t.palette.selectTable);
-		} else if (keyboard) {
-			const tableId = this.singleTable();
-			if (tableId) this.host.openRelate(tableId);
-			else this.host.toasts.show(t.palette.selectTableRelation);
-		} else this.startLink(item.relation, null);
+		} else this.relate({ kind: item.relation });
+	}
+
+	private relate(request: RelateRequest): void {
+		if (this.store.schema.tables.length === 0) this.host.toasts.show(this.strings.palette.noTables);
+		else this.host.openRelate(request, request.tableId ? undefined : this.relateAnchor());
+	}
+
+	private relateAnchor(): { x: number; y: number } {
+		const rect = this.root.getBoundingClientRect();
+		return { x: rect.left + this.host.leftInset() + 24, y: rect.top + 16 };
+	}
+
+	private runPlan(plan: RelationPlan | null): void {
+		if (!plan) return;
+		applyRelationPlan({ strings: this.strings, live: this.host.live, commit: (next, label, options) => this.host.commit(next, label, options), flash: (id) => this.flash(id) }, plan);
 	}
 
 	private singleTable(): string | null {
@@ -941,39 +951,13 @@ export class Canvas {
 
 	private linkOutcome(relation: RelationKind, source: Table, target: Table): Outcome {
 		const t = this.strings;
-		if (relation === 'manyToMany') {
-			const name = `${source.name}_${target.name}`;
-			return {
-				valid: true,
-				text: this.label(t.connect.junction, { name }),
-				run: () => {
-					const result = createJunction(this.store.schema, source.id, target.id);
-					if (!result.tableId) return;
-					const created = findTable(result.schema, result.tableId);
-					this.host.commit(result.schema, this.label(t.history.junction, { x: created?.name ?? name }), { select: { ...emptySelection(), tables: [result.tableId] } });
-					this.host.live.say(this.label(t.live.junctionCreated, { x: created?.name ?? name }));
-				}
-			};
-		}
+		const run = () => this.runPlan(planRelation(this.store.schema, { kind: relation, from: source.id, to: target.id }));
+		if (relation === 'manyToMany') return { valid: true, text: this.label(t.connect.junction, { name: `${source.name}_${target.name}` }), run };
 		const key = referencedKey(target);
 		const keyColumn = target.columns.find((c) => c.id === key[0]);
 		if (key.length === 0 || !keyColumn) return { valid: false, text: this.label(t.palette.noKey, { table: target.name }) };
-		const column = `${target.name}_${keyColumn.name}`;
-		const text = this.label(t.connect.createColumn, { table: source.name, column, target: `${target.name}.${keyColumn.name}` });
-		return {
-			valid: true,
-			text: relation === 'oneToOne' ? this.label(t.palette.oneToOneTag, { text }) : text,
-			run: () => {
-				const result = connectWithNewColumns(this.store.schema, source.id, target.id);
-				if (!result.relationId) return;
-				const schema = relation === 'oneToOne' ? setOneToOne(result.schema, result.relationId, true) : result.schema;
-				const created = findTable(schema, source.id)?.columns.find((c) => c.id === result.columnIds[0])?.name ?? column;
-				const label = `${source.name}.${created} → ${target.name}.${keyColumn.name}`;
-				this.host.commit(schema, this.label(t.history.createRelation, { x: label }));
-				this.host.live.say(this.label(t.live.relationCreated, { x: label }));
-				this.flash(result.relationId);
-			}
-		};
+		const text = this.label(t.connect.createColumn, { table: source.name, column: `${target.name}_${keyColumn.name}`, target: `${target.name}.${keyColumn.name}` });
+		return { valid: true, text: relation === 'oneToOne' ? this.label(t.palette.oneToOneTag, { text }) : text, run };
 	}
 
 	private linkClick(e: PointerEvent, target: HTMLElement): void {
@@ -1197,7 +1181,7 @@ export class Canvas {
 		if (cancelled) return;
 		const item = drag.item;
 		if (!drag.ghost) {
-			this.activateItem(item, false);
+			this.activateItem(item);
 			return;
 		}
 		if (!this.insideCanvas(e.clientX, e.clientY)) return;
@@ -1746,18 +1730,11 @@ export class Canvas {
 		if (source && sourceColumn && card?.dataset.table) {
 			const target = findTable(schema, card.dataset.table);
 			if (target && alt && target.id !== source.id) {
-				const name = `${source.name}_${target.name}`;
 				outcome = {
 					valid: true,
-					text: this.label(t.connect.junction, { name }),
+					text: this.label(t.connect.junction, { name: `${source.name}_${target.name}` }),
 					highlight: head ?? row ?? undefined,
-					run: () => {
-						const result = createJunction(this.store.schema, source.id, target.id);
-						if (!result.tableId) return;
-						const created = findTable(result.schema, result.tableId);
-						this.host.commit(result.schema, this.label(t.history.junction, { x: created?.name ?? name }), { select: { ...emptySelection(), tables: [result.tableId] } });
-						this.host.live.say(this.label(t.live.junctionCreated, { x: created?.name ?? name }));
-					}
+					run: () => this.runPlan(planRelation(this.store.schema, { kind: 'manyToMany', from: source.id, to: target.id }))
 				};
 			} else if (target && row?.dataset.column) {
 				const targetColumn = target.columns.find((c) => c.id === row.dataset.column);
@@ -1773,19 +1750,11 @@ export class Canvas {
 				if (key.length === 0 || !keyColumn) {
 					outcome = { valid: false, text: this.label(t.connect.notKey, { column: target.name }) };
 				} else {
-					const column = `${target.name}_${keyColumn.name}`;
 					outcome = {
 						valid: true,
-						text: this.label(t.connect.createColumn, { table: source.name, column, target: `${target.name}.${keyColumn.name}` }),
+						text: this.label(t.connect.createColumn, { table: source.name, column: `${target.name}_${keyColumn.name}`, target: `${target.name}.${keyColumn.name}` }),
 						highlight: head,
-						run: () => {
-							const result = connectWithNewColumns(this.store.schema, source.id, target.id);
-							if (!result.relationId) return;
-							const label = `${source.name}.${findTable(result.schema, source.id)?.columns.find((c) => c.id === result.columnIds[0])?.name ?? column} → ${target.name}.${keyColumn.name}`;
-							this.host.commit(result.schema, this.label(t.history.createRelation, { x: label }));
-							this.host.live.say(this.label(t.live.relationCreated, { x: label }));
-							this.flash(result.relationId);
-						}
+						run: () => this.runPlan(planRelation(this.store.schema, { kind: 'oneToMany', from: source.id, to: target.id }))
 					};
 				}
 			} else if (target && target.id === source.id && head) {
@@ -1979,7 +1948,7 @@ export class Canvas {
 		return [
 			{ label: t.ctx.rename, shortcut: 'F2', action: () => this.startRename(tableId) },
 			{ label: t.ctx.addColumn, shortcut: 'C', disabled: (table?.columns.length ?? 0) >= LIMITS.columns, action: () => this.addColumnAndEdit(tableId) },
-			{ label: t.ctx.relate, shortcut: 'R', action: () => this.host.openRelate(tableId) },
+			{ label: t.ctx.relate, shortcut: 'R', action: () => this.host.openRelate({ tableId }) },
 			{ label: t.ctx.properties, shortcut: 'Alt+Enter', action: () => this.host.openProperties() },
 			...this.colourItems('table', tableId),
 			{ kind: 'separator' },
@@ -2021,7 +1990,7 @@ export class Canvas {
 				action: () => this.host.commit(toggleUnique(this.store.schema, tableId, columnId), this.label(t.history.editColumn, { x: column.name }))
 			},
 			{ kind: 'separator' },
-			{ label: t.ctx.relate, shortcut: 'R', action: () => this.host.openRelate(tableId, columnId) },
+			{ label: t.ctx.relate, shortcut: 'R', action: () => this.host.openRelate({ tableId, columnId }) },
 			{ label: t.ctx.deleteColumn, danger: true, shortcut: t.shortcuts.keys.del, action: () => this.deleteColumnWithToast(tableId, columnId) }
 		];
 	}
@@ -2189,7 +2158,7 @@ export class Canvas {
 			}
 			if (key === 'r' || key === 'R') {
 				e.preventDefault();
-				this.host.openRelate(tableId, columnId);
+				this.host.openRelate({ tableId, columnId });
 				return;
 			}
 			if (key === 'ContextMenu' || (key === 'F10' && e.shiftKey)) {
@@ -2263,9 +2232,9 @@ export class Canvas {
 		} else if (lower === 'c' && tableId) {
 			e.preventDefault();
 			this.addColumnAndEdit(tableId);
-		} else if (lower === 'r' && tableId) {
+		} else if (lower === 'r') {
 			e.preventDefault();
-			this.host.openRelate(tableId);
+			this.relate(tableId ? { tableId } : {});
 		} else if (lower === 'f') {
 			e.preventDefault();
 			this.fit(null, true);

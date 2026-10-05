@@ -1,17 +1,10 @@
 import { h, icon, s } from './dom';
-import { fill, type Strings } from './strings';
-import { choiceLabel, TYPE_BY_ID, type CommonTypeId } from './types';
+import { COLUMN_PRESETS, itemKey, matchesQuery, RELATION_KINDS, searchText, TABLE_PRESETS, type PaletteItem, type TablePreset } from './elements';
+import type { RelationKind } from '../model/relate';
+import { fill, plural, type Strings } from './strings';
+import { choiceLabel, TYPE_BY_ID } from './types';
 
-export type TablePreset = 'basic' | 'timestamps' | 'lookup';
-export type ColumnPreset = CommonTypeId | 'timestamps';
-export type RelationKind = 'oneToMany' | 'oneToOne' | 'manyToMany';
-
-export type PaletteItem =
-	| { kind: 'table'; preset: TablePreset }
-	| { kind: 'column'; preset: ColumnPreset }
-	| { kind: 'relation'; relation: RelationKind }
-	| { kind: 'note' }
-	| { kind: 'area' };
+export type { ColumnPreset, PaletteItem, TablePreset } from './elements';
 
 export const TIMESTAMP_COLUMNS = ['created_at', 'updated_at'] as const;
 
@@ -20,8 +13,14 @@ const TABLE_ROWS: Record<TablePreset, number> = { basic: 1, timestamps: 3, looku
 export interface PaletteHost {
 	strings: Strings;
 	drag(item: PaletteItem, event: PointerEvent): void;
-	activate(item: PaletteItem, keyboard: boolean): void;
+	activate(item: PaletteItem): void;
 	toggled(open: boolean): void;
+}
+
+interface Entry {
+	item: PaletteItem;
+	el: HTMLButtonElement;
+	text: string;
 }
 
 function tableThumb(rows: number): SVGSVGElement {
@@ -50,13 +49,19 @@ function relationGlyph(kind: RelationKind): SVGSVGElement {
 
 export class Palette {
 	private open: boolean;
+	private readonly entries: Entry[] = [];
+	private readonly sections: HTMLElement[] = [];
+	private input!: HTMLInputElement;
+	private empty!: HTMLElement;
+	private status!: HTMLElement;
 
 	constructor(
 		private readonly host: PaletteHost,
 		private readonly el: HTMLElement,
-		open: boolean
+		open: boolean,
+		private readonly sheet = false
 	) {
-		this.open = open;
+		this.open = sheet || open;
 		this.build();
 	}
 
@@ -64,80 +69,139 @@ export class Palette {
 		return this.open;
 	}
 
+	focusSearch(): void {
+		this.input.focus();
+	}
+
+	reset(): void {
+		this.input.value = '';
+		this.filter();
+	}
+
 	private build(): void {
 		const t = this.host.strings.palette;
-		const toggle = h('button', { type: 'button', class: 'sf-palette-toggle', 'aria-expanded': String(this.open), 'aria-controls': 'sf-palette-body' });
-		toggle.append(icon('shapes', 15), h('span', { class: 'sf-palette-title', text: t.title }), icon('chevron', 14));
-		toggle.addEventListener('click', () => this.setOpen(!this.open));
-		const body = h('div', { class: 'sf-palette-body', id: 'sf-palette-body' });
-		body.append(h('p', { class: 'sf-palette-hint', text: t.hint }));
+		const body = h('div', { class: 'sf-palette-body', id: this.sheet ? 'sf-elements-body' : 'sf-palette-body' });
+		body.append(h('p', { class: 'sf-palette-hint', text: this.sheet ? t.sheetHint : t.hint }), this.searchBox());
 
 		const tables = this.group(t.groups.tables, 'sf-palette-grid sf-palette-grid-3');
-		for (const preset of ['basic', 'timestamps', 'lookup'] as const) {
+		for (const preset of TABLE_PRESETS) {
 			const label = t.tables[preset];
-			tables.append(this.item({ kind: 'table', preset }, [tableThumb(TABLE_ROWS[preset]), h('span', { class: 'sf-palette-label', text: label.label })], label.label, label.tip, 'sf-palette-tile'));
+			tables.grid.append(this.item({ kind: 'table', preset }, [tableThumb(TABLE_ROWS[preset]), h('span', { class: 'sf-palette-label', text: label.label })], label.label, label.tip, 'sf-palette-tile', [label.label, t.groups.tables]));
 		}
 
 		const columns = this.group(t.groups.columns, 'sf-palette-grid sf-palette-grid-2');
-		for (const preset of ['text', 'longText', 'integer', 'decimal', 'boolean', 'date', 'datetime', 'uuid', 'json', 'timestamps'] as const) {
+		for (const preset of COLUMN_PRESETS) {
 			const name = preset === 'timestamps' ? t.columns.timestamps : choiceLabel(this.host.strings, preset);
 			const hint = preset === 'timestamps' ? TIMESTAMP_COLUMNS.join(', ') : TYPE_BY_ID[preset].sql;
-			columns.append(
+			columns.grid.append(
 				this.item(
 					{ kind: 'column', preset },
 					[h('span', { class: 'sf-palette-label', text: name }), h('span', { class: 'sf-palette-type', text: hint })],
 					fill(t.columnLabel, { name }),
 					t.columnTip,
-					preset === 'timestamps' ? 'sf-palette-chip sf-palette-wide' : 'sf-palette-chip'
+					preset === 'timestamps' ? 'sf-palette-chip sf-palette-wide' : 'sf-palette-chip',
+					[name, hint, t.groups.columns]
 				)
 			);
 		}
 
 		const relations = this.group(t.groups.relations, 'sf-palette-grid sf-palette-grid-3');
-		for (const relation of ['oneToMany', 'oneToOne', 'manyToMany'] as const) {
+		for (const relation of RELATION_KINDS) {
 			const info = t.relations[relation];
-			relations.append(
-				this.item({ kind: 'relation', relation }, [relationGlyph(relation), h('span', { class: 'sf-palette-label', text: info.label })], info.name, relation === 'manyToMany' ? t.manyTip : fill(t.relationTip, { name: info.name }), 'sf-palette-tile')
+			relations.grid.append(
+				this.item({ kind: 'relation', relation }, [relationGlyph(relation), h('span', { class: 'sf-palette-label', text: info.label })], info.name, relation === 'manyToMany' ? t.manyTip : fill(t.relationTip, { name: info.name }), 'sf-palette-tile', [info.label, info.name, t.groups.relations])
 			);
 		}
 
 		const notes = this.group(t.groups.notes, 'sf-palette-grid sf-palette-grid-2');
 		const bar = this.host.strings.bar;
-		notes.append(
-			this.item({ kind: 'note' }, [icon('note', 15), h('span', { class: 'sf-palette-label', text: bar.note })], bar.note, bar.noteTip, 'sf-palette-chip sf-palette-row'),
-			this.item({ kind: 'area' }, [icon('area', 15), h('span', { class: 'sf-palette-label', text: bar.area })], bar.area, bar.areaTip, 'sf-palette-chip sf-palette-row')
+		notes.grid.append(
+			this.item({ kind: 'note' }, [icon('note', 15), h('span', { class: 'sf-palette-label', text: bar.note })], bar.note, bar.noteTip, 'sf-palette-chip sf-palette-row', [bar.note, t.groups.notes]),
+			this.item({ kind: 'area' }, [icon('area', 15), h('span', { class: 'sf-palette-label', text: bar.area })], bar.area, bar.areaTip, 'sf-palette-chip sf-palette-row', [bar.area, t.groups.notes])
 		);
 
-		for (const grid of [tables, columns, relations, notes]) body.append(grid.parentElement as HTMLElement);
+		this.empty = h('p', { class: 'sf-palette-empty', text: t.noResults, hidden: true });
+		this.status = h('p', { class: 'sr-only', role: 'status' });
+		body.append(...[tables, columns, relations, notes].map((group) => group.section), this.empty, this.status);
+
+		if (this.sheet) {
+			this.el.replaceChildren(body);
+			return;
+		}
+		const toggle = h('button', { type: 'button', class: 'sf-palette-toggle', 'aria-expanded': String(this.open), 'aria-controls': 'sf-palette-body' });
+		toggle.append(icon('shapes', 15), h('span', { class: 'sf-palette-title', text: t.title }), icon('chevron', 14));
+		toggle.addEventListener('click', () => this.setOpen(!this.open));
 		this.el.replaceChildren(toggle, body);
 		this.sync();
 	}
 
-	private group(title: string, gridClass: string): HTMLElement {
+	private searchBox(): HTMLElement {
+		const t = this.host.strings.palette;
+		const id = this.sheet ? 'sf-elements-search' : 'sf-palette-search';
+		const wrap = h('div', { class: 'sf-search sf-palette-search' });
+		this.input = h('input', { type: 'search', class: 'sf-input', id, placeholder: t.search, autocomplete: 'off', spellcheck: 'false', enterkeyhint: 'go' });
+		wrap.append(h('label', { class: 'sr-only', for: id, text: t.search }), icon('search', 15), this.input);
+		this.input.addEventListener('input', () => this.filter());
+		this.input.addEventListener('keydown', (event) => {
+			const first = this.entries.find((entry) => !entry.el.hidden);
+			if (event.key === 'Enter' && first) {
+				event.preventDefault();
+				this.host.activate(first.item);
+			} else if (event.key === 'ArrowDown' && first) {
+				event.preventDefault();
+				first.el.focus();
+			} else if (event.key === 'Escape' && this.input.value) {
+				event.preventDefault();
+				event.stopPropagation();
+				this.reset();
+			}
+		});
+		return wrap;
+	}
+
+	private filter(): void {
+		const t = this.host.strings;
+		const query = this.input.value;
+		let count = 0;
+		for (const entry of this.entries) {
+			const match = matchesQuery(query, entry.text);
+			entry.el.hidden = !match;
+			if (match) count++;
+		}
+		for (const section of this.sections) section.hidden = !section.querySelector('.sf-palette-item:not([hidden])');
+		this.empty.hidden = count > 0;
+		this.status.textContent = query.trim() && count > 0 ? plural(t.count.items, count) : '';
+	}
+
+	private group(title: string, gridClass: string): { section: HTMLElement; grid: HTMLElement } {
 		const section = h('section', { class: 'sf-palette-group' });
 		const grid = h('div', { class: gridClass, role: 'group', 'aria-label': title });
 		section.append(h('h3', { class: 'sf-palette-group-title', text: title }), grid);
-		return grid;
+		this.sections.push(section);
+		return { section, grid };
 	}
 
-	private item(item: PaletteItem, content: Node[], label: string, tip: string, className: string): HTMLButtonElement {
+	private item(item: PaletteItem, content: Node[], label: string, tip: string, className: string, words: string[]): HTMLButtonElement {
 		const button = h('button', { type: 'button', class: `sf-palette-item ${className}`, 'aria-label': label, 'data-tip': tip, 'data-item': item.kind });
 		button.append(...content);
 		let dragged = false;
-		button.addEventListener('pointerdown', (event) => {
-			if (event.button !== 0 || event.pointerType === 'touch') return;
-			event.preventDefault();
-			dragged = true;
-			window.addEventListener('pointerup', () => setTimeout(() => (dragged = false), 0), { once: true });
-			this.host.drag(item, event);
-		});
-		button.addEventListener('click', (event) => {
+		if (!this.sheet) {
+			button.addEventListener('pointerdown', (event) => {
+				if (event.button !== 0 || event.pointerType === 'touch') return;
+				event.preventDefault();
+				dragged = true;
+				window.addEventListener('pointerup', () => setTimeout(() => (dragged = false), 0), { once: true });
+				this.host.drag(item, event);
+			});
+		}
+		button.addEventListener('click', () => {
 			if (dragged) {
 				dragged = false;
 				return;
 			}
-			this.host.activate(item, event.detail === 0);
+			this.host.activate(item);
 		});
+		this.entries.push({ item, el: button, text: searchText(itemKey(item), ...words) });
 		return button as HTMLButtonElement;
 	}
 

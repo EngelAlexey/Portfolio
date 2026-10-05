@@ -149,9 +149,10 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		commit,
 		undo,
 		openRelationBubble: (id, at) => openRelationBubble(store, bubbleHost, id, at),
-		openRelate: (tableId, columnId) => {
-			const anchor = canvas.cardElement(tableId)?.querySelector<HTMLElement>(columnId ? `.sf-row[data-column="${columnId}"]` : '.sf-card-head') ?? canvasEl;
-			openRelateBubble(store, bubbleHost, tableId, columnId, anchor);
+		openRelate: (request, anchor) => {
+			const card = request.tableId ? canvas.cardElement(request.tableId) : null;
+			const at = anchor ?? card?.querySelector<HTMLElement>(request.columnId ? `.sf-row[data-column="${request.columnId}"]` : '.sf-card-head') ?? canvasEl;
+			openRelateBubble(store, bubbleHost, request, at);
 		},
 		openProperties: () => openSheet('properties'),
 		openGlossary: (term, anchor) => openGlossary(t, bubble, term, anchor),
@@ -381,7 +382,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 		{
 			strings: t,
 			drag: (item, event) => canvas.beginInsert(item, event),
-			activate: (item, keyboard) => canvas.activateItem(item, keyboard),
+			activate: (item) => canvas.activateItem(item),
 			toggled: (open) => {
 				prefs.paletteOpen = open;
 				savePrefs(prefs);
@@ -407,6 +408,40 @@ export function mountSchemaFlow(root: HTMLElement): void {
 			gallery = new Gallery(t, lang, loadTemplate, () => store.schema.tables.length > 0);
 		}
 		await gallery.open();
+	};
+
+	let elements: { dialog: HTMLDialogElement; palette: Palette } | null = null;
+	const openElements = () => {
+		if (!elements) {
+			const dialog = h('dialog', { class: 'sf-elements', 'aria-labelledby': 'sf-elements-title' }) as HTMLDialogElement;
+			const close = h('button', { type: 'button', class: 'sf-icon-btn', 'aria-label': t.close, 'data-tip': t.close });
+			close.append(icon('close', 16));
+			close.addEventListener('click', () => dialog.close());
+			const head = h('div', { class: 'sf-gallery-head' }, h('h2', { id: 'sf-elements-title', class: 'sf-gallery-title', text: t.palette.title }), close);
+			const body = h('div', { class: 'sf-elements-panel' });
+			dialog.append(head, body);
+			dialog.addEventListener('click', (event) => {
+				if (event.target === dialog) dialog.close();
+			});
+			document.body.append(dialog);
+			const palette = new Palette(
+				{
+					strings: t,
+					drag: () => {},
+					activate: (item) => {
+						dialog.close();
+						canvas.activateItem(item);
+					},
+					toggled: () => {}
+				},
+				body,
+				true,
+				true
+			);
+			elements = { dialog, palette };
+		}
+		elements.palette.reset();
+		elements.dialog.showModal();
 	};
 
 	let exportDialog: import('./export-dialog').ExportDialog | null = null;
@@ -612,6 +647,7 @@ export function mountSchemaFlow(root: HTMLElement): void {
 				break;
 			case 'more':
 				menus.open(target, [
+					{ label: t.palette.title, icon: 'shapes', action: () => openElements() },
 					{ label: t.bar.note, icon: 'note', action: () => canvas.createNote() },
 					{ label: t.bar.area, icon: 'area', action: () => canvas.createArea() },
 					{ label: t.bar.arrange, icon: 'arrange', disabled: store.schema.tables.length === 0, action: () => root.querySelector<HTMLButtonElement>('[data-action="arrange"]')?.click() },

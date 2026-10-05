@@ -19,10 +19,11 @@ import { COLORS, LIMITS, type Column, type DefaultValue, type LogicalType, type 
 import type { Severity } from '../parse/issues';
 import { applyFix } from '../validate/fixes';
 import type { DesignIssue } from '../validate/rules';
-import { relationControls, type BubbleHost } from './bubbles';
+import { relationControls, type BubbleHost, type RelateRequest } from './bubbles';
 import { COLOUR_TOKEN } from './canvas';
 import { h, icon } from './dom';
 import { ruleMessage } from './messages';
+import type { Anchor } from './popups';
 import type { Store } from './store';
 import { fill, plural, summarize } from './strings';
 import { TypePicker } from './type-picker';
@@ -33,7 +34,7 @@ export type SheetTab = 'properties' | 'review';
 export interface SheetHost extends BubbleHost {
 	overlay: HTMLElement;
 	toasts: { show(text: string): void };
-	openRelate(tableId: string, columnId?: string): void;
+	openRelate(request: RelateRequest, anchor?: Anchor): void;
 	openRelationBubble(relationId: string, at: Element): void;
 	frame(kind: 'table' | 'relation', id: string): void;
 	createArea(): void;
@@ -349,7 +350,7 @@ export class Sheet {
 		}
 		box.append(rl);
 		const relate = h('button', { type: 'button', class: 'sf-btn', text: t.ctx.relate });
-		relate.addEventListener('click', () => this.host.openRelate(table.id));
+		relate.addEventListener('click', () => this.host.openRelate({ tableId: table.id }, relate));
 		box.append(relate);
 
 		box.append(h('h3', { class: 'sf-props-title', text: t.props.indexes }));

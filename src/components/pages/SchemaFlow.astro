@@ -1480,6 +1480,23 @@ const svg = (name: IconName, size = 16) =>
 		color: var(--ink-muted);
 	}
 
+	.sf-palette-search {
+		margin: 0 0 0.6rem;
+	}
+
+	.sf-palette-empty {
+		margin: 0.25rem 0 0;
+		font-size: 0.75rem;
+		line-height: 1.4;
+		color: var(--ink-muted);
+	}
+
+	.sf-palette-empty[hidden],
+	.sf-palette-group[hidden],
+	.sf-palette-item[hidden] {
+		display: none;
+	}
+
 	.sf-palette-group + .sf-palette-group {
 		margin-top: 0.75rem;
 	}
@@ -2518,6 +2535,98 @@ const svg = (name: IconName, size = 16) =>
 		display: none;
 	}
 
+	.sf-relate-pair {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.5rem;
+	}
+
+	.sf-kinds {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		min-width: 0;
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+
+	.sf-kinds > legend {
+		margin-bottom: 0.3rem;
+		padding: 0;
+	}
+
+	.sf-kind {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.55rem;
+		padding: 0.45rem 0.6rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		cursor: pointer;
+	}
+
+	.sf-kind:hover {
+		border-color: var(--line-strong);
+		background: var(--paper-sunken);
+	}
+
+	.sf-kind:has(input:checked) {
+		border-color: var(--focus);
+		background: color-mix(in oklab, var(--focus) 8%, var(--surface));
+	}
+
+	.sf-kind:has(input:focus-visible) {
+		outline: 2px solid var(--focus);
+		outline-offset: 1px;
+	}
+
+	.sf-kind input {
+		flex: none;
+		width: 15px;
+		height: 15px;
+		margin: 0.15rem 0 0;
+		accent-color: var(--focus);
+	}
+
+	.sf-kind.is-disabled {
+		cursor: not-allowed;
+	}
+
+	.sf-kind-body {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+		min-width: 0;
+	}
+
+	.sf-kind-name {
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+
+	.sf-kind-text {
+		font-size: 0.75rem;
+		line-height: 1.4;
+		color: var(--ink-muted);
+		overflow-wrap: anywhere;
+	}
+
+	.sf-relate-advanced > summary {
+		padding: 0.15rem 0;
+		font-size: 0.78rem;
+		color: var(--ink-muted);
+		cursor: pointer;
+	}
+
+	.sf-relate-more {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding-top: 0.5rem;
+	}
+
 	.sf-glossary-head {
 		display: flex;
 		align-items: center;
@@ -2739,8 +2848,44 @@ const svg = (name: IconName, size = 16) =>
 	}
 
 	dialog.sf-gallery:not([open]),
-	dialog.sf-shortcuts:not([open]) {
+	dialog.sf-shortcuts:not([open]),
+	dialog.sf-elements:not([open]) {
 		display: none;
+	}
+
+	dialog.sf-elements {
+		position: fixed;
+		inset: auto 0 0 0;
+		box-sizing: border-box;
+		width: 100%;
+		max-width: none;
+		height: fit-content;
+		max-height: min(34rem, 82dvh);
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		border: 0;
+		border-top: 1px solid var(--line);
+		border-radius: var(--radius) var(--radius) 0 0;
+		background: var(--surface);
+		color: var(--ink);
+		box-shadow: 0 -12px 40px oklch(18% 0.008 260 / 0.18);
+	}
+
+	dialog.sf-elements::backdrop {
+		background: oklch(18% 0.008 260 / 0.32);
+	}
+
+	.sf-elements-panel {
+		min-height: 0;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+
+	.sf-elements-panel .sf-palette-body {
+		padding: 0.75rem 1rem 1.25rem;
+		overflow: visible;
 	}
 
 	dialog.sf-gallery::backdrop,
