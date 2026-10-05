@@ -46,20 +46,20 @@ export class ExportDialog {
 			this.dialect = this.select.value as SqlDialectId;
 			this.render();
 		});
-		const row = h('div', { class: 'sf-tool-row' }, this.chips, h('label', { class: 'sr-only', for: 'sf-export-dialect', text: t.dialect }), this.select);
+		const row = h('div', { class: 'sf-controls' }, this.chips, h('label', { class: 'sr-only', for: 'sf-export-dialect', text: t.dialect }), this.select);
 		this.note = h('p', { class: 'sf-help' });
 		this.warning = h('p', { class: 'sf-conflict', hidden: true });
 		const tools = h('div', { class: 'sf-gallery-tools' }, row, this.note, this.warning);
 		this.code = h('pre', { class: 'sf-outcode', tabindex: '0', 'aria-label': t.title });
 		const scroller = h('div', { class: 'sf-gallery-scroll' }, this.code);
-		this.status = h('span', { class: 'sf-tool-status', role: 'status' });
+		this.status = h('span', { class: 'sf-dlg-status', role: 'status' });
 		this.copyButton = h('button', { type: 'button', class: 'sf-btn sf-btn-primary' });
 		this.copyButton.append(icon('copy', 14), h('span', { text: t.copy }));
 		this.copyButton.addEventListener('click', () => void this.copy());
 		this.downloadButton = h('button', { type: 'button', class: 'sf-btn' });
 		this.downloadButton.append(icon('download', 14), h('span', { class: 'sf-download-label' }));
 		this.downloadButton.addEventListener('click', () => this.download());
-		const foot = h('div', { class: 'sf-tool-foot' }, this.status, h('span', { class: 'sf-spacer' }), this.downloadButton, this.copyButton);
+		const foot = h('div', { class: 'sf-dlg-foot' }, this.status, h('span', { class: 'sf-spacer' }), this.downloadButton, this.copyButton);
 		this.frame = createToolDialog({ id: 'sf-export', title: t.title, closeLabel: strings.close, className: 'sf-export' }, tools, scroller, foot);
 	}
 

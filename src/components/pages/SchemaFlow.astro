@@ -3285,10 +3285,10 @@ const svg = (name: IconName, size = 16) =>
 		display: none;
 	}
 
-	dialog.sf-tool {
-		align-items: stretch;
-		justify-content: flex-start;
-		white-space: normal;
+	dialog.sf-dlg {
+		gap: 0.4rem;
+		font-size: 0.8125rem;
+		line-height: 1.2;
 	}
 
 	dialog.sf-export {
@@ -3319,14 +3319,14 @@ const svg = (name: IconName, size = 16) =>
 		padding-top: 0.85rem;
 	}
 
-	.sf-tool-row {
+	.sf-controls {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 0.5rem 0.75rem;
 	}
 
-	.sf-tool-row .sf-select {
+	.sf-controls .sf-select {
 		width: auto;
 		min-width: 9rem;
 	}
@@ -3338,19 +3338,19 @@ const svg = (name: IconName, size = 16) =>
 		color: var(--ink);
 	}
 
-	.sf-tool-panel {
+	.sf-dlg-panel {
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
 	}
 
-	.sf-tool-result {
+	.sf-dlg-result {
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
 	}
 
-	.sf-tool-foot {
+	.sf-dlg-foot {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
@@ -3359,12 +3359,12 @@ const svg = (name: IconName, size = 16) =>
 		border-top: 1px solid var(--line);
 	}
 
-	.sf-tool-result .sf-tool-foot {
+	.sf-dlg-result .sf-dlg-foot {
 		padding: 0;
 		border-top: 0;
 	}
 
-	.sf-tool-status {
+	.sf-dlg-status {
 		font-size: 0.8125rem;
 		color: var(--ink-muted);
 	}

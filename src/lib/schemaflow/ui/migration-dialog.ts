@@ -48,7 +48,7 @@ export class MigrationDialog {
 			chip.addEventListener('click', () => this.chooseSource(source));
 			this.sourceChips.append(chip);
 		}
-		this.panel = h('div', { class: 'sf-tool-panel' });
+		this.panel = h('div', { class: 'sf-dlg-panel' });
 		this.select = h('select', { class: 'sf-select', id: 'sf-migration-dialect', 'aria-label': t.dialect });
 		for (const dialect of SQL_DIALECTS) this.select.append(h('option', { value: dialect, text: DIALECT_LABELS[dialect] }));
 		this.select.addEventListener('change', () => {
@@ -59,9 +59,9 @@ export class MigrationDialog {
 		this.transaction = h('input', { type: 'checkbox', checked: true });
 		this.transaction.addEventListener('change', () => this.renderResult());
 		const check = h('label', { class: 'sf-check' }, this.transaction, h('span', { text: t.transaction }));
-		const controls = h('div', { class: 'sf-tool-row' }, h('label', { class: 'sf-dlg-label', for: 'sf-migration-dialect', text: t.dialect }), this.select, check);
+		const controls = h('div', { class: 'sf-controls' }, h('label', { class: 'sf-dlg-label', for: 'sf-migration-dialect', text: t.dialect }), this.select, check);
 		this.mongoNote = h('p', { class: 'sf-help', text: t.mongoNote, hidden: true });
-		this.result = h('div', { class: 'sf-tool-result', 'aria-live': 'polite' });
+		this.result = h('div', { class: 'sf-dlg-result', 'aria-live': 'polite' });
 		const intro = h('p', { class: 'sf-help', text: t.intro });
 		const tools = h('div', { class: 'sf-gallery-tools' }, intro, h('p', { class: 'sf-dlg-label', text: t.source }), this.sourceChips, this.panel, controls, this.mongoNote);
 		const scroller = h('div', { class: 'sf-gallery-scroll' }, this.result);
@@ -104,7 +104,7 @@ export class MigrationDialog {
 			area.addEventListener('input', () => (this.pasted = area.value));
 			const use = h('button', { type: 'button', class: 'sf-btn sf-btn-primary', text: t.paste.use });
 			use.addEventListener('click', () => void this.usePasted());
-			this.panel.append(h('label', { class: 'sf-dlg-label', for: 'sf-migration-sql', text: fill(t.paste.label, { dialect: DIALECT_LABELS[this.dialect] }) }), area, h('div', { class: 'sf-tool-row' }, use));
+			this.panel.append(h('label', { class: 'sf-dlg-label', for: 'sf-migration-sql', text: fill(t.paste.label, { dialect: DIALECT_LABELS[this.dialect] }) }), area, h('div', { class: 'sf-controls' }, use));
 		} else {
 			const input = h('input', { type: 'file', accept: '.json,.sql,.ddl,.txt', hidden: true }) as HTMLInputElement;
 			const choose = h('button', { type: 'button', class: 'sf-btn sf-btn-primary', text: t.file.choose });
@@ -114,7 +114,7 @@ export class MigrationDialog {
 				input.value = '';
 				if (file) void this.useFile(file);
 			});
-			this.panel.append(h('div', { class: 'sf-tool-row' }, choose, input), h('p', { class: 'sf-help', text: t.file.hint }));
+			this.panel.append(h('div', { class: 'sf-controls' }, choose, input), h('p', { class: 'sf-help', text: t.file.hint }));
 		}
 		if (this.notice) this.panel.append(h('p', { class: this.notice.kind === 'error' ? 'sf-conflict' : 'sf-help', role: 'status', text: this.notice.text }));
 	}
@@ -137,7 +137,7 @@ export class MigrationDialog {
 			}
 			this.render();
 		});
-		const row = h('div', { class: 'sf-tool-row' }, save);
+		const row = h('div', { class: 'sf-controls' }, save);
 		if (saved) {
 			const clear = h('button', { type: 'button', class: 'sf-btn sf-btn-ghost', text: t.saved.clear });
 			clear.addEventListener('click', () => {
@@ -269,7 +269,7 @@ export class MigrationDialog {
 		if (this.dialect === 'sqlserver' && text.includes('\nGO\n')) this.result.append(h('p', { class: 'sf-help', text: t.transactionSqlServer }));
 
 		const file = `${this.host.fileBase()}.${this.direction}.sql`;
-		const status = h('span', { class: 'sf-tool-status', role: 'status' });
+		const status = h('span', { class: 'sf-dlg-status', role: 'status' });
 		const copy = h('button', { type: 'button', class: 'sf-btn sf-btn-primary' }, icon('copy', 14), h('span', { text: t.copy }));
 		copy.addEventListener('click', async () => {
 			status.textContent = (await copyText(this.text)) ? t.copied : this.strings.copyFailed;
@@ -279,6 +279,6 @@ export class MigrationDialog {
 			download(file, this.text, 'application/sql;charset=utf-8');
 			status.textContent = fill(t.downloaded, { file });
 		});
-		this.result.append(h('div', { class: 'sf-tool-foot' }, status, h('span', { class: 'sf-spacer' }), save, copy));
+		this.result.append(h('div', { class: 'sf-dlg-foot' }, status, h('span', { class: 'sf-spacer' }), save, copy));
 	}
 }

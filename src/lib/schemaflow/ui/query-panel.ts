@@ -69,7 +69,7 @@ export class QueryPanel {
 			this.focus();
 		});
 		this.output = h('div', { class: 'sf-query-output', 'aria-live': 'polite' });
-		const body = h('div', { class: 'sf-query-body' }, h('p', { class: 'sf-help', text: t.help }), h('p', { class: 'sf-help', text: t.download }), tools, this.editorHost, h('div', { class: 'sf-tool-row' }, this.run, clear), this.output);
+		const body = h('div', { class: 'sf-query-body' }, h('p', { class: 'sf-help', text: t.help }), h('p', { class: 'sf-help', text: t.download }), tools, this.editorHost, h('div', { class: 'sf-controls' }, this.run, clear), this.output);
 		this.root.append(h('summary', {}, h('span', { text: t.summary })), body);
 		this.paintButton(false);
 		store.on('schema', () => this.refresh());

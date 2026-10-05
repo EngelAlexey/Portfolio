@@ -7,7 +7,7 @@ export interface ToolDialog {
 }
 
 export function createToolDialog(options: { id: string; title: string; closeLabel: string; className: string }, ...sections: HTMLElement[]): ToolDialog {
-	const dialog = h('dialog', { class: `sf-gallery sf-tool ${options.className}`, 'aria-labelledby': `${options.id}-title` }) as HTMLDialogElement;
+	const dialog = h('dialog', { class: `sf-gallery sf-dlg ${options.className}`, 'aria-labelledby': `${options.id}-title` }) as HTMLDialogElement;
 	const head = h('div', { class: 'sf-gallery-head' });
 	const close = h('button', { type: 'button', class: 'sf-icon-btn', 'aria-label': options.closeLabel, 'data-tip': options.closeLabel });
 	close.append(icon('close', 16));
