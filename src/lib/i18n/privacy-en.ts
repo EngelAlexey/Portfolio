@@ -61,7 +61,7 @@ export const privacyEn: Privacy = {
 				{ kind: 'h3', text: 'Phishing detector' },
 				{
 					kind: 'p',
-					text: 'The phishing detector checks, in your browser, the message, links, sender and headers that you type or paste. It does not store or send that content. It does not open any link.'
+					text: 'The phishing detector checks, in your browser, the message, links, sender, headers and file that you type, paste or choose. It does not store or send that content. It does not open any link or run the file.'
 				},
 				{ kind: 'h3', text: 'Email' },
 				{

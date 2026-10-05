@@ -32,7 +32,7 @@ export async function analyzeFile(name: string, bytes: Uint8Array): Promise<File
 	if (bytes.length > LIMITS.fileBytes) return tooLarge(name, bytes.length);
 
 	const kind = detectKind(bytes);
-	const [sha256, inspection] = await Promise.all([sha256Hex(bytes), inspect(kind, bytes)]);
+	const [sha256, inspection] = await Promise.all([sha256Hex(bytes), inspect(kind, bytes, name)]);
 
 	const findings = nameFindings(name, kind);
 	const extension = extensionOf(name);

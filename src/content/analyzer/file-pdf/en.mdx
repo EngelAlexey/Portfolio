@@ -1,0 +1,27 @@
+---
+codes:
+  - file-pdf-javascript
+  - file-pdf-launch
+  - file-pdf-embedded
+sources:
+  - text: 'MITRE ATT&CK: T1566.001, spearphishing attachment'
+    url: https://attack.mitre.org/techniques/T1566/001/
+  - text: 'MITRE ATT&CK: T1204.002, malicious file'
+    url: https://attack.mitre.org/techniques/T1204/002/
+---
+
+## What it means
+
+The PDF carries something beyond displaying a document. It can be:
+
+- JavaScript, which are instructions that the PDF reader runs when it is opened;
+- an action that tries to launch a program on your computer;
+- a file stored inside the PDF.
+
+## What the risk is
+
+The instructions and the actions that launch programs can run something harmful on your computer. This is more likely if the PDF reader has unfixed flaws. A file stored inside can be a disguised program. A normal PDF rarely carries these things. Some electronic invoices do carry a data file.
+
+## What to do
+
+Do not open the PDF if you did not expect it. If you did, confirm with the sender, through another channel, that they sent it. Keep your PDF reader up to date.

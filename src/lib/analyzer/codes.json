@@ -61,6 +61,14 @@
 		"file-embedded-object": { "section": "files", "severity": "medium" },
 		"file-external-template": { "section": "files", "severity": "high" },
 		"file-external-link": { "section": "files", "severity": "medium" },
+		"file-pdf-javascript": { "section": "files", "severity": "high" },
+		"file-pdf-launch": { "section": "files", "severity": "high" },
+		"file-pdf-embedded": { "section": "files", "severity": "medium" },
+		"file-rtf-object": { "section": "files", "severity": "high" },
+		"file-html-script": { "section": "files", "severity": "medium" },
+		"file-html-password-form": { "section": "files", "severity": "high" },
+		"file-html-smuggling": { "section": "files", "severity": "high" },
+		"file-svg-script": { "section": "files", "severity": "high" },
 		"file-parse-error": { "section": "files", "severity": "info" }
 	}
 }

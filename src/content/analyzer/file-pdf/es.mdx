@@ -1,0 +1,27 @@
+---
+codes:
+  - file-pdf-javascript
+  - file-pdf-launch
+  - file-pdf-embedded
+sources:
+  - text: 'MITRE ATT&CK: T1566.001, archivo adjunto de phishing'
+    url: https://attack.mitre.org/techniques/T1566/001/
+  - text: 'MITRE ATT&CK: T1204.002, archivo malicioso'
+    url: https://attack.mitre.org/techniques/T1204/002/
+---
+
+## Qué significa
+
+El PDF trae algo que va más allá de mostrar un documento. Puede ser:
+
+- JavaScript, que son instrucciones que el lector de PDF ejecuta al abrirlo;
+- una acción que intenta lanzar un programa de su equipo;
+- un archivo guardado dentro del PDF.
+
+## Qué riesgo tiene
+
+Las instrucciones y las acciones que lanzan programas pueden ejecutar algo dañino en su equipo. Esto es más probable si el lector de PDF tiene fallos sin corregir. Un archivo guardado dentro puede ser un programa disfrazado. Un PDF normal rara vez trae estas cosas. Algunas facturas electrónicas sí llevan un archivo de datos.
+
+## Qué hacer
+
+No abra el PDF si no lo esperaba. Si lo esperaba, confirme con quien lo envió, por otro medio, que lo mandó. Mantenga su lector de PDF actualizado.

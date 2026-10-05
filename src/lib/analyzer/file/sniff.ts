@@ -42,6 +42,7 @@ const SIGNATURES: readonly (readonly [Kind, readonly number[]])[] = [
 const ISO_OFFSET = 0x8001;
 const ISO_MAGIC = [0x43, 0x44, 0x30, 0x30, 0x31];
 const TEXT_SAMPLE = 4096;
+const HTML_START = /^(?:<!--[\s\S]*?-->\s*)*(?:<!doctype\s+html|<(?:html|head|body|script|form|meta|title|style|iframe|center|table|div|a|p|img|link)[\s>])/;
 
 function startsWith(bytes: Uint8Array, signature: readonly number[], offset = 0): boolean {
 	if (bytes.length < offset + signature.length) return false;
@@ -71,6 +72,6 @@ export function detectKind(bytes: Uint8Array): Kind {
 	if (!looksLikeText(bytes)) return 'unknown';
 	const head = decodeHead(bytes);
 	if (/^<svg[\s>]/.test(head) || (/^<\?xml/.test(head) && head.includes('<svg'))) return 'svg';
-	if (/^<!doctype\s+html|^<html[\s>]|^<head[\s>]|^<body[\s>]|^<script[\s>]/.test(head)) return 'html';
+	if (HTML_START.test(head)) return 'html';
 	return 'text';
 }

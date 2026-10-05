@@ -1,0 +1,21 @@
+---
+codes:
+  - file-rtf-object
+sources:
+  - text: 'MITRE ATT&CK: T1203, explotación para ejecutar código en el cliente'
+    url: https://attack.mitre.org/techniques/T1203/
+  - text: 'MITRE ATT&CK: T1566.001, archivo adjunto de phishing'
+    url: https://attack.mitre.org/techniques/T1566/001/
+---
+
+## Qué significa
+
+El documento RTF lleva dentro un objeto incrustado, que es otro archivo o programa guardado dentro del documento.
+
+## Qué riesgo tiene
+
+Los atacantes usan los objetos de los documentos RTF para aprovechar fallos de Word y ejecutar un programa en su equipo. Puede ocurrir al abrir el documento, sin pulsar nada más. Un documento RTF normal casi nunca lleva objetos.
+
+## Qué hacer
+
+No abra el documento. Si lo esperaba, pida a quien lo envió que lo mande como PDF. Mantenga Word y Windows actualizados.

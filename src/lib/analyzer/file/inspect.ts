@@ -2,9 +2,13 @@ import { finding } from '../codes';
 import { DISK_EXTENSIONS, EXECUTABLE_EXTENSIONS, SCRIPT_EXTENSIONS, SHORTCUT_EXTENSIONS } from '../data/files';
 import type { Finding, MessageLink } from '../types';
 import { normalizeName, readCfb } from './cfb';
+import { inspectHtml, type MarkupReport } from './html';
 import { extensionOf } from './name';
 import { inspectOoxml } from './ooxml';
+import { inspectPdf } from './pdf';
+import { inspectRtf } from './rtf';
 import type { Kind } from './sniff';
+import { inspectSvg } from './svg';
 import { declaredSize, isBomb, readZip } from './zip';
 
 export type Inspection = {
@@ -61,8 +65,24 @@ function inspectOle(bytes: Uint8Array): Inspection {
 	return { findings, links: [], office: null };
 }
 
-export async function inspect(kind: Kind, bytes: Uint8Array): Promise<Inspection> {
+const TEXT_LIMIT = 5 * 1024 * 1024;
+const HTML_EXTENSIONS: ReadonlySet<string> = new Set(['html', 'htm', 'xhtml', 'shtml']);
+
+function fromMarkup(report: MarkupReport): Inspection {
+	return { findings: report.findings, links: report.links, office: null };
+}
+
+function decode(bytes: Uint8Array): string {
+	return new TextDecoder().decode(bytes.subarray(0, TEXT_LIMIT));
+}
+
+export async function inspect(kind: Kind, bytes: Uint8Array, name = ''): Promise<Inspection> {
+	const extension = extensionOf(name);
 	if (kind === 'zip') return inspectZip(bytes);
 	if (kind === 'ole') return inspectOle(bytes);
+	if (kind === 'pdf') return { ...(await inspectPdf(bytes)), office: null };
+	if (kind === 'rtf') return { ...inspectRtf(bytes), office: null };
+	if (kind === 'svg' || (kind === 'text' && extension === 'svg')) return fromMarkup(inspectSvg(decode(bytes)));
+	if (kind === 'html' || (kind === 'text' && HTML_EXTENSIONS.has(extension))) return fromMarkup(inspectHtml(decode(bytes)));
 	return NOTHING;
 }

@@ -1,0 +1,31 @@
+---
+codes:
+  - file-html-script
+  - file-html-password-form
+  - file-html-smuggling
+  - file-svg-script
+sources:
+  - text: 'MITRE ATT&CK: T1027.006, contrabando de HTML'
+    url: https://attack.mitre.org/techniques/T1027/006/
+  - text: 'MITRE ATT&CK: T1566.001, archivo adjunto de phishing'
+    url: https://attack.mitre.org/techniques/T1566/001/
+  - text: 'MDN: elemento script de SVG'
+    url: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/script
+---
+
+## Qué significa
+
+El archivo es una página web o una imagen SVG, y trae algo más que texto o dibujo. Puede ser:
+
+- un script, que son instrucciones que el navegador ejecuta al abrirlo;
+- un campo para escribir una contraseña, como una página de inicio de sesión falsa guardada en un archivo;
+- un script que arma un archivo en su navegador y lo descarga, una técnica llamada «HTML smuggling»;
+- en una imagen SVG, instrucciones que se ejecutan al abrirla.
+
+## Qué riesgo tiene
+
+Una página abierta desde un archivo puede imitar el inicio de sesión de un banco o de su correo. Lo que usted escriba puede llegar al atacante. Un script puede crear y descargar un programa sin pasar por el filtro del correo. Una imagen SVG con instrucciones las ejecuta al abrirla en el navegador.
+
+## Qué hacer
+
+No abra el archivo. Si lo esperaba, confirme con quien lo envió, por otro medio, que lo mandó. Nunca escriba una contraseña en una página que le llegó como archivo adjunto.

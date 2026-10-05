@@ -1,0 +1,21 @@
+---
+codes:
+  - file-rtf-object
+sources:
+  - text: 'MITRE ATT&CK: T1203, exploitation for client execution'
+    url: https://attack.mitre.org/techniques/T1203/
+  - text: 'MITRE ATT&CK: T1566.001, spearphishing attachment'
+    url: https://attack.mitre.org/techniques/T1566/001/
+---
+
+## What it means
+
+The RTF document carries an embedded object, which is another file or program stored inside the document.
+
+## What the risk is
+
+Attackers use the objects of RTF documents to take advantage of flaws in Word and run a program on your computer. It can happen when the document is opened, without clicking anything else. A normal RTF document almost never carries objects.
+
+## What to do
+
+Do not open the document. If you expected it, ask the sender to send it as a PDF. Keep Word and Windows up to date.

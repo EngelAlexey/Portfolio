@@ -97,7 +97,7 @@ export const privacyEs: Privacy = {
 				{ kind: 'h3', text: 'Detector de phishing' },
 				{
 					kind: 'p',
-					text: 'El detector de phishing revisa en su navegador el mensaje, los enlaces, el remitente y las cabeceras que usted escribe o pega. No guarda ni envía ese contenido. No abre ningún enlace.'
+					text: 'El detector de phishing revisa en su navegador el mensaje, los enlaces, el remitente, las cabeceras y el archivo que usted escribe, pega o elige. No guarda ni envía ese contenido. No abre ningún enlace ni ejecuta el archivo.'
 				},
 				{ kind: 'h3', text: 'Correo' },
 				{

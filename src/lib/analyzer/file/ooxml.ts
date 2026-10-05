@@ -1,7 +1,8 @@
 import { finding } from '../codes';
 import { LIMITS } from '../limits';
 import type { Finding, MessageLink } from '../types';
-import { defang } from '../url/defang';
+import { unescapeXml } from './entities';
+import { isRemote, shownTarget } from './remote';
 import { readEntry, type ZipEntry, type ZipListing } from './zip';
 
 export type OfficeFamily = 'word' | 'excel' | 'powerpoint';
@@ -24,25 +25,10 @@ const MAX_RELS_FILES = 100;
 const MAX_RELATIONSHIPS = 500;
 const MAX_LINK_PARTS = 20;
 const MAX_REPORTED = 3;
-const MAX_SHOWN = 200;
-const REMOTE = /^(?:(?:https?|ftps?|smb|webdav|dav|file):\/\/[^/]|\\\\|\/\/)/i;
 const DDE_FIELD = /(?:w:instr\s*=\s*["']|<w:instrText[^>]*>)\s*(?:DDEAUTO|DDE)\b/i;
 
 function named(listing: ZipListing, wanted: string): ZipEntry | undefined {
 	return listing.entries.find((entry) => entry.name.toLowerCase() === wanted.toLowerCase());
-}
-
-function unescapeXml(value: string): string {
-	return value
-		.replace(/&#(x[0-9a-f]+|\d+);/gi, (whole, code: string) => {
-			const point = code.startsWith('x') || code.startsWith('X') ? Number.parseInt(code.slice(1), 16) : Number.parseInt(code, 10);
-			return point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : whole;
-		})
-		.replace(/&quot;/g, '"')
-		.replace(/&apos;/g, "'")
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&amp;/g, '&');
 }
 
 function relationships(xml: string): Relationship[] {
@@ -67,11 +53,6 @@ function familyOf(names: readonly string[]): OfficeFamily | null {
 	if (names.some((name) => /^xl\//i.test(name))) return 'excel';
 	if (names.some((name) => /^ppt\//i.test(name))) return 'powerpoint';
 	return null;
-}
-
-function shown(target: string): string {
-	const text = defang(target);
-	return text.length > MAX_SHOWN ? `${text.slice(0, MAX_SHOWN)}…` : text;
 }
 
 export async function inspectOoxml(bytes: Uint8Array, listing: ZipListing): Promise<OoxmlReport | null> {
@@ -129,15 +110,15 @@ export async function inspectOoxml(bytes: Uint8Array, listing: ZipListing): Prom
 				}
 				continue;
 			}
-			if (!REMOTE.test(relationship.target)) continue;
+			if (!isRemote(relationship.target)) continue;
 			if (/^https?:/i.test(relationship.target) && !seen.has(relationship.target) && links.length < LIMITS.links) {
 				seen.add(relationship.target);
 				links.push({ href: relationship.target, text: null });
 			}
 			if (relationship.type === 'attachedtemplate') {
-				if (templates++ < MAX_REPORTED) findings.push(finding('file-external-template', { target: shown(relationship.target) }));
+				if (templates++ < MAX_REPORTED) findings.push(finding('file-external-template', { target: shownTarget(relationship.target) }));
 			} else if (externals++ < MAX_REPORTED) {
-				findings.push(finding('file-external-link', { target: shown(relationship.target) }));
+				findings.push(finding('file-external-link', { target: shownTarget(relationship.target) }));
 			}
 		}
 	}

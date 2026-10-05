@@ -97,7 +97,7 @@ export const analyzerEs: AnalyzerStrings = {
 					'Texto: frases de presión, peticiones de claves o pagos y pasos para ejecutar algo en el equipo.',
 					'Remitente: si el nombre y la dirección coinciden y si la dirección imita a una marca.',
 					'Datos técnicos del correo: si el correo pasó las comprobaciones de autenticidad y si las horas de su recorrido cuadran.',
-					'Archivo: su nombre, su tipo real, su huella digital (SHA-256) y, en los archivos comprimidos y los documentos de Office, lo que llevan dentro: programas, macros, objetos y direcciones externas.'
+					'Archivo: su nombre, su tipo real, su huella digital (SHA-256) y, en archivos comprimidos, documentos de Office, PDF, RTF, páginas web e imágenes SVG, lo que llevan dentro: programas, macros, scripts, objetos y direcciones externas.'
 				]
 			},
 			{
@@ -107,7 +107,7 @@ export const analyzerEs: AnalyzerStrings = {
 					'No abre ningún enlace.',
 					'No abre ni ejecuta el archivo.',
 					'No da un veredicto: muestra señales y las explica.',
-					'No guarda el mensaje.'
+					'No guarda ni envía el mensaje ni el archivo.'
 				]
 			},
 			{
@@ -322,7 +322,15 @@ export const analyzerEs: AnalyzerStrings = {
 		'file-embedded-object': 'El documento lleva otro archivo guardado dentro',
 		'file-external-template': 'El documento descarga una plantilla de otro sitio al abrirse',
 		'file-external-link': 'El documento carga contenido desde una dirección externa',
-		'file-parse-error': 'No se pudo leer todo el contenido del archivo'
+		'file-parse-error': 'No se pudo leer todo el contenido del archivo',
+		'file-pdf-javascript': 'El PDF contiene JavaScript, que son instrucciones que se ejecutan al abrirlo',
+		'file-pdf-launch': 'El PDF intenta lanzar un programa de su equipo',
+		'file-pdf-embedded': 'El PDF lleva otro archivo guardado dentro',
+		'file-rtf-object': 'El documento RTF lleva un objeto incrustado',
+		'file-html-script': 'La página web adjunta contiene un script',
+		'file-html-password-form': 'La página web adjunta pide una contraseña',
+		'file-html-smuggling': 'La página web adjunta arma y descarga un archivo al abrirse',
+		'file-svg-script': 'La imagen SVG contiene instrucciones que se ejecutan al abrirla'
 	},
 	sample: {
 		message:

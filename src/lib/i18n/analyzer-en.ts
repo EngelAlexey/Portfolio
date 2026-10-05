@@ -19,7 +19,7 @@ export const analyzerEn: AnalyzerStrings = {
 					'Text: pressure phrases, requests for passwords or payments and steps to run something on the computer.',
 					'Sender: whether the name and the address match and whether the address imitates a brand.',
 					'Technical data of the email: whether the email passed the authenticity checks and whether the times of its journey add up.',
-					'File: its name, its real type, its digital fingerprint (SHA-256) and, in compressed files and Office documents, what they carry inside: programs, macros, objects and external addresses.'
+					'File: its name, its real type, its digital fingerprint (SHA-256) and, in compressed files, Office documents, PDFs, RTF files, web pages and SVG images, what they carry inside: programs, macros, scripts, objects and external addresses.'
 				]
 			},
 			{
@@ -29,7 +29,7 @@ export const analyzerEn: AnalyzerStrings = {
 					'It does not open any link.',
 					'It does not open or run the file.',
 					'It does not give a verdict: it shows signals and explains them.',
-					'It does not store the message.'
+					'It does not store or send the message or the file.'
 				]
 			},
 			{
@@ -244,7 +244,15 @@ export const analyzerEn: AnalyzerStrings = {
 		'file-embedded-object': 'The document carries another file stored inside',
 		'file-external-template': 'The document downloads a template from another site when opened',
 		'file-external-link': 'The document loads content from an external address',
-		'file-parse-error': 'The whole content of the file could not be read'
+		'file-parse-error': 'The whole content of the file could not be read',
+		'file-pdf-javascript': 'The PDF contains JavaScript, which are instructions that run when it is opened',
+		'file-pdf-launch': 'The PDF tries to launch a program on your computer',
+		'file-pdf-embedded': 'The PDF carries another file stored inside',
+		'file-rtf-object': 'The RTF document carries an embedded object',
+		'file-html-script': 'The attached web page contains a script',
+		'file-html-password-form': 'The attached web page asks for a password',
+		'file-html-smuggling': 'The attached web page builds and downloads a file when opened',
+		'file-svg-script': 'The SVG image contains instructions that run when it is opened'
 	},
 	sample: {
 		message:
