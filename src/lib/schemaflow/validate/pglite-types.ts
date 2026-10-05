@@ -17,6 +17,7 @@ export interface Failure {
 	position: number | null;
 	hint: string | null;
 	code: string | null;
+	table?: string | null;
 	stage?: 'ddl' | 'query';
 	timeout?: boolean;
 	stopped?: boolean;

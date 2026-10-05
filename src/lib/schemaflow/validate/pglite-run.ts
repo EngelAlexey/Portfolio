@@ -47,6 +47,7 @@ interface EngineError {
 	position?: string | number;
 	hint?: string;
 	code?: string;
+	table?: string;
 }
 
 const hex = (bytes: Uint8Array) => `\\x${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
@@ -77,7 +78,8 @@ export function failure(error: unknown, stage: 'ddl' | 'query'): Failure {
 		message: String(e.message ?? error),
 		position: Number.isFinite(position) && position > 0 ? position : null,
 		hint: e.hint ?? null,
-		code: e.code ?? null
+		code: e.code ?? null,
+		table: e.table ?? null
 	};
 }
 

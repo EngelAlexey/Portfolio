@@ -88,6 +88,11 @@ SELECT bio, meta, born, avatar, ARRAY[10000000000000000::int8, 1] AS big, true A
 		expect(result).toMatchObject({ ok: false, stage: 'query', message: expect.stringContaining('nope') });
 	}, 60_000);
 
+	it('names the table of a query error that breaks a constraint', async () => {
+		const result = await execute(db, { sql: 'CREATE TABLE prices (id INT PRIMARY KEY, amount INT CHECK (amount > 0));', query: 'INSERT INTO prices VALUES (1, 5), (2, -1);' });
+		expect(result).toMatchObject({ ok: false, stage: 'query', code: '23514', table: 'prices' });
+	}, 60_000);
+
 	it('counts the position of a query error from the start of the whole text', async () => {
 		const text = 'SELECT 1;\nSELECT 2;\nSELEC 3;';
 		const result = await execute(db, { sql: '', query: text });

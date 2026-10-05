@@ -1,6 +1,6 @@
 import type { EngineResult, RunRequest, WorkerMessage } from './pglite-types';
 
-export type { EngineResult, QueryOutput, Timings } from './pglite-types';
+export type { EngineResult, Failure, QueryOutput, Timings } from './pglite-types';
 
 export interface WorkerHandle {
 	post(request: RunRequest): void;
