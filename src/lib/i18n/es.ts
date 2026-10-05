@@ -173,8 +173,8 @@ export const es = {
 		cookies: 'Cambiar cookies'
 	},
 	cookies: {
-		title: 'Aceptar políticas de privacidad y cookies',
-		body: 'Este sitio usa cookies y almacenamiento local para medir las visitas y recordar sus preferencias. Las cookies de medición solo se guardan si usted las acepta.',
+		title: 'Aceptar cookies y política de privacidad',
+		body: 'Este sitio usa cookies para medir las visitas.',
 		more: 'Política de privacidad',
 		accept: 'Aceptar cookies',
 		reject: 'Rechazar cookies',

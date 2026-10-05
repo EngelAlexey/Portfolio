@@ -172,8 +172,8 @@ export const en: Dict = {
 		cookies: 'Change cookies'
 	},
 	cookies: {
-		title: 'Accept privacy policy and cookies',
-		body: 'This site uses cookies and local storage to measure visits and remember your preferences. Measurement cookies are only stored if you accept them.',
+		title: 'Accept cookies and privacy policy',
+		body: 'This site uses cookies to measure visits.',
 		more: 'Privacy policy',
 		accept: 'Accept cookies',
 		reject: 'Reject cookies',
