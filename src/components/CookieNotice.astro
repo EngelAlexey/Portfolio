@@ -23,8 +23,8 @@ const text = t(lang).cookies;
 	<p>{text.body}</p>
 	<a class="more" href={path(lang, 'privacy')}>{text.more}</a>
 	<div class="actions">
-		<button type="button" class="btn" data-cookie-accept>{text.accept}</button>
 		<button type="button" class="btn" data-cookie-reject>{text.reject}</button>
+		<button type="button" class="btn" data-cookie-accept>{text.accept}</button>
 	</div>
 </section>
 <p class="sr-only" role="status" data-cookie-status></p>
@@ -51,7 +51,7 @@ const text = t(lang).cookies;
 	@media (min-width: 40rem) {
 		.notice {
 			inset-inline: auto;
-			left: 1.25rem;
+			right: 1.25rem;
 			bottom: 1.25rem;
 		}
 	}
