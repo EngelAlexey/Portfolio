@@ -172,9 +172,9 @@ export const en: Dict = {
 		cookies: 'Change cookies'
 	},
 	cookies: {
-		title: 'Cookies',
+		title: 'Accept privacy policy and cookies',
 		body: 'Google Analytics cookies count visits to this site. They are only stored if you accept them.',
-		more: 'More information',
+		more: 'Privacy policy',
 		accept: 'Accept cookies',
 		reject: 'Reject cookies',
 		savedGranted: 'Cookies accepted',

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-	CONSENT_MAX_AGE_MS,
 	analyticsCookieNames,
 	cookieDomains,
 	expiredCookie,
@@ -12,32 +11,27 @@ const NOW = Date.UTC(2026, 9, 4);
 
 describe('consent decision', () => {
 	it('reads back what it wrote', () => {
-		expect(parseDecision(serializeDecision('granted', NOW), NOW)).toBe('granted');
-		expect(parseDecision(serializeDecision('denied', NOW), NOW)).toBe('denied');
+		expect(parseDecision(serializeDecision('granted', NOW))).toBe('granted');
+		expect(parseDecision(serializeDecision('denied', NOW))).toBe('denied');
 	});
 
 	it('asks again when nothing is stored', () => {
-		expect(parseDecision(null, NOW)).toBeNull();
+		expect(parseDecision(null)).toBeNull();
 	});
 
-	it('asks again after 24 months', () => {
-		const stored = serializeDecision('granted', NOW);
-		expect(parseDecision(stored, NOW + CONSENT_MAX_AGE_MS)).toBe('granted');
-		expect(parseDecision(stored, NOW + CONSENT_MAX_AGE_MS + 1)).toBeNull();
+	it('keeps the decision however old it is', () => {
+		expect(parseDecision(serializeDecision('granted', 0))).toBe('granted');
+		expect(parseDecision(serializeDecision('denied', NOW + 10 * 365 * 24 * 60 * 60 * 1000))).toBe('denied');
 	});
 
 	it('asks again when the stored version is not the current one', () => {
 		const stored = JSON.stringify({ analytics: 'granted', at: NOW, v: 0 });
-		expect(parseDecision(stored, NOW)).toBeNull();
-	});
-
-	it('asks again when the timestamp is in the future', () => {
-		expect(parseDecision(serializeDecision('granted', NOW + 1), NOW)).toBeNull();
+		expect(parseDecision(stored)).toBeNull();
 	});
 
 	it('treats damaged values as no decision', () => {
 		for (const raw of ['', 'granted', '{', 'null', '[]', '{"analytics":"yes","at":1,"v":1}', '{"analytics":"granted","v":1}']) {
-			expect(parseDecision(raw, NOW), raw).toBeNull();
+			expect(parseDecision(raw), raw).toBeNull();
 		}
 	});
 });

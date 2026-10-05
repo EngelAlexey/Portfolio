@@ -110,7 +110,7 @@ const text = t(lang).cookies;
 
 		const read = (): Decision | null => {
 			try {
-				return parseDecision(localStorage.getItem(CONSENT_KEY), Date.now());
+				return parseDecision(localStorage.getItem(CONSENT_KEY));
 			} catch {
 				return memory;
 			}

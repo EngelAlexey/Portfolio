@@ -89,7 +89,7 @@ export const privacyEn: Privacy = {
 							'Your browser',
 							'No limit. Until you delete them.'
 						],
-						['Your cookie choice', 'Your browser', '24 months'],
+						['Your cookie choice', 'Your browser', 'No limit. Until you delete it.'],
 						['Your email and message', 'Google email service', 'Until you ask for them to be deleted.']
 					]
 				}
@@ -111,7 +111,7 @@ export const privacyEn: Privacy = {
 					rows: [
 						['_ga (Google)', 'Tells visitors apart in the statistics.', '2 years', 'Only if you accept the cookies.'],
 						['_ga_TB0F0YLTWX (Google)', 'Keeps the visit session.', '2 years', 'Only if you accept the cookies.'],
-						['consent', 'Remembers your cookie choice.', '24 months', 'When you accept or reject.'],
+						['consent', 'Remembers your cookie choice.', 'Until you delete it', 'When you accept or reject.'],
 						['theme', 'Remembers the light or dark theme.', 'Until you delete it', 'When you change the theme.'],
 						[
 							'notrack',
@@ -205,6 +205,10 @@ export const privacyEn: Privacy = {
 			title: 'Your cookie choice',
 			blocks: [
 				{ kind: 'choice' },
+				{
+					kind: 'p',
+					text: 'Accepting the cookies means accepting this policy. The site stores your choice and does not ask again.'
+				},
 				{
 					kind: 'p',
 					text: 'When you reject, the site deletes any Google Analytics cookies it had stored. You can also delete them in the browser settings.'

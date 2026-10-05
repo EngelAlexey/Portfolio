@@ -173,9 +173,9 @@ export const es = {
 		cookies: 'Cambiar cookies'
 	},
 	cookies: {
-		title: 'Cookies',
+		title: 'Aceptar políticas de privacidad y cookies',
 		body: 'Las cookies de Google Analytics cuentan las visitas a este sitio. Solo se guardan si usted las acepta.',
-		more: 'Más información',
+		more: 'Política de privacidad',
 		accept: 'Aceptar cookies',
 		reject: 'Rechazar cookies',
 		savedGranted: 'Cookies aceptadas',

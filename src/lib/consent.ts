@@ -2,13 +2,12 @@ export type Decision = 'granted' | 'denied';
 
 export const CONSENT_KEY = 'consent';
 export const CONSENT_VERSION = 1;
-export const CONSENT_MAX_AGE_MS = 730 * 24 * 60 * 60 * 1000;
 
 export function serializeDecision(decision: Decision, now: number): string {
 	return JSON.stringify({ analytics: decision, at: now, v: CONSENT_VERSION });
 }
 
-export function parseDecision(raw: string | null, now: number): Decision | null {
+export function parseDecision(raw: string | null): Decision | null {
 	if (raw === null) return null;
 	try {
 		const value: unknown = JSON.parse(raw);
@@ -16,8 +15,7 @@ export function parseDecision(raw: string | null, now: number): Decision | null 
 		const { analytics, at, v } = value as { analytics?: unknown; at?: unknown; v?: unknown };
 		if (analytics !== 'granted' && analytics !== 'denied') return null;
 		if (v !== CONSENT_VERSION) return null;
-		if (typeof at !== 'number' || !Number.isFinite(at) || at > now) return null;
-		if (now - at > CONSENT_MAX_AGE_MS) return null;
+		if (typeof at !== 'number' || !Number.isFinite(at)) return null;
 		return analytics;
 	} catch {
 		return null;

@@ -125,7 +125,7 @@ export const privacyEs: Privacy = {
 							'Su navegador',
 							'Sin plazo. Hasta que usted los borre.'
 						],
-						['Su decisión sobre las cookies', 'Su navegador', '24 meses'],
+						['Su decisión sobre las cookies', 'Su navegador', 'Sin plazo. Hasta que usted la borre.'],
 						['Su correo y su mensaje', 'Servicio de correo de Google', 'Hasta que usted pida borrarlos.']
 					]
 				}
@@ -147,7 +147,7 @@ export const privacyEs: Privacy = {
 					rows: [
 						['_ga (Google)', 'Distingue a los visitantes en las estadísticas.', '2 años', 'Solo si usted acepta las cookies.'],
 						['_ga_TB0F0YLTWX (Google)', 'Mantiene la sesión de visita.', '2 años', 'Solo si usted acepta las cookies.'],
-						['consent', 'Recuerda su decisión sobre las cookies.', '24 meses', 'Al aceptar o rechazar.'],
+						['consent', 'Recuerda su decisión sobre las cookies.', 'Hasta que usted lo borre', 'Al aceptar o rechazar.'],
 						['theme', 'Recuerda el tema claro u oscuro.', 'Hasta que usted lo borre', 'Al cambiar el tema.'],
 						[
 							'notrack',
@@ -241,6 +241,10 @@ export const privacyEs: Privacy = {
 			title: 'Su decisión sobre las cookies',
 			blocks: [
 				{ kind: 'choice' },
+				{
+					kind: 'p',
+					text: 'Aceptar las cookies implica aceptar esta política. El sitio guarda su decisión y no vuelve a preguntar.'
+				},
 				{
 					kind: 'p',
 					text: 'Al rechazar, el sitio borra las cookies de Google Analytics que haya guardado. También puede borrarlas en los ajustes del navegador.'
