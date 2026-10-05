@@ -268,6 +268,11 @@ const svg = (name: IconName, size = 16) =>
 		color: var(--surface);
 	}
 
+	.sf-btn-danger-solid:hover:not(:disabled) {
+		border-color: color-mix(in oklab, var(--sev-critical) 84%, var(--ink));
+		background: color-mix(in oklab, var(--sev-critical) 84%, var(--ink));
+	}
+
 	.sf-btn-small {
 		min-height: 28px;
 		padding: 0 0.55rem;
