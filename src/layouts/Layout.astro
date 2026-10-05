@@ -7,6 +7,7 @@ import '../app.css';
 
 import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
+import CookieNotice from '../components/CookieNotice.astro';
 import LangSwitch from '../components/LangSwitch.astro';
 import Seo from '../components/Seo.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
@@ -67,15 +68,6 @@ const fontFaces = [
 ].join('\n');
 
 const gaId = import.meta.env.PROD && analytics ? ANALYTICS.ga4 : null;
-const gtagInit = gaId
-	? `window.dataLayer = window.dataLayer || [];
-function gtag() {
-	dataLayer.push(arguments);
-}
-gtag('js', new Date());
-gtag('config', '${gaId}');`
-	: '';
-
 const notrackInit = `try {
 	var notrack = new URLSearchParams(location.search).get('notrack');
 	if (notrack === '1') localStorage.setItem('notrack', '1');
@@ -146,8 +138,6 @@ const currentTool = current === null ? null : (toolSection[current] ?? null);
 			});
 		</script>
 		<script is:inline set:html={notrackInit}></script>
-		{gaId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />}
-		{gaId && <script is:inline set:html={gtagInit}></script>}
 		{
 			showBlog && (
 				<link
@@ -278,9 +268,15 @@ const currentTool = current === null ? null : (toolSection[current] ?? null);
 
 			{!app && <footer class="footer">
 				<p>© {new Date().getFullYear()} {PERSON.name}</p>
+				<p class="legal">
+					<a href={path(lang, 'privacy')}>{strings.footer.privacy}</a>
+					{analytics && <button type="button" data-cookie-settings>{strings.footer.cookies}</button>}
+				</p>
 				<p class="built">{strings.footer.builtWith}</p>
 			</footer>}
 		</div>
+
+		{analytics && <CookieNotice {lang} {gaId} />}
 
 		<script is:inline>
 			(() => {
@@ -634,6 +630,32 @@ const currentTool = current === null ? null : (toolSection[current] ?? null);
 
 	.footer p {
 		margin: 0;
+	}
+
+	.legal {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1.25rem;
+	}
+
+	.footer a,
+	.footer button {
+		color: inherit;
+		font: inherit;
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
+	.footer button {
+		padding: 0;
+		border: 0;
+		background: none;
+		cursor: pointer;
+	}
+
+	.footer a:hover,
+	.footer button:hover {
+		color: var(--ink);
 	}
 
 	@media (max-width: 46rem) {

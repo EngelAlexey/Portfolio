@@ -160,7 +160,8 @@ function breadcrumbNode(input: GraphInput, key: RouteKey): Node | null {
 		});
 		trail.push({ '@type': 'ListItem', position: 3, name });
 	} else {
-		trail.push({ '@type': 'ListItem', position: 2, name: key === 'scanner' ? strings.scanner.title : strings.nav[key] });
+		const name = key === 'scanner' ? strings.scanner.title : key === 'privacy' ? strings.privacy.title : strings.nav[key];
+		trail.push({ '@type': 'ListItem', position: 2, name });
 	}
 
 	return {
@@ -283,7 +284,8 @@ const PAGE_TYPE: Record<RouteKey, string> = {
 	scannerAbout: 'WebPage',
 	scannerReport: 'WebPage',
 	tools: 'CollectionPage',
-	schemaflow: 'WebPage'
+	schemaflow: 'WebPage',
+	privacy: 'WebPage'
 };
 
 export async function buildGraph(input: GraphInput): Promise<string | null> {

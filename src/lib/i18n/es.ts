@@ -1,3 +1,4 @@
+import { privacyEs } from './privacy-es';
 import { schemaflowEs } from './schemaflow-es';
 import { schemaflowUiEs } from './schemaflow-ui-es';
 
@@ -167,8 +168,20 @@ export const es = {
 		}
 	},
 	footer: {
-		builtWith: 'Hecho con Astro.'
+		builtWith: 'Hecho con Astro.',
+		privacy: 'Privacidad y cookies',
+		cookies: 'Cambiar cookies'
 	},
+	cookies: {
+		title: 'Cookies',
+		body: 'Este sitio usa cookies de Google Analytics para medir qué páginas se visitan. Son de un tercero y solo se guardan si usted las acepta.',
+		more: 'Más información',
+		accept: 'Aceptar cookies',
+		reject: 'Rechazar cookies',
+		savedGranted: 'Cookies aceptadas',
+		savedDenied: 'Cookies rechazadas'
+	},
+	privacy: privacyEs,
 	notFound: {
 		title: 'Página no encontrada',
 		body: 'Esta dirección no corresponde a ninguna página del sitio.',

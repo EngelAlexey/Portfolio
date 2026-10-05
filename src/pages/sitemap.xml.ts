@@ -5,7 +5,7 @@ import { DEFAULT_LANG, LANGS, alternates, path, type Lang, type RouteKey } from 
 import { absolute } from '../lib/site';
 import lastmod from '../lib/lastmod.json';
 
-const STATIC_KEYS: RouteKey[] = ['home', 'projects', 'about', 'contact', 'tools', 'scanner', 'scannerAbout', 'schemaflow'];
+const STATIC_KEYS: RouteKey[] = ['home', 'projects', 'about', 'contact', 'tools', 'scanner', 'scannerAbout', 'schemaflow', 'privacy'];
 
 type Entry = { key: RouteKey; slug?: string; slugs?: Record<Lang, string> };
 

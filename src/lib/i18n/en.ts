@@ -1,4 +1,5 @@
 import type { Dict } from './es';
+import { privacyEn } from './privacy-en';
 import { schemaflowEn } from './schemaflow-en';
 import { schemaflowUiEn } from './schemaflow-ui-en';
 
@@ -166,8 +167,20 @@ export const en: Dict = {
 		}
 	},
 	footer: {
-		builtWith: 'Built with Astro.'
+		builtWith: 'Built with Astro.',
+		privacy: 'Privacy and cookies',
+		cookies: 'Change cookies'
 	},
+	cookies: {
+		title: 'Cookies',
+		body: 'This site uses Google Analytics cookies to measure which pages are visited. They come from a third party and are only stored if you accept them.',
+		more: 'More information',
+		accept: 'Accept cookies',
+		reject: 'Reject cookies',
+		savedGranted: 'Cookies accepted',
+		savedDenied: 'Cookies rejected'
+	},
+	privacy: privacyEn,
 	notFound: {
 		title: 'Page not found',
 		body: 'This address does not match any page on the site.',
