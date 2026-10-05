@@ -17,7 +17,8 @@ export const analyzerEn: AnalyzerStrings = {
 					'Links: the file type, the domain, the resemblance to well-known brands, shorteners and redirects.',
 					'Text: pressure phrases, requests for passwords or payments and commands to run on the computer.',
 					'Sender: whether the name and the domain match and whether the domain imitates a brand.',
-					'Headers: SPF, DKIM and DMARC, the reply addresses and the times of the mail hops.'
+					'Headers: SPF, DKIM and DMARC, the reply addresses and the times of the mail hops.',
+					'File: the name, the real type and the SHA-256.'
 				]
 			},
 			{
@@ -27,7 +28,7 @@ export const analyzerEn: AnalyzerStrings = {
 					'It does not open any link or request any address from the message.',
 					'It does not run or draw the content of the message.',
 					'It does not give a verdict: it shows signals and their explanation.',
-					'It does not analyse attached files.',
+					'It does not open or run the file.',
 					'It does not store the message.'
 				]
 			},
@@ -72,6 +73,8 @@ export const analyzerEn: AnalyzerStrings = {
 		advancedTitle: 'Email headers',
 		headersLabel: 'Headers',
 		headersHint: 'Optional. In Gmail, open the message, press the three dots and choose "Show original". Copy the text at the top.',
+		fileLabel: 'Attached file',
+		fileHint: 'Optional. It is read without being opened or run. Maximum size: 25 MB.',
 		analyse: 'Analyse message',
 		example: 'Use example',
 		clear: 'Clear fields'
@@ -88,10 +91,42 @@ export const analyzerEn: AnalyzerStrings = {
 		summaryOne: '1 signal: {high} high or critical, {medium} medium and {low} low or informational.',
 		summaryMany: '{total} signals: {high} high or critical, {medium} medium and {low} low or informational.',
 		sources: 'Sources',
+		file: {
+			title: 'File',
+			name: 'Name',
+			size: 'Size',
+			type: 'Detected type',
+			hash: 'SHA-256',
+			copy: 'Copy SHA-256',
+			copied: 'SHA-256 copied',
+			hashHint: 'Search for this SHA-256 in a file reputation service, such as VirusTotal. You do not need to upload the file.',
+			notRead: 'It was not read because it exceeds the maximum size.',
+			kinds: {
+				pe: 'Windows executable',
+				elf: 'Linux executable',
+				macho: 'macOS executable',
+				pdf: 'PDF',
+				zip: 'ZIP archive',
+				ole: 'Legacy Office document',
+				rar: 'RAR archive',
+				'7z': '7-Zip archive',
+				gzip: 'GZIP archive',
+				rtf: 'RTF document',
+				lnk: 'Windows shortcut',
+				iso: 'ISO disk image',
+				png: 'PNG image',
+				jpeg: 'JPEG image',
+				gif: 'GIF image',
+				html: 'HTML page',
+				svg: 'SVG image',
+				text: 'Text',
+				unknown: 'Not recognised'
+			}
+		},
 		none: 'This analysis found no signals.',
 		closing: 'No signals does not mean safe.',
 		explain: 'What it means',
-		sections: { links: 'Links', text: 'Text', sender: 'Sender', headers: 'Headers' },
+		sections: { links: 'Links', text: 'Text', sender: 'Sender', headers: 'Headers', files: 'File' },
 		severity: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low', info: 'Informational' },
 		evidence: {
 			url: 'Link',
@@ -126,7 +161,10 @@ export const analyzerEn: AnalyzerStrings = {
 			dkim: 'DKIM signature',
 			hop: 'Hop',
 			hours: 'Hours',
-			days: 'Days'
+			days: 'Days',
+			detected: 'Detected type',
+			size: 'Size in bytes',
+			limit: 'Limit in bytes'
 		},
 		doTitle: 'What to do now',
 		doItems: [
@@ -138,7 +176,7 @@ export const analyzerEn: AnalyzerStrings = {
 		skippedTitle: 'What this analysis does not check',
 		skippedItems: [
 			'The content of the links. No link is opened.',
-			'Attached files.',
+			'Files that you do not drop here.',
 			'That the sender is who they say they are, if you do not paste the headers.'
 		]
 	},
@@ -187,7 +225,15 @@ export const analyzerEn: AnalyzerStrings = {
 		'hdr-dkim-misaligned': 'The DKIM signature belongs to another domain',
 		'hdr-received-anomaly': 'The times of the mail hops do not add up',
 		'hdr-auth-missing': 'The headers carry no authentication result',
-		'hdr-auth-untrusted': 'There are several authentication results'
+		'hdr-auth-untrusted': 'There are several authentication results',
+		'file-type-mismatch': 'The real type of the file does not match its extension',
+		'file-double-extension': 'The file name hides a dangerous extension',
+		'file-rtlo': 'The file name uses characters that reverse the text',
+		'file-executable': 'The file is a program that runs when opened',
+		'file-script': 'The file is a file of instructions (a script)',
+		'file-shortcut': 'The file is a shortcut',
+		'file-disk-image': 'The file is a disk image, a virtual disk',
+		'file-too-large': 'The file exceeds the maximum size and was not analysed'
 	},
 	sample: {
 		message:

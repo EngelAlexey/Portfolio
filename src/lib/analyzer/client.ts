@@ -1,4 +1,6 @@
-import { analyzeMessage, type MessageInput, type Report } from './analyze';
+import type { MessageInput, Report } from './analyze';
+import { analyzeAll } from './analyze-all';
+import type { FileFacts } from './file/analyze-file';
 import { LIMITS } from './limits';
 import type { Finding, SectionId, Severity } from './types';
 
@@ -19,7 +21,19 @@ export type ClientStrings = {
 		readonly closing: string;
 		readonly explain: string;
 		readonly sources: string;
-		readonly sections: Readonly<Record<'links' | 'text' | 'sender' | 'headers', string>>;
+		readonly file: {
+			readonly title: string;
+			readonly name: string;
+			readonly size: string;
+			readonly type: string;
+			readonly hash: string;
+			readonly copy: string;
+			readonly copied: string;
+			readonly hashHint: string;
+			readonly notRead: string;
+			readonly kinds: Readonly<Record<string, string>>;
+		};
+		readonly sections: Readonly<Record<'links' | 'text' | 'sender' | 'headers' | 'files', string>>;
 		readonly severity: Readonly<Record<Severity, string>>;
 		readonly evidence: Readonly<Record<string, string>>;
 		readonly doTitle: string;
@@ -37,24 +51,26 @@ export type ClientStrings = {
 
 type Answer = { readonly report?: Report; readonly error?: boolean };
 
-const SECTIONS: readonly SectionId[] = ['links', 'text', 'sender', 'headers'];
+const SECTIONS: readonly SectionId[] = ['links', 'text', 'sender', 'headers', 'files'];
 const HIDDEN_EVIDENCE: ReadonlySet<string> = new Set(['how', 'kind', 'start', 'end']);
 
 export function fill(template: string, values: Readonly<Record<string, string>>): string {
 	return template.replace(/\{(\w+)\}/g, (_match, key: string) => values[key] ?? '');
 }
 
-export function analyse(input: MessageInput): Promise<Report> {
+export type FileSelection = { readonly name: string; readonly size: number; readonly buffer?: ArrayBuffer };
+
+export function analyse(input: MessageInput, file?: FileSelection): Promise<Report> {
 	return new Promise((resolve, reject) => {
 		let worker: Worker;
 		try {
 			worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
 		} catch {
-			try {
-				resolve(analyzeMessage(input));
-			} catch {
-				reject(new Error('error'));
-			}
+			const given =
+				file === undefined
+					? undefined
+					: { name: file.name, size: file.size, ...(file.buffer === undefined ? {} : { bytes: new Uint8Array(file.buffer) }) };
+			analyzeAll(input, given).then(resolve, () => reject(new Error('error')));
 			return;
 		}
 		const finish = (): void => {
@@ -74,7 +90,7 @@ export function analyse(input: MessageInput): Promise<Report> {
 			finish();
 			reject(new Error('error'));
 		};
-		worker.postMessage({ input });
+		worker.postMessage({ input, file }, file?.buffer === undefined ? [] : [file.buffer]);
 	});
 }
 
@@ -89,6 +105,50 @@ function list(items: readonly string[]): HTMLUListElement {
 	const element = node('ul', 'plain');
 	for (const item of items) element.append(node('li', '', item));
 	return element;
+}
+
+function formatSize(bytes: number): string {
+	const format = new Intl.NumberFormat(document.documentElement.lang, { maximumFractionDigits: 1 });
+	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024 * 1024) return `${format.format(bytes / 1024)} KB`;
+	return `${format.format(bytes / (1024 * 1024))} MB`;
+}
+
+function fileFacts(file: FileFacts, strings: ClientStrings): HTMLElement {
+	const copy = strings.result.file;
+	const facts = node('dl', 'evidence');
+	const row = (label: string, value: string): HTMLElement => {
+		const line = node('div');
+		line.append(node('dt', '', label));
+		line.append(node('dd', '', value));
+		facts.append(line);
+		return line;
+	};
+	row(copy.name, file.name);
+	row(copy.size, formatSize(file.size));
+	if (file.kind !== null) row(copy.type, copy.kinds[file.kind] ?? file.kind);
+	if (file.sha256 === null) {
+		row(copy.hash, copy.notRead);
+		return facts;
+	}
+	const line = row(copy.hash, file.sha256);
+	const button = node('button', 'copy', copy.copy);
+	button.type = 'button';
+	const reset = copy.copy;
+	button.addEventListener('click', () => {
+		navigator.clipboard.writeText(file.sha256 ?? '').then(
+			() => {
+				button.textContent = copy.copied;
+				setTimeout(() => {
+					button.textContent = reset;
+				}, 2000);
+			},
+			() => undefined
+		);
+	});
+	line.append(button);
+	facts.append(node('p', 'hint', copy.hashHint));
+	return facts;
 }
 
 function card(item: Finding, strings: ClientStrings, templates: ReadonlyMap<string, HTMLTemplateElement>): HTMLElement {
@@ -155,9 +215,10 @@ export function renderReport(
 
 	for (const section of SECTIONS) {
 		const found = report.findings.filter((item) => item.section === section);
-		if (found.length === 0) continue;
+		if (found.length === 0 && !(section === 'files' && report.file !== undefined)) continue;
 		const block = node('section', 'group');
-		block.append(node('h3', '', strings.result.sections[section as 'links' | 'text' | 'sender' | 'headers']));
+		block.append(node('h3', '', strings.result.sections[section as 'links' | 'text' | 'sender' | 'headers' | 'files']));
+		if (section === 'files' && report.file !== undefined) block.append(fileFacts(report.file, strings));
 		for (const item of found) block.append(card(item, strings, templates));
 		container.append(block);
 	}

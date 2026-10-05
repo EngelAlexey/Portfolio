@@ -27,6 +27,8 @@ export type AnalyzerStrings = {
 		readonly advancedTitle: string;
 		readonly headersLabel: string;
 		readonly headersHint: string;
+		readonly fileLabel: string;
+		readonly fileHint: string;
 		readonly analyse: string;
 		readonly example: string;
 		readonly clear: string;
@@ -43,10 +45,22 @@ export type AnalyzerStrings = {
 		readonly summaryOne: string;
 		readonly summaryMany: string;
 		readonly sources: string;
+		readonly file: {
+			readonly title: string;
+			readonly name: string;
+			readonly size: string;
+			readonly type: string;
+			readonly hash: string;
+			readonly copy: string;
+			readonly copied: string;
+			readonly hashHint: string;
+			readonly notRead: string;
+			readonly kinds: Readonly<Record<string, string>>;
+		};
 		readonly none: string;
 		readonly closing: string;
 		readonly explain: string;
-		readonly sections: Readonly<Record<'links' | 'text' | 'sender' | 'headers', string>>;
+		readonly sections: Readonly<Record<'links' | 'text' | 'sender' | 'headers' | 'files', string>>;
 		readonly severity: Readonly<Record<Severity, string>>;
 		readonly evidence: Readonly<Record<string, string>>;
 		readonly doTitle: string;
@@ -80,7 +94,8 @@ export const analyzerEs: AnalyzerStrings = {
 					'Enlaces: el tipo de archivo, el dominio, el parecido con marcas conocidas, los acortadores y las redirecciones.',
 					'Texto: frases de presión, peticiones de claves o pagos y órdenes para ejecutar en el equipo.',
 					'Remitente: si el nombre y el dominio coinciden y si el dominio imita a una marca.',
-					'Cabeceras: SPF, DKIM y DMARC, las direcciones de respuesta y las horas de los saltos del correo.'
+					'Cabeceras: SPF, DKIM y DMARC, las direcciones de respuesta y las horas de los saltos del correo.',
+					'Archivo: el nombre, el tipo real y el SHA-256.'
 				]
 			},
 			{
@@ -90,7 +105,7 @@ export const analyzerEs: AnalyzerStrings = {
 					'No abre ningún enlace ni pide ninguna dirección del mensaje.',
 					'No ejecuta ni dibuja el contenido del mensaje.',
 					'No da un veredicto: muestra señales y su explicación.',
-					'No analiza archivos adjuntos.',
+					'No abre ni ejecuta el archivo.',
 					'No guarda el mensaje.'
 				]
 			},
@@ -135,6 +150,8 @@ export const analyzerEs: AnalyzerStrings = {
 		advancedTitle: 'Cabeceras del correo',
 		headersLabel: 'Cabeceras',
 		headersHint: 'Opcional. En Gmail, abra el mensaje, pulse los tres puntos y elija «Mostrar original». Copie el texto del principio.',
+		fileLabel: 'Archivo adjunto',
+		fileHint: 'Opcional. Se lee sin abrirlo ni ejecutarlo. Tamaño máximo: 25 MB.',
 		analyse: 'Analizar mensaje',
 		example: 'Usar ejemplo',
 		clear: 'Limpiar campos'
@@ -151,10 +168,42 @@ export const analyzerEs: AnalyzerStrings = {
 		summaryOne: '1 señal: {high} alta o crítica, {medium} media y {low} baja o informativa.',
 		summaryMany: '{total} señales: {high} altas o críticas, {medium} medias y {low} bajas o informativas.',
 		sources: 'Fuentes',
+		file: {
+			title: 'Archivo',
+			name: 'Nombre',
+			size: 'Tamaño',
+			type: 'Tipo detectado',
+			hash: 'SHA-256',
+			copy: 'Copiar SHA-256',
+			copied: 'SHA-256 copiado',
+			hashHint: 'Busque este SHA-256 en un servicio de reputación de archivos, como VirusTotal. No hace falta subir el archivo.',
+			notRead: 'No se leyó porque supera el tamaño máximo.',
+			kinds: {
+				pe: 'Ejecutable de Windows',
+				elf: 'Ejecutable de Linux',
+				macho: 'Ejecutable de macOS',
+				pdf: 'PDF',
+				zip: 'Archivo ZIP',
+				ole: 'Documento antiguo de Office',
+				rar: 'Archivo RAR',
+				'7z': 'Archivo 7-Zip',
+				gzip: 'Archivo GZIP',
+				rtf: 'Documento RTF',
+				lnk: 'Acceso directo de Windows',
+				iso: 'Imagen de disco ISO',
+				png: 'Imagen PNG',
+				jpeg: 'Imagen JPEG',
+				gif: 'Imagen GIF',
+				html: 'Página HTML',
+				svg: 'Imagen SVG',
+				text: 'Texto',
+				unknown: 'No reconocido'
+			}
+		},
 		none: 'Este análisis no encontró señales.',
 		closing: 'Sin señales no significa seguro.',
 		explain: 'Qué significa',
-		sections: { links: 'Enlaces', text: 'Texto', sender: 'Remitente', headers: 'Cabeceras' },
+		sections: { links: 'Enlaces', text: 'Texto', sender: 'Remitente', headers: 'Cabeceras', files: 'Archivo' },
 		severity: { critical: 'Crítica', high: 'Alta', medium: 'Media', low: 'Baja', info: 'Informativa' },
 		evidence: {
 			url: 'Enlace',
@@ -189,7 +238,10 @@ export const analyzerEs: AnalyzerStrings = {
 			dkim: 'Firma DKIM',
 			hop: 'Salto',
 			hours: 'Horas',
-			days: 'Días'
+			days: 'Días',
+			detected: 'Tipo detectado',
+			size: 'Tamaño en bytes',
+			limit: 'Límite en bytes'
 		},
 		doTitle: 'Qué hacer ahora',
 		doItems: [
@@ -201,7 +253,7 @@ export const analyzerEs: AnalyzerStrings = {
 		skippedTitle: 'Lo que este análisis no revisa',
 		skippedItems: [
 			'El contenido de los enlaces. Ningún enlace se abre.',
-			'Los archivos adjuntos.',
+			'Los archivos que no suelte aquí.',
 			'Que el remitente sea quien dice ser, si no pega las cabeceras.'
 		]
 	},
@@ -250,7 +302,15 @@ export const analyzerEs: AnalyzerStrings = {
 		'hdr-dkim-misaligned': 'La firma DKIM es de otro dominio',
 		'hdr-received-anomaly': 'Las horas de los saltos del correo no cuadran',
 		'hdr-auth-missing': 'Las cabeceras no traen un resultado de autenticación',
-		'hdr-auth-untrusted': 'Hay varios resultados de autenticación'
+		'hdr-auth-untrusted': 'Hay varios resultados de autenticación',
+		'file-type-mismatch': 'El tipo real del archivo no coincide con su extensión',
+		'file-double-extension': 'El nombre del archivo oculta una extensión peligrosa',
+		'file-rtlo': 'El nombre del archivo usa caracteres que invierten el texto',
+		'file-executable': 'El archivo es un programa que se ejecuta al abrirlo',
+		'file-script': 'El archivo es un archivo de instrucciones (un script)',
+		'file-shortcut': 'El archivo es un acceso directo',
+		'file-disk-image': 'El archivo es una imagen de disco, un disco virtual',
+		'file-too-large': 'El archivo supera el tamaño máximo y no se analizó'
 	},
 	sample: {
 		message:

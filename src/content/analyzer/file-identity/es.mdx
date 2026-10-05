@@ -1,0 +1,31 @@
+---
+codes:
+  - file-type-mismatch
+  - file-double-extension
+  - file-rtlo
+sources:
+  - text: 'MITRE ATT&CK: T1036.007, doble extensión de archivo'
+    url: https://attack.mitre.org/techniques/T1036/007/
+  - text: 'MITRE ATT&CK: T1036.002, anulación de derecha a izquierda'
+    url: https://attack.mitre.org/techniques/T1036/002/
+  - text: 'MITRE ATT&CK: T1204.002, archivo malicioso'
+    url: https://attack.mitre.org/techniques/T1204/002/
+---
+
+## Qué significa
+
+El archivo no es lo que su nombre aparenta. Puede ocurrir de tres maneras:
+
+- el nombre dice un tipo de archivo y el contenido es de otro;
+- el nombre tiene dos terminaciones, como `factura.pdf.exe`, y Windows puede ocultar la última;
+- el nombre incluye un carácter invisible que invierte el orden de las letras, así que la terminación real parece otra.
+
+Este análisis mira el contenido del archivo y no solo su nombre.
+
+## Qué riesgo tiene
+
+Un programa puede hacerse pasar por un documento y ejecutarse al abrirlo. Los atacantes usan este truco en los archivos adjuntos de un correo.
+
+## Qué hacer
+
+No abra el archivo. Si lo esperaba, pregunte a quien lo envió, por otro medio, cómo se llama y de qué tipo es.

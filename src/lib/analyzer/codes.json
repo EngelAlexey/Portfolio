@@ -44,6 +44,14 @@
 		"hdr-dkim-misaligned": { "section": "headers", "severity": "medium" },
 		"hdr-received-anomaly": { "section": "headers", "severity": "low" },
 		"hdr-auth-missing": { "section": "headers", "severity": "info" },
-		"hdr-auth-untrusted": { "section": "headers", "severity": "info" }
+		"hdr-auth-untrusted": { "section": "headers", "severity": "info" },
+		"file-type-mismatch": { "section": "files", "severity": "high" },
+		"file-double-extension": { "section": "files", "severity": "high" },
+		"file-rtlo": { "section": "files", "severity": "high" },
+		"file-executable": { "section": "files", "severity": "high" },
+		"file-script": { "section": "files", "severity": "high" },
+		"file-shortcut": { "section": "files", "severity": "high" },
+		"file-disk-image": { "section": "files", "severity": "medium" },
+		"file-too-large": { "section": "files", "severity": "info" }
 	}
 }

@@ -368,7 +368,7 @@ describe('catalogue', () => {
 	});
 
 	it('uses only known sections', () => {
-		expect(new Set(FINDING_CODES.map((code) => code.split('-')[0]))).toEqual(new Set(['link', 'text', 'sender', 'hdr']));
+		expect(new Set(FINDING_CODES.map((code) => code.split('-')[0]))).toEqual(new Set(['link', 'text', 'sender', 'hdr', 'file']));
 	});
 });
 

@@ -1,3 +1,4 @@
+import type { FileFacts } from './file/analyze-file';
 import { analyzeHeaders } from './headers/rules';
 import { LIMITS } from './limits';
 import { analyzeSender } from './sender/rules';
@@ -17,9 +18,14 @@ export type Report = {
 	readonly findings: readonly Finding[];
 	readonly links: readonly MessageLink[];
 	readonly truncated: boolean;
+	readonly file?: FileFacts;
 };
 
 const ORDER: Readonly<Record<Severity, number>> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+
+export function sortFindings(findings: readonly Finding[]): Finding[] {
+	return [...findings].sort((a, b) => ORDER[a.severity] - ORDER[b.severity] || a.code.localeCompare(b.code));
+}
 
 function key(href: string): string {
 	try {
@@ -47,12 +53,12 @@ export function analyzeMessage(input: MessageInput): Report {
 	const merged = mergeLinks(input.links ?? [], extracted.links);
 	const links = merged.slice(0, LIMITS.links);
 
-	const findings = [
+	const findings = sortFindings([
 		...analyzeLinks(links),
 		...analyzeText(text),
 		...(input.sender === undefined || input.sender.trim() === '' ? [] : analyzeSender(input.sender)),
 		...(input.headers === undefined || input.headers.trim() === '' ? [] : analyzeHeaders(input.headers))
-	].sort((a, b) => ORDER[a.severity] - ORDER[b.severity] || a.code.localeCompare(b.code));
+	]);
 
 	return { findings, links, truncated: extracted.truncated || merged.length > LIMITS.links };
 }

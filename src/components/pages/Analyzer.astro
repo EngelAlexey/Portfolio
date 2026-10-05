@@ -40,7 +40,7 @@ const payload = {
 	</Container>
 
 	<Container size="text">
-		<div data-analyzer data-strings={JSON.stringify(payload)} data-limit={LIMITS.links}>
+		<div data-analyzer data-strings={JSON.stringify(payload)} data-limit={LIMITS.links} data-file-limit={LIMITS.fileBytes}>
 			<form data-form novalidate>
 				<div class="field">
 					<label for="analyzer-message">{text.form.messageLabel}</label>
@@ -64,6 +64,12 @@ const payload = {
 					<label for="analyzer-sender">{text.form.senderLabel}</label>
 					<input id="analyzer-sender" name="sender" type="text" spellcheck="false" autocomplete="off" />
 					<p class="hint">{text.form.senderHint}</p>
+				</div>
+
+				<div class="field" data-drop>
+					<label for="analyzer-file">{text.form.fileLabel}</label>
+					<input id="analyzer-file" name="file" type="file" />
+					<p class="hint">{text.form.fileHint}</p>
 				</div>
 
 				<details class="advanced">
@@ -174,8 +180,25 @@ const payload = {
 		font-size: 0.8125rem;
 	}
 
+	input[type='file'] {
+		width: 100%;
+		padding: 0.65rem 0.8rem;
+		border: 1px dashed var(--line-strong);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--ink);
+		font: inherit;
+		font-size: 0.9375rem;
+	}
+
+	[data-drop].over input[type='file'] {
+		border-style: solid;
+		border-color: var(--ink);
+	}
+
 	textarea:focus-visible,
-	input[type='text']:focus-visible {
+	input[type='text']:focus-visible,
+	input[type='file']:focus-visible {
 		outline: 2px solid var(--focus);
 		outline-offset: 1px;
 	}
@@ -339,6 +362,25 @@ const payload = {
 		overflow-wrap: anywhere;
 	}
 
+	.result :global(.evidence .copy) {
+		justify-self: start;
+		padding: 0.15rem 0.6rem;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		color: var(--ink);
+		font: inherit;
+		font-size: 0.8125rem;
+		cursor: pointer;
+	}
+
+	.result :global(.evidence + .hint),
+	.result :global(.evidence .hint) {
+		margin: 0.5rem 0 0;
+		font-size: 0.8125rem;
+		color: var(--ink-faint);
+	}
+
 	.result :global(.explain) {
 		margin-top: 0.6rem;
 		font-size: 0.9375rem;
@@ -428,6 +470,9 @@ const payload = {
 		const sender = root.querySelector<HTMLInputElement>('#analyzer-sender');
 		const headers = root.querySelector<HTMLTextAreaElement>('#analyzer-headers');
 		const example = root.querySelector<HTMLButtonElement>('[data-example]');
+		const fileInput = root.querySelector<HTMLInputElement>('#analyzer-file');
+		const drop = root.querySelector<HTMLElement>('[data-drop]');
+		const fileLimit = Number(root.dataset['fileLimit'] ?? '0');
 
 		const templates = new Map<string, HTMLTemplateElement>();
 		for (const template of root.querySelectorAll<HTMLTemplateElement>('template[data-explanation]')) {
@@ -436,7 +481,7 @@ const payload = {
 			}
 		}
 
-		if (form && result && status && submit && message && links && sender && headers && example) {
+		if (form && result && status && submit && message && links && sender && headers && example && fileInput && drop) {
 			let pasted: MessageLink[] = [];
 
 			const say = (value: string): void => {
@@ -452,16 +497,35 @@ const payload = {
 				if (message.value.trim() === '') pasted = [];
 			});
 
+			drop.addEventListener('dragover', (event) => {
+				event.preventDefault();
+				drop.classList.add('over');
+			});
+			drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+			drop.addEventListener('drop', (event) => {
+				event.preventDefault();
+				drop.classList.remove('over');
+				const files = event.dataTransfer?.files;
+				if (files !== undefined && files.length > 0) fileInput.files = files;
+			});
+
 			const run = async (): Promise<void> => {
 				const text = [message.value, links.value].filter((part) => part.trim() !== '').join('\n');
-				if (text.trim() === '' && sender.value.trim() === '' && headers.value.trim() === '') {
+				const chosen = fileInput.files?.[0];
+				if (text.trim() === '' && sender.value.trim() === '' && headers.value.trim() === '' && chosen === undefined) {
 					say(strings.status.empty);
 					return;
 				}
 				say(strings.status.working);
 				submit.disabled = true;
 				try {
-					const report = await analyse({ text, links: pasted, sender: sender.value, headers: headers.value });
+					const file =
+						chosen === undefined
+							? undefined
+							: chosen.size > fileLimit
+								? { name: chosen.name, size: chosen.size }
+								: { name: chosen.name, size: chosen.size, buffer: await chosen.arrayBuffer() };
+					const report = await analyse({ text, links: pasted, sender: sender.value, headers: headers.value }, file);
 					const heading = renderReport(result, report, strings, templates);
 					result.hidden = false;
 					say(report.truncated ? fill(strings.status.truncated, { limit }) : '');
