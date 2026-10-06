@@ -61,6 +61,7 @@ period:
   end: null                     # null = sigue en curso
 tier: ficha                     # único valor admitido
 home: true                      # destacado en la portada (máximo 4 en todo el sitio)
+draft: false                    # true = solo se ve en `astro dev`
 visibility: privado             # publico | privado
 repo: null                      # obligatorio null si visibility es privado
 site: null                      # URL pública del producto, si la tiene
@@ -78,10 +79,14 @@ Reglas que el build hace cumplir:
 - Como máximo 4 proyectos destacados en todo el sitio.
 - `period.end` no puede ser anterior a `period.start`. Un `YYYY` suelto se ordena a mitad de año, porque no dice más.
 - `cover`, si existe, empieza por `/img/`.
-- Si existe `es.md` debe existir `en.md`, y al revés, con el mismo `tier`, el mismo `home` y el mismo diagrama.
+- Si existe `es.md` debe existir `en.md`, y al revés, con el mismo `tier`, el mismo `home`, el mismo `draft` y el mismo diagrama.
 - **Un `.md` que declare `diagram` falla el build**: el diagrama necesita `.mdx` para poder colocarse, y un fallo silencioso lo dejaría fuera de la página.
 
 `order` decide una sola cosa: en qué orden salen los cuatro destacados de la portada. `/proyectos` va siempre por fecha, del más reciente al más antiguo, y cada grupo de organización aparece según la fecha del trabajo más reciente que contiene.
+
+**`draft: true` saca la ficha del sitio publicado y la deja a la vista en `astro dev`.** Es el mismo campo que gobierna los artículos. La ficha desaparece de `/proyectos`, de los destacados de la portada, del recuento de áreas, de la navegación entre fichas, de `related`, del sitemap, de `/llms.txt`, de los datos estructurados y de su propia dirección: la página deja de generarse. El archivo se queda en el repositorio, así que el trabajo no se pierde y volver a publicarlo es quitar el campo.
+
+Una ficha en borrador tampoco puede estar nombrada en `src/lib/about.ts`. El CV no menciona un sistema que el visitante no puede abrir.
 
 `org` lleva el nombre de la organización y, si hace falta, un calificador tras la primera coma: «Intercargo Panamá, vía Kaizen Apps CR». `src/lib/org.ts` separa por esa coma para agrupar las fichas en `/proyectos`, para la tarjeta Open Graph y para resolver el logotipo. Por eso el nombre de una organización no puede llevar comas.
 
@@ -111,7 +116,7 @@ Cada sección contesta una pregunta, y esa pregunta decide dónde va cada frase:
 - Los títulos nombran la cosa, y lo que la hace interesante va en la tagline. Separador `|` o `,`, nunca raya, y ambas mitades en mayúscula inicial.
 - Una URL en producción no es una «demo». El campo es `site` y la etiqueta, *Sitio en producción*.
 - Nada de reclamos de exclusividad ni de velocidad, y ninguna métrica de negocio del cliente: solo cifras técnicas del propio trabajo.
-- El texto de experiencia en `src/lib/about.ts` y la lista de proyectos tienen que nombrar el mismo conjunto. Si la experiencia nombra un sistema, ese sistema necesita ficha.
+- El texto de experiencia en `src/lib/about.ts` y la lista de proyectos tienen que nombrar el mismo conjunto. Si la experiencia nombra un sistema, ese sistema necesita ficha publicada: una ficha con `draft: true` sale también de la experiencia.
 - Nada que describa una debilidad explotable de un sistema en producción de un cliente. El sitio es público.
 
 `ArchDiagram.astro` dibuja una cadena de etapas con una etapa de control, donde se aplican varias reglas a la vez. Los datos van en el campo `diagram`: de 2 a 6 `nodes`, `gate` con el índice de la etapa de control y de 2 a 4 `layers`. El cuerpo lo coloca con `<ArchDiagram {...frontmatter.diagram} />`. El diagrama enuncia la regla y el cuerpo explica la consecuencia, y ninguno de los dos repite al otro. Las capas no van numeradas, porque se aplican todas a la vez en la etapa de control y no forman una secuencia.

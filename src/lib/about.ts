@@ -45,7 +45,6 @@ export const EXPERIENCE: Role[] = [
 		detail: {
 			es: [
 				'Construyo la plataforma corporativa: sitio público, portal del personal, debida diligencia, cuentas por cobrar y nómina.',
-				'Construyo el asistente de cobranza por WhatsApp: identifica al cliente, le muestra su saldo, recibe su comprobante y registra su promesa de pago.',
 				'Definí el modelo de seguridad: dos instancias separadas por criticidad de secretos, identidad por invitación y sesiones revocables.',
 				'Automaticé la debida diligencia, con extracción por modelo y validación contra esquema en el código.',
 				'Cubrí el sistema con 2 243 pruebas unitarias y 27 suites de extremo a extremo.',
@@ -53,7 +52,6 @@ export const EXPERIENCE: Role[] = [
 			],
 			en: [
 				'Build the corporate platform: public site, staff portal, client due diligence, accounts receivable and payroll.',
-				'Build the WhatsApp collections assistant: it identifies the client, shows their balance, takes their receipt and records their payment promise.',
 				'Defined the security model: two instances split by how critical their secrets are, invite-based identity and revocable sessions.',
 				'Automated due diligence, with model-driven extraction and schema validation enforced in code.',
 				'Covered the system with 2,243 unit tests and 27 end-to-end suites.',
@@ -74,13 +72,13 @@ export const EXPERIENCE: Role[] = [
 				'Construí el CRM comercial que sustituyó la gestión en hojas de cálculo.',
 				'Amplié el sitio y sus trámites en línea a lo largo del año, hasta rediseñarlo por completo como un proyecto aparte dentro del mismo repositorio, con build y dependencias propias.',
 				'Construí el portal con sesión donde el cliente sigue sus solicitudes, con los permisos resueltos contra el ERP en cada petición.',
-				'Di mantenimiento y corregí defectos de la API de bodega y de la app de rastreo de viajes, probándolas contra el sistema real.'
+				'Di mantenimiento y corregí defectos de la app de rastreo de viajes, probándola contra el sistema real.'
 			],
 			en: [
 				'Built the sales CRM that replaced the spreadsheet workflow.',
 				'Extended the site and its online forms through the year, then rebuilt it entirely as a separate project inside the same repository, with its own build and dependencies.',
 				'Built the portal where clients follow their requests behind a session, with permissions resolved against the ERP on every request.',
-				'Maintained and fixed defects in the warehouse API and the trip-tracking app, testing them against the real system.'
+				'Maintained and fixed defects in the trip-tracking app, testing it against the real system.'
 			]
 		}
 	},

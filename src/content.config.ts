@@ -30,6 +30,7 @@ const projectSchema = z
 
 		tier: z.literal('ficha'),
 		home: z.boolean().default(false),
+		draft: z.boolean().default(false),
 
 		visibility: z.enum(['publico', 'privado']),
 		repo: url.nullable().default(null),
