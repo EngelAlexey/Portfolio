@@ -26,6 +26,8 @@ function parseId(id: string): { folder: string; lang: Lang } | null {
 	return { folder: match[1], lang: match[2] as Lang };
 }
 
+const published = (meta: ProjectMeta): boolean => !meta.draft || !import.meta.env.PROD;
+
 let CONTENT: Map<string, Partial<Record<Lang, Project>>> | null = null;
 
 async function load(): Promise<Map<string, Partial<Record<Lang, Project>>>> {
@@ -62,7 +64,7 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Project>>>> {
 			}
 		}
 
-		for (const field of ['tier', 'home'] as const) {
+		for (const field of ['tier', 'home', 'draft'] as const) {
 			const es = bucket.es!.meta[field];
 			const en = bucket.en!.meta[field];
 			if (es !== en) {
@@ -81,7 +83,9 @@ async function load(): Promise<Map<string, Partial<Record<Lang, Project>>>> {
 		}
 	}
 
-	const featured = [...bySlug.values()].filter((bucket) => bucket.es?.meta.home).length;
+	const featured = [...bySlug.values()].filter(
+		(bucket) => bucket.es?.meta.home && published(bucket.es.meta)
+	).length;
 	if (featured > MAX_HOME_PROJECTS) {
 		fail(
 			'src/content/projects',
@@ -106,6 +110,7 @@ export async function allProjects(lang: Lang): Promise<Project[]> {
 	return [...content.values()]
 		.map((bucket) => bucket[lang])
 		.filter((project): project is Project => Boolean(project))
+		.filter((project) => published(project.meta))
 		.sort(compare);
 }
 
@@ -120,7 +125,8 @@ export const homeProjects = async (lang: Lang): Promise<Project[]> =>
 		.sort((a, b) => homeRank(a) - homeRank(b));
 
 export async function getProject(lang: Lang, slug: string): Promise<Project | undefined> {
-	return (await load()).get(slug)?.[lang];
+	const project = (await load()).get(slug)?.[lang];
+	return project && published(project.meta) ? project : undefined;
 }
 
 export const renderProject = (project: Project) => render(project.entry);
